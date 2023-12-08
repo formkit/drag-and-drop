@@ -1,0 +1,23 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "devDependencies": {
+    "@formkit/auto-animate": "^0.8.0",
+    "@playwright/test": "^1.34.0",
+    "@types/node": "^18",
+    "nuxt": "^3.5.1"
+  },
+  "dependencies": {
+    "@formkit/icons": "^1.1.0",
+    "@formkit/nuxt": "^1.1.0",
+    "@formkit/pro": "^0.115.10",
+    "@formkit/themes": "^1.1.0"
+  }
+}

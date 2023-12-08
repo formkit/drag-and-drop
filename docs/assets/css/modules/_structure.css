@@ -1,0 +1,19 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  -webkit-text-size-adjust: 100%;
+}
+
+* {
+  box-sizing: border-box;
+
+  *::before,
+  *::after {
+    box-sizing: inherit;
+  }
+}
+
+.main-layout {
+  padding: 0 2em;
+}

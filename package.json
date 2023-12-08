@@ -1,0 +1,38 @@
+{
+  "name": "@formkit/drag-and-drop",
+  "version": "0.0.2",
+  "description": "Drag and drop package.",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "npx playwright test vue",
+    "dev": "cd docs && pnpm run dev",
+    "build": "tsup",
+    "release": "npx publint && pnpm run build && npx bumpp && pnpm publish",
+    "lint": "eslint ."
+  },
+  "packages": [],
+  "keywords": [],
+  "author": "Sasha Milenkovic <sasha@formkit.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.13.2",
+    "bumpp": "^9.2.0",
+    "eslint": "^8.55.0",
+    "publint": "^0.2.6",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ]
+}
