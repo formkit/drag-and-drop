@@ -207,6 +207,9 @@ function remap(parent: HTMLElement) {
   }
 
   if (enabledNodes.length !== parentData.getValues(parent).length) {
+    console.warn(
+      "The number of enabled nodes does not match the number of values."
+    );
     return;
   }
 
@@ -243,7 +246,7 @@ function remap(parent: HTMLElement) {
         : config?.dropZoneClass;
     }
 
-    handleClass([child], dropZoneClass, state);
+    handleClass([child], dropZoneClass, state, false, true);
   }
 
   state.parentData.set(parent, { ...parentData, enabledNodes });

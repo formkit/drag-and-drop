@@ -390,6 +390,8 @@ export type DNDState = {
   parents: WeakSet<HTMLElement>;
   preventEnter: boolean;
   removeDraggable: ((el: Node) => void) | undefined;
+  scrollParent: HTMLElement | undefined;
+  scrollParentOverflow: string | undefined;
   selectedNodes: Array<Node>;
   selectedValues: Array<any>;
   touchMoving: boolean;

@@ -27,6 +27,8 @@ export const state: DNDState = {
   parents: new WeakSet<Node>(),
   preventEnter: false,
   removeDraggable: undefined,
+  scrollParent: undefined,
+  scrollParentOverflow: undefined,
   touchMoving: false,
   selectedNodes: Array<Node>(),
   selectedValues: Array<any>(),

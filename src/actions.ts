@@ -100,7 +100,11 @@ export function touchstart(e: NodeTouchEvent, state: DNDState) {
     state.longTouchTimeout = setTimeout(() => {
       state.longTouch = true;
       const parentScroll = getScrollParent(e.draggedNode);
-      if (parentScroll) parentScroll.style.overflow = "hidden";
+      if (parentScroll) {
+        state.scrollParent = parentScroll;
+        state.scrollParentOverflow = parentScroll.style.overflow;
+        parentScroll.style.overflow = "hidden";
+      }
 
       if (config.longTouchClass)
         handleClass(state.draggedNodes, config.longTouchClass, state);
@@ -151,10 +155,13 @@ export function touchmove(e: NodeTouchEvent, state: DNDState) {
 
   const y = e.event.touches[0].clientY + window.scrollY;
 
-  const windowHeight = window.innerHeight;
+  const windowHeight = window.innerHeight + window.scrollY;
 
-  if (y > windowHeight - 50) window.scrollBy(0, 10);
-  else if (y < 300) window.scrollBy(0, -10);
+  if (y > windowHeight - 50) {
+    window.scrollBy(0, 10);
+  } else if (y < window.scrollY + 50) {
+    window.scrollBy(0, -10);
+  }
 
   const touchStartLeft = state.touchStartLeft ?? 0;
 
@@ -244,8 +251,6 @@ export function end(
   if (e.event instanceof TouchEvent) {
     state.longTouch = false;
     clearTimeout(state.longTouchTimeout);
-    const parentScroll = getScrollParent(e.draggedNode);
-    if (parentScroll) parentScroll.style.overflow = "auto";
   }
 
   if (

@@ -32,6 +32,8 @@ export function cleanUp(
 
   const config = state.parentData.get(state.initialParent)?.config;
 
+  const root = config?.root || document;
+
   if (config) {
     const hasSelections = state.selectedValues.length > 0;
 
@@ -50,6 +52,14 @@ export function cleanUp(
     }
 
     handleClass(state.draggedNodes, dropZoneClass, state, true);
+
+    if (dropZoneClass) {
+      const elsWithDropZoneClass = root.querySelectorAll(
+        `.${splitClass(dropZoneClass)}`
+      );
+
+      handleClass(Array.from(elsWithDropZoneClass), dropZoneClass, state, true);
+    }
   }
 
   handleClass(
@@ -75,6 +85,11 @@ export function cleanUp(
     y: 0,
   };
   state.direction = undefined;
+  if (state.scrollParent) {
+    state.scrollParent.style.overflow = state.scrollParentOverflow || "";
+    state.scrollParent = undefined;
+    state.scrollParentOverflow = undefined;
+  }
 }
 
 export function dragTransfer(): DragTransfer | undefined {
@@ -291,10 +306,11 @@ export function copyNodeStyle(
 }
 
 export function handleClass(
-  nodes: Array<Node | HTMLElement>,
+  nodes: Array<Node | HTMLElement | Element>,
   className: string | undefined,
   state: DNDState,
-  remove = false
+  remove = false,
+  omitAppendPrivateClass = false
 ) {
   if (!className) return;
 
@@ -304,13 +320,14 @@ export function handleClass(
 
   remove
     ? removeClass(nodes, classNames, state)
-    : addClass(nodes, classNames, state);
+    : addClass(nodes, classNames, state, omitAppendPrivateClass);
 }
 
 export function addClass(
-  nodes: Array<Node | HTMLElement>,
+  nodes: Array<Node | HTMLElement | Element>,
   classNames: Array<string>,
-  state: DNDState
+  state: DNDState,
+  omitAppendPrivateClass = false
 ) {
   for (const node of nodes) {
     if (!isNode(node, state) || !state.nodeData.has(node)) {
@@ -328,7 +345,7 @@ export function addClass(
     for (const className of classNames) {
       if (!node.classList.contains(className)) {
         node.classList.add(className);
-      } else {
+      } else if (omitAppendPrivateClass === false) {
         privateClasses.push(className);
       }
     }
@@ -340,7 +357,7 @@ export function addClass(
 }
 
 export function removeClass(
-  nodes: Array<Node | HTMLElement>,
+  nodes: Array<Node | HTMLElement | Element>,
   classNames: Array<string>,
   state: DNDState
 ) {
@@ -350,13 +367,15 @@ export function removeClass(
 
       continue;
     }
+
     const nodeData = state.nodeData.get(node);
 
     if (!nodeData) continue;
 
     for (const className of classNames) {
-      if (!nodeData.privateClasses.includes(className))
+      if (!nodeData.privateClasses.includes(className)) {
         node.classList.remove(className);
+      }
     }
   }
 }
@@ -378,4 +397,5 @@ export function getScrollParent(
     if (node.parentNode instanceof HTMLElement)
       return getScrollParent(node.parentNode);
   }
+  return undefined;
 }

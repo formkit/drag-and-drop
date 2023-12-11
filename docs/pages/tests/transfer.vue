@@ -180,13 +180,14 @@ function reset() {
 }
 .container {
   display: flex;
+  flex-wrap: wrap;
 }
 .list {
   margin: 0 1em;
   border: 1px solid black;
   padding: 2em;
-  min-width: 300px;
   height: 500px;
+  width: 100%;
   position: relative;
 }
 
