@@ -180,7 +180,6 @@ function reset() {
 }
 .container {
   display: flex;
-  flex-wrap: wrap;
 }
 .list {
   margin: 0 1em;

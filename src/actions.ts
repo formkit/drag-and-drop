@@ -99,10 +99,14 @@ export function touchstart(e: NodeTouchEvent, state: DNDState) {
   if (config?.longTouch) {
     state.longTouchTimeout = setTimeout(() => {
       state.longTouch = true;
+
       const parentScroll = getScrollParent(e.draggedNode);
+
       if (parentScroll) {
         state.scrollParent = parentScroll;
+
         state.scrollParentOverflow = parentScroll.style.overflow;
+
         parentScroll.style.overflow = "hidden";
       }
 
@@ -128,25 +132,30 @@ export function touchmove(e: NodeTouchEvent, state: DNDState) {
     return;
   }
 
-  state.touchMoving = true;
+  if (state.touchMoving !== true) {
+    state.touchMoving = true;
 
-  handleClass(state.draggedNodes, config?.longTouchClass, state, true);
+    handleClass(state.draggedNodes, config?.longTouchClass, state, true);
 
-  const hasSelections =
-    Array.isArray(state.selectedValues) && state.selectedValues.length;
+    const hasSelections =
+      Array.isArray(state.selectedValues) && state.selectedValues.length;
 
-  if (hasSelections) {
-    handleClass(
-      state.clonedDraggedNodes,
-      config?.touchSelectionDraggingClass,
-      state
-    );
+    if (hasSelections) {
+      handleClass(
+        state.clonedDraggedNodes,
+        config?.touchSelectionDraggingClass,
+        state
+      );
 
-    handleClass(state.draggedNodes, config?.touchSelectionDropZoneClass, state);
-  } else {
-    handleClass([state.touchedNode], config?.touchDraggingClass, state);
-
-    handleClass(state.draggedNodes, config?.touchDropZoneClass, state);
+      handleClass(
+        state.draggedNodes,
+        config?.touchSelectionDropZoneClass,
+        state
+      );
+    } else {
+      handleClass([state.touchedNode], config?.touchDraggingClass, state);
+      handleClass(state.draggedNodes, config?.touchDropZoneClass, state);
+    }
   }
 
   e.touchedNode.style.display = "block";

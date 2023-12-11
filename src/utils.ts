@@ -329,6 +329,7 @@ export function addClass(
   state: DNDState,
   omitAppendPrivateClass = false
 ) {
+  if (classNames.includes("longTouch")) return;
   for (const node of nodes) {
     if (!isNode(node, state) || !state.nodeData.has(node)) {
       node.classList.add(...classNames);
@@ -345,7 +346,10 @@ export function addClass(
     for (const className of classNames) {
       if (!node.classList.contains(className)) {
         node.classList.add(className);
-      } else if (omitAppendPrivateClass === false) {
+      } else if (
+        node.classList.contains(className) &&
+        omitAppendPrivateClass === false
+      ) {
         privateClasses.push(className);
       }
     }
