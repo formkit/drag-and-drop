@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { dragAndDrop } from "../src/vue/index";
-import { dropZone } from "../src/vue/dropZone";
+import { dragAndDrop } from "../../src/vue/index";
 
 let firstList = ref(null);
 
@@ -13,25 +12,7 @@ dragAndDrop({
   draggable: (child: HTMLElement) => {
     return child.classList.contains("item");
   },
-  //drop: (e, state, originalDrop) => {
-  //  console.log("drop 1", e);
-  //  //originalDrop(e, state);
-  //},
-  //transitClass: "transit",
-  originLeaveClass: "origin-leave",
-  //dragstart: (nodeDragEvent, state, originalDragstart) => {
-  //  originalDragstart(nodeDragEvent, state);
-  //},
-  //sort: (nodeDragEvent, state, originalSort) => {
-  //  originalSort(nodeDragEvent, state);
-  //},
-  //dragleave: (dropZoneDragEvent, state, originalDragleave) => {
-  //  originalDragleave(dropZoneDragEvent, state);
-  //},
-  //dragend: (nodeDragEvent, state, originalDragend) => {
-  //  originalDragend(nodeDragEvent, state);
-  //},
-  plugins: [dropZone({})],
+  disabled: true,
 });
 
 const testValues1 = computed(() => {
@@ -50,9 +31,6 @@ const testValues1 = computed(() => {
           class="item"
         >
           <div class="content">
-            {{ item }}
-          </div>
-          <div v-if="item === 'Banana'" class="content">
             {{ item }}
           </div>
         </div>

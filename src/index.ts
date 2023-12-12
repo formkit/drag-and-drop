@@ -189,24 +189,26 @@ function remap(parent: HTMLElement) {
 
   const config = parentData.config;
 
+  let disabled = false;
   for (let x = 0; x < parent.children.length; x++) {
     const child = parent.children[x];
 
     if (!isNode(child, state)) continue;
-
-    if (
-      (config && config.draggable && !config.draggable(child)) ||
-      config?.disabled
-    ) {
-      if (state.removeDraggable) state.removeDraggable(child);
+    if (config && config.draggable && !config.draggable(child)) {
+      removeDraggable(child);
+    } else if (config?.disabled) {
+      disabled = true;
+      removeDraggable(child);
     } else if (parentData.config?.setDraggable) {
       parentData.config.setDraggable(child);
 
       enabledNodes.push(child);
     }
   }
-
-  if (enabledNodes.length !== parentData.getValues(parent).length) {
+  if (
+    enabledNodes.length !== parentData.getValues(parent).length &&
+    !disabled
+  ) {
     console.warn(
       "The number of enabled nodes does not match the number of values."
     );
