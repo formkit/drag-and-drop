@@ -37,7 +37,7 @@ export function cleanUp(
   if (config) {
     const hasSelections = state.selectedValues.length > 0;
 
-    const isTouch = e.event instanceof TouchEvent;
+    const isTouch = !(e.event instanceof DragEvent);
 
     let dropZoneClass: string | undefined;
 

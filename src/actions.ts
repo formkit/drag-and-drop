@@ -257,7 +257,7 @@ export function end(
 ) {
   if (e.event instanceof DragEvent && state.longTouch) return;
 
-  if (e.event instanceof TouchEvent) {
+  if (!(e.event instanceof DragEvent)) {
     state.longTouch = false;
     clearTimeout(state.longTouchTimeout);
   }

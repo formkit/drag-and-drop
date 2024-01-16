@@ -12,7 +12,6 @@ dragAndDrop({
   draggable: (child: HTMLElement) => {
     return child.classList.contains("item");
   },
-  disabled: true,
 });
 
 const testValues1 = computed(() => {
