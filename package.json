@@ -16,7 +16,7 @@
   "keywords": [],
   "author": "Sasha Milenkovic <sasha@formkit.com>",
   "license": "MIT",
-  "dependencies": {
+  "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "bumpp": "^9.2.0",
     "eslint": "^8.55.0",
