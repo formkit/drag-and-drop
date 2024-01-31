@@ -1,28 +1,6 @@
-import {
-  DropZoneDragTargetEvent,
-  NodeDragTargetEvent,
-  DropZoneTouchTargetEvent,
-  NodeTouchTargetEvent,
-} from "./types";
-import { state } from "./state";
+import type { NodeEventData } from "./types";
 
-/**
- * Validates sort action should be performed.
- *
- * @param nEvent
- *
- * @returns {boolean} - Whether or not the sort action should be performed.
- * @internal
- */
-export function validateSort(
-  e: NodeDragTargetEvent | NodeTouchTargetEvent
-): boolean {
-  const dzConfig = e.targetParentData.dzConfig;
-
-  if (dzConfig && dzConfig.nodeDropZone === false) return false;
-
-  return e.targetParentData.config?.sortable !== false;
-}
+import { State } from "./globals";
 
 /**
  * Validates child transfer action should be performed.

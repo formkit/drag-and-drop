@@ -1,6 +1,6 @@
 {
   "name": "@formkit/drag-and-drop",
-  "version": "0.0.7",
+  "version": "0.0.6",
   "description": "Drag and drop package.",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -16,7 +16,7 @@
   "keywords": [],
   "author": "Sasha Milenkovic <sasha@formkit.com>",
   "license": "MIT",
-  "devDependencies": {
+  "dependencies": {
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "bumpp": "^9.2.0",
     "eslint": "^8.55.0",

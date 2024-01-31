@@ -1,21 +1,19 @@
 import type {
-  DNDState,
   Node,
-  NodeTouchEvent,
-  NodeDragTargetEvent,
-  NodeTouchTargetEvent,
-  DropZoneDragEvent,
-  DropZoneTouchEvent,
-  DropZoneDragTargetEvent,
+  NodeTouchEventData,
+  NodeRecord,
+  NodeEventData,
 } from "./types";
-import {
-  cleanUp,
-  stackNodes,
-  copyNodeStyle,
-  handleSelections,
-  getScrollParent,
-  handleClass,
-} from "./utils";
+
+//import { State } from "./globals";
+
+import { cleanup, getScrollParent, handleClass } from "./utils";
+
+export const defaultActions = {
+  touchstart,
+  touchmove,
+  end,
+};
 
 /**
  * Defines the dragged elements and sets the drag image.
@@ -23,14 +21,15 @@ import {
  * @param el - The element that is being dragged.
  * @param e - The drag event.
  */
-export function dragstart(e: NodeDragTargetEvent, state: DNDState) {
+export function dragstart(data: NodeEventData) {
   // TODO: Allow this to be configurable
-  if (e.event.dataTransfer) {
-    e.event.dataTransfer.dropEffect = "move";
+  if (data.e && data.e instanceof DragEvent && data.e.dataTransfer) {
+    data.e.dataTransfer.dropEffect = "move";
 
-    e.event.dataTransfer.effectAllowed = "move";
+    data.e.dataTransfer.effectAllowed = "move";
   }
-  const config = e.targetParentData.config;
+
+  return;
 
   const selectedValues =
     config?.setSelections && config?.setSelections(e.draggedNode.parentNode);
@@ -48,39 +47,43 @@ export function dragstart(e: NodeDragTargetEvent, state: DNDState) {
 
     setTimeout(() => {
       handleClass(state.draggedNodes, config.draggingClass, state, true);
+
       handleClass(state.draggedNodes, config.dropZoneClass, state);
     });
   }
 }
 
-export function touchstart(e: NodeTouchEvent, state: DNDState) {
-  e.event.stopPropagation();
+export function touchstart(data: NodeTouchEventData) {
+  return;
+  data.e.stopPropagation();
 
-  const rect = e.draggedNode.getBoundingClientRect();
+  if (!State.touchedNode) return;
 
-  state.touchStartLeft = e.event.touches[0].clientX - rect.left;
+  const draggedNode = data.targetData.node.el;
 
-  state.touchStartTop = e.event.touches[0].clientY - rect.top;
+  const rect = draggedNode.getBoundingClientRect();
 
-  const config = e.draggedParentData.config;
+  State.touchStartLeft = data.e.touches[0].clientX - rect.left;
+
+  State.touchStartTop = data.e.touches[0].clientY - rect.top;
+
+  const config = data.targetData.parent.data.config;
 
   const selectedValues =
-    config?.setSelections && config?.setSelections(e.draggedNode.parentNode);
+    config?.setSelections && config?.setSelections(draggedNode.parentNode);
 
   if (Array.isArray(selectedValues) && selectedValues.length) {
     stackNodes(
       handleSelections(
-        e,
+        data.e,
         selectedValues,
-        state,
-        state.touchStartLeft,
-        state.touchStartTop
+        State,
+        State.touchStartLeft,
+        State.touchStartTop
       )
     );
   } else {
-    state.touchedNode = e.touchedNode;
-
-    e.touchedNode.style.cssText = `
+    State.touchedNode.style.cssText = `
             width: ${rect.width}px;
             position: absolute;
             pointer-events: none;
@@ -89,31 +92,36 @@ export function touchstart(e: NodeTouchEvent, state: DNDState) {
             display: none;
           `;
 
-    document.body.append(e.touchedNode);
+    document.body.append(State.touchedNode);
 
-    copyNodeStyle(e.draggedNode, e.touchedNode as Node);
+    copyNodeStyle(data.targetData.node.el, State.touchedNode as Node);
 
-    e.touchedNode.style.display = "none";
+    State.touchedNode.style.display = "none";
   }
 
   if (config?.longTouch) {
-    state.longTouchTimeout = setTimeout(() => {
-      state.longTouch = true;
+    State.longTouchTimeout = setTimeout(() => {
+      State.longTouch = true;
 
-      const parentScroll = getScrollParent(e.draggedNode);
+      const parentScroll = getScrollParent(draggedNode);
 
       if (parentScroll) {
-        state.scrollParent = parentScroll;
+        State.scrollParent = parentScroll;
 
-        state.scrollParentOverflow = parentScroll.style.overflow;
+        State.scrollParentOverflow = parentScroll.style.overflow;
 
         parentScroll.style.overflow = "hidden";
       }
 
       if (config.longTouchClass)
-        handleClass(state.draggedNodes, config.longTouchClass, state);
+        if (data.e.cancelable)
+          handleClass(
+            State.draggedNodes.map((x) => x.el),
+            config.longTouchClass,
+            State
+          );
 
-      if (e.event.cancelable) e.event.preventDefault();
+      data.e.preventDefault();
 
       document.addEventListener("contextmenu", function (e) {
         e.preventDefault();
@@ -122,47 +130,55 @@ export function touchstart(e: NodeTouchEvent, state: DNDState) {
   }
 }
 
-export function touchmove(e: NodeTouchEvent, state: DNDState) {
+export function touchmove(data: NodeTouchEventData) {
+  const state = State;
+
   if (!state.touchedNode) return;
 
-  const config = e.draggedParentData.config;
+  const config = data.targetData.parent.data.config;
 
   if (config?.longTouch && !state.longTouch) {
     clearTimeout(state.longTouchTimeout);
+
     return;
   }
 
   if (state.touchMoving !== true) {
     state.touchMoving = true;
 
-    handleClass(state.draggedNodes, config?.longTouchClass, state, true);
+    handleClass(
+      state.draggedNodes.map((x) => x.el),
+      config?.longTouchClass,
+      state,
+      true
+    );
 
-    const hasSelections =
-      Array.isArray(state.selectedValues) && state.selectedValues.length;
+    //const hasSelections =
+    //  Array.isArray(state.selectedValues) && state.selectedValues.length;
 
-    if (hasSelections) {
-      handleClass(
-        state.clonedDraggedNodes,
-        config?.touchSelectionDraggingClass,
-        state
-      );
+    //if (hasSelections) {
+    //  handleClass(
+    //    state.clonedDraggedNodes,
+    //    config?.touchSelectionDraggingClass,
+    //    state
+    //  );
 
-      handleClass(
-        state.draggedNodes,
-        config?.touchSelectionDropZoneClass,
-        state
-      );
-    } else {
-      handleClass([state.touchedNode], config?.touchDraggingClass, state);
-      handleClass(state.draggedNodes, config?.touchDropZoneClass, state);
-    }
+    //  handleClass(
+    //    state.draggedNodes,
+    //    config?.touchSelectionDropZoneClass,
+    //    state
+    //  );
+    //} else {
+    //  handleClass([state.touchedNode], config?.touchDraggingClass, state);
+    //  handleClass(state.draggedNodes, config?.touchDropZoneClass, state);
+    //}
   }
 
-  e.touchedNode.style.display = "block";
+  state.touchedNode.style.display = "block";
 
-  const x = e.event.touches[0].clientX + window.scrollX;
+  const x = data.e.touches[0].clientX + window.scrollX;
 
-  const y = e.event.touches[0].clientY + window.scrollY;
+  const y = data.e.touches[0].clientY + window.scrollY;
 
   const windowHeight = window.innerHeight + window.scrollY;
 
@@ -176,119 +192,60 @@ export function touchmove(e: NodeTouchEvent, state: DNDState) {
 
   const touchStartTop = state.touchStartTop ?? 0;
 
-  e.touchedNode.style.left = `${x - touchStartLeft}px`;
+  state.touchedNode.style.left = `${x - touchStartLeft}px`;
 
-  e.touchedNode.style.top = `${y - touchStartTop}px`;
+  state.touchedNode.style.top = `${y - touchStartTop}px`;
 
-  if (e.event.cancelable) e.event.preventDefault();
+  if (data.e.cancelable) data.e.preventDefault();
 }
 
 /**
  * Used when the dragged element is inserted to another element of its list.
  *
- * @param e - The drag event.
- * @param state - The current state of the DND system.
+ * @param data - Event data.
+ *
  *
  * @internal
+ *
  * @returns {void}
  */
-export function sort(
-  e: NodeDragTargetEvent | NodeTouchTargetEvent,
-  state: DNDState
-) {
-  const targetParentValues = e.targetParentData.getValues(e.targetParent);
+export function sort(data: NodeEventData) {
+  const targetParentValues = data.targetData.parent.data.getValues(
+    data.targetData.parent.el
+  );
 
-  const draggedNodeValues = state.draggedNodes.map(
-    (x) => state.nodeData.get(x)?.value
+  const draggedNodeValues = State.draggedNodes.map(
+    (x: NodeRecord) => x.data.value
   );
 
   const newParentValues = [
     ...targetParentValues.filter((x: Node) => !draggedNodeValues.includes(x)),
   ];
 
-  newParentValues.splice(e.targetNodeData.index, 0, ...draggedNodeValues);
-  e.targetParentData.setValues(e.targetParent, newParentValues);
-}
-
-/**
- * Used when a dragged element is transferred back to its original list.
- *
- * @param e
- * @param dragData
- */
-export function transferReturn(
-  e:
-    | NodeDragTargetEvent
-    | DropZoneDragTargetEvent
-    | NodeTouchTargetEvent
-    | DropZoneTouchEvent,
-  state: DNDState
-) {
-  if (e.draggedParent === e.lastParent) return;
-
-  const leftParentValues = [...e.lastParentData.getValues(e.lastParent)];
-
-  const draggedValues = state.draggedNodes.map(
-    (x) => state.nodeData.get(x)?.value
+  newParentValues.splice(
+    data.targetData.node.data.index,
+    0,
+    ...draggedNodeValues
   );
 
-  const newLeftParentValues = [
-    ...leftParentValues.filter((x: Node) => !draggedValues.includes(x)),
-  ];
-
-  e.lastParentData.setValues(e.lastParent, newLeftParentValues);
-
-  state.lastParent = e.draggedParent;
-
-  e.draggedParentData.setValues(e.draggedParent, state.initialParentValues);
+  data.targetData.parent.data.setValues(
+    data.targetData.parent.el,
+    newParentValues
+  );
 }
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function dragleave(_e: DropZoneDragEvent, _state: DNDState) {}
 
 /**
  * Used when the dragged element is dropped outside of a dropzone.
  *
  * @param state - The current state of the DND system.
  */
-export function end(
-  e: NodeDragTargetEvent | NodeTouchTargetEvent | NodeTouchEvent,
-  state: DNDState
-) {
-  if (e.event instanceof DragEvent && state.longTouch) return;
+export function end(eventData: NodeEventData) {
+  if (eventData.e instanceof DragEvent && State.longTouch) return;
 
-  if (!(e.event instanceof DragEvent)) {
-    state.longTouch = false;
-    clearTimeout(state.longTouchTimeout);
+  if (!(eventData.e instanceof DragEvent)) {
+    State.longTouch = false;
+    clearTimeout(State.longTouchTimeout);
   }
 
-  if (
-    state.draggedNode &&
-    state.draggedNode.parentNode &&
-    state.draggedNode.parentNode !== state.lastParent &&
-    state.initialParent
-  ) {
-    const deData = state.nodeData.get(state.draggedNode);
-
-    if (deData) {
-      const deParentData = state.parentData.get(state.draggedNode.parentNode);
-
-      const deParentValues = [
-        ...(deParentData?.getValues(state.draggedNode.parentNode) || []),
-      ];
-
-      const deIndex = deData.index;
-
-      deParentValues.splice(deIndex, state.draggedNodes.length);
-
-      deParentData?.setValues(state.initialParent, deParentValues);
-    }
-  }
-
-  cleanUp(e);
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function drop(e: DropZoneDragEvent, _state: DNDState) {
-  cleanUp(e);
+  cleanup(eventData);
 }
