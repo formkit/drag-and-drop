@@ -486,7 +486,7 @@ export function setupNode(data: SetupNodeData) {
   data.nodeData.abortControllers["mainNode"] = abortControllers;
 
   data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
-    plugin(data.parent).setupNode?.(data);
+    plugin(data.parent)?.setupNode?.(data);
   });
 
   config.reapplyDragClasses(data.node, data.parentData);
@@ -517,7 +517,7 @@ export function tearDownNode(data: TearDownNodeData) {
   }
 
   data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
-    plugin(data.parent).tearDownNode?.(data);
+    plugin(data.parent)?.tearDownNode?.(data);
   });
 
   nodes.delete(data.node);
