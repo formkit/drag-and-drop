@@ -324,15 +324,6 @@ export interface Node extends HTMLElement {
   parentNode: HTMLElement;
 }
 
-type Selected = (data: SelectedData) => void;
-
-interface SelectedData {
-  el: HTMLElement;
-  nodeData: NodeData;
-  parent: HTMLElement;
-  parentData: ParentData;
-}
-
 export interface TouchOverNodeEvent extends Event {
   detail: {
     e: TouchEvent;
