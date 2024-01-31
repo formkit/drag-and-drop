@@ -187,55 +187,11 @@ export function getElFromPoint(
           },
         };
       }
-
-      continue;
-
-      const targetDropZoneData = Data.dropZones.get(node);
-
-      if (targetDropZoneData) {
-        const parentData =
-          targetDropZoneData.parent &&
-          Data.parents.get(targetDropZoneData.parent);
-
-        if (!parentData) return;
-
-        return {
-          parent: {
-            el: targetDropZoneData.parent,
-            data: parentData,
-          },
-          dropZone: {
-            el: node,
-            config: targetDropZoneData.config,
-          },
-        };
-      }
     }
   }
 
   return undefined;
 }
-
-export function parentTargetData(
-  parent: HTMLElement
-): ParentTargetData | undefined {
-  const parentData = parents.get(parent);
-
-  if (!parentData) return;
-
-  return {
-    parent: {
-      el: parent,
-      data: parentData,
-    },
-  };
-}
-
-export type ElementEventMap = keyof HTMLElementEventMap;
-
-export type EventListener = {
-  [K in ElementEventMap]: AbortController;
-};
 
 /**
  * Checks to see that a given element and its parent node are instances of
@@ -263,7 +219,7 @@ export function addEvents(
   el: Node | HTMLElement,
   events: EventHandlers
 ): AbortControllers {
-  const keysToControllers = {};
+  const keysToControllers: AbortControllers = {};
   for (const key in events) {
     const abortController = new AbortController();
     const event = events[key];
