@@ -77,7 +77,7 @@ export function dropZones(data: DropZones) {
   };
 }
 
-function tearDownDropZone(dropZone: HTMLElement) {
+export function tearDownDropZone(dropZone: HTMLElement) {
   const dropZoneData = dzData.get(dropZone);
 
   if (!dropZoneData) return;

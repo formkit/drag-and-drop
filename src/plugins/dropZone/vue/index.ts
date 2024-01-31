@@ -2,11 +2,25 @@ import type { VueDropZones, VueDropZoneConfig } from "./types";
 
 import { handleVueElements } from "../../../vue/utils";
 
-import { setupDropZone as setupDropZoneCore } from "../index";
+import {
+  setupDropZone as setupDropZoneCore,
+  tearDownDropZone as tearDownDropZoneCore,
+} from "../index";
 
 export function dropZones(data: VueDropZones) {
   return (parent: HTMLElement) => {
     return {
+      tearDownParent() {
+        data.forEach((dz: VueDropZoneConfig) => {
+          if (dz.el instanceof HTMLElement) {
+            tearDownDropZone()(dz.el);
+
+            return;
+          }
+
+          handleVueElements(dz.el, tearDownDropZone());
+        });
+      },
       setupParent() {
         data.forEach((dz: VueDropZoneConfig) => {
           if (dz.el instanceof HTMLElement) {
@@ -31,5 +45,11 @@ function setupDropZone(parent: HTMLElement, dzConfig: VueDropZoneConfig) {
       },
       parent
     );
+  };
+}
+
+function tearDownDropZone() {
+  return (dropZone: HTMLElement) => {
+    tearDownDropZoneCore(dropZone);
   };
 }
