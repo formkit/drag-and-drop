@@ -109,11 +109,11 @@ function handleDragstart(data: NodeDragEventData) {
 
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
 
-  const selectedNodes =
+  const selectedValues =
     multiDragConfig.selections &&
     multiDragConfig.selections(data.targetData.parent.el);
 
-  if (Array.isArray(selectedNodes) && selectedNodes.length) {
+  if (Array.isArray(selectedValues) && selectedValues.length) {
     const targetRect = data.targetData.node.el.getBoundingClientRect();
 
     const [x, y] = [
@@ -121,7 +121,7 @@ function handleDragstart(data: NodeDragEventData) {
       data.e.clientY - targetRect.top,
     ];
 
-    stackNodes(handleSelections(data, selectedNodes, dragState, x, y));
+    stackNodes(handleSelections(data, selectedValues, dragState, x, y));
   } else {
     const config = data.targetData.parent.data.config;
 
@@ -161,24 +161,25 @@ function handleTouchstart(data: NodeTouchEventData) {
 
 export function handleSelections(
   data: NodeEventData,
-  selectedNodes: Array<Node>,
+  selectedValues: Array<any>,
   state: DragState | TouchState,
   x: number,
   y: number
 ) {
-  for (const node of selectedNodes) {
-    if (node !== data.targetData.node.el) {
-      const nodeData = nodes.get(node);
+  for (const child of data.targetData.parent.data.enabledNodes) {
+    if (child === state.draggedNode.el) continue;
 
-      if (!nodeData) continue;
+    const childData = nodes.get(child);
 
-      state.draggedNodes.push({
-        el: node,
-        data: nodeData,
-      });
-    }
+    if (!childData) continue;
+
+    if (!selectedValues.includes(childData.value)) continue;
+
+    state.draggedNodes.push({
+      el: child,
+      data: childData,
+    });
   }
-
   const config = data.targetData.parent.data.config.multiDragConfig;
 
   const clonedEls = state.draggedNodes.map((x: NodeRecord) => {

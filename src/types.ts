@@ -34,6 +34,10 @@ export interface ParentConfig {
   dropZone?: boolean;
   handleDragend: DNDNodeAction;
   handleDragstart: DNDNodeAction;
+  handleTouchstart: DNDNodeAction;
+  handleDragoverParent: DNDParentAction;
+  handleDragoverNode: (data: NodeDragEventData) => void;
+  handleTouchmove: (data: NodeTouchEventData) => void;
   longTouchClass?: string;
   name?: string;
   plugins?: Array<DNDPlugin>;
@@ -211,6 +215,7 @@ export interface TouchState extends DragState {
   longTouch: boolean;
   draggedNode: NodeRecord;
   draggedNodes: Array<NodeRecord>;
+  touchedNodeDisplay: string | undefined;
   initialParent: ParentRecord;
   lastParent: ParentRecord;
 }

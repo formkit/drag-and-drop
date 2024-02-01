@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { dragAndDrop } from "../../src/vue/index";
-import { dropZones } from "../../src/plugins/dropZone/vue/index";
+import { multiDrag } from "../../src/plugins/multiDrag";
 
 let firstList = ref(null);
 let secondList = ref(null);
@@ -32,12 +32,11 @@ onMounted(() => {
       return child.classList.contains("item");
     },
     plugins: [
-      dropZones([
-        {
-          el: dropZone,
-          name: "hello world",
+      multiDrag({
+        selections: () => {
+          return ["Apple"];
         },
-      ]),
+      }),
     ],
   });
 

@@ -154,7 +154,7 @@ export function validateTransfer(
   ) {
     return false;
   } else if (
-    targetConfig.group &&
+    !targetConfig.group ||
     targetConfig.group !== initialParentConfig.group
   ) {
     return false;

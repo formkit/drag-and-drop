@@ -38,6 +38,8 @@ import {
 
 export * from "./types";
 
+export { multiDrag } from "./plugins/multiDrag";
+
 export const nodes: NodesData = new WeakMap<Node, NodeData>();
 
 export const parents: ParentsData = new WeakMap<HTMLElement, ParentData>();
@@ -138,7 +140,7 @@ export function parentValues(
   parent: HTMLElement,
   parentData: ParentData
 ): Array<any> {
-  return parentData.getValues(parent);
+  return [...parentData.getValues(parent)];
 }
 
 export function setParentValues(
@@ -150,7 +152,7 @@ export function setParentValues(
 }
 
 export function dragValues(state: DragState | TouchState): Array<any> | any {
-  return state.draggedNodes.map((x) => x.data.value);
+  return [...state.draggedNodes.map((x) => x.data.value)];
 }
 
 /**
@@ -330,6 +332,8 @@ export function remapNodes(parent: HTMLElement) {
 
     config.tearDownNode({ node, parent, nodeData, parentData });
 
+    if (config.disabled) return;
+
     if (!config.draggable || (config.draggable && config.draggable(node)))
       enabledNodes.push(node);
   }
@@ -363,7 +367,7 @@ export function remapNodes(parent: HTMLElement) {
   parents.set(parent, { ...parentData, enabledNodes });
 }
 
-function handleDragstart(data: NodeEventData) {
+export function handleDragstart(data: NodeEventData) {
   if (!(data.e instanceof DragEvent)) return;
 
   dragstart({
@@ -523,7 +527,7 @@ export function tearDownNode(data: TearDownNodeData) {
   nodes.delete(data.node);
 }
 
-function handleDragend(eventData: NodeEventData) {
+export function handleDragend(eventData: NodeEventData) {
   if (!state) return;
 
   end(eventData, state);
@@ -576,7 +580,7 @@ export function end(_eventData: NodeEventData, state: DragState | TouchState) {
   }
 }
 
-function handleTouchstart(eventData: NodeEventData) {
+export function handleTouchstart(eventData: NodeEventData) {
   if (!(eventData.e instanceof TouchEvent)) return;
 
   touchstart({
@@ -608,6 +612,8 @@ export function handleTouchedNode(
   data: NodeTouchEventData,
   touchState: TouchState
 ) {
+  touchState.touchedNodeDisplay = touchState.touchedNode.style.display;
+
   const rect = data.targetData.node.el.getBoundingClientRect();
 
   touchState.touchedNode.style.cssText = `
@@ -660,7 +666,7 @@ export function handleLongTouch(data: NodeEventData, touchState: TouchState) {
   }, config.longTouchTimeout || 200);
 }
 
-function handleTouchmove(eventData: NodeTouchEventData) {
+export function handleTouchmove(eventData: NodeTouchEventData) {
   if (!state || !("touchedNode" in state)) return;
 
   touchmove(eventData, state);
@@ -685,7 +691,7 @@ function touchmoveClasses(touchState: TouchState, config: ParentConfig) {
 }
 
 function moveTouchedNode(data: NodeTouchEventData, touchState: TouchState) {
-  touchState.touchedNode.style.display = "block";
+  touchState.touchedNode.style.display = touchState.touchedNodeDisplay || "";
 
   const x = data.e.touches[0].clientX + window.scrollX;
 
@@ -760,13 +766,13 @@ function touchmove(data: NodeTouchEventData, touchState: TouchState) {
   }
 }
 
-function handleDragoverNode(data: NodeDragEventData) {
+export function handleDragoverNode(data: NodeDragEventData) {
   if (!state) return;
 
   dragoverNode(data, state);
 }
 
-function handleDragoverParent(eventData: ParentEventData) {
+export function handleDragoverParent(eventData: ParentEventData) {
   if (!state) return;
 
   transfer(eventData, state);
@@ -801,7 +807,7 @@ export function validateTransfer(
   ) {
     return false;
   } else if (
-    targetConfig.group &&
+    !targetConfig.group ||
     targetConfig.group !== initialParentConfig.group
   ) {
     return false;
