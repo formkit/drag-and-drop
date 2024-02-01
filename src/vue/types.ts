@@ -1,12 +1,8 @@
 import type { Ref } from "vue";
-
-import type { ParentConfig } from "../types";
-
-export type VueElement = HTMLElement | Ref<HTMLElement | null>;
-
-export interface VueDragAndDropData extends VueParentConfig {
-  parent: VueElement;
-  values: Ref<Array<any>>;
+export interface DropZoneConfigVue {
+  accepts?: (el: HTMLElement) => boolean;
+  dropZones?: Array<{
+    element: HTMLElement | Ref<HTMLElement | null>;
+    accepts: (draggedParentName: string | undefined) => boolean;
+  }>;
 }
-
-export type VueParentConfig = Partial<ParentConfig>;

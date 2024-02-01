@@ -1,4 +1,4 @@
-import { dragAndDrop } from "./index";
+import dragAndDrop from "./index";
 import { defineComponent, h, PropType, ref, watch } from "vue";
 
 export const DNDList = /* #__PURE__ */ defineComponent(
@@ -13,7 +13,7 @@ export const DNDList = /* #__PURE__ */ defineComponent(
     dragAndDrop([
       {
         parent: parentRef,
-        values: parentValues,
+        listValues: parentValues,
       },
     ]);
 

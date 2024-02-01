@@ -14,49 +14,43 @@ let thirdListValues = ref(["Peach", "Grape"]);
 dragAndDrop({
   parent: firstList,
   values: firstListValues,
-  config: {
-    draggingClass: "dragging item",
-    dropZoneClass: "dropZone item",
-    touchDraggingClass: "dragging",
-    touchDropZoneClass: "dropZone",
-    longTouch: true,
-    longTouchClass: "longTouch",
-    draggable: (child: HTMLElement) => {
-      return child.classList.contains("item");
-    },
-    plugins: [dropZone({})],
+  draggingClass: "dragging item",
+  dropZoneClass: "dropZone item",
+  touchDraggingClass: "dragging",
+  touchDropZoneClass: "dropZone",
+  longTouch: true,
+  longTouchClass: "longTouch",
+  draggable: (child: HTMLElement) => {
+    return child.classList.contains("item");
   },
+  plugins: [dropZone({})],
 });
 
 dragAndDrop({
   parent: secondList,
   values: secondListValues,
-  config: {
-    draggable: (child: HTMLElement) => {
-      return child.classList.contains("item");
-    },
-    plugins: [
-      dropZone({
-        transfer(e, state, originalTransfer) {
-          originalTransfer(e, state);
-        },
-        drop(e, state, originalDrop) {
-          originalDrop(e, state);
-        },
-      }),
-    ],
+  draggable: (child: HTMLElement) => {
+    return child.classList.contains("item");
   },
+  plugins: [
+    dropZone({
+      transfer(e, state, originalTransfer) {
+        originalTransfer(e, state);
+      },
+      drop(e, state, originalDrop) {
+        originalDrop(e, state);
+      },
+    }),
+  ],
 });
 
 dragAndDrop({
   parent: thirdList,
   values: thirdListValues,
-  config: {
-    draggable: (child: HTMLElement) => {
-      return child.classList.contains("item");
-    },
-    plugins: [dropZone()],
+  draggable: (child: HTMLElement) => {
+    return child.classList.contains("item");
   },
+  plugins: [dropZone()],
 });
 
 const testValues1 = computed(() => {
@@ -70,6 +64,24 @@ const testValues2 = computed(() => {
 const testValues3 = computed(() => {
   return thirdListValues.value.join(" ");
 });
+
+function reset() {
+  dragAndDrop({
+    parent: secondList,
+    values: secondListValues,
+    draggable: (child: HTMLElement) => {
+      return child.classList.contains("item");
+    },
+  });
+
+  dragAndDrop({
+    parent: thirdList,
+    values: thirdListValues,
+    draggable: (child: HTMLElement) => {
+      return child.classList.contains("item");
+    },
+  });
+}
 </script>
 
 <template>
@@ -134,7 +146,7 @@ const testValues3 = computed(() => {
         />
       </div>
     </div>
-    <!--<button @click="reset" id="reset">Reset</button>-->
+    <button @click="reset" id="reset">Reset</button>
     <div id="drag-leave-zone"></div>
   </main>
 </template>
