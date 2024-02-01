@@ -543,7 +543,7 @@ export function end(_eventData: NodeEventData, state: DragState | TouchState) {
 
   const root = config?.root || document;
 
-  const isTouch = !("touchedNode" in state);
+  const isTouch = "touchedNode" in state;
 
   const dropZoneClass = isTouch
     ? config?.touchDropZoneClass
@@ -554,6 +554,8 @@ export function end(_eventData: NodeEventData, state: DragState | TouchState) {
     dropZoneClass,
     true
   );
+
+  console.log(dropZoneClass);
 
   if (dropZoneClass) {
     const elsWithDropZoneClass = root.querySelectorAll(

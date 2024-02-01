@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import autoAnimate from "@formkit/auto-animate";
+
 import { computed } from "vue";
 import { dragAndDrop } from "../../src/vue/index";
 import { multiDrag } from "../../src/plugins/multiDrag";
 
-let firstList = ref(null);
-let secondList = ref(null);
-let thirdList = ref(null);
+let firstList = ref();
+let secondList = ref();
+let thirdList = ref();
 
 let dropZone = ref(null);
 let dropZone2 = ref(null);
@@ -28,21 +30,19 @@ onMounted(() => {
   dragAndDrop({
     parent: firstList,
     values: firstListValues,
+    group: "group a",
+    dropZoneClass: "opacity",
     draggable: (child: HTMLElement) => {
       return child.classList.contains("item");
     },
-    plugins: [
-      multiDrag({
-        selections: () => {
-          return ["Apple"];
-        },
-      }),
-    ],
+    plugins: [],
   });
 
   dragAndDrop({
     parent: secondList,
     values: secondListValues,
+    dropZoneClass: "opacity",
+    group: "group a",
     draggable: (child: HTMLElement) => {
       return child.classList.contains("item");
     },
@@ -52,11 +52,17 @@ onMounted(() => {
   dragAndDrop({
     parent: thirdList,
     values: thirdListValues,
+    dropZoneClass: "opacity",
+    group: "group a",
     draggable: (child: HTMLElement) => {
       return child.classList.contains("item");
     },
     //plugins: [dropZone()],
   });
+
+  //autoAnimate(firstList.value);
+  //autoAnimate(secondList.value);
+  //autoAnimate(thirdList.value);
 });
 
 const testValues1 = computed(() => {
