@@ -1,270 +1,237 @@
 import type {
-  DragTransfer,
-  TouchTransfer,
-  DropZoneTarget,
-  NodeTarget,
-  NodeDragEvent,
-  NodeTouchEvent,
   Node,
-  DNDState,
-  NodeDragTargetEvent,
-  NodeTouchTargetEvent,
-  DropZoneDragEvent,
+  NodeEventData,
+  NodeFromPoint,
+  ParentFromPoint,
+  EventHandlers,
+  AbortControllers,
 } from "./types";
-import { isNode } from "./predicates";
-import { state } from "./state";
+
+import { parents, nodes } from "./index";
+
+export function splitClass(className: string): Array<string> {
+  return className.split(" ").filter((x) => x);
+}
 
 /**
- * Conditional to check if the code is running in a browser.
+ * Check to see if code is running in a browser.
  *
  * @internal
  */
 export const isBrowser = typeof window !== "undefined";
 
-export function cleanUp(
-  e:
-    | NodeDragTargetEvent
-    | NodeTouchTargetEvent
-    | NodeTouchEvent
-    | DropZoneDragEvent
+export function handleClass(
+  els: Array<Node | HTMLElement | Element>,
+  className: string | undefined,
+  remove = false,
+  omitAppendPrivateClass = false
 ) {
-  if (!state.draggedNode || !state.initialParent || !state.lastParent) return;
+  if (!className) return;
 
-  const config = state.parentData.get(state.initialParent)?.config;
+  const classNames = splitClass(className);
 
-  const root = config?.root || document;
+  if (!classNames.length) return;
 
-  if (config) {
-    const hasSelections = state.selectedValues.length > 0;
-
-    const isTouch = !(e.event instanceof DragEvent);
-
-    let dropZoneClass: string | undefined;
-
-    if (isTouch) {
-      dropZoneClass = hasSelections
-        ? config.touchSelectionDropZoneClass
-        : config.touchDropZoneClass;
-    } else {
-      dropZoneClass = hasSelections
-        ? config.selectionDropZoneClass
-        : config.dropZoneClass;
-    }
-
-    handleClass(state.draggedNodes, dropZoneClass, state, true);
-
-    if (dropZoneClass) {
-      const elsWithDropZoneClass = root.querySelectorAll(
-        `.${splitClass(dropZoneClass)}`
-      );
-
-      handleClass(Array.from(elsWithDropZoneClass), dropZoneClass, state, true);
-    }
-  }
-
-  handleClass(
-    state.draggedNodes,
-    state.parentData.get(state.initialParent)?.config?.longTouchClass,
-    state,
-    true
-  );
-
-  state.touchedNode?.remove();
-  state.touchedNode = undefined;
-  state.lastParent = undefined;
-  state.draggedNode = undefined;
-  state.draggedNodes = [];
-  state.selectedNodes = [];
-  state.selectedValues = [];
-  state.touchStartTop = state.touchedNode = undefined;
-  state.touchStartLeft = 0;
-  state.lastValue = undefined;
-  state.touchMoving = false;
-  state.lastCoordinates = {
-    x: 0,
-    y: 0,
-  };
-  state.direction = undefined;
-  if (state.scrollParent) {
-    state.scrollParent.style.overflow = state.scrollParentOverflow || "";
-    state.scrollParent = undefined;
-    state.scrollParentOverflow = undefined;
-  }
+  remove
+    ? removeClass(els, classNames)
+    : addClass(els, classNames, omitAppendPrivateClass);
 }
 
-export function dragTransfer(): DragTransfer | undefined {
-  if (!state.draggedNode || !state.lastParent || !state.initialParent) return;
-  const draggedNodeData = state.nodeData.get(state.draggedNode);
-  const draggedParentData = state.parentData.get(state.initialParent);
-  const lastParentData = state.parentData.get(state.lastParent);
-  if (!draggedNodeData || !draggedParentData || !lastParentData) return;
-  else
-    return {
-      draggedNode: state.draggedNode,
-      draggedNodeData,
-      draggedParent: state.initialParent,
-      draggedParentData,
-      lastParent: state.lastParent,
-      lastParentData,
-    };
-}
-
-export function touchTransfer(): TouchTransfer | undefined {
-  if (!state.touchedNode) return;
-  const data = dragTransfer();
-  if (data === undefined) return;
-  const transferTouchData: TouchTransfer = {
-    ...data,
-    touchedNode: state.touchedNode,
-  };
-  return transferTouchData;
-}
-
-export function nodeDragTarget(e: DragEvent): NodeTarget | undefined {
-  if (!isNode(e.currentTarget, state)) return;
-  const targetNodeData = state.nodeData.get(e.currentTarget);
-  const targetParentData = state.parentData.get(
-    e.currentTarget.parentNode || state.lastParent
-  );
-  if (!targetNodeData || !targetParentData) return;
-  const targetData: NodeTarget = {
-    targetNode: e.currentTarget,
-    targetNodeData,
-    targetParent: e.currentTarget.parentNode || state.lastParent,
-    targetParentData,
-  };
-  return targetData;
-}
-
-export function dzDragTarget(e: DragEvent): DropZoneTarget | undefined {
-  if (!isNode(e.currentTarget, state)) return;
-  const targetParentData = state.parentData.get(e.currentTarget);
-  if (!targetParentData) return;
-  const targetData: DropZoneTarget = {
-    targetParent: e.currentTarget,
-    targetParentData,
-  };
-  return targetData;
-}
-
-export function getTouchTarget(
-  e: TouchEvent
-): NodeTarget | DropZoneTarget | undefined {
-  const newX = e.touches[0].clientX;
-  const newY = e.touches[0].clientY;
-  const nodes = document.elementsFromPoint(newX, newY);
-  if (!nodes) return;
-  for (const node of nodes) {
-    if (isNode(node, state) && state.nodeData.has(node)) {
-      const targetNode = node;
-      const targetNodeData = state.nodeData.get(targetNode);
-      const targetParentData = state.parentData.get(targetNode.parentNode);
-      if (!targetNodeData || !targetParentData) return;
-      return {
-        targetNode: targetNode,
-        targetNodeData,
-        targetParent: targetNode.parentNode,
-        targetParentData,
-      };
-    } else if (node instanceof HTMLElement && state.dropZones.has(node)) {
-      if (!state.parentData.has(node)) return;
-      const targetParentData = state.parentData.get(node);
-      if (!targetParentData) return;
-      return {
-        targetParent: node,
-        targetParentData,
-      };
-    }
-  }
-  return undefined;
-}
-
-export function handleSelections(
-  e: NodeDragEvent | NodeTouchEvent,
-  selectedValues: Array<any>,
-  state: DNDState,
-  x: number,
-  y: number
+export function addClass(
+  els: Array<Node | HTMLElement | Element>,
+  classNames: Array<string>,
+  omitAppendPrivateClass = false
 ) {
-  state.selectedValues = selectedValues;
+  if (classNames.includes("longTouch")) return;
 
-  for (const child of e.draggedParentData.enabledNodes) {
-    if (child === e.draggedNode) {
-      state.selectedNodes.push(child);
+  for (const node of els) {
+    if (!isNode(node) || !nodes.has(node)) {
+      node.classList.add(...classNames);
+
       continue;
     }
 
-    const childValue = state.nodeData.get(child)?.value;
+    const privateClasses = [];
 
-    if (!childValue) continue;
+    const nodeData = nodes.get(node);
 
-    if (selectedValues?.includes(childValue)) {
-      state.draggedNodes.push(child);
+    if (!nodeData) continue;
+
+    for (const className of classNames) {
+      if (!node.classList.contains(className)) {
+        node.classList.add(className);
+      } else if (
+        node.classList.contains(className) &&
+        omitAppendPrivateClass === false
+      ) {
+        privateClasses.push(className);
+      }
+    }
+
+    nodeData.privateClasses = privateClasses;
+
+    nodes.set(node, nodeData);
+  }
+}
+
+export function removeClass(
+  els: Array<Node | HTMLElement | Element>,
+  classNames: Array<string>
+) {
+  for (const node of els) {
+    if (!isNode(node)) {
+      node.classList.remove(...classNames);
+
+      continue;
+    }
+
+    const nodeData = nodes.get(node);
+
+    if (!nodeData) continue;
+
+    for (const className of classNames) {
+      if (!nodeData.privateClasses.includes(className)) {
+        node.classList.remove(className);
+      }
+    }
+  }
+}
+
+/**
+ * Used for getting the closest scrollable parent of a given element.
+ *
+ * @param node - The element to get the closest scrollable parent of.
+ *
+ * @internal
+ */
+export function getScrollParent(
+  node: HTMLElement | null
+): HTMLElement | undefined {
+  if (node == null) return undefined;
+
+  if (node.scrollHeight > node.clientHeight) {
+    return node;
+  } else if (node.parentNode instanceof HTMLElement) {
+    return getScrollParent(node.parentNode);
+  }
+
+  return undefined;
+}
+
+/**
+ * Used for setting a single event listener on x number of events for a given
+ * element.
+ *
+ * @param el - The element to set the event listener on.
+ *
+ * @param events - An array of events to set the event listener on.
+ *
+ * @param fn - The function to run when the event is triggered.
+ *
+ * @param remove - Whether or not to remove the event listener.
+ *
+ * @internal
+ */
+export function events(
+  el: Node | HTMLElement,
+  events: Array<string>,
+  fn: any,
+  remove = false
+) {
+  events.forEach((event) => {
+    remove ? el.removeEventListener(event, fn) : el.addEventListener(event, fn);
+  });
+}
+
+export function getElFromPoint(
+  eventData: NodeEventData
+): NodeFromPoint | ParentFromPoint | undefined {
+  if (!(eventData.e instanceof TouchEvent)) return;
+
+  const newX = eventData.e.touches[0].clientX;
+
+  const newY = eventData.e.touches[0].clientY;
+
+  const els = document.elementsFromPoint(newX, newY);
+
+  if (!nodes) return;
+
+  for (const node of els) {
+    if (isNode(node) && nodes.has(node)) {
+      const targetNode = node;
+
+      const targetNodeData = nodes.get(targetNode);
+
+      const targetParentData = parents.get(targetNode.parentNode);
+
+      if (!targetNodeData || !targetParentData) return;
+
+      return {
+        node: {
+          el: targetNode,
+          data: targetNodeData,
+        },
+        parent: {
+          el: targetNode.parentNode,
+          data: targetParentData,
+        },
+      };
+    } else if (node instanceof HTMLElement) {
+      const parentData = parents.get(node);
+
+      if (parentData) {
+        return {
+          parent: {
+            el: node,
+            data: parentData,
+          },
+        };
+      }
     }
   }
 
-  const config = e.draggedParentData.config;
-
-  const clonedEls = state.draggedNodes.map((x: Node) => {
-    const el = x.cloneNode(true) as Node;
-
-    copyNodeStyle(x, el, true);
-    if (e.event instanceof DragEvent)
-      handleClass([el], config?.selectionDraggingClass, state);
-
-    return el;
-  });
-
-  setTimeout(() => {
-    if (e.event instanceof DragEvent && config?.selectionDropZoneClass)
-      for (const node of state.draggedNodes) {
-        node.classList.add(config?.selectionDropZoneClass);
-      }
-  });
-
-  state.clonedDraggedNodes = clonedEls;
-
-  return { e, clonedEls, x, y };
+  return undefined;
 }
 
-export function stackNodes({
-  e,
-  clonedEls,
-  x,
-  y,
-}: {
-  e: NodeDragEvent | NodeTouchEvent;
-  clonedEls: Array<Node>;
-  x: number;
-  y: number;
-}) {
-  const wrapper = document.createElement("div");
+/**
+ * Checks to see that a given element and its parent node are instances of
+ * HTML Elements.
+ *
+ * @param {unknown} el - The element to check.
+ *
+ * @returns {boolean} - Whether or not provided element is of type Node.
+ */
+export function isNode(el: unknown): el is Node {
+  return el instanceof HTMLElement && el.parentNode instanceof HTMLElement;
+}
 
-  if (!(wrapper instanceof HTMLElement)) return;
+/**
+ * Takes a given el and event handlers, assigns them, and returns the used abort
+ * controller.
+ *
+ * @param el - The element to add the event listeners to.
+ *
+ * @param events - The events to add to the element.
+ *
+ * @returns - The abort controller used for the event listeners.
+ */
+export function addEvents(
+  el: Node | HTMLElement,
+  events: EventHandlers
+): AbortControllers {
+  const keysToControllers: AbortControllers = {};
+  for (const key in events) {
+    const abortController = new AbortController();
+    const event = events[key];
 
-  for (const el of clonedEls) wrapper.append(el);
-
-  const rect = e.draggedNode.getBoundingClientRect();
-
-  wrapper.style.cssText = `
-        display: flex;
-        flex-direction: column;
-        width: ${rect.width}px;
-        position: absolute;
-        left: -9999px
-      `;
-
-  document.body.append(wrapper);
-
-  if (e.event instanceof DragEvent) {
-    e.event.dataTransfer?.setDragImage(wrapper, x, y);
-
-    setTimeout(() => {
-      wrapper.remove();
+    el.addEventListener(key, event, {
+      signal: abortController.signal,
     });
-  } else {
-    state.touchedNode = wrapper;
+
+    keysToControllers[key] = abortController;
   }
+
+  return keysToControllers;
 }
 
 export function copyNodeStyle(
@@ -287,6 +254,7 @@ export function copyNodeStyle(
 
   for (const key of Array.from(computedStyle)) {
     if (omitKeys === false && key && omittedKeys.includes(key)) continue;
+
     targetNode.style.setProperty(
       key,
       computedStyle.getPropertyValue(key),
@@ -295,7 +263,7 @@ export function copyNodeStyle(
   }
 
   for (const child of Array.from(sourceNode.children)) {
-    if (!isNode(child, state)) continue;
+    if (!isNode(child)) continue;
 
     const targetChild = targetNode.children[
       Array.from(sourceNode.children).indexOf(child)
@@ -305,101 +273,8 @@ export function copyNodeStyle(
   }
 }
 
-export function handleClass(
-  nodes: Array<Node | HTMLElement | Element>,
-  className: string | undefined,
-  state: DNDState,
-  remove = false,
-  omitAppendPrivateClass = false
-) {
-  if (!className) return;
-
-  const classNames = splitClass(className);
-
-  if (!classNames.length) return;
-
-  remove
-    ? removeClass(nodes, classNames, state)
-    : addClass(nodes, classNames, state, omitAppendPrivateClass);
-}
-
-export function addClass(
-  nodes: Array<Node | HTMLElement | Element>,
-  classNames: Array<string>,
-  state: DNDState,
-  omitAppendPrivateClass = false
-) {
-  if (classNames.includes("longTouch")) return;
-  for (const node of nodes) {
-    if (!isNode(node, state) || !state.nodeData.has(node)) {
-      node.classList.add(...classNames);
-
-      continue;
-    }
-
-    const privateClasses = [];
-
-    const nodeData = state.nodeData.get(node);
-
-    if (!nodeData) continue;
-
-    for (const className of classNames) {
-      if (!node.classList.contains(className)) {
-        node.classList.add(className);
-      } else if (
-        node.classList.contains(className) &&
-        omitAppendPrivateClass === false
-      ) {
-        privateClasses.push(className);
-      }
-    }
-
-    nodeData.privateClasses = privateClasses;
-
-    state.nodeData.set(node, nodeData);
-  }
-}
-
-export function removeClass(
-  nodes: Array<Node | HTMLElement | Element>,
-  classNames: Array<string>,
-  state: DNDState
-) {
-  for (const node of nodes) {
-    if (!isNode(node, state)) {
-      node.classList.remove(...classNames);
-
-      continue;
-    }
-
-    const nodeData = state.nodeData.get(node);
-
-    if (!nodeData) continue;
-
-    for (const className of classNames) {
-      if (!nodeData.privateClasses.includes(className)) {
-        node.classList.remove(className);
-      }
-    }
-  }
-}
-
-export function splitClass(className: string): Array<string> {
-  return className.split(" ").filter((x) => x);
-}
-
-export function getScrollParent(
-  node: HTMLElement | null
-): HTMLElement | undefined {
-  if (node == null) {
-    return undefined;
-  }
-
-  if (node.scrollHeight > node.clientHeight) {
-    return node;
-  } else {
-    if (node.parentNode instanceof HTMLElement)
-      return getScrollParent(node.parentNode);
-  }
-  return undefined;
+export function eventCoordinates(data: DragEvent | TouchEvent) {
+  return data instanceof DragEvent
+    ? { x: data.clientX, y: data.clientY }
+    : { x: data.touches[0].clientX, y: data.touches[0].clientY };
 }
