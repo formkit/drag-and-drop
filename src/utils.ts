@@ -81,7 +81,6 @@ export function removeClass(
   for (const node of els) {
     if (!isNode(node)) {
       node.classList.remove(...classNames);
-
       continue;
     }
 
@@ -90,6 +89,7 @@ export function removeClass(
     if (!nodeData) continue;
 
     for (const className of classNames) {
+      console.log("ndoeDAta", nodeData.privateClasses);
       if (!nodeData.privateClasses.includes(className)) {
         node.classList.remove(className);
       }

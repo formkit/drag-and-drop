@@ -508,7 +508,7 @@ function reapplyDragClasses(node: Node, parentData: ParentData) {
 
   if (nodeValue !== state.draggedNode.data.value) return;
 
-  handleClass([node], dropZoneClass);
+  handleClass([node], dropZoneClass, false, true);
 }
 
 export function tearDownNode(data: TearDownNodeData) {
@@ -554,8 +554,6 @@ export function end(_eventData: NodeEventData, state: DragState | TouchState) {
     dropZoneClass,
     true
   );
-
-  console.log(dropZoneClass);
 
   if (dropZoneClass) {
     const elsWithDropZoneClass = root.querySelectorAll(
