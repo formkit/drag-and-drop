@@ -70,9 +70,10 @@ export function setDragState(dragStateProps: DragStateProps): DragState {
   state = {
     direction: undefined,
     enterCount: 0,
-    lastCoordinates: { x: 0, y: 0 },
     lastValue: undefined,
     clonedDraggedEls: [],
+    swappedNodeValue: false,
+    preventSortValue: undefined,
     ...dragStateProps,
   } as DragState;
 
@@ -201,6 +202,10 @@ export function initParent({
       setupNode,
       reapplyDragClasses,
       tearDownNode,
+      threshold: {
+        horizontal: 0.5,
+        vertical: 0.5,
+      },
       ...config,
     },
     enabledNodes: [],
@@ -361,6 +366,9 @@ export function remapNodes(parent: HTMLElement) {
       abortControllers: {},
     };
 
+    if (state && nodeData.value === state.draggedNode.data.value)
+      state.draggedNode.data = nodeData;
+
     config.setupNode({ node, parent, parentData, nodeData });
   }
 
@@ -506,7 +514,46 @@ function reapplyDragClasses(node: Node, parentData: ParentData) {
 
   const nodeValue = nodes.get(node)?.value;
 
-  if (nodeValue !== state.draggedNode.data.value) return;
+  if (nodeValue === state.swappedNodeValue && state) {
+    state.preventSortValue = nodeValue;
+
+    if (state.direction === "below") {
+      node.classList.add("slide-down");
+
+      setTimeout((state) => {
+        node.classList.remove("slide-down");
+
+        state.preventSortValue = undefined;
+      }, 200);
+    } else if (state.direction === "above") {
+      node.classList.add("slide-up");
+
+      setTimeout((state) => {
+        node.classList.remove("slide-up");
+
+        state.preventSortValue = undefined;
+      }, 200);
+    } else if (state.direction === "left") {
+      node.classList.add("slide-left");
+
+      setTimeout((state) => {
+        node.classList.remove("slide-left");
+
+        state.preventSortValue = undefined;
+      }, 200);
+    } else if (state.direction === "right") {
+      node.classList.add("slide-right");
+
+      setTimeout((state) => {
+        node.classList.remove("slide-right");
+
+        state.preventSortValue = undefined;
+      }, 200);
+    }
+  }
+
+  //if (nodeValue !== state.draggedNode.data.value) {
+  //}
 
   handleClass([node], dropZoneClass, false, true);
 }
@@ -822,6 +869,8 @@ function dragoverNode(
 ) {
   eventData.e.preventDefault();
 
+  if (dragState.draggedNode.el === eventData.targetData.node.el) return;
+
   eventData.targetData.parent.el === dragState.lastParent?.el
     ? sort(eventData, dragState)
     : transfer(eventData, dragState);
@@ -829,31 +878,96 @@ function dragoverNode(
 
 export function validateSort(
   data: NodeDragEventData | NodeTouchEventData,
-  dragState: DragState | TouchState,
+  state: DragState | TouchState,
   x: number,
   y: number
 ): boolean {
-  if (!dragState) return false;
+  if (!state) return false;
 
-  if (
-    data.targetData.parent.el !== dragState.lastParent?.el ||
-    data.targetData.node.data.value === dragState.lastValue
-  )
-    return false;
+  if (state.preventSortValue === data.targetData.node.data.value) return false;
 
-  if (dragState.lastValue === data.targetData.node.data.value) {
-    if (dragState.direction !== 1) return false;
+  if (data.targetData.parent.el !== state.lastParent?.el) return false;
 
-    if (
-      x >= dragState.lastCoordinates.y - 20 &&
-      y >=
-        dragState.lastCoordinates.x -
-          data.targetData.node.el.getBoundingClientRect().width / 20
-    )
-      return false;
+  const targetRect = data.targetData.node.el.getBoundingClientRect();
+
+  const dragRect = state.draggedNode.el.getBoundingClientRect();
+
+  const yDiff = targetRect.y - dragRect.y;
+
+  const xDiff = targetRect.x - dragRect.x;
+
+  let incomingDirection: "above" | "below" | "left" | "right";
+
+  if (Math.abs(yDiff) > Math.abs(xDiff)) {
+    incomingDirection = yDiff > 0 ? "above" : "below";
+  } else {
+    incomingDirection = xDiff > 0 ? "left" : "right";
   }
 
-  return true;
+  const threshold = state.lastParent.data.config.threshold;
+
+  switch (incomingDirection) {
+    case "left":
+      if (x > targetRect.x + targetRect.width * threshold.horizontal) {
+        state.direction = "left";
+
+        state.draggedNode.el.classList.add("slide-right");
+
+        setTimeout(() => {
+          state.draggedNode.el.classList.remove("slide-right");
+        }, 200);
+
+        return true;
+      }
+      break;
+
+    case "right":
+      if (x < targetRect.x + targetRect.width * (1 - threshold.horizontal)) {
+        state.direction = "right";
+
+        state.draggedNode.el.classList.add("slide-left");
+
+        setTimeout(() => {
+          state.draggedNode.el.classList.remove("slide-left");
+        }, 200);
+
+        return true;
+      }
+      break;
+
+    case "above":
+      if (y > targetRect.y + targetRect.height * threshold.vertical) {
+        state.direction = "above";
+
+        state.draggedNode.el.classList.add("slide-down");
+
+        setTimeout(() => {
+          state.draggedNode.el.classList.remove("slide-down");
+        }, 200);
+
+        return true;
+      }
+      break;
+
+    case "below":
+      if (y < targetRect.y + targetRect.height * (1 - threshold.vertical)) {
+        state.direction = "below";
+
+        state.draggedNode.el.classList.add("slide-up");
+
+        setTimeout(() => {
+          state.draggedNode.el.classList.remove("slide-up");
+        }, 200);
+
+        return true;
+      }
+      break;
+
+    default:
+      break;
+  }
+
+  return false;
 }
 
 export function sort(
@@ -864,14 +978,13 @@ export function sort(
 
   if (!validateSort(data, state, x, y)) return;
 
+  setTimeout(() => {
+    state.draggedNode.el.classList.remove("slide-down");
+  }, 200);
+
+  state.swappedNodeValue = data.targetData.node.data.value;
+
   data.targetData.parent.data.config.performSort(state, data);
-
-  state.lastValue = data.targetData.node.data.value;
-
-  state.lastCoordinates = { x, y };
-
-  state.direction =
-    data.targetData.node.data.index > state.draggedNode.data.index ? 1 : -1;
 }
 
 /**

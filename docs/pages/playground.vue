@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import autoAnimate from "@formkit/auto-animate";
-
 import { computed } from "vue";
 import { dragAndDrop } from "../../src/vue/index";
 import { multiDrag } from "../../src/plugins/multiDrag";
+import { animate } from "../../src/plugins/animations";
 
 let firstList = ref();
 let secondList = ref();
@@ -31,11 +30,14 @@ onMounted(() => {
     parent: firstList,
     values: firstListValues,
     group: "group a",
-    dropZoneClass: "opacity",
     draggable: (child: HTMLElement) => {
       return child.classList.contains("item");
     },
-    plugins: [],
+    threshold: {
+      horizontal: 0,
+      vertical: 0,
+    },
+    plugins: [animate({})],
   });
 
   dragAndDrop({
@@ -93,8 +95,6 @@ let showFirstList = ref(true);
         >
           <div class="content">
             {{ item }}
-            <div class="handle">+</div>
-            <div class="handle">+</div>
           </div>
         </div>
         <div id="first_list_target"></div>
@@ -107,7 +107,7 @@ let showFirstList = ref(true);
         />
       </div>
     </div>
-    <div v-if="true" class="container">
+    <div v-if="false" class="container">
       <div id="second_list" class="list" ref="secondList">
         <div
           v-for="item in secondListValues"
@@ -129,7 +129,7 @@ let showFirstList = ref(true);
           class="values"
         />
       </div>
-      <div v-if="true" class="container">
+      <div v-if="false" class="container">
         <div id="third_list" class="list" ref="thirdList">
           <div
             v-for="item in thirdListValues"

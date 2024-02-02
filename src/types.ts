@@ -45,6 +45,10 @@ export interface ParentConfig {
   setupNode: SetupNode;
   sortable?: boolean;
   tearDownNode: TearDownNode;
+  threshold: {
+    horizontal: number;
+    vertical: number;
+  };
   touchDraggingClass?: string;
   touchDropZoneClass?: string;
 }
@@ -221,18 +225,16 @@ export interface TouchState extends DragState {
 }
 
 export interface DragState extends DragStateProps {
-  direction: number | undefined;
   enterCount: number;
-  lastCoordinates: {
-    x: number;
-    y: number;
-  };
   lastValue: any;
   draggedNode: NodeRecord;
   draggedNodes: Array<NodeRecord>;
   initialParent: ParentRecord;
   lastParent: ParentRecord;
   clonedDraggedEls: Array<Element>;
+  swappedNodeValue: any | undefined;
+  preventSortValue: any | undefined;
+  direction: "above" | "below" | "left" | "right" | undefined;
 }
 
 export interface DragStateProps {
