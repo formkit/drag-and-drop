@@ -481,6 +481,8 @@ export function dragstart(data: NodeDragEventData) {
 export function handleTouchOverNode(e: TouchOverNodeEvent) {
   if (!state) return;
 
+  if (state.draggedNode.el === e.detail.targetData.node.el) return;
+
   if (e.detail.targetData.parent.el === state.lastParent.el)
     sort(e.detail, state);
 }
@@ -891,10 +893,7 @@ export function validateTransfer(
   return true;
 }
 
-function dragoverNode(
-  eventData: NodeDragEventData | NodeTouchEventData,
-  dragState: DragState
-) {
+function dragoverNode(eventData: NodeDragEventData, dragState: DragState) {
   eventData.e.preventDefault();
 
   if (dragState.draggedNode.el === eventData.targetData.node.el) return;
