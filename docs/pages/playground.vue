@@ -2,7 +2,6 @@
 import { computed } from "vue";
 import { dragAndDrop } from "../../src/vue/index";
 import { multiDrag } from "../../src/plugins/multiDrag";
-import { animate } from "../../src/plugins/animations";
 
 let firstList = ref();
 let secondList = ref();
@@ -39,7 +38,6 @@ onMounted(() => {
   dragAndDrop({
     parent: secondList,
     values: secondListValues,
-    dropZoneClass: "opacity",
     group: "group a",
     draggable: (child: HTMLElement) => {
       return child.classList.contains("item");
@@ -50,7 +48,6 @@ onMounted(() => {
   dragAndDrop({
     parent: thirdList,
     values: thirdListValues,
-    dropZoneClass: "opacity",
     group: "group a",
     draggable: (child: HTMLElement) => {
       return child.classList.contains("item");
@@ -103,7 +100,7 @@ let showFirstList = ref(true);
         />
       </div>
     </div>
-    <div v-if="false" class="container">
+    <div v-if="true" class="container">
       <div id="second_list" class="list" ref="secondList">
         <div
           v-for="item in secondListValues"

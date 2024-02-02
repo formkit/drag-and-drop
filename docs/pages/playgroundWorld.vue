@@ -21,13 +21,12 @@ onMounted(() => {
   dragAndDrop({
     parent: firstList,
     values: firstListValues,
-    group: "group a",
+    draggable: (child: HTMLElement) => {
+      return child.classList.contains("item");
+    },
     threshold: {
       horizontal: 0.5,
       vertical: 0.5,
-    },
-    draggable: (child: HTMLElement) => {
-      return child.classList.contains("item");
     },
   });
 });

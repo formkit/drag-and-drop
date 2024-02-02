@@ -226,6 +226,7 @@ export interface TouchState extends DragState {
 
 export interface DragState extends DragStateProps {
   enterCount: number;
+  preventEnter: boolean;
   lastValue: any;
   draggedNode: NodeRecord;
   draggedNodes: Array<NodeRecord>;
@@ -234,7 +235,7 @@ export interface DragState extends DragStateProps {
   clonedDraggedEls: Array<Element>;
   swappedNodeValue: any | undefined;
   preventSortValue: any | undefined;
-  direction: "above" | "below" | "left" | "right" | undefined;
+  incomingDirection: "above" | "below" | "left" | "right" | undefined;
 }
 
 export interface DragStateProps {
