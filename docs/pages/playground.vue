@@ -33,10 +33,6 @@ onMounted(() => {
     draggable: (child: HTMLElement) => {
       return child.classList.contains("item");
     },
-    threshold: {
-      horizontal: 0,
-      vertical: 0,
-    },
     plugins: [animate({})],
   });
 

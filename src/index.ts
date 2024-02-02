@@ -203,8 +203,8 @@ export function initParent({
       reapplyDragClasses,
       tearDownNode,
       threshold: {
-        horizontal: 0.5,
-        vertical: 0.5,
+        horizontal: 0,
+        vertical: 0,
       },
       ...config,
     },
@@ -520,34 +520,34 @@ function reapplyDragClasses(node: Node, parentData: ParentData) {
     if (state.direction === "below") {
       node.classList.add("slide-down");
 
-      setTimeout((state) => {
-        node.classList.remove("slide-down");
+      setTimeout(() => {
+        if (state) state.preventSortValue = undefined;
 
-        state.preventSortValue = undefined;
+        node.classList.remove("slide-down");
       }, 200);
     } else if (state.direction === "above") {
       node.classList.add("slide-up");
 
-      setTimeout((state) => {
-        node.classList.remove("slide-up");
+      setTimeout(() => {
+        if (state) state.preventSortValue = undefined;
 
-        state.preventSortValue = undefined;
+        node.classList.remove("slide-up");
       }, 200);
     } else if (state.direction === "left") {
       node.classList.add("slide-left");
 
-      setTimeout((state) => {
-        node.classList.remove("slide-left");
+      setTimeout(() => {
+        if (state) state.preventSortValue = undefined;
 
-        state.preventSortValue = undefined;
+        node.classList.remove("slide-left");
       }, 200);
     } else if (state.direction === "right") {
       node.classList.add("slide-right");
 
-      setTimeout((state) => {
-        node.classList.remove("slide-right");
+      setTimeout(() => {
+        if (state) state.preventSortValue = undefined;
 
-        state.preventSortValue = undefined;
+        node.classList.remove("slide-right");
       }, 200);
     }
   }
