@@ -28,21 +28,21 @@ onMounted(() => {
   dragAndDrop({
     parent: firstList,
     values: firstListValues,
+    dropZoneClass: "opacity",
     group: "group a",
     draggable: (child: HTMLElement) => {
       return child.classList.contains("item");
     },
-    plugins: [animate({})],
   });
 
   dragAndDrop({
     parent: secondList,
     values: secondListValues,
+    dropZoneClass: "opacity",
     group: "group a",
     draggable: (child: HTMLElement) => {
       return child.classList.contains("item");
     },
-    //plugins: [dropZone()],
   });
 
   dragAndDrop({
@@ -52,12 +52,7 @@ onMounted(() => {
     draggable: (child: HTMLElement) => {
       return child.classList.contains("item");
     },
-    //plugins: [dropZone()],
   });
-
-  //autoAnimate(firstList.value);
-  //autoAnimate(secondList.value);
-  //autoAnimate(thirdList.value);
 });
 
 const testValues1 = computed(() => {

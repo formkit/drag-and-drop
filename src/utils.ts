@@ -20,10 +20,9 @@ export function splitClass(className: string): Array<string> {
  */
 export const isBrowser = typeof window !== "undefined";
 
-export function handleClass(
+export function addClass(
   els: Array<Node | HTMLElement | Element>,
   className: string | undefined,
-  remove = false,
   omitAppendPrivateClass = false
 ) {
   if (!className) return;
@@ -32,16 +31,6 @@ export function handleClass(
 
   if (!classNames.length) return;
 
-  remove
-    ? removeClass(els, classNames)
-    : addClass(els, classNames, omitAppendPrivateClass);
-}
-
-export function addClass(
-  els: Array<Node | HTMLElement | Element>,
-  classNames: Array<string>,
-  omitAppendPrivateClass = false
-) {
   if (classNames.includes("longTouch")) return;
 
   for (const node of els) {
@@ -76,8 +65,14 @@ export function addClass(
 
 export function removeClass(
   els: Array<Node | HTMLElement | Element>,
-  classNames: Array<string>
+  className: string | undefined
 ) {
+  if (!className) return;
+
+  const classNames = splitClass(className);
+
+  if (!classNames.length) return;
+
   for (const node of els) {
     if (!isNode(node)) {
       node.classList.remove(...classNames);

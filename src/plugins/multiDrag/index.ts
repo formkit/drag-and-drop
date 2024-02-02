@@ -25,7 +25,7 @@ import {
   resetState,
 } from "../../index";
 
-import { handleClass, copyNodeStyle, splitClass } from "../../utils";
+import { addClass, removeClass, copyNodeStyle, splitClass } from "../../utils";
 
 export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
   return (parent: HTMLElement) => {
@@ -71,7 +71,7 @@ function reapplyDragClasses(node: Node, parentData: ParentData) {
 
   if (!draggedValues.includes(nodeValue)) return;
 
-  handleClass([node], dropZoneClass);
+  addClass([node], dropZoneClass);
 }
 
 function handleDragend(data: NodeDragEventData) {
@@ -100,7 +100,7 @@ function selectionsEnd(data: NodeEventData) {
       `.${splitClass(dropZoneClass)}`
     );
 
-    handleClass(Array.from(elsWithDropZoneClass), dropZoneClass, true);
+    removeClass(Array.from(elsWithDropZoneClass), dropZoneClass);
   }
 }
 
@@ -187,14 +187,14 @@ export function handleSelections(
 
     copyNodeStyle(x.el, el, true);
 
-    if (data.e instanceof DragEvent) handleClass([el], config.draggingClass);
+    if (data.e instanceof DragEvent) addClass([el], config.draggingClass);
 
     return el;
   });
 
   setTimeout(() => {
     if (data.e instanceof DragEvent) {
-      handleClass(
+      addClass(
         state.draggedNodes.map((x) => x.el),
         config.dropZoneClass
       );

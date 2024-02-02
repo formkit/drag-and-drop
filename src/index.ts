@@ -26,7 +26,8 @@ import type {
 
 import {
   isBrowser,
-  handleClass,
+  addClass,
+  removeClass,
   getElFromPoint,
   isNode,
   getScrollParent,
@@ -395,12 +396,12 @@ export function dragstartClasses(
   draggingClass: string | undefined,
   dropZoneClass: string | undefined
 ) {
-  handleClass([el], draggingClass);
+  addClass([el], draggingClass);
 
   setTimeout(() => {
-    handleClass([el], draggingClass, true);
+    removeClass([el], draggingClass);
 
-    handleClass([el], dropZoneClass);
+    addClass([el], dropZoneClass);
   });
 }
 
@@ -582,10 +583,9 @@ function reapplyDragClasses(node: Node, parentData: ParentData) {
     }
   }
 
-  //if (nodeValue !== state.draggedNode.data.value) {
-  //}
+  if (state.draggedNode.el !== node) return;
 
-  handleClass([node], dropZoneClass, false, true);
+  addClass([node], dropZoneClass, true);
 }
 
 export function tearDownNode(data: TearDownNodeData) {
@@ -626,7 +626,7 @@ export function end(_eventData: NodeEventData, state: DragState | TouchState) {
     ? config?.touchDropZoneClass
     : config?.dropZoneClass;
 
-  handleClass(
+  addClass(
     state.draggedNodes.map((x) => x.el),
     dropZoneClass,
     true
@@ -637,14 +637,13 @@ export function end(_eventData: NodeEventData, state: DragState | TouchState) {
       `.${splitClass(dropZoneClass)}`
     );
 
-    handleClass(Array.from(elsWithDropZoneClass), dropZoneClass, true);
+    removeClass(Array.from(elsWithDropZoneClass), dropZoneClass);
   }
 
   if (config?.longTouchClass) {
-    handleClass(
+    removeClass(
       state.draggedNodes.map((x) => x.el),
-      state.initialParent.data?.config?.longTouchClass,
-      true
+      state.initialParent.data?.config?.longTouchClass
     );
   }
 
@@ -730,7 +729,7 @@ export function handleLongTouch(data: NodeEventData, touchState: TouchState) {
     }
 
     if (config.longTouchClass && data.e.cancelable)
-      handleClass(
+      addClass(
         touchState.draggedNodes.map((x) => x.el),
         config.longTouchClass
       );
@@ -751,17 +750,16 @@ export function handleTouchmove(eventData: NodeTouchEventData) {
 
 function touchmoveClasses(touchState: TouchState, config: ParentConfig) {
   if (config.longTouchClass)
-    handleClass(
+    removeClass(
       touchState.draggedNodes.map((x) => x.el),
-      config?.longTouchClass,
-      true
+      config?.longTouchClass
     );
 
   if (config.touchDraggingClass)
-    handleClass([touchState.touchedNode], config.touchDraggingClass);
+    addClass([touchState.touchedNode], config.touchDraggingClass);
 
   if (config.touchDropZoneClass)
-    handleClass(
+    addClass(
       touchState.draggedNodes.map((x) => x.el),
       config.touchDropZoneClass
     );
