@@ -2,8 +2,8 @@ import type { SetupNodeData } from "../../types";
 
 import { state } from "../../index";
 
-export function animations(config = {}) {
-  return (parent: HTMLElement) => {
+export function animations() {
+  return () => {
     return {
       tearDownParent() {},
       setupParent() {
