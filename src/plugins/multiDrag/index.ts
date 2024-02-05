@@ -65,13 +65,11 @@ function reapplyDragClasses(node: Node, parentData: ParentData) {
       ? parentData.config.multiDragConfig.touchDropZoneClass
       : parentData.config.multiDragConfig.dropZoneClass;
 
-  const nodeValue = nodes.get(node)?.value;
+  const draggedNodeEls = state.draggedNodes.map((x) => x.el);
 
-  const draggedValues = state.draggedNodes.map((x) => x.data.value);
+  if (!draggedNodeEls.includes(node)) return;
 
-  if (!draggedValues.includes(nodeValue)) return;
-
-  addClass([node], dropZoneClass);
+  addClass([node], dropZoneClass, true);
 }
 
 function handleDragend(data: NodeDragEventData) {

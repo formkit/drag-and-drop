@@ -5,7 +5,7 @@ import { dragAndDrop } from "../../src/vue/index";
 
 let firstList = ref();
 
-let firstListValues = ref(["China", "United States of AMERICA", "India"]);
+let firstListValues = ref(["China", "United States", "India"]);
 
 let showList1 = ref(true);
 
@@ -26,7 +26,7 @@ onMounted(() => {
     },
     threshold: {
       horizontal: 0.5,
-      vertical: 0.5,
+      vertical: 0,
     },
   });
 });
@@ -48,12 +48,15 @@ onMounted(() => {
 <style scoped>
 .list {
   display: flex;
+  width: 200px;
+  flex-wrap: wrap;
 }
 
 .item {
   margin-right: 0.2em;
   padding: 0.5em;
   background-color: #f0f0f0;
+  font-size: 0.8em;
   /*height: 10em;*/
 }
 </style>

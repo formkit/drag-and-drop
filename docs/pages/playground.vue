@@ -33,6 +33,14 @@ onMounted(() => {
     draggable: (child: HTMLElement) => {
       return child.classList.contains("item");
     },
+    plugins: [
+      multiDrag({
+        dropZoneClass: "opacity",
+        selections: () => {
+          return ["Apple"];
+        },
+      }),
+    ],
   });
 
   dragAndDrop({
@@ -43,6 +51,14 @@ onMounted(() => {
     draggable: (child: HTMLElement) => {
       return child.classList.contains("item");
     },
+    plugins: [
+      multiDrag({
+        dropZoneClass: "opacity",
+        selections: () => {
+          return ["Pear"];
+        },
+      }),
+    ],
   });
 
   dragAndDrop({

@@ -374,6 +374,17 @@ export function remapNodes(parent: HTMLElement) {
       state.draggedNode.el = node;
     }
 
+    if (
+      state &&
+      state.draggedNodes.map((x) => x.data.value).includes(nodeData.value)
+    ) {
+      const draggedNode = state.draggedNodes.find(
+        (x) => x.data.value === nodeData.value
+      );
+
+      if (draggedNode) draggedNode.el = node;
+    }
+
     config.setupNode({ node, parent, parentData, nodeData });
   }
 
@@ -896,7 +907,12 @@ export function validateTransfer(
 function dragoverNode(eventData: NodeDragEventData, dragState: DragState) {
   eventData.e.preventDefault();
 
-  if (dragState.draggedNode.el === eventData.targetData.node.el) return;
+  if (
+    dragState.draggedNodes
+      .map((x) => x.el)
+      .includes(eventData.targetData.node.el)
+  )
+    return;
 
   eventData.targetData.parent.el === dragState.lastParent?.el
     ? sort(eventData, dragState)
@@ -911,7 +927,10 @@ export function validateSort(
 ): boolean {
   if (!state) return false;
 
-  if (state.preventEnter) return false;
+  if (state.preventEnter) {
+    console.log("prevent enter");
+    return false;
+  }
 
   if (state.preventSortValue === data.targetData.node.data.value) return false;
 
