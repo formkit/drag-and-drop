@@ -7,8 +7,67 @@ export function animations(config = {}) {
     return {
       tearDownParent() {},
       setupParent() {
-        //parent.style.position = "relative";
-        //parent.style.overflow = "hidden";
+        const style = document.createElement("style");
+
+        style.innerHTML = `
+          .slide-up {
+            animation-name: slideUp;
+            animation-duration: 0.2s;
+          }
+
+          @keyframes slideUp {
+            from {
+              transform: translateY(100%);
+            }
+            to {
+              transform: translateY(0);
+            }
+          }
+
+          .slide-down {
+            animation-name: slideDown;
+            animation-duration: 0.2s;
+          }
+
+          @keyframes slideDown {
+            from {
+              transform: translateY(-100%);
+            }
+            to {
+              transform: translateY(0%);
+            }
+          }
+
+          .slide-left {
+            animation-name: slideLeft;
+            animation-duration: 0.2s;
+          }
+
+          @keyframes slideLeft {
+            from {
+              transform: translateX(100%);
+            }
+            to {
+              transform: translateX(0%);
+            }
+          }
+
+          .slide-right {
+            animation-name: slideRight;
+            animation-duration: 0.2s;
+          }
+
+          @keyframes slideRight {
+            from {
+              transform: translateX(-100%);
+            }
+            to {
+              transform: translateX(0);
+            }
+          }
+        `;
+
+        document.head.append(style);
       },
       setupNode(data: SetupNodeData) {
         if (!state) return;
