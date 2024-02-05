@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { dragAndDrop } from "../../src/vue/index";
 import { multiDrag } from "../../src/plugins/multiDrag";
+import { animations } from "../../src/plugins/animations";
 
 let firstList = ref();
 let secondList = ref();
@@ -34,6 +35,7 @@ onMounted(() => {
       return child.classList.contains("item");
     },
     plugins: [
+      animations({}),
       multiDrag({
         dropZoneClass: "opacity",
         selections: () => {
@@ -52,6 +54,7 @@ onMounted(() => {
       return child.classList.contains("item");
     },
     plugins: [
+      animations({}),
       multiDrag({
         dropZoneClass: "opacity",
         selections: () => {

@@ -522,6 +522,8 @@ export function setupNode(data: SetupNodeData) {
   });
 
   config.reapplyDragClasses(data.node, data.parentData);
+
+  if (!state) return;
 }
 
 function reapplyDragClasses(node: Node, parentData: ParentData) {
@@ -531,70 +533,6 @@ function reapplyDragClasses(node: Node, parentData: ParentData) {
     "touchedNode" in state
       ? parentData.config.touchDropZoneClass
       : parentData.config.dropZoneClass;
-
-  const nodeValue = nodes.get(node)?.value;
-
-  if (nodeValue === state.swappedNodeValue) {
-    state.preventSortValue = nodeValue;
-
-    if (state.incomingDirection === "below") {
-      node.classList.add("slide-down");
-
-      state.draggedNode.el.classList.add("slide-up");
-
-      setTimeout(() => {
-        if (state) {
-          state.preventSortValue = undefined;
-
-          state.draggedNode.el.classList.remove("slide-up");
-        }
-
-        node.classList.remove("slide-down");
-      }, 200);
-    } else if (state.incomingDirection === "above") {
-      node.classList.add("slide-up");
-
-      state.draggedNode.el.classList.add("slide-down");
-
-      setTimeout(() => {
-        if (state) {
-          state.preventSortValue = undefined;
-
-          state.draggedNode.el.classList.remove("slide-down");
-        }
-
-        node.classList.remove("slide-up");
-      }, 200);
-    } else if (state.incomingDirection === "left") {
-      node.classList.add("slide-left");
-
-      state.draggedNode.el.classList.add("slide-right");
-
-      setTimeout(() => {
-        if (state) {
-          state.preventSortValue = undefined;
-
-          state.draggedNode.el.classList.remove("slide-right");
-        }
-
-        node.classList.remove("slide-left");
-      }, 200);
-    } else if (state.incomingDirection === "right") {
-      node.classList.add("slide-right");
-
-      state.draggedNode.el.classList.add("slide-left");
-
-      setTimeout(() => {
-        if (state) {
-          state.preventSortValue = undefined;
-
-          state.draggedNode.el.classList.remove("slide-left");
-        }
-
-        node.classList.remove("slide-right");
-      }, 200);
-    }
-  }
 
   if (state.draggedNode.el !== node) return;
 
