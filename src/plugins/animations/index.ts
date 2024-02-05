@@ -10,7 +10,7 @@ export function animations(config = {}) {
         const style = document.createElement("style");
 
         style.innerHTML = `
-          .slide-up {
+          .drag-and-drop-slide-up {
             animation-name: slideUp;
             animation-duration: 0.2s;
           }
@@ -24,7 +24,7 @@ export function animations(config = {}) {
             }
           }
 
-          .slide-down {
+          .drag-and-drop-slide-down {
             animation-name: slideDown;
             animation-duration: 0.2s;
           }
@@ -38,7 +38,7 @@ export function animations(config = {}) {
             }
           }
 
-          .slide-left {
+          .drag-and-drop-slide-left {
             animation-name: slideLeft;
             animation-duration: 0.2s;
           }
@@ -52,7 +52,7 @@ export function animations(config = {}) {
             }
           }
 
-          .slide-right {
+          .drag-and-drop-slide-right {
             animation-name: slideRight;
             animation-duration: 0.2s;
           }
