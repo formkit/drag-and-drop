@@ -867,10 +867,7 @@ export function validateSort(
 ): boolean {
   if (!state) return false;
 
-  if (state.preventEnter) {
-    console.log("prevent enter");
-    return false;
-  }
+  if (state.preventEnter) return false;
 
   if (state.preventSortValue === data.targetData.node.data.value) return false;
 

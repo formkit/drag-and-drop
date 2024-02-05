@@ -67,6 +67,8 @@ export function animations() {
           }
         `;
 
+        style.setAttribute("data-drag-and-drop", "true");
+
         document.head.append(style);
       },
       setupNode(data: SetupNodeData) {
@@ -78,60 +80,66 @@ export function animations() {
           state.preventSortValue = nodeValue;
 
           if (state.incomingDirection === "below") {
-            data.node.classList.add("slide-down");
+            data.node.classList.add("drag-and-drop-slide-down");
 
-            state.draggedNode.el.classList.add("slide-up");
+            state.draggedNode.el.classList.add("drag-and-drop-slide-up");
 
             setTimeout(() => {
               if (state) {
                 state.preventSortValue = undefined;
 
-                state.draggedNode.el.classList.remove("slide-up");
+                state.draggedNode.el.classList.remove("drag-and-drop-slide-up");
               }
 
-              data.node.classList.remove("slide-down");
+              data.node.classList.remove("drag-and-drop-slide-down");
             }, 200);
           } else if (state.incomingDirection === "above") {
-            data.node.classList.add("slide-up");
+            data.node.classList.add("drag-and-drop-slide-up");
 
-            state.draggedNode.el.classList.add("slide-down");
+            state.draggedNode.el.classList.add("drag-and-drop-slide-down");
 
             setTimeout(() => {
               if (state) {
                 state.preventSortValue = undefined;
 
-                state.draggedNode.el.classList.remove("slide-down");
+                state.draggedNode.el.classList.remove(
+                  "drag-and-drop-slide-down"
+                );
               }
 
-              data.node.classList.remove("slide-up");
+              data.node.classList.remove("drag-and-drop-slide-up");
             }, 200);
           } else if (state.incomingDirection === "left") {
-            data.node.classList.add("slide-left");
+            data.node.classList.add("drag-and-drop-slide-left");
 
-            state.draggedNode.el.classList.add("slide-right");
+            state.draggedNode.el.classList.add("drag-and-drop-slide-right");
 
             setTimeout(() => {
               if (state) {
                 state.preventSortValue = undefined;
 
-                state.draggedNode.el.classList.remove("slide-right");
+                state.draggedNode.el.classList.remove(
+                  "drag-and-drop-slide-right"
+                );
               }
 
-              data.node.classList.remove("slide-left");
+              data.node.classList.remove("drag-and-drop-slide-left");
             }, 200);
           } else if (state.incomingDirection === "right") {
-            data.node.classList.add("slide-right");
+            data.node.classList.add("drag-and-drop-slide-right");
 
-            state.draggedNode.el.classList.add("slide-left");
+            state.draggedNode.el.classList.add("drag-and-drop-slide-left");
 
             setTimeout(() => {
               if (state) {
                 state.preventSortValue = undefined;
 
-                state.draggedNode.el.classList.remove("slide-left");
+                state.draggedNode.el.classList.remove(
+                  "drag-and-drop-slide-left"
+                );
               }
 
-              data.node.classList.remove("slide-right");
+              data.node.classList.remove("drag-and-drop-slide-right");
             }, 200);
           }
         }
