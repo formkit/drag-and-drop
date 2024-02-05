@@ -9,6 +9,8 @@ export function animations() {
       setupParent() {
         const style = document.createElement("style");
 
+        if (document.head.querySelector("[data-drag-and-drop]")) return;
+
         style.innerHTML = `
           .drag-and-drop-slide-up {
             animation-name: slideUp;
@@ -66,6 +68,8 @@ export function animations() {
             }
           }
         `;
+
+        style.setAttribute("type", "text/css");
 
         style.setAttribute("data-drag-and-drop", "true");
 
