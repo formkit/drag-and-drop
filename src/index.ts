@@ -41,6 +41,8 @@ export * from "./types";
 
 export { multiDrag } from "./plugins/multiDrag";
 
+export { animations } from "./plugins/animations";
+
 export const nodes: NodesData = new WeakMap<Node, NodeData>();
 
 export const parents: ParentsData = new WeakMap<HTMLElement, ParentData>();
