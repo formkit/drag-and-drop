@@ -12,8 +12,6 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
 
         if (document.head.querySelector("[data-drag-and-drop]")) return;
 
-        console.log("animationsConfig", animationsConfig);
-
         style.innerHTML = `
           .drag-and-drop-slide-up {
             animation-name: slideUp;
