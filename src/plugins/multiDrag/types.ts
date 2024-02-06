@@ -1,3 +1,4 @@
+import { DNDNodeAction } from "../../types";
 export interface MultiDragConfig {
   [key: string]: any;
   draggingClass?: string;
@@ -5,4 +6,7 @@ export interface MultiDragConfig {
   selections?: (parent: HTMLElement) => Array<any>;
   touchDraggingClass?: string;
   touchDropZoneClass?: string;
+  handleDragend: DNDNodeAction;
+  handleDragstart: DNDNodeAction;
+  handleTouchstart: DNDNodeAction;
 }

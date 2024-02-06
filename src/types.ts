@@ -234,6 +234,7 @@ export interface DragState extends DragStateProps {
   lastParent: ParentRecord;
   clonedDraggedEls: Array<Element>;
   swappedNodeValue: any | undefined;
+  originalZIndex: string | undefined;
   preventSortValue: any | undefined;
   incomingDirection: "above" | "below" | "left" | "right" | undefined;
 }

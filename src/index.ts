@@ -78,6 +78,7 @@ export function setDragState(dragStateProps: DragStateProps): DragState {
     clonedDraggedEls: [],
     swappedNodeValue: false,
     preventSortValue: undefined,
+    originalZIndex: undefined,
     ...dragStateProps,
   } as DragState;
 
@@ -484,6 +485,12 @@ export function dragstart(data: NodeDragEventData) {
 
   const dragState = initDrag(data);
 
+  const originalZIndex = data.targetData.node.el.style.zIndex;
+
+  dragState.originalZIndex = originalZIndex;
+
+  data.targetData.node.el.style.zIndex = "9999";
+
   dragstartClasses(
     dragState.draggedNode.el,
     config.draggingClass,
@@ -578,6 +585,9 @@ export function end(_eventData: NodeEventData, state: DragState | TouchState) {
   const dropZoneClass = isTouch
     ? config?.touchDropZoneClass
     : config?.dropZoneClass;
+
+  if (state.originalZIndex !== undefined)
+    state.draggedNode.el.style.zIndex = state.originalZIndex;
 
   addClass(
     state.draggedNodes.map((x) => x.el),

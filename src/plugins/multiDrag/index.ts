@@ -5,6 +5,8 @@ import type {
   DragState,
   TouchState,
   ParentData,
+  NodeDragEventData,
+  NodeTouchEventData,
 } from "../../types";
 
 import type { MultiDragConfig } from "./types";
@@ -13,8 +15,6 @@ import {
   parents,
   nodes,
   remapNodes,
-  NodeDragEventData,
-  NodeTouchEventData,
   handleLongTouch,
   initDrag,
   initTouch,
@@ -72,7 +72,7 @@ function reapplyDragClasses(node: Node, parentData: ParentData) {
   addClass([node], dropZoneClass, true);
 }
 
-function handleDragend(data: NodeDragEventData) {
+function handleDragend(data: NodeEventData) {
   if (!state) return;
 
   end(data, state);
@@ -83,15 +83,17 @@ function handleDragend(data: NodeDragEventData) {
 }
 
 function selectionsEnd(data: NodeEventData) {
-  const config = data.targetData.parent.data.config.multiDragConfig;
+  const config = data.targetData.parent.data.config;
+
+  const multiDragconfig = data.targetData.parent.data.config.multiDragConfig;
 
   const root = config.root || document;
 
-  const isTouch = data.e instanceof TouchEvent;
+  const isTouch = state && "touchedNode" in state;
 
   const dropZoneClass = isTouch
-    ? config.selectionDropZoneClass
-    : config.touchSelectionDraggingClass;
+    ? multiDragconfig.selectionDropZoneClass
+    : multiDragconfig.touchSelectionDraggingClass;
 
   if (dropZoneClass) {
     const elsWithDropZoneClass = root.querySelectorAll(
@@ -102,7 +104,16 @@ function selectionsEnd(data: NodeEventData) {
   }
 }
 
-function handleDragstart(data: NodeDragEventData) {
+function handleDragstart(data: NodeEventData) {
+  if (!(data.e instanceof DragEvent)) return;
+
+  dragstart({
+    e: data.e,
+    targetData: data.targetData,
+  });
+}
+
+function dragstart(data: NodeDragEventData) {
   const dragState = initDrag(data);
 
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
@@ -110,6 +121,12 @@ function handleDragstart(data: NodeDragEventData) {
   const selectedValues =
     multiDragConfig.selections &&
     multiDragConfig.selections(data.targetData.parent.el);
+
+  const originalZIndex = data.targetData.node.el.style.zIndex;
+
+  dragState.originalZIndex = originalZIndex;
+
+  data.targetData.node.el.style.zIndex = "9999";
 
   if (Array.isArray(selectedValues) && selectedValues.length) {
     const targetRect = data.targetData.node.el.getBoundingClientRect();
@@ -131,7 +148,16 @@ function handleDragstart(data: NodeDragEventData) {
   }
 }
 
-function handleTouchstart(data: NodeTouchEventData) {
+function handleTouchstart(data: NodeEventData) {
+  if (!(data.e instanceof TouchEvent)) return;
+
+  touchstart({
+    e: data.e,
+    targetData: data.targetData,
+  });
+}
+
+function touchstart(data: NodeTouchEventData) {
   const touchState = initTouch(data);
 
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
