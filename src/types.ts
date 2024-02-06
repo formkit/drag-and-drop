@@ -171,8 +171,8 @@ export interface NodeTargetData {
 }
 
 export interface DNDPluginData {
-  setupParent: () => void;
-  tearDownParent: () => void;
+  setupParent?: () => void;
+  tearDownParent?: () => void;
   setupNode?: SetupNode;
   tearDownNode?: TearDownNode;
 }

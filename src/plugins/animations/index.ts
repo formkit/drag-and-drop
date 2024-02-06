@@ -1,20 +1,23 @@
-import type { SetupNodeData } from "../../types";
+import type { SetupNodeData, Node } from "../../types";
+
+import type { AnimationsConfig } from "./types";
 
 import { state } from "../../index";
 
-export function animations() {
+export function animations(animationsConfig: AnimationsConfig = {}) {
   return () => {
     return {
-      tearDownParent() {},
       setupParent() {
         const style = document.createElement("style");
 
         if (document.head.querySelector("[data-drag-and-drop]")) return;
 
+        console.log("animationsConfig", animationsConfig);
+
         style.innerHTML = `
           .drag-and-drop-slide-up {
             animation-name: slideUp;
-            animation-duration: 0.2s;
+            animation-duration: ${(animationsConfig.duration || 200) / 1000}s;
           }
 
           @keyframes slideUp {
@@ -28,7 +31,7 @@ export function animations() {
 
           .drag-and-drop-slide-down {
             animation-name: slideDown;
-            animation-duration: 0.2s;
+            animation-duration: ${(animationsConfig.duration || 200) / 1000}s;
           }
 
           @keyframes slideDown {
@@ -42,7 +45,7 @@ export function animations() {
 
           .drag-and-drop-slide-left {
             animation-name: slideLeft;
-            animation-duration: 0.2s;
+            animation-duration: ${(animationsConfig.duration || 200) / 1000}s;
           }
 
           @keyframes slideLeft {
@@ -56,7 +59,7 @@ export function animations() {
 
           .drag-and-drop-slide-right {
             animation-name: slideRight;
-            animation-duration: 0.2s;
+            animation-duration: ${(animationsConfig.duration || 200) / 1000}s;
           }
 
           @keyframes slideRight {
@@ -75,79 +78,77 @@ export function animations() {
 
         document.head.append(style);
       },
+
       setupNode(data: SetupNodeData) {
         if (!state) return;
 
         const nodeValue = data.nodeData.value;
 
-        if (nodeValue === state.swappedNodeValue) {
-          state.preventSortValue = nodeValue;
+        if (nodeValue !== state.swappedNodeValue) return;
 
-          if (state.incomingDirection === "below") {
-            data.node.classList.add("drag-and-drop-slide-down");
+        state.preventSortValue = nodeValue;
 
-            state.draggedNode.el.classList.add("drag-and-drop-slide-up");
-
-            setTimeout(() => {
-              if (state) {
-                state.preventSortValue = undefined;
-
-                state.draggedNode.el.classList.remove("drag-and-drop-slide-up");
-              }
-
-              data.node.classList.remove("drag-and-drop-slide-down");
-            }, 200);
-          } else if (state.incomingDirection === "above") {
-            data.node.classList.add("drag-and-drop-slide-up");
-
-            state.draggedNode.el.classList.add("drag-and-drop-slide-down");
-
-            setTimeout(() => {
-              if (state) {
-                state.preventSortValue = undefined;
-
-                state.draggedNode.el.classList.remove(
-                  "drag-and-drop-slide-down"
-                );
-              }
-
-              data.node.classList.remove("drag-and-drop-slide-up");
-            }, 200);
-          } else if (state.incomingDirection === "left") {
-            data.node.classList.add("drag-and-drop-slide-left");
-
-            state.draggedNode.el.classList.add("drag-and-drop-slide-right");
-
-            setTimeout(() => {
-              if (state) {
-                state.preventSortValue = undefined;
-
-                state.draggedNode.el.classList.remove(
-                  "drag-and-drop-slide-right"
-                );
-              }
-
-              data.node.classList.remove("drag-and-drop-slide-left");
-            }, 200);
-          } else if (state.incomingDirection === "right") {
-            data.node.classList.add("drag-and-drop-slide-right");
-
-            state.draggedNode.el.classList.add("drag-and-drop-slide-left");
-
-            setTimeout(() => {
-              if (state) {
-                state.preventSortValue = undefined;
-
-                state.draggedNode.el.classList.remove(
-                  "drag-and-drop-slide-left"
-                );
-              }
-
-              data.node.classList.remove("drag-and-drop-slide-right");
-            }, 200);
-          }
+        switch (state.incomingDirection) {
+          case "below":
+            setClasses(
+              data.node,
+              state.draggedNode.el,
+              "drag-and-drop-slide-down",
+              "drag-and-drop-slide-up",
+              animationsConfig.duration || 200
+            );
+            break;
+          case "above":
+            setClasses(
+              data.node,
+              state.draggedNode.el,
+              "drag-and-drop-slide-up",
+              "drag-and-drop-slide-down",
+              animationsConfig.duration || 200
+            );
+            break;
+          case "left":
+            setClasses(
+              data.node,
+              state.draggedNode.el,
+              "drag-and-drop-slide-left",
+              "drag-and-drop-slide-right",
+              animationsConfig.duration || 200
+            );
+            break;
+          case "right":
+            setClasses(
+              data.node,
+              state.draggedNode.el,
+              "drag-and-drop-slide-right",
+              "drag-and-drop-slide-left",
+              animationsConfig.duration || 200
+            );
+            break;
         }
       },
     };
   };
+}
+
+function setClasses(
+  node: Node,
+  draggedNode: Node,
+  nodeClass: string,
+  draggedNodeClass: string,
+  duration: number
+) {
+  node.classList.add(nodeClass);
+
+  draggedNode.classList.add(draggedNodeClass);
+
+  setTimeout(() => {
+    if (!state) return;
+
+    state.preventSortValue = undefined;
+
+    draggedNode.classList.remove(draggedNodeClass);
+
+    node.classList.remove(nodeClass);
+  }, duration);
 }

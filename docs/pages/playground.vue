@@ -35,7 +35,9 @@ onMounted(() => {
       return child.classList.contains("item");
     },
     plugins: [
-      animations(),
+      animations({
+        duration: 200,
+      }),
       multiDrag({
         dropZoneClass: "opacity",
         selections: () => {

@@ -219,13 +219,13 @@ export function initParent({
   setupParent(parent, parentData);
 
   config.plugins?.forEach((plugin) => {
-    plugin(parent)?.tearDownParent();
+    plugin(parent)?.tearDownParent?.();
   });
 
   remapNodes(parent);
 
   config.plugins?.forEach((plugin: DNDPlugin) => {
-    plugin(parent)?.setupParent();
+    plugin(parent)?.setupParent?.();
   });
 }
 
