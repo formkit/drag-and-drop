@@ -7,9 +7,40 @@
     <title>Vite + TS</title>
   </head>
   <body>
-    <div id="app-vue"></div>
+    <div id="app-js" class="app">
+      <div class="logo">
+        <img src="/logo-javascript.svg" alt="Vite Logo" />
+      </div>
+    </div>
+    <div id="app-vue" class="app"></div>
     <script type="module" src="./vue/main.ts"></script>
-    <div id="app-react"></div>
+    <div id="app-react" class="app"></div>
     <script type="module" src="./react/main.tsx"></script>
   </body>
 </html>
+
+<style>
+  body {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+  }
+
+  .app {
+    width: 45%;
+    height: 100vh;
+    border: 1px solid #000;
+    padding: 10px;
+  }
+
+  .logo {
+    width: 4em;
+    height: 4em;
+  }
+
+  img {
+    width: 100%;
+  }
+</style>
