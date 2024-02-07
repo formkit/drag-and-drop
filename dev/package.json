@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@types/react": "^18.2.55",
     "typescript": "^5.2.2",
     "vite": "^5.0.8"
   },

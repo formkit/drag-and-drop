@@ -22,9 +22,6 @@ onMounted(() => {
   dragAndDrop({
     parent: el,
     values: playingCards,
-    draggable: () => {
-      return true;
-    },
   });
 });
 </script>
@@ -48,22 +45,3 @@ onMounted(() => {
     </div>
   </div>
 </template>
-
-<style scoped>
-.content {
-  padding: 2em 0;
-}
-
-ul {
-  display: flex;
-  padding: 0;
-}
-
-li {
-  list-style-type: none;
-  display: inline-block;
-  margin: 10px;
-  background-color: white !important;
-  width: 100px;
-}
-</style>
