@@ -5,7 +5,8 @@ import { ref, onMounted } from "vue";
 
 import { dragAndDrop } from "../../src/vue/index";
 
-//dragAndDrop();
+const myList = ref();
+
 const playingCards = ref([
   "/cards/10_of_clubs.png",
   "/cards/jack_of_hearts.png",
@@ -14,15 +15,9 @@ const playingCards = ref([
   "/cards/ace_of_clubs.png",
 ]);
 
-onMounted(() => {
-  const el = document.getElementById("playing_cards_vue");
-
-  if (!(el instanceof HTMLElement)) return;
-
-  dragAndDrop({
-    parent: el,
-    values: playingCards,
-  });
+dragAndDrop({
+  parent: myList,
+  values: playingCards,
 });
 </script>
 
@@ -37,7 +32,7 @@ onMounted(() => {
         Init parent by passing in the parent element directly to `dragAndDrop`
         function.
       </h4>
-      <ul id="playing_cards_vue">
+      <ul id="playing_cards_vue" ref="myList">
         <li v-for="card in playingCards" :key="card" class="item">
           <img :src="`${card}`" />
         </li>

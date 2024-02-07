@@ -27,8 +27,6 @@ export function handleVueElements(
   for (const element of elements) {
     const validEl = getEl(element);
 
-    console.log("validEl", validEl);
-
     if (validEl) return cb(validEl);
 
     const stop = watch(element, (newEl) => {

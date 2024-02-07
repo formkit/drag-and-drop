@@ -21,18 +21,13 @@ function getValues(parent: HTMLElement): Array<any> {
     return [];
   }
 
-  console.log("values", values);
-
   return values[0];
 }
 
 function setValues(parent: HTMLElement, newValues: Array<any>): void {
   const values = parentValues.get(parent);
 
-  if (values) {
-    console.log("new values", newValues);
-    values[1](newValues);
-  }
+  if (values) values[1](newValues);
 }
 
 /**
@@ -45,7 +40,6 @@ function setValues(parent: HTMLElement, newValues: Array<any>): void {
 export function dragAndDrop(
   data: ReactDragAndDropData | Array<ReactDragAndDropData>
 ): void {
-  console.log("drag and drop", data);
   if (!Array.isArray(data)) data = [data];
 
   data.forEach((dnd) => {
@@ -55,12 +49,4 @@ export function dragAndDrop(
 
     initParent({ parent: dnd.parent, getValues, setValues, config: {} });
   });
-
-  //for (const { parent, values } of data) {
-  //  if (parent instanceof HTMLElement) {
-  //    parentValues.set(parent, values);
-  //  } else {
-  //    parentValues.set(parent, values);
-  //  }
-  //}
 }

@@ -15,7 +15,7 @@ function App() {
     "/cards/ace_of_clubs.png",
   ];
 
-  const [values, updateValues] = useState(playingCardAssets);
+  const [values, setValues] = useState(playingCardAssets);
 
   const playingCards = values.map((card: string) => (
     <li className="item" key={card}>
@@ -30,24 +30,22 @@ function App() {
 
     dragAndDrop({
       parent: el,
-      values: [values, updateValues],
+      values: [values, setValues],
     });
   });
 
   return (
     <>
-      <div>
-        <div className="logo">
-          <img src={reactLogo} alt="React Logo" />
-        </div>
-        <div className="content">
-          <h3>Test 1: Init Parent</h3>
-          <h4>
-            Init parent by passing in the parent elmeent directly to
-            `dragAndDrop` function.
-          </h4>
-          <ul id="playing_cards_react">{playingCards}</ul>
-        </div>
+      <div className="logo">
+        <img src={reactLogo} alt="React Logo" />
+      </div>
+      <div className="content">
+        <h3>Test 1: Init Parent</h3>
+        <h4>
+          Init parent by passing in the parent elmeent directly to `dragAndDrop`
+          function.
+        </h4>
+        <ul id="playing_cards_react">{playingCards}</ul>
       </div>
     </>
   );

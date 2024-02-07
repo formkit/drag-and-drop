@@ -48,11 +48,7 @@ function getValues(parent: HTMLElement): Array<any> {
 function setValues(parent: HTMLElement, newValues: Array<any>): void {
   const currentValues = parentValues.get(parent);
 
-  if (currentValues) {
-    currentValues.value = newValues;
-  } else {
-    parentValues.set(parent, ref(newValues));
-  }
+  if (currentValues) currentValues.value = newValues;
 }
 
 /**
