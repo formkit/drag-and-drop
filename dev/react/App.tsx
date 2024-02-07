@@ -24,7 +24,7 @@ function App() {
   ));
 
   useEffect(() => {
-    const el = document.getElementById("playing_cards_react");
+    const el = document.getElementById("playing_cards_react_1");
 
     if (!(el instanceof HTMLElement)) return;
 
@@ -40,12 +40,12 @@ function App() {
         <img src={reactLogo} alt="React Logo" />
       </div>
       <div className="content">
-        <h3>Test 1: Init Parent</h3>
+        <h3>#playing_cards_react_1</h3>
         <h4>
           Init parent by passing in the parent elmeent directly to `dragAndDrop`
           function.
         </h4>
-        <ul id="playing_cards_react">{playingCards}</ul>
+        <ul id="playing_cards_react_1">{playingCards}</ul>
       </div>
     </>
   );

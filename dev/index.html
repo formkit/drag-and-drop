@@ -11,9 +11,14 @@
       <div class="logo">
         <img src="/logo-javascript.svg" alt="JSLogo" />
       </div>
+      <div id="app-vanilla" class="content">
+        <h3>Test 1: Init Parent</h3>
+        <h4>
+          Init parent by passing in the parent element directly to `initParent`
+          function.
+        </h4>
+      </div>
       <script type="module" src="./main.ts"></script>
-      <script type="module" rc=""></script>
-      <div id="app-vanilla" class="content"></div>
     </div>
     <div id="app-vue" class="app"></div>
     <script type="module" src="./vue/main.ts"></script>
@@ -32,16 +37,28 @@
     background-color: #35654d;
   }
 
+  .test {
+    /*border-bottom: 1px solid #000;*/
+  }
+
+  .divider {
+    background-color: #000;
+    height: 1px;
+  }
+
   .app {
-    width: 33%;
+    width: 25%;
     height: 100vh;
     border: 1px solid #000;
-    padding: 10px;
+    position: relative;
   }
 
   .logo {
     width: 4em;
     height: 4em;
+    position: absoulte;
+    top: 0;
+    left: 0;
   }
 
   img {

@@ -31,46 +31,4 @@ initParent({
   setValues: (parent, newValues) => {
     state.playingCards = newValues;
   },
-  config: {},
 });
-
-//vanillaApp.appendChild(parent);
-
-//function render() {
-//  const els = playingCards.map((x) => {
-//    const li = document.createElement("li");
-
-//    li.classList.add("item");
-
-//    const img = document.createElement("img");
-
-//    img.src = x;
-
-//    li.appendChild(img);
-
-//    return li;
-//  });
-
-//  parent.innerHTML = "";
-
-//  els.forEach((el) => {
-//    parent.appendChild(el);
-//  });
-//}
-
-//render();
-
-//initParent({
-//  parent,
-//  getValues: () => playingCards,
-//  setValues: (parent, newValues) => {
-//    playingCards.length = 0;
-
-//    console.log("newValues", newValues);
-
-//    playingCards.push(...newValues);
-
-//    //render();
-//  },
-//  config: {},
-//});
