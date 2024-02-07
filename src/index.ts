@@ -424,7 +424,14 @@ export function initDrag(eventData: NodeDragEventData): DragState {
 
   if (eventData.e.dataTransfer) {
     eventData.e.dataTransfer.dropEffect = "move";
+
     eventData.e.dataTransfer.effectAllowed = "move";
+
+    eventData.e.dataTransfer.setDragImage(
+      eventData.targetData.node.el,
+      eventData.e.offsetX,
+      eventData.e.offsetY
+    );
   }
 
   return dragState;
