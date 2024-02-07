@@ -17,7 +17,9 @@ const vanillaApp = document.getElementById("app-vanilla");
 html`<ul id="parent_vanilla">
   ${() =>
     state.playingCards.map((x: string) =>
-      html`<li class="item"><img src="${x}" /></li>`.key(x)
+      html`<li id="palying_cards_vanilla_1'" class="item">
+        <img src="${x}" />
+      </li>`.key(x)
     )}
 </ul>`(vanillaApp);
 

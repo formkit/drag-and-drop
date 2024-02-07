@@ -40,12 +40,18 @@ function App() {
         <img src={reactLogo} alt="React Logo" />
       </div>
       <div className="content">
-        <h3>#playing_cards_react_1</h3>
+        <h3>#react_1</h3>
         <h4>
           Init parent by passing in the parent elmeent directly to `dragAndDrop`
           function.
         </h4>
-        <ul id="playing_cards_react_1">{playingCards}</ul>
+        <ul id="react_1">{playingCards}</ul>
+        <div className="divider"></div>
+        <h3>#react_2</h3>
+        <h4>
+          Init parent by passing in a ref of the parent element to `dragAndDrop`
+        </h4>
+        <ul id="react_2">{playingCards}</ul>
       </div>
     </>
   );
