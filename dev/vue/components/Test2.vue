@@ -24,14 +24,16 @@ dragAndDrop({
 </script>
 
 <template>
-  <h3>#{{ props.id }}</h3>
-  <h4>
-    Init parent by passing in the parent element directly to `dragAndDrop`
-    function.
-  </h4>
-  <ul :id="props.id" ref="list">
-    <li v-for="card in values" :key="card" class="item">
-      <img :src="`${card}`" />
-    </li>
-  </ul>
+  <div>
+    <h3>#{{ props.id }}</h3>
+    <h4>
+      Init parent by passing in the parent element directly to `dragAndDrop`
+      function.
+    </h4>
+    <ul :id="props.id" ref="list">
+      <li v-for="card in values" :key="card" class="item">
+        <img :src="`${card}`" />
+      </li>
+    </ul>
+  </div>
 </template>

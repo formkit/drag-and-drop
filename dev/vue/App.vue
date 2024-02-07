@@ -12,9 +12,15 @@ import vueLogo from "/vuejs-icon.svg";
       <img :src="vueLogo" className="logo" alt="Vite logo" />
     </div>
     <div class="content">
-      <Test1 id="vue_1" />
+      <Test1
+        id="vue_1"
+        test-description="Init parent by passing in the parent element directly to `dragAndDrop` function."
+      />
       <div class="divider"></div>
-      <Test2 id="vue_2" />
+      <Test2
+        id="vue_2"
+        test-description="Init parent by passing in the parent element directly to `dragAndDrop` funciton."
+      />
     </div>
   </div>
 </template>
