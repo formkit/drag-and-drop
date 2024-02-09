@@ -43,7 +43,7 @@ function getValues(parent: HTMLElement): Array<any> {
  *
  * @returns void
  */
-function setValues(parent: HTMLElement, newValues: Array<any>): void {
+function setValues(newValues: Array<any>, parent: HTMLElement): void {
   const currentValues = parentValues.get(parent);
 
   if (currentValues) currentValues.value = newValues;

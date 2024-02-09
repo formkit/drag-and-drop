@@ -55,7 +55,7 @@ export interface ParentConfig {
 
 export interface ParentData {
   getValues: (parent: HTMLElement) => Array<any>;
-  setValues: (parent: HTMLElement, values: Array<any>) => void;
+  setValues: (values: Array<any>, parent: HTMLElement) => void;
   config: ParentConfig;
   enabledNodes: Array<Node>;
   abortControllers: Record<string, AbortControllers>;

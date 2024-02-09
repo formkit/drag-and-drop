@@ -28,7 +28,7 @@ function getValues(parent: HTMLElement): Array<any> {
   return values[0];
 }
 
-function setValues(parent: HTMLElement, newValues: Array<any>): void {
+function setValues(newValues: Array<any>, parent: HTMLElement): void {
   const values = parentValues.get(parent);
 
   if (values) values[1](newValues);

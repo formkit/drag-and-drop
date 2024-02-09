@@ -154,7 +154,7 @@ export function setParentValues(
   parentData: ParentData,
   values: Array<any>
 ): void {
-  parentData.setValues(parent, values);
+  parentData.setValues(values, parent);
 }
 
 export function dragValues(state: DragState | TouchState): Array<any> | any {
