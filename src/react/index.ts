@@ -1,8 +1,12 @@
-import type { ReactDragAndDropData } from "./types";
-
-export * from "./types";
+import type { ReactDragAndDropData, ReactParentConfig } from "./types";
 
 import { initParent } from "../index";
+
+import { isBrowser } from "../utils";
+
+import { handleReactElements } from "./utils";
+
+export * from "./types";
 
 /**
  * Global store for parent els to values.
@@ -40,13 +44,27 @@ function setValues(parent: HTMLElement, newValues: Array<any>): void {
 export function dragAndDrop(
   data: ReactDragAndDropData | Array<ReactDragAndDropData>
 ): void {
+  if (!isBrowser) return;
+
   if (!Array.isArray(data)) data = [data];
-
   data.forEach((dnd) => {
-    if (!(dnd.parent instanceof HTMLElement)) return;
+    const { parent, values, ...rest } = dnd;
 
-    parentValues.set(dnd.parent, dnd.values);
+    handleReactElements(parent, handleParent(rest, values));
 
-    initParent({ parent: dnd.parent, getValues, setValues, config: {} });
+    //parentValues.set(dnd.parent, dnd.values);
+
+    //initParent({ parent: dnd.parent, getValues, setValues, config: {} });
   });
+}
+
+function handleParent(
+  config: Partial<ReactParentConfig>,
+  values: [Array<any>, React.Dispatch<React.SetStateAction<Array<any>>>]
+) {
+  return (el: HTMLElement) => {
+    parentValues.set(el, values);
+
+    initParent({ parent: el, getValues, setValues, config });
+  };
 }

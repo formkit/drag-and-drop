@@ -2,6 +2,8 @@ import React from "react";
 
 import Test1 from "./components/Test1";
 
+import Test2 from "./components/Test2";
+
 import reactLogo from "/reactjs-icon.svg";
 
 function App() {
@@ -16,6 +18,10 @@ function App() {
           testDescription="Init parent by passing in the parent elmeent directly to `dragAndDrop` function."
         />
         <div className="divider"></div>
+        <Test2
+          id="react_2"
+          testDescription="Init parent by passing in a React ref to `dragAndDrop` function."
+        />
       </div>
     </>
   );

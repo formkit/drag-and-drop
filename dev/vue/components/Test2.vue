@@ -5,6 +5,7 @@ import { dragAndDrop } from "../../../src/vue/index";
 
 const props = defineProps<{
   id: string;
+  testDescription: string;
 }>();
 
 const values = ref([
@@ -27,8 +28,7 @@ dragAndDrop({
   <div>
     <h3>#{{ props.id }}</h3>
     <h4>
-      Init parent by passing in the parent element directly to `dragAndDrop`
-      function.
+      {{ props.testDescription }}
     </h4>
     <ul :id="props.id" ref="list">
       <li v-for="card in values" :key="card" class="item">

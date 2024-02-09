@@ -2,8 +2,6 @@ import type { Ref } from "vue";
 
 import type { VueDragAndDropData, VueParentConfig } from "./types";
 
-import { ref } from "vue";
-
 import { initParent } from "../index";
 
 import { isBrowser } from "../utils";
@@ -88,19 +86,14 @@ function handleParent(
   return (parent: HTMLElement) => {
     parentValues.set(parent, values);
 
-    initParent(
-      Object.assign(
-        {},
-        {
-          parent,
-          getValues,
-          setValues,
-          config: {
-            ...config,
-            dropZones: [],
-          },
-        }
-      )
-    );
+    initParent({
+      parent,
+      getValues,
+      setValues,
+      config: {
+        ...config,
+        dropZones: [],
+      },
+    });
   };
 }
