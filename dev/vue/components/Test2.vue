@@ -25,10 +25,10 @@ const values = ref([
 
 const list = ref();
 
-//dragAndDrop({
-//  parent: list,
-//  values,
-//});
+dragAndDrop({
+  parent: list,
+  values,
+});
 </script>
 
 <template>

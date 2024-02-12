@@ -50,8 +50,9 @@ test.describe("Vue wrapper correctly inits parent", async () => {
     );
   });
 
-  test("Iniit parent by passing in a Vue ref directly to `dragAndDrop` function.", async () => {
+  test("init parent by passing in a Vue ref directly to `dragAndDrop` function.", async () => {
     const listitems = page.locator("#vue_2 .item");
+    console.log(await listitems);
     for (let i = 0; i < (await listitems.count()); i++) {
       await expect(listitems.nth(i)).toHaveAttribute("draggable", "true");
     }

@@ -28,11 +28,11 @@ onMounted(() => {
 
   if (!(parent instanceof HTMLElement)) return;
 
-  //dragAndDrop({
-  //  parent,
-  //  values,
-  //  valueKey: "id",
-  //});
+  dragAndDrop({
+    parent,
+    values,
+    valueKey: "id",
+  });
 });
 </script>
 
