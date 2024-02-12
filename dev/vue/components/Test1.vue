@@ -9,11 +9,18 @@ const props = defineProps<{
 }>();
 
 const values = ref([
-  "/cards/10_of_clubs.png",
-  "/cards/jack_of_hearts.png",
-  "/cards/queen_of_spades.png",
-  "/cards/king_of_diamonds.png",
-  "/cards/ace_of_clubs.png",
+  {
+    id: "10_of_clubs",
+    src: "/cards/10_of_clubs.png",
+  },
+  {
+    id: "jack_of_hearts",
+    src: "/cards/jack_of_hearts.png",
+  },
+  {
+    id: "queen_of_spades",
+    src: "/cards/queen_of_spades.png",
+  },
 ]);
 
 onMounted(() => {
@@ -24,6 +31,7 @@ onMounted(() => {
   dragAndDrop({
     parent,
     values,
+    valueKey: "id",
   });
 });
 </script>
@@ -35,9 +43,17 @@ onMounted(() => {
       {{ props.testDescription }}
     </h4>
     <ul :id="props.id">
-      <li v-for="card in values" :key="card" class="item">
-        <img :src="`${card}`" />
+      <li
+        v-for="card in values"
+        :key="card.id"
+        class="item"
+        :id="props.id + '_' + card.id"
+      >
+        <img :src="`${card.src}`" />
       </li>
     </ul>
+    <span :id="props.id + '_values'">
+      {{ values.map((x) => x.id).join(" ") }}
+    </span>
   </div>
 </template>
