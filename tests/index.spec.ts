@@ -9,7 +9,7 @@ test.beforeAll(async ({ browser }) => {
 });
 
 test.describe("Vanilla wrapper correctly inits parent", async () => {
-  test.only("Init parent by passing in the parent elmeent directly to `dragAndDrop `function.", async () => {
+  test("Init parent by passing in the parent elmeent directly to `dragAndDrop `function.", async () => {
     const listitems = page.locator("#vanilla_1 .item");
     for (let i = 0; i < (await listitems.count()); i++) {
       await expect(listitems.nth(i)).toHaveAttribute("draggable", "true");

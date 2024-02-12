@@ -9,7 +9,7 @@ test.beforeAll(async ({ browser }) => {
 });
 
 test.describe("Vue wrapper correctly inits parent", async () => {
-  test.only("Init parent by passing in the parent elmeent directly to `dragAndDrop `function.", async () => {
+  test("Init parent by passing in the parent elmeent directly to `dragAndDrop `function.", async () => {
     const listitems = page.locator("#react_1 .item");
     for (let i = 0; i < (await listitems.count()); i++) {
       await expect(listitems.nth(i)).toHaveAttribute("draggable", "true");
@@ -50,7 +50,7 @@ test.describe("Vue wrapper correctly inits parent", async () => {
     );
   });
 
-  test.only("Iniit parent by passing in a React ref directly to `dragAndDrop` function.", async () => {
+  test("Iniit parent by passing in a React ref directly to `dragAndDrop` function.", async () => {
     const listitems = page.locator("#react_2 .item");
     for (let i = 0; i < (await listitems.count()); i++) {
       await expect(listitems.nth(i)).toHaveAttribute("draggable", "true");
