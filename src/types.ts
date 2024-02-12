@@ -1,7 +1,7 @@
 export interface InitParent {
   parent: HTMLElement;
   getValues: (parent: HTMLElement) => Array<any>;
-  setValues: (parent: HTMLElement, values: Array<any>) => void;
+  setValues: (values: Array<any>, parent: HTMLElement) => void;
   config?: Partial<ParentConfig>;
 }
 
