@@ -4,33 +4,46 @@ import { initParent } from "../src/index";
 
 const state = reactive({
   playingCards: [
-    "/cards/10_of_clubs.png",
-    "/cards/jack_of_hearts.png",
-    "/cards/queen_of_spades.png",
-    "/cards/king_of_diamonds.png",
-    "/cards/ace_of_clubs.png",
+    {
+      id: "10_of_clubs",
+      src: "/cards/10_of_clubs.png",
+    },
+    {
+      id: "jack_of_hearts",
+      src: "/cards/jack_of_hearts.png",
+    },
+    {
+      id: "queen_of_spades",
+      src: "/cards/queen_of_spades.png",
+    },
   ],
 });
 
 const vanillaApp = document.getElementById("app-vanilla");
 
-html`<ul id="parent_vanilla">
-  ${() =>
-    state.playingCards.map((x: string) =>
-      html`<li id="palying_cards_vanilla_1'" class="item">
-        <img src="${x}" />
-      </li>`.key(x)
-    )}
-</ul>`(vanillaApp);
+html`<ul id="vanilla_1">
+    ${() =>
+      state.playingCards.map((x: { id: string; src: string }) =>
+        html`<li id="vanilla_1_${x.id}" class="item">
+          <img src="${x.src}" />
+        </li>`.key(x)
+      )}
+  </ul>
+  <span id="vanilla_1_values">
+    ${() =>
+      state.playingCards
+        .map((x: { id: string; src: string }) => x.id)
+        .join(" ")}
+  </span>`(vanillaApp);
 
-const parent = document.getElementById("parent_vanilla");
+const parent = document.getElementById("vanilla_1");
 
 if (!(parent instanceof HTMLElement)) throw new Error("Invalid parent element");
 
 initParent({
   parent,
   getValues: () => state.playingCards,
-  setValues: (parent, newValues) => {
+  setValues: (newValues) => {
     state.playingCards = newValues;
   },
 });
