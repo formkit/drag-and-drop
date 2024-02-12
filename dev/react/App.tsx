@@ -17,11 +17,11 @@ function App() {
           id="react_1"
           testDescription="Init parent by passing in the parent element directly to `dragAndDrop` function."
         />
-        {/*<div className="divider"></div>
+        <div className="divider"></div>
         <Test2
           id="react_2"
           testDescription="Init parent by passing in a React ref to `dragAndDrop` function."
-        />*/}
+        />
       </div>
     </>
   );

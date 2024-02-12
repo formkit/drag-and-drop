@@ -40,10 +40,10 @@ const parent = document.getElementById("vanilla_1");
 
 if (!(parent instanceof HTMLElement)) throw new Error("Invalid parent element");
 
-initParent({
-  parent,
-  getValues: () => state.playingCards,
-  setValues: (newValues) => {
-    state.playingCards = newValues;
-  },
-});
+//initParent({
+//  parent,
+//  getValues: () => state.playingCards,
+//  setValues: (newValues) => {
+//    state.playingCards = newValues;
+//  },
+//});

@@ -9,6 +9,11 @@ export function getEl(parent: HTMLElement | ReactElement): HTMLElement | void {
   if (parent instanceof HTMLElement) return parent;
   else if ("current" in parent && parent.current instanceof HTMLElement)
     return parent.current;
+  else {
+    console.warn("Invalid parent element", parent);
+
+    return;
+  }
 }
 
 export function handleReactElements(

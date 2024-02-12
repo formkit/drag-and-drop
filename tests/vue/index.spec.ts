@@ -49,4 +49,45 @@ test.describe("Vue wrapper correctly inits parent", async () => {
       "queen_of_spades 10_of_clubs jack_of_hearts"
     );
   });
+
+  test.only("Iniit parent by passing in a Vue ref directly to `dragAndDrop` function.", async () => {
+    const listitems = page.locator("#vue_2 .item");
+    for (let i = 0; i < (await listitems.count()); i++) {
+      await expect(listitems.nth(i)).toHaveAttribute("draggable", "true");
+    }
+    await dragDrop(page, {
+      origin: "#vue_2_10_of_clubs",
+      destination: "#vue_2_jack_of_hearts",
+      dragStart: true,
+      drop: false,
+    });
+    await expect(page.locator("#vue_2_values")).toHaveText(
+      "jack_of_hearts 10_of_clubs queen_of_spades"
+    );
+    await dragDrop(page, {
+      destination: "#vue_2_queen_of_spades",
+      dragStart: false,
+      drop: true,
+    });
+    await expect(page.locator("#vue_2_values")).toHaveText(
+      "jack_of_hearts queen_of_spades 10_of_clubs"
+    );
+    await dragDrop(page, {
+      origin: "#vue_2_jack_of_hearts",
+      destination: "#vue_2_queen_of_spades",
+      dragStart: true,
+      drop: false,
+    });
+    await expect(page.locator("#vue_2_values")).toHaveText(
+      "queen_of_spades jack_of_hearts 10_of_clubs"
+    );
+    await dragDrop(page, {
+      destination: "#vue_2_10_of_clubs",
+      dragStart: false,
+      drop: true,
+    });
+    await expect(page.locator("#vue_2_values")).toHaveText(
+      "queen_of_spades 10_of_clubs jack_of_hearts"
+    );
+  });
 });

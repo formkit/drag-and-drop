@@ -32,6 +32,8 @@ function setValues(newValues: Array<any>, parent: HTMLElement): void {
   const values = parentValues.get(parent);
 
   if (values) values[1](newValues);
+
+  parentValues.set(parent, [newValues, values![1]]);
 }
 
 /**

@@ -37,7 +37,7 @@ function Test1(props: { id: string; testDescription: string }) {
       parent: el,
       values: [values, setValues],
     });
-  });
+  }, []);
 
   return (
     <>
