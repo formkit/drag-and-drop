@@ -1,4 +1,4 @@
-export interface InitParent {
+export interface DragAndDrop {
   parent: HTMLElement;
   getValues: (parent: HTMLElement) => Array<any>;
   setValues: (values: Array<any>, parent: HTMLElement) => void;

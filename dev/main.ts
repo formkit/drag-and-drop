@@ -1,6 +1,6 @@
 import { reactive, html } from "https://esm.sh/@arrow-js/core";
 
-import { initParent } from "../src/index";
+import { dragAndDrop } from "../src/index";
 
 const state = reactive({
   playingCards: [
@@ -40,7 +40,7 @@ const parent = document.getElementById("vanilla_1");
 
 if (!(parent instanceof HTMLElement)) throw new Error("Invalid parent element");
 
-initParent({
+dragAndDrop({
   parent,
   getValues: () => state.playingCards,
   setValues: (newValues) => {

@@ -2,7 +2,7 @@ import type { Ref } from "vue";
 
 import type { VueDragAndDropData, VueParentConfig } from "./types";
 
-import { initParent } from "../index";
+import { dragAndDrop as initParent } from "../index";
 
 import { isBrowser } from "../utils";
 

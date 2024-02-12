@@ -1,5 +1,5 @@
 import type {
-  InitParent,
+  DragAndDrop,
   Node,
   DNDPlugin,
   NodeEventData,
@@ -175,12 +175,12 @@ export function dragValues(state: DragState | TouchState): Array<any> | any {
  * @returns void
  *
  */
-export function initParent({
+export function dragAndDrop({
   parent,
   getValues,
   setValues,
   config = {},
-}: InitParent): void {
+}: DragAndDrop): void {
   if (!isBrowser) return;
 
   document.addEventListener("dragover", (e) => {
