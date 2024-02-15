@@ -396,7 +396,6 @@ export function remapNodes(parent: HTMLElement) {
 }
 
 export function remapFinished() {
-  console.log("Remap finished.");
   if (state) {
     state.preventEnter = false;
     state.swappedNodeValue = undefined;
