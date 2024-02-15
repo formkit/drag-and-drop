@@ -19,8 +19,10 @@ import vueLogo from "/vuejs-icon.svg";
       <div class="divider"></div>
       <Test2
         id="vue_2"
-        test-description="Init parent bsy passing in a Vue ref directly to `dragAndDrop` function."
+        test-description="Init parent by passing in a Vue ref directly to `dragAndDrop` function."
       />
+      <div class="divider"></div>
+      <Test2 id="vue_3" test-description="Testing touch events." />
     </div>
   </div>
 </template>
