@@ -396,7 +396,11 @@ export function remapNodes(parent: HTMLElement) {
 }
 
 export function remapFinished() {
-  if (state) state.preventEnter = false;
+  console.log("Remap finished.");
+  if (state) {
+    state.preventEnter = false;
+    state.swappedNodeValue = undefined;
+  }
 }
 
 export function handleDragstart(data: NodeEventData) {

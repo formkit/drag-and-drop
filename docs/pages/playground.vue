@@ -34,11 +34,7 @@ onMounted(() => {
     draggable: (child: HTMLElement) => {
       return child.classList.contains("item");
     },
-    plugins: [
-      animations({
-        duration: 200,
-      }),
-    ],
+    plugins: [],
   });
 
   dragAndDrop({
@@ -49,15 +45,7 @@ onMounted(() => {
     draggable: (child: HTMLElement) => {
       return child.classList.contains("item");
     },
-    plugins: [
-      animations({}),
-      multiDrag({
-        dropZoneClass: "opacity",
-        selections: () => {
-          return ["Pear"];
-        },
-      }),
-    ],
+    plugins: [],
   });
 
   dragAndDrop({
