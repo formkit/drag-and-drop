@@ -1,6 +1,6 @@
 {
   "name": "@formkit/drag-and-drop",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "private": true,
   "description": "Drag and drop package.",
   "main": "./index.cjs",
@@ -11,7 +11,7 @@
     "docs": "cd docs && pnpm run dev",
     "dev": "cd dev && pnpm run dev",
     "build": "jiti build.ts",
-    "release": "npx bumpp --no-tag --no-push --no-commit && pnpm run build && cd dist && npx publint && pnpm publish",
+    "release": "npx bumpp --no-tag --no-push --no-commit && pnpm run build && cd dist && npx publint && pnpm publish --no-git-checks",
     "lint": "eslint ."
   },
   "packages": [],
