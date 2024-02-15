@@ -11,7 +11,7 @@
     "docs": "cd docs && pnpm run dev",
     "dev": "cd dev && pnpm run dev",
     "build": "jiti build.ts",
-    "release": "npx bumpp --no-tag --no-push --no-commit && pnpm run build && cd dist && npx publint && pnpm publish && git push origin --tags",
+    "release": "npx bumpp --no-tag --no-push --no-commit && pnpm run build && cd dist && npx publint && pnpm publish",
     "lint": "eslint ."
   },
   "packages": [],
@@ -60,8 +60,5 @@
         "default": "./index.mjs"
       }
     }
-  },
-  "files": [
-    "dist"
-  ]
+  }
 }
