@@ -36,7 +36,7 @@ const __dirname = dirname(__filename);
   await build({
     entry: ["src/react/index.ts"],
     format: ["cjs", "esm"],
-    external: ["react", "react-dom"],
+    external: ["react", "react-dom", "../index", "../utils"],
     splitting: false,
     sourcemap: true,
     clean: true,
