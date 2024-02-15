@@ -26,6 +26,14 @@ pnpm install @formkit/drag-and-drop
 
 # 🕹 Usage
 
+Features:
+
+## Reactive framework wrappers
+
 ## Multi-drag
+
+## Drag handles
+
+## Written in TypeScript
 
 ## Animations
