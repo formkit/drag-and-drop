@@ -38,12 +38,6 @@ onMounted(() => {
       animations({
         duration: 200,
       }),
-      multiDrag({
-        dropZoneClass: "opacity",
-        selections: () => {
-          return ["Apple"];
-        },
-      }),
     ],
   });
 
@@ -209,6 +203,7 @@ let showFirstList = ref(true);
 
 .item {
   border: 1px solid white;
+  height: 10em;
 }
 
 .item.active .content {
@@ -220,6 +215,7 @@ let showFirstList = ref(true);
   padding: 1em;
   text-align: center;
   color: white;
+  height: 100%;
   display: flex;
 }
 

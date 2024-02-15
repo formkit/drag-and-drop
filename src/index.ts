@@ -77,7 +77,6 @@ export function setDragState(dragStateProps: DragStateProps): DragState {
     preventEnter: false,
     clonedDraggedEls: [],
     swappedNodeValue: false,
-    preventSortValue: undefined,
     originalZIndex: undefined,
     ...dragStateProps,
   } as DragState;
@@ -207,6 +206,7 @@ export function dragAndDrop({
       setupNode,
       reapplyDragClasses,
       tearDownNode,
+      remapFinished,
       threshold: {
         horizontal: 0,
         vertical: 0,
@@ -387,12 +387,15 @@ export function remapNodes(parent: HTMLElement) {
 
       if (draggedNode) draggedNode.el = node;
     }
-
     config.setupNode({ node, parent, parentData, nodeData });
   }
 
   parents.set(parent, { ...parentData, enabledNodes });
 
+  config.remapFinished(parentData);
+}
+
+export function remapFinished() {
   if (state) state.preventEnter = false;
 }
 
@@ -538,8 +541,6 @@ export function setupNode(data: SetupNodeData) {
   });
 
   config.reapplyDragClasses(data.node, data.parentData);
-
-  if (!state) return;
 }
 
 function reapplyDragClasses(node: Node, parentData: ParentData) {
@@ -886,7 +887,7 @@ export function validateSort(
 
   if (state.preventEnter) return false;
 
-  if (state.preventSortValue === data.targetData.node.data.value) return false;
+  if (state.swappedNodeValue === data.targetData.node.data.value) return false;
 
   if (data.targetData.parent.el !== state.lastParent?.el) return false;
 

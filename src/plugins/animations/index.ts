@@ -2,25 +2,33 @@ import type { SetupNodeData, Node } from "../../types";
 
 import type { AnimationsConfig } from "./types";
 
-import { state } from "../../index";
+import { state, parents } from "../../index";
 
 export function animations(animationsConfig: AnimationsConfig = {}) {
-  return () => {
+  return (parent: HTMLElement) => {
+    const parentData = parents.get(parent);
+
+    if (!parentData) return;
+
     return {
       setupParent() {
+        parentData.config.remapFinished = () => {};
+
         const style = document.createElement("style");
 
         if (document.head.querySelector("[data-drag-and-drop]")) return;
 
+        const duration = (animationsConfig.duration || 100) / 1000;
+
         style.innerHTML = `
           .drag-and-drop-slide-up {
             animation-name: slideUp;
-            animation-duration: ${(animationsConfig.duration || 200) / 1000}s;
+            animation-duration: ${duration}s;
           }
 
           @keyframes slideUp {
             from {
-              transform: translateY(100%);
+              transform: translateY(50%);
             }
             to {
               transform: translateY(0);
@@ -29,12 +37,12 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
 
           .drag-and-drop-slide-down {
             animation-name: slideDown;
-            animation-duration: ${(animationsConfig.duration || 200) / 1000}s;
+            animation-duration: ${duration}s;
           }
 
           @keyframes slideDown {
             from {
-              transform: translateY(-100%);
+              transform: translateY(-50%);
             }
             to {
               transform: translateY(0%);
@@ -43,12 +51,12 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
 
           .drag-and-drop-slide-left {
             animation-name: slideLeft;
-            animation-duration: ${(animationsConfig.duration || 200) / 1000}s;
+            animation-duration: ${duration}s;
           }
 
           @keyframes slideLeft {
             from {
-              transform: translateX(100%);
+              transform: translateX(50%);
             }
             to {
               transform: translateX(0%);
@@ -57,12 +65,12 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
 
           .drag-and-drop-slide-right {
             animation-name: slideRight;
-            animation-duration: ${(animationsConfig.duration || 200) / 1000}s;
+            animation-duration: ${duration}s;
           }
 
           @keyframes slideRight {
             from {
-              transform: translateX(-100%);
+              transform: translateX(-50%);
             }
             to {
               transform: translateX(0);
@@ -82,9 +90,12 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
 
         const nodeValue = data.nodeData.value;
 
-        if (nodeValue !== state.swappedNodeValue) return;
+        // I will return in the nodevalue is not that of the swapped node
+        if (nodeValue !== state.swappedNodeValue) {
+          return;
+        }
 
-        state.preventSortValue = nodeValue;
+        //state.preventSortValue = nodeValue;
 
         switch (state.incomingDirection) {
           case "below":
@@ -143,10 +154,12 @@ function setClasses(
   setTimeout(() => {
     if (!state) return;
 
-    state.preventSortValue = undefined;
+    state.swappedNodeValue = undefined;
 
     draggedNode.classList.remove(draggedNodeClass);
 
     node.classList.remove(nodeClass);
+
+    state.preventEnter = false;
   }, duration);
 }
