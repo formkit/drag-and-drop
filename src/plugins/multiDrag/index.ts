@@ -8,9 +8,7 @@ import type {
   NodeDragEventData,
   NodeTouchEventData,
 } from "../../types";
-
 import type { MultiDragConfig } from "./types";
-
 import {
   parents,
   nodes,
@@ -24,7 +22,6 @@ import {
   state,
   resetState,
 } from "../../index";
-
 import { addClass, removeClass, copyNodeStyle, splitClass } from "../../utils";
 
 export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {

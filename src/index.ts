@@ -23,7 +23,6 @@ import type {
   NodeDragEventData,
   NodeTouchEventData,
 } from "./types";
-
 import {
   isBrowser,
   addClass,
@@ -36,13 +35,9 @@ import {
   eventCoordinates,
   splitClass,
 } from "./utils";
-
 export { isBrowser };
-
 export * from "./types";
-
 export { multiDrag } from "./plugins/multiDrag";
-
 export { animations } from "./plugins/animations";
 
 export const nodes: NodesData = new WeakMap<Node, NodeData>();
