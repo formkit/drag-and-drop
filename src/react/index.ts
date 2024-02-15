@@ -1,8 +1,6 @@
 import type { ReactDragAndDropData, ReactParentConfig } from "./types";
 
-import { dragAndDrop as initParent } from "../index";
-
-import { isBrowser } from "../utils";
+import { dragAndDrop as initParent, isBrowser } from "../index";
 
 import { handleReactElements } from "./utils";
 

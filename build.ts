@@ -48,7 +48,10 @@ const __dirname = dirname(__filename);
   async function replaceImports(fileName) {
     const format = fileName.endsWith("mjs") ? "mjs" : "cjs";
     const file = await readFile(resolve(__dirname, `${fileName}`), "utf8");
-    const updatedFile = file.replace(/\.\.\/(index|utils)/g, `../$1.${format}`);
+    const updatedFile = file.replace(
+      /\.\.\/(index|utils)/g,
+      `../index.${format}`
+    );
     await writeFile(resolve(__dirname, `${fileName}`), updatedFile, "utf8");
   }
 

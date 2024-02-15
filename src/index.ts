@@ -37,6 +37,8 @@ import {
   splitClass,
 } from "./utils";
 
+export { isBrowser };
+
 export * from "./types";
 
 export { multiDrag } from "./plugins/multiDrag";
