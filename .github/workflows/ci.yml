@@ -36,7 +36,7 @@ jobs:
       - name: Build Nuxt
         run: cd docs && pnpm install && cd ..
       - name: Install Playwright
-        run: pnpm exec playwright install chromium
+        run: pnpm exec playwright install
       - name: Spin up dev
         run: pnpm dev &
       - name: Run Playwright tests
