@@ -53,10 +53,6 @@ export function dragAndDrop(
     const { parent, values, ...rest } = dnd;
 
     handleReactElements(parent, handleParent(rest, values));
-
-    //parentValues.set(dnd.parent, dnd.values);
-
-    //initParent({ parent: dnd.parent, getValues, setValues, config: {} });
   });
 }
 

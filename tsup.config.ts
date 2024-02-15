@@ -7,4 +7,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   dts: true,
+  outExtension: ({ format }) => ({ js: format === "cjs" ? ".cjs" : ".mjs" }),
 });

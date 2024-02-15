@@ -2,8 +2,8 @@
   "name": "@formkit/drag-and-drop",
   "version": "0.0.11",
   "description": "Drag and drop package.",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
   "type": "module",
   "scripts": {
     "test": "npx playwright test vue",
@@ -21,16 +21,20 @@
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "bumpp": "^9.2.0",
     "eslint": "^8.55.0",
-    "publint": "^0.2.6",
+    "publint": "^0.2.7",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3"
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "default": "./dist/index.js"
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      },
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      }
     }
   },
   "files": [
