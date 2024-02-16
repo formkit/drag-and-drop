@@ -3,7 +3,6 @@ import { dragAndDrop } from "@formkit/drag-and-drop/vue";
 import { animations } from "@formkit/drag-and-drop";
 
 const dragList = ref(null);
-
 const features = ref([
   {
     title: "Declarative",
