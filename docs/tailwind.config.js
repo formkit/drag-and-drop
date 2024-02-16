@@ -9,7 +9,12 @@ module.exports = {
     "./error.vue",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        display: ["Permanent Marker", "cursive"],
+        sans: ["Rubik", "ui-sans-serif", "sans-serif"],
+      },
+    },
   },
   plugins: [],
 };
