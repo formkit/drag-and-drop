@@ -525,7 +525,7 @@ export function setupNode(data: SetupNodeData) {
 
   const config = data.parentData.config;
 
-  data.node.setAttribute("draggable", "true");
+  data.node.draggable = true;
 
   data.nodeData.abortControllers.mainNode = addEvents(data.node, {
     dragstart: nodeEventData(config.handleDragstart),
@@ -558,7 +558,7 @@ function reapplyDragClasses(node: Node, parentData: ParentData) {
 }
 
 export function tearDownNode(data: TearDownNodeData) {
-  data.node.setAttribute("draggable", "false");
+  data.node.draggable = false;
 
   if (data.nodeData?.abortControllers?.mainNode) {
     data.nodeData?.abortControllers?.mainNode.abort();
