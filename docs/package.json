@@ -9,15 +9,20 @@
     "postinstall": "nuxt prepare"
   },
   "devDependencies": {
-    "@formkit/auto-animate": "^0.8.0",
+    "@nuxtjs/color-mode": "^3.3.2",
+    "@nuxtjs/tailwindcss": "^6.11.2",
+    "@vueuse/nuxt": "^10.7.2",
     "@playwright/test": "^1.34.0",
     "@types/node": "^18",
-    "nuxt": "^3.5.1"
+    "nuxt": "^3.10.0",
+    "nuxt-fathom": "^0.0.1"
   },
   "dependencies": {
-    "@formkit/icons": "^1.1.0",
-    "@formkit/nuxt": "^1.1.0",
-    "@formkit/pro": "^0.115.10",
-    "@formkit/themes": "^1.1.0"
+    "@formkit/auto-animate": "^0.8.0",
+    "@formkit/drag-and-drop": "workspace:*",
+    "@formkit/icons": "^1.5.0",
+    "@formkit/nuxt": "^1.5.0",
+    "@formkit/pro": "^0.122.0",
+    "@formkit/themes": "^1.5.0"
   }
 }
