@@ -92,7 +92,7 @@ onMounted(() => {
           absolute
           -top-10
           -right-10
-          -rotate-90
+          -rotate-0
           w-48
           transition-all
           duration-500
