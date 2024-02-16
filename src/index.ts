@@ -237,8 +237,8 @@ function tearDownParent(parent: HTMLElement) {
 
   if (!parentData) return;
 
-  for (const event of Object.keys(parentData.abortControllers["mainParent"])) {
-    parentData.abortControllers["mainParent"][event].abort();
+  if (parentData.abortControllers.mainParent) {
+    parentData.abortControllers.mainParent.abort();
   }
 
   for (const node of Array.from(parent.children)) {
@@ -273,12 +273,10 @@ function setupParent(parent: HTMLElement, parentData: ParentData) {
 
   parents.set(parent, { ...parentData });
 
-  const abortControllers = addEvents(parent, {
+  parentData.abortControllers.mainParent = addEvents(parent, {
     dragover: parentEventData(parentData.config.handleDragoverParent),
     touchOverParent: parentData.config.handleTouchOverParent,
   });
-
-  parentData.abortControllers["mainParent"] = abortControllers;
 }
 
 function parentMutated(mutationList: MutationRecord[]) {
@@ -529,7 +527,7 @@ export function setupNode(data: SetupNodeData) {
 
   data.node.setAttribute("draggable", "true");
 
-  const abortControllers = addEvents(data.node, {
+  data.nodeData.abortControllers.mainNode = addEvents(data.node, {
     dragstart: nodeEventData(config.handleDragstart),
     dragover: nodeEventData(config.handleDragoverNode),
     dragend: nodeEventData(config.handleDragend),
@@ -538,8 +536,6 @@ export function setupNode(data: SetupNodeData) {
     touchend: nodeEventData(config.handleDragend),
     touchOverNode: config.handleTouchOverNode,
   });
-
-  data.nodeData.abortControllers["mainNode"] = abortControllers;
 
   data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
     plugin(data.parent)?.setupNode?.(data);
@@ -565,9 +561,7 @@ export function tearDownNode(data: TearDownNodeData) {
   data.node.setAttribute("draggable", "false");
 
   if (data.nodeData?.abortControllers?.mainNode) {
-    for (const event of Object.keys(data.nodeData.abortControllers.mainNode)) {
-      data.nodeData.abortControllers.mainNode[event].abort();
-    }
+    data.nodeData?.abortControllers?.mainNode.abort();
   }
 
   data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
