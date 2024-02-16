@@ -11,7 +11,91 @@ let thirdList = ref();
 let dropZone = ref(null);
 let dropZone2 = ref(null);
 
-let firstListValues = ref(["Apple", "Banana", "Orange"]);
+//let firstListValues = ref(["Apple", "Banana", "Orange"]);
+// list of countries
+let firstListValues = ref([
+  "Afghanistan",
+  "Albania",
+  "Algeria",
+  "Andorra",
+  "Angola",
+  "Antigua and Barbuda",
+  "Argentina",
+  "Armenia",
+  "Australia",
+  "Austria",
+  "Azerbaijan",
+  "Bahamas",
+  "Bahrain",
+  "Bangladesh",
+  "Barbados",
+  "Belarus",
+  "Belgium",
+  "Belize",
+  "Benin",
+  "Bhutan",
+  "Bolivia",
+  "Bosnia and Herzegovina",
+  "Botswana",
+  "Brazil",
+  "Brunei",
+  "Bulgaria",
+  "Burkina Faso",
+  "Burundi",
+  "Côte d'Ivoire",
+  "Cabo Verde",
+  "Cambodia",
+  "Cameroon",
+  "Canada",
+  "Central African Republic",
+  "Chad",
+  "Chile",
+  "China",
+  "Colombia",
+  "Comoros",
+  "Congo (Congo-Brazzaville)",
+  "Costa Rica",
+  "Croatia",
+  "Cuba",
+  "Cyprus",
+  "Czechia (Czech Republic)",
+  "Democratic Republic of the Congo",
+  "Denmark",
+  "Djibouti",
+  "Dominica",
+  "Dominican Republic",
+  "Ecuador",
+  "Egypt",
+  "El Salvador",
+  "Equatorial Guinea",
+  "Eritrea",
+  "Estonia",
+  "Eswatini (fmr. 'waziland')",
+  "Ethiopia",
+  "Fiji",
+  "Finland",
+  "France",
+  "Gabon",
+  "Gambia",
+  "Georgia",
+  "Germany",
+  "Ghana",
+  "Greece",
+  "Grenada",
+  "Guatemala",
+  "Guinea",
+  "Guinea-Bissau",
+  "Guyana",
+  "Haiti",
+  "Holy See",
+  "Honduras",
+  "Hungary",
+  "Iceland",
+  "India",
+  "Indonesia",
+  "Iran",
+  "Iraq",
+]);
 let secondListValues = ref(["Pear", "Peach", "Grape"]);
 let thirdListValues = ref(["Pineapple", "Kiwi", "Mango"]);
 
@@ -34,7 +118,7 @@ onMounted(() => {
     draggable: (child: HTMLElement) => {
       return child.classList.contains("item");
     },
-    plugins: [],
+    plugins: [animations()],
   });
 
   dragAndDrop({
@@ -191,7 +275,7 @@ let showFirstList = ref(true);
 
 .item {
   border: 1px solid white;
-  height: 10em;
+  /*height: 10em;*/
 }
 
 .item.active .content {
@@ -200,10 +284,10 @@ let showFirstList = ref(true);
 
 .content {
   background-color: teal;
-  padding: 1em;
+  /*padding: 1em;*/
   text-align: center;
   color: white;
-  height: 100%;
+  /*height: 100%;*/
   display: flex;
 }
 
