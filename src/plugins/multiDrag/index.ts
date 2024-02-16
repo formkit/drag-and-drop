@@ -7,14 +7,19 @@ import type {
   ParentData,
   NodeDragEventData,
   NodeTouchEventData,
+  SetupNodeData,
+  TearDownNodeData,
 } from "../../types";
 
-import type { MultiDragConfig } from "./types";
+import type {
+  MultiDragConfig,
+  MultiDragParentConfig,
+  MultiDragState,
+} from "./types";
 
 import {
   parents,
   nodes,
-  remapNodes,
   handleLongTouch,
   initDrag,
   initTouch,
@@ -27,31 +32,58 @@ import {
 
 import { addClass, removeClass, copyNodeStyle, splitClass } from "../../utils";
 
+export const multiDragState: MultiDragState = {
+  selectedNodes: Array<NodeRecord>(),
+
+  activeNode: undefined,
+};
+
 export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
   return (parent: HTMLElement) => {
     const parentData = parents.get(parent);
 
     if (!parentData) return;
 
+    const multiDragParentConfig = {
+      ...parentData.config,
+      multiDragConfig: multiDragConfig,
+    } as MultiDragParentConfig;
+
     return {
-      tearDownParent() {},
-
       setupParent() {
-        parentData.config.multiDragConfig = multiDragConfig;
-
-        parentData.config.handleDragstart =
+        multiDragParentConfig.handleDragstart =
           multiDragConfig.handleDragstart || handleDragstart;
 
-        parentData.config.handleTouchstart =
+        multiDragParentConfig.handleTouchstart =
           multiDragConfig.handleTouchstart || handleTouchstart;
 
-        parentData.config.handleDragend =
+        multiDragParentConfig.handleDragend =
           multiDragConfig.handleDragend || handleDragend;
 
-        parentData.config.reapplyDragClasses =
+        multiDragParentConfig.reapplyDragClasses =
           multiDragConfig.reapplyDragClasses || reapplyDragClasses;
 
-        remapNodes(parent);
+        parentData.config = multiDragParentConfig;
+
+        multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
+          plugin(parent)?.tearDownParent?.();
+        });
+
+        multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
+          plugin(parent)?.setupParent?.();
+        });
+      },
+
+      tearDownNode(data: TearDownNodeData) {
+        multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
+          plugin(data.parent)?.tearDownNode?.(data);
+        });
+      },
+
+      setupNode(data: SetupNodeData) {
+        multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
+          plugin(data.parent)?.setupNode?.(data);
+        });
       },
     };
   };
@@ -118,9 +150,14 @@ function dragstart(data: NodeDragEventData) {
 
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
 
-  const selectedValues =
-    multiDragConfig.selections &&
-    multiDragConfig.selections(data.targetData.parent.el);
+  let selectedValues =
+    multiDragState.selectedNodes.map((node) => node.data.value) ||
+    (multiDragConfig.selections &&
+      multiDragConfig.selections(data.targetData.parent.el));
+
+  if (!selectedValues.includes(data.targetData.node.data.value)) {
+    selectedValues = [data.targetData.node.data.value, ...selectedValues];
+  }
 
   const originalZIndex = data.targetData.node.el.style.zIndex;
 
@@ -191,18 +228,11 @@ export function handleSelections(
   y: number
 ) {
   for (const child of data.targetData.parent.data.enabledNodes) {
-    if (child === state.draggedNode.el) continue;
+    if (child.el === state.draggedNode.el) continue;
 
-    const childData = nodes.get(child);
+    if (!selectedValues.includes(child.data.value)) continue;
 
-    if (!childData) continue;
-
-    if (!selectedValues.includes(childData.value)) continue;
-
-    state.draggedNodes.push({
-      el: child,
-      data: childData,
-    });
+    state.draggedNodes.push(child);
   }
   const config = data.targetData.parent.data.config.multiDragConfig;
 
