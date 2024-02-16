@@ -14,7 +14,6 @@ import type { MultiDragConfig } from "./types";
 import {
   parents,
   nodes,
-  remapNodes,
   handleLongTouch,
   initDrag,
   initTouch,
@@ -50,8 +49,6 @@ export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
 
         parentData.config.reapplyDragClasses =
           multiDragConfig.reapplyDragClasses || reapplyDragClasses;
-
-        remapNodes(parent);
       },
     };
   };
@@ -119,8 +116,9 @@ function dragstart(data: NodeDragEventData) {
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
 
   const selectedValues =
-    multiDragConfig.selections &&
-    multiDragConfig.selections(data.targetData.parent.el);
+    dragState.selectedValues ||
+    (multiDragConfig.selections &&
+      multiDragConfig.selections(data.targetData.parent.el));
 
   const originalZIndex = data.targetData.node.el.style.zIndex;
 

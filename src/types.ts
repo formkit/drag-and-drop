@@ -228,11 +228,13 @@ export interface DragState extends DragStateProps {
   enterCount: number;
   preventEnter: boolean;
   lastValue: any;
+  activeNode: NodeRecord | undefined;
   draggedNode: NodeRecord;
   draggedNodes: Array<NodeRecord>;
   initialParent: ParentRecord;
   lastParent: ParentRecord;
   clonedDraggedEls: Array<Element>;
+  selectedValues: Array<any>;
   swappedNodeValue: any | undefined;
   originalZIndex: string | undefined;
   incomingDirection: "above" | "below" | "left" | "right" | undefined;

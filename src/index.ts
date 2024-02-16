@@ -45,6 +45,8 @@ export { multiDrag } from "./plugins/multiDrag";
 
 export { animations } from "./plugins/animations";
 
+export { selections } from "./plugins/selections";
+
 export const nodes: NodesData = new WeakMap<Node, NodeData>();
 
 export const parents: ParentsData = new WeakMap<HTMLElement, ParentData>();
@@ -76,8 +78,10 @@ export function setDragState(dragStateProps: DragStateProps): DragState {
     incomingDirection: undefined,
     enterCount: 0,
     lastValue: undefined,
+    activeNode: undefined,
     preventEnter: false,
     clonedDraggedEls: [],
+    selectedValues: [],
     swappedNodeValue: false,
     originalZIndex: undefined,
     ...dragStateProps,
@@ -225,11 +229,11 @@ export function dragAndDrop({
     plugin(parent)?.tearDownParent?.();
   });
 
-  remapNodes(parent);
-
   config.plugins?.forEach((plugin: DNDPlugin) => {
     plugin(parent)?.setupParent?.();
   });
+
+  remapNodes(parent);
 }
 
 function tearDownParent(parent: HTMLElement) {
