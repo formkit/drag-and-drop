@@ -67,7 +67,7 @@ export function dragAndDrop<ListItem>(
  */
 export function useDragAndDrop<ListItem>(
   list: ListItem[],
-  options: Partial<ParentConfig>
+  options: Partial<ParentConfig> = {}
 ): [
   MutableRefObject<HTMLElement | null>,
   ListItem[],
