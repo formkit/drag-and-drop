@@ -63,6 +63,8 @@ export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
         multiDragParentConfig.reapplyDragClasses =
           multiDragConfig.reapplyDragClasses || reapplyDragClasses;
 
+        parentData.config = multiDragParentConfig;
+
         multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
           plugin(parent)?.tearDownParent?.();
         });
@@ -148,10 +150,14 @@ function dragstart(data: NodeDragEventData) {
 
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
 
-  const selectedValues =
-    selectedNodes.map((node) => node.data.value) ||
+  let selectedValues =
+    multiDragState.selectedNodes.map((node) => node.data.value) ||
     (multiDragConfig.selections &&
       multiDragConfig.selections(data.targetData.parent.el));
+
+  if (!selectedValues.includes(data.targetData.node.data.value)) {
+    selectedValues = [data.targetData.node.data.value, ...selectedValues];
+  }
 
   const originalZIndex = data.targetData.node.el.style.zIndex;
 
@@ -222,18 +228,11 @@ export function handleSelections(
   y: number
 ) {
   for (const child of data.targetData.parent.data.enabledNodes) {
-    if (child === state.draggedNode.el) continue;
+    if (child.el === state.draggedNode.el) continue;
 
-    const childData = nodes.get(child);
+    if (!selectedValues.includes(child.data.value)) continue;
 
-    if (!childData) continue;
-
-    if (!selectedValues.includes(childData.value)) continue;
-
-    state.draggedNodes.push({
-      el: child,
-      data: childData,
-    });
+    state.draggedNodes.push(child);
   }
   const config = data.targetData.parent.data.config.multiDragConfig;
 
