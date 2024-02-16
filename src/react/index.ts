@@ -1,6 +1,6 @@
 import type { ReactDragAndDropConfig } from "./types";
 import type { ParentConfig } from "../types";
-import type { Dispatch, SetStateAction, MutableRefObject } from "react";
+import type { Dispatch, SetStateAction, RefObject } from "react";
 import { useRef, useEffect, useState } from "react";
 import { dragAndDrop as initParent, isBrowser } from "../index";
 import { handleReactElements } from "./utils";
@@ -29,8 +29,8 @@ function setValues(newValues: Array<unknown>, parent: HTMLElement): void {
   parentValues.set(parent, [newValues, values![1]]);
 }
 
-function handleParent<ListItem>(
-  config: Partial<ReactDragAndDropConfig<ListItem[]>>,
+function handleParent<E extends RefObject<HTMLElement | null>, ListItem>(
+  config: Partial<ReactDragAndDropConfig<E, ListItem[]>>,
   values: [Array<any>, React.Dispatch<React.SetStateAction<Array<any>>>]
 ) {
   return (el: HTMLElement) => {
@@ -45,10 +45,10 @@ function handleParent<ListItem>(
  * @param data - The drag and drop configuration.
  * @returns void
  */
-export function dragAndDrop<ListItem>(
+export function dragAndDrop<E extends HTMLElement, I>(
   data:
-    | ReactDragAndDropConfig<ListItem[]>
-    | Array<ReactDragAndDropConfig<ListItem[]>>
+    | ReactDragAndDropConfig<RefObject<E | null>, I[]>
+    | Array<ReactDragAndDropConfig<RefObject<E | null>, I[]>>
 ): void {
   if (!isBrowser) return;
   if (!Array.isArray(data)) data = [data];
@@ -65,20 +65,16 @@ export function dragAndDrop<ListItem>(
  * @param options - The drag and drop configuration.
  * @returns
  */
-export function useDragAndDrop<ListItem>(
-  list: ListItem[],
+export function useDragAndDrop<E extends HTMLElement, I = unknown>(
+  list: I[],
   options: Partial<ParentConfig> = {}
-): [
-  MutableRefObject<HTMLElement | null>,
-  ListItem[],
-  Dispatch<SetStateAction<ListItem[]>>
-] {
-  const parent: MutableRefObject<HTMLElement | null> = useRef(null);
+): [RefObject<E>, I[], Dispatch<SetStateAction<I[]>>] {
+  const parent: RefObject<E> = useRef<E>(null);
   const [values, setValues] = useState(list);
-  dragAndDrop<ListItem>({ parent, state: [values, setValues], ...options });
 
   useEffect(() => {
     dragAndDrop({ parent, state: [values, setValues], ...options });
-  }, []);
+  }, [parent.current]);
+
   return [parent, values, setValues];
 }
