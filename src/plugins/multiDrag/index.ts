@@ -19,7 +19,6 @@ import type {
 
 import {
   parents,
-  nodes,
   handleLongTouch,
   initDrag,
   initTouch,
