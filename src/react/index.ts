@@ -43,7 +43,6 @@ function handleParent<ListItem>(
  * Entry point for React drag and drop.
  *
  * @param data - The drag and drop configuration.
- *
  * @returns void
  */
 export function dragAndDrop<ListItem>(
@@ -60,8 +59,10 @@ export function dragAndDrop<ListItem>(
 }
 
 /**
+ * Hook for adding drag and drop/sortable support to a list of items.
  *
  * @param list - Initial list of data.
+ * @param options - The drag and drop configuration.
  * @returns
  */
 export function useDragAndDrop<ListItem>(
