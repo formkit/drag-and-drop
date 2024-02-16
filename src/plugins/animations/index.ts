@@ -104,7 +104,7 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
               state.draggedNode.el,
               "drag-and-drop-slide-down",
               "drag-and-drop-slide-up",
-              animationsConfig.duration || 200
+              animationsConfig.duration || 100
             );
             break;
           case "above":
@@ -113,7 +113,7 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
               state.draggedNode.el,
               "drag-and-drop-slide-up",
               "drag-and-drop-slide-down",
-              animationsConfig.duration || 200
+              animationsConfig.duration || 100
             );
             break;
           case "left":
@@ -122,7 +122,7 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
               state.draggedNode.el,
               "drag-and-drop-slide-left",
               "drag-and-drop-slide-right",
-              animationsConfig.duration || 200
+              animationsConfig.duration || 100
             );
             break;
           case "right":
@@ -131,7 +131,7 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
               state.draggedNode.el,
               "drag-and-drop-slide-right",
               "drag-and-drop-slide-left",
-              animationsConfig.duration || 200
+              animationsConfig.duration || 100
             );
             break;
         }
