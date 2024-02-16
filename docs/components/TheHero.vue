@@ -2,8 +2,6 @@
 import { dragAndDrop } from "@formkit/drag-and-drop/vue";
 
 const dragList = ref(null);
-<<<<<<< HEAD
-=======
 const showHand = ref(true);
 const showTitle = ref(false);
 const openHand = ref(false);
@@ -11,7 +9,6 @@ const exitHand = ref(false);
 const showHeadline = ref(false);
 const showDemo = ref(false);
 
->>>>>>> 57e79820addd34ee5524e563f313a5d3d2c8e178
 const features = ref([
   {
     title: "Declarative",
@@ -76,9 +73,9 @@ onMounted(() => {
       :data-show="showTitle"
       :class="`
       relative
-      font-display 
-      text-[10em] 
-      text-emerald-500 
+      font-display
+      text-[10em]
+      text-emerald-500
       mb-24
       transition-all
       duration-1000
