@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { dragAndDrop } from "@formkit/drag-and-drop/vue";
+import { animations } from "@formkit/drag-and-drop";
 
 const dragList = ref(null);
+
 const features = ref([
   {
     title: "Declarative",
@@ -32,7 +34,12 @@ const features = ref([
 dragAndDrop({
   parent: dragList,
   values: features,
-  dropZoneClass: "blur-[2px] opacity-50",
+  dropZoneClass: "opacity-50",
+  plugins: [
+    animations({
+      duration: 200,
+    }),
+  ],
 });
 </script>
 
