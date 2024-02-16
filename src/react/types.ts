@@ -4,9 +4,8 @@ export type ReactElement =
   | HTMLElement
   | React.MutableRefObject<HTMLElement | null>;
 
-export interface ReactDragAndDropData extends ReactParentConfig {
+export interface ReactDragAndDropConfig<ListItems extends unknown[]>
+  extends Partial<ParentConfig> {
   parent: ReactElement;
-  values: [Array<any>, React.Dispatch<React.SetStateAction<Array<any>>>];
+  state: [ListItems, React.Dispatch<React.SetStateAction<ListItems>>];
 }
-
-export type ReactParentConfig = Partial<ParentConfig>;
