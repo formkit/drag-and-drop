@@ -1,4 +1,5 @@
 import type { ReactDragAndDropData, ReactParentConfig } from "./types";
+import { useRef, useEffect } from "react";
 import { dragAndDrop as initParent, isBrowser } from "../index";
 import { handleReactElements } from "./utils";
 export * from "./types";
@@ -31,6 +32,17 @@ function setValues(newValues: Array<any>, parent: HTMLElement): void {
   parentValues.set(parent, [newValues, values![1]]);
 }
 
+function handleParent(
+  config: Partial<ReactParentConfig>,
+  values: [Array<any>, React.Dispatch<React.SetStateAction<Array<any>>>]
+) {
+  return (el: HTMLElement) => {
+    parentValues.set(el, values);
+
+    initParent({ parent: el, getValues, setValues, config });
+  };
+}
+
 /**
  * Entry point for React drag and drop.
  *
@@ -51,13 +63,9 @@ export function dragAndDrop(
   });
 }
 
-function handleParent(
-  config: Partial<ReactParentConfig>,
-  values: [Array<any>, React.Dispatch<React.SetStateAction<Array<any>>>]
-) {
-  return (el: HTMLElement) => {
-    parentValues.set(el, values);
-
-    initParent({ parent: el, getValues, setValues, config });
-  };
-}
+// export function useDragAndDrop(): [] {
+//   const parent = useRef(null);
+//   const [list];
+//   useEffect(() => {});
+//   return [parent];
+// }
