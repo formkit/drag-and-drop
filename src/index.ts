@@ -750,6 +750,7 @@ function moveTouchedNode(data: NodeTouchEventData, touchState: TouchState) {
 
   const windowHeight = window.innerHeight + window.scrollY;
 
+  // TODO: Make this more dynamic.
   if (y > windowHeight - 50) {
     window.scrollBy(0, 10);
   } else if (y < window.scrollY + 50) {
