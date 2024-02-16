@@ -22,6 +22,7 @@ import type {
   TouchOverParentEvent,
   NodeDragEventData,
   NodeTouchEventData,
+  NodeRecord,
 } from "./types";
 
 import {
@@ -45,7 +46,7 @@ export { multiDrag } from "./plugins/multiDrag";
 
 export { animations } from "./plugins/animations";
 
-export { selections } from "./plugins/selections";
+export { selections } from "./plugins/multiDrag/plugins/selections";
 
 export const nodes: NodesData = new WeakMap<Node, NodeData>();
 
@@ -81,7 +82,6 @@ export function setDragState(dragStateProps: DragStateProps): DragState {
     activeNode: undefined,
     preventEnter: false,
     clonedDraggedEls: [],
-    selectedValues: [],
     swappedNodeValue: false,
     originalZIndex: undefined,
     ...dragStateProps,
@@ -295,7 +295,10 @@ function parentMutated(mutationList: MutationRecord[]) {
       if (!parentData) continue;
 
       for (const node of Array.from(removedNode.childNodes)) {
-        if (isNode(node) && parentData.enabledNodes.includes(node)) {
+        if (
+          isNode(node) &&
+          parentData.enabledNodes.map((x) => x.el).includes(node)
+        ) {
           nodes.delete(node);
         }
       }
@@ -350,8 +353,9 @@ export function remapNodes(parent: HTMLElement) {
 
     if (config.disabled) return;
 
-    if (!config.draggable || (config.draggable && config.draggable(node)))
+    if (!config.draggable || (config.draggable && config.draggable(node))) {
       enabledNodes.push(node);
+    }
   }
 
   if (
@@ -366,6 +370,8 @@ export function remapNodes(parent: HTMLElement) {
   }
 
   const values = parentData.getValues(parent);
+
+  const enabledNodeRecords: Array<NodeRecord> = [];
 
   for (let x = 0; x < enabledNodes.length; x++) {
     const node = enabledNodes[x];
@@ -393,10 +399,20 @@ export function remapNodes(parent: HTMLElement) {
 
       if (draggedNode) draggedNode.el = node;
     }
-    config.setupNode({ node, parent, parentData, nodeData });
+    config.setupNode({
+      node: node,
+      parent,
+      parentData,
+      nodeData: nodeData,
+    });
+
+    enabledNodeRecords.push({
+      el: node,
+      data: nodeData,
+    });
   }
 
-  parents.set(parent, { ...parentData, enabledNodes });
+  parents.set(parent, { ...parentData, enabledNodes: enabledNodeRecords });
 
   config.remapFinished(parentData);
 }

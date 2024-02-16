@@ -7,9 +7,15 @@ import type {
   ParentData,
   NodeDragEventData,
   NodeTouchEventData,
+  SetupNodeData,
+  TearDownNodeData,
 } from "../../types";
 
-import type { MultiDragConfig } from "./types";
+import type {
+  MultiDragConfig,
+  MultiDragParentConfig,
+  MultiDragState,
+} from "./types";
 
 import {
   parents,
@@ -26,29 +32,56 @@ import {
 
 import { addClass, removeClass, copyNodeStyle, splitClass } from "../../utils";
 
+export const multiDragState: MultiDragState = {
+  selectedNodes: Array<NodeRecord>(),
+
+  activeNode: undefined,
+};
+
 export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
   return (parent: HTMLElement) => {
     const parentData = parents.get(parent);
 
     if (!parentData) return;
 
+    const multiDragParentConfig = {
+      ...parentData.config,
+      multiDragConfig: multiDragConfig,
+    } as MultiDragParentConfig;
+
     return {
-      tearDownParent() {},
-
       setupParent() {
-        parentData.config.multiDragConfig = multiDragConfig;
-
-        parentData.config.handleDragstart =
+        multiDragParentConfig.handleDragstart =
           multiDragConfig.handleDragstart || handleDragstart;
 
-        parentData.config.handleTouchstart =
+        multiDragParentConfig.handleTouchstart =
           multiDragConfig.handleTouchstart || handleTouchstart;
 
-        parentData.config.handleDragend =
+        multiDragParentConfig.handleDragend =
           multiDragConfig.handleDragend || handleDragend;
 
-        parentData.config.reapplyDragClasses =
+        multiDragParentConfig.reapplyDragClasses =
           multiDragConfig.reapplyDragClasses || reapplyDragClasses;
+
+        multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
+          plugin(parent)?.tearDownParent?.();
+        });
+
+        multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
+          plugin(parent)?.setupParent?.();
+        });
+      },
+
+      tearDownNode(data: TearDownNodeData) {
+        multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
+          plugin(data.parent)?.tearDownNode?.(data);
+        });
+      },
+
+      setupNode(data: SetupNodeData) {
+        multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
+          plugin(data.parent)?.setupNode?.(data);
+        });
       },
     };
   };
@@ -116,7 +149,7 @@ function dragstart(data: NodeDragEventData) {
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
 
   const selectedValues =
-    dragState.selectedValues ||
+    selectedNodes.map((node) => node.data.value) ||
     (multiDragConfig.selections &&
       multiDragConfig.selections(data.targetData.parent.el));
 

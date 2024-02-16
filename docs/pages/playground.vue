@@ -116,31 +116,27 @@ onMounted(() => {
     values: firstListValues,
     dropZoneClass: "opacity",
     group: "group a",
+    dragImage: false,
     draggable: (child: HTMLElement) => {
       return child.classList.contains("item");
     },
-    plugins: [
-      multiDrag({
-        dropZoneClass: "opacity",
-      }),
-      selections(),
-    ],
+    plugins: [multiDrag({})],
   });
 
-  dragAndDrop({
-    parent: secondList,
-    values: secondListValues,
-    dropZoneClass: "opacity",
-    group: "group a",
-    draggable: (child: HTMLElement) => {
-      return child.classList.contains("item");
-    },
-    plugins: [
-      multiDrag({
-        dropZoneClass: "opacity",
-      }),
-    ],
-  });
+  //dragAndDrop({
+  //  parent: secondList,
+  //  values: secondListValues,
+  //  dropZoneClass: "opacity",
+  //  group: "group a",
+  //  draggable: (child: HTMLElement) => {
+  //    return child.classList.contains("item");
+  //  },
+  //  plugins: [
+  //    multiDrag({
+  //      dropZoneClass: "opacity",
+  //    }),
+  //  ],
+  //});
 
   dragAndDrop({
     parent: thirdList,
