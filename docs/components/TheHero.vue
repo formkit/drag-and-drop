@@ -9,7 +9,7 @@ const features = ref([
   },
   {
     title: "Lightweight",
-    description: "Just 3kb min-gzip.",
+    description: "Just 3kb min-gzip. No dependencies.",
   },
   {
     title: "Modern",
@@ -32,6 +32,7 @@ const features = ref([
 dragAndDrop({
   parent: dragList,
   values: features,
+  draggingClass: "[&>.card]:-rotate-2 before:-rotate-2",
   dropZoneClass: "blur-[2px] opacity-50",
 });
 </script>
@@ -51,19 +52,51 @@ dragAndDrop({
 
   <ul
     ref="dragList"
-    class="features flex flex-wrap items-center justify-center mt-16 border border-emerald-500 border-dashed rounded-xl p-5"
+    class="features flex flex-wrap items-center justify-center mt-16 bg-emerald-400/10 border border-emerald-500 border-dashed rounded-xl p-5"
   >
     <li
       v-for="feature in features"
       :key="feature.title"
-      class="flex flex-col basis-[30%] items-center bg-white/70 border border-emerald-500 shadow-md p-5 rounded-lg m-2 cursor-grab active:cursor-grabbing active:shadow-xl active:select-none"
+      :class="`
+        relative
+        z-10
+        flex
+        flex-col
+        items-center
+        m-2
+        cursor-grab
+        active:cursor-grabbing
+        active:shadow-xl
+        active:select-none
+
+        before:absolute
+         before:z-[-1]
+         before:bg-pink-500
+        before:top-[3px]
+        before:-left-[3px]
+        before:w-full
+        before:h-full
+      `"
     >
-      <h2 class="text-xl font-semibold text-emerald-700 mb-1">
-        {{ feature.title }}
-      </h2>
-      <p class="text-sm text-center text-stone-500">
-        {{ feature.description }}
-      </p>
+      <div
+        :class="`
+        card
+    
+        p-5
+        w-full
+        bg-white
+        border-t
+        border-r
+        border-emerald-500
+      `"
+      >
+        <h2 class="text-xl font-semibold text-emerald-700 mb-1">
+          {{ feature.title }}
+        </h2>
+        <p class="text-sm text-center text-stone-500">
+          {{ feature.description }}
+        </p>
+      </div>
     </li>
   </ul>
 </template>
