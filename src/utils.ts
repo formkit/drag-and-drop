@@ -210,7 +210,7 @@ export function isNode(el: unknown): el is Node {
  * @returns - The abort controller used for the event listeners.
  */
 export function addEvents(
-  el: Node | HTMLElement,
+  el: Document | ShadowRoot | Node | HTMLElement,
   events: EventHandlers
 ): AbortControllers {
   const keysToControllers: AbortControllers = {};
@@ -220,6 +220,7 @@ export function addEvents(
 
     el.addEventListener(key, event, {
       signal: abortController.signal,
+      passive: key === "touchmove",
     });
 
     keysToControllers[key] = abortController;

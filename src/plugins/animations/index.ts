@@ -88,14 +88,7 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
       setupNode(data: SetupNodeData) {
         if (!state) return;
 
-        const nodeValue = data.nodeData.value;
-
-        // I will return in the nodevalue is not that of the swapped node
-        if (nodeValue !== state.swappedNodeValue) {
-          return;
-        }
-
-        //state.preventSortValue = nodeValue;
+        if (data.nodeData.value !== state.swappedNodeValue) return;
 
         switch (state.incomingDirection) {
           case "below":
