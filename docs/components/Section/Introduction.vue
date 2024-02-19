@@ -17,5 +17,6 @@
       was not apparent to the developers, so a new library was born.<br />
       <strong>@formkit/drag-and-drop</strong>
     </p>
+    <CodeExample />
   </PageSection>
 </template>
