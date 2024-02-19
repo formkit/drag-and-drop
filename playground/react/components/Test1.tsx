@@ -35,7 +35,7 @@ function Test1(props: { id: string; testDescription: string }) {
 
     dragAndDrop({
       parent: el,
-      values: [values, setValues],
+      state: [values, setValues],
     });
   }, []);
 

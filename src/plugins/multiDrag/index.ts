@@ -11,7 +11,6 @@ import type {
   TearDownNodeData,
   SetupNodeData,
 } from "../../types";
-
 import type {
   MultiDragConfig,
   MultiDragParentConfig,
@@ -29,7 +28,6 @@ import {
   state,
   resetState,
 } from "../../index";
-
 import { addClass, removeClass, copyNodeStyle, splitClass } from "../../utils";
 
 export const multiDragState: MultiDragState = {

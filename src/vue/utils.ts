@@ -1,7 +1,5 @@
 import type { Ref } from "vue";
-
 import type { VueElement } from "./types";
-
 import { watch } from "vue";
 
 /**

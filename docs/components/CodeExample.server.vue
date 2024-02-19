@@ -1,12 +1,17 @@
 <script lang="ts" setup>
 import { codeToHtml } from "shiki";
 import { transformerTwoslash } from "@shikijs/twoslash";
-
-const html = await codeToHtml('console.log("hello world")', {
-  theme: "solarized-light",
-  lang: "typescript",
-  transformers: [transformerTwoslash()],
-});
+const props = defineProps<{
+  example: string;
+}>();
+const html = await codeToHtml(
+  await import(`../examples/${props.example}/${props.example}.vue?raw`),
+  {
+    theme: "solarized-light",
+    lang: "typescript",
+    transformers: [transformerTwoslash()],
+  }
+);
 </script>
 
 <template>

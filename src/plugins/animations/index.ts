@@ -1,7 +1,5 @@
 import type { SetupNodeData, Node } from "../../types";
-
 import type { AnimationsConfig } from "./types";
-
 import { state, parents } from "../../index";
 
 export function animations(animationsConfig: AnimationsConfig = {}) {

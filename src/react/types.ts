@@ -1,12 +1,12 @@
 import type { ParentConfig } from "../types";
+import type { RefObject } from "react";
 
-export type ReactElement =
-  | HTMLElement
-  | React.MutableRefObject<HTMLElement | null>;
+export type ReactElement<E extends HTMLElement> = E | RefObject<E>;
 
-export interface ReactDragAndDropData extends ReactParentConfig {
-  parent: ReactElement;
-  values: [Array<any>, React.Dispatch<React.SetStateAction<Array<any>>>];
+export interface ReactDragAndDropConfig<
+  E extends RefObject<HTMLElement | null> | HTMLElement,
+  ListItems extends unknown[]
+> extends Partial<ParentConfig> {
+  parent: E;
+  state: [ListItems, React.Dispatch<React.SetStateAction<ListItems>>];
 }
-
-export type ReactParentConfig = Partial<ParentConfig>;

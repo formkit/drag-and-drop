@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-
-import { dragAndDrop } from "../../../src/vue/index";
+import { useDragAndDrop } from "../../../src/vue/index";
 
 const props = defineProps<{
   id: string;
   testDescription: string;
 }>();
-
-const values = ref([
+const [parent, values] = useDragAndDrop([
   {
     id: "10_of_clubs",
     src: "/cards/10_of_clubs.png",
@@ -22,18 +19,6 @@ const values = ref([
     src: "/cards/queen_of_spades.png",
   },
 ]);
-
-onMounted(() => {
-  const parent = document.getElementById("vue_1");
-
-  if (!(parent instanceof HTMLElement)) return;
-
-  dragAndDrop({
-    parent,
-    values,
-    valueKey: "id",
-  });
-});
 </script>
 
 <template>
@@ -42,7 +27,7 @@ onMounted(() => {
     <h4>
       {{ props.testDescription }}
     </h4>
-    <ul :id="props.id">
+    <ul ref="parent">
       <li
         v-for="card in values"
         :key="card.id"

@@ -23,7 +23,6 @@ import type {
   NodeTouchEventData,
   NodeRecord,
 } from "./types";
-
 import {
   isBrowser,
   addClass,
@@ -36,13 +35,9 @@ import {
   eventCoordinates,
   splitClass,
 } from "./utils";
-
 export { isBrowser };
-
 export * from "./types";
-
 export { multiDrag } from "./plugins/multiDrag";
-
 export { animations } from "./plugins/animations";
 
 export { selections } from "./plugins/multiDrag/plugins/selections";
@@ -230,7 +225,7 @@ export function dragAndDrop({
   remapNodes(parent);
 }
 
-function tearDown(parent: HTMLElement) {
+export function tearDown(parent: HTMLElement) {
   const parentData = parents.get(parent);
 
   if (!parentData) return;
