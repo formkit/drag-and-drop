@@ -225,12 +225,14 @@ export interface TouchState extends DragState {
 }
 
 export interface DragState extends DragStateProps {
+  ascendingDirection: boolean;
   enterCount: number;
   preventEnter: boolean;
   lastValue: any;
   activeNode: NodeRecord | undefined;
   draggedNode: NodeRecord;
   affectedNodes: Array<NodeRecord>;
+  targetIndex: number;
   draggedNodes: Array<NodeRecord>;
   initialParent: ParentRecord;
   lastParent: ParentRecord;

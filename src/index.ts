@@ -76,8 +76,10 @@ export function resetState() {
  */
 export function setDragState(dragStateProps: DragStateProps): DragState {
   state = {
+    ascendingDirection: false,
     incomingDirection: undefined,
     enterCount: 0,
+    targetIndex: 0,
     affectedNodes: [],
     lastValue: undefined,
     activeNode: undefined,
@@ -932,6 +934,8 @@ export function validateSort(
     state.draggedNode.data.index > data.targetData.node.data.index
       ? [data.targetData.node.data.index, state.draggedNode.data.index]
       : [state.draggedNode.data.index, data.targetData.node.data.index];
+
+  state.targetIndex = data.targetData.node.data.index;
 
   state.affectedNodes = data.targetData.parent.data.enabledNodes.filter(
     (node) => {

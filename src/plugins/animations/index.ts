@@ -88,74 +88,135 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
       setupNode(data: SetupNodeData) {
         if (!state) return;
 
+        if (data.nodeData.value === state.draggedNode.data.value) {
+          switch (state.incomingDirection) {
+            case "below":
+              setClasses(
+                data.node,
+                "drag-and-drop-slide-up",
+                animationsConfig.duration || 100
+              );
+              break;
+            case "above":
+              setClasses(
+                data.node,
+                "drag-and-drop-slide-down",
+                animationsConfig.duration || 100
+              );
+              break;
+            case "left":
+              setClasses(
+                data.node,
+                "drag-and-drop-slide-right",
+                animationsConfig.duration || 100
+              );
+              break;
+            case "right":
+              setClasses(
+                data.node,
+                "drag-and-drop-slide-left",
+                animationsConfig.duration || 100
+              );
+              break;
+          }
+
+          return;
+        }
+
         if (
           !state.affectedNodes
             .map((x) => x.data.value)
             .includes(data.nodeData.value)
-        ) {
+        )
           return;
+
+        const nodeRect = data.node.getBoundingClientRect();
+
+        const nodeIndex = state.affectedNodes.findIndex(
+          (x) => x.data.value === data.nodeData.value
+        );
+
+        const draggedNodeIndex = state.draggedNode.data.index;
+
+        const ascendingDirection = draggedNodeIndex >= state.targetIndex;
+
+        let adjacentNode;
+        if (ascendingDirection) {
+          adjacentNode = state.affectedNodes[nodeIndex + 1]
+            ? state.affectedNodes[nodeIndex + 1]
+            : state.affectedNodes[nodeIndex - 1];
+        } else {
+          adjacentNode = state.affectedNodes[nodeIndex - 1]
+            ? state.affectedNodes[nodeIndex - 1]
+            : state.affectedNodes[nodeIndex + 1];
         }
 
-        switch (state.incomingDirection) {
-          case "below":
+        if (adjacentNode) {
+          const xDiff = Math.abs(
+            nodeRect.x - adjacentNode.el.getBoundingClientRect().x
+          );
+
+          const yDiff = Math.abs(
+            nodeRect.y - adjacentNode.el.getBoundingClientRect().y
+          );
+
+          if (xDiff > yDiff && ascendingDirection) {
             setClasses(
               data.node,
-              state.draggedNode.el,
-              "drag-and-drop-slide-down",
-              "drag-and-drop-slide-up",
-              animationsConfig.duration || 100
-            );
-            break;
-          case "above":
-            setClasses(
-              data.node,
-              state.draggedNode.el,
-              "drag-and-drop-slide-up",
-              "drag-and-drop-slide-down",
-              animationsConfig.duration || 100
-            );
-            break;
-          case "left":
-            setClasses(
-              data.node,
-              state.draggedNode.el,
-              "drag-and-drop-slide-left",
               "drag-and-drop-slide-right",
               animationsConfig.duration || 100
             );
-            break;
-          case "right":
+          } else if (xDiff > yDiff && !ascendingDirection) {
             setClasses(
               data.node,
-              state.draggedNode.el,
-              "drag-and-drop-slide-right",
               "drag-and-drop-slide-left",
               animationsConfig.duration || 100
             );
-            break;
+          }
+        } else {
+          switch (state.incomingDirection) {
+            case "below":
+              setClasses(
+                data.node,
+                "drag-and-drop-slide-down",
+                animationsConfig.duration || 100
+              );
+              break;
+            case "above":
+              setClasses(
+                data.node,
+                "drag-and-drop-slide-up",
+                animationsConfig.duration || 100
+              );
+              break;
+            case "left":
+              setClasses(
+                data.node,
+                "drag-and-drop-slide-left",
+                animationsConfig.duration || 100
+              );
+              break;
+            case "right":
+              setClasses(
+                data.node,
+                "drag-and-drop-slide-right",
+                animationsConfig.duration || 100
+              );
+              break;
+          }
         }
       },
     };
   };
 }
 
-function setClasses(
-  node: Node,
-  draggedNode: Node,
-  nodeClass: string,
-  draggedNodeClass: string,
-  duration: number
-) {
+function setClasses(node: Node, nodeClass: string, duration: number) {
   node.classList.add(nodeClass);
-
-  draggedNode.classList.add(draggedNodeClass);
 
   setTimeout(() => {
     if (!state) return;
 
     state.swappedNodeValue = undefined;
-
-    draggedNode.classList.remove(draggedNodeClass);
 
     node.classList.remove(nodeClass);
 
