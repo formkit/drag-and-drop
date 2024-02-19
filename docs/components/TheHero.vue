@@ -98,13 +98,13 @@ onMounted(() => {
               max-w-[45vh]
               tall:max-w-[min(22rem,50vh)]
               drop-shadow-[-1px_1px_0_rgba(255,255,255,1)]
-              brightness-90
 
               dark:text-white
-              dark:brightness-[115%]
             `"
           >
-            <DnDLogo class="block w-full mb-0" />
+            <DnDLogo
+              class="block w-full mb-0 brightness-90 dark:brightness-[115%]"
+            />
             <IconHand
               v-if="showHand"
               :data-exit="exitHand"
