@@ -66,7 +66,7 @@ export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
         parentData.config = multiDragParentConfig;
 
         multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
-          plugin(parent)?.tearDownParent?.();
+          plugin(parent)?.tearDown?.();
         });
 
         multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {

@@ -44,12 +44,8 @@ export function selections(selectionsConfig: SelectionsConfig = {}) {
       },
 
       teardownNode(data: TearDownNodeData) {
-        if (data.nodeData?.abortControllers?.mainNode) {
-          for (const event of Object.keys(
-            data.nodeData.abortControllers.mainNode
-          )) {
-            data.nodeData.abortControllers.selectionsNode[event].abort();
-          }
+        if (data.parentData.abortControllers.mainNode) {
+          data.parentData.abortControllers.mainNode.abort();
         }
       },
 

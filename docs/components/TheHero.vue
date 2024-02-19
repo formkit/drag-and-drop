@@ -97,9 +97,11 @@ onMounted(() => {
               w-3/4
               max-w-[45vh]
               tall:max-w-[min(22rem,50vh)]
+              drop-shadow-[-1px_1px_0_rgba(255,255,255,1)]
+              brightness-90
 
               dark:text-white
-              dark:drop-shadow-[-1px_1px_0_rgba(255,255,255,1)]
+              dark:brightness-[115%]
             `"
           >
             <DnDLogo class="block w-full mb-0" />
@@ -168,7 +170,7 @@ onMounted(() => {
             border-sky-400
             rounded-xl
             p-3
-            backdrop-blur-[6px]
+            backdrop-blur-[8px]
 
             transition-all
             duration-500
