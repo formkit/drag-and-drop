@@ -220,7 +220,7 @@ export function addEvents(
 
     el.addEventListener(key, event, {
       signal: abortController.signal,
-      passive: key === "touchmove",
+      passive: false,
     });
 
     keysToControllers[key] = abortController;
