@@ -3,6 +3,7 @@ env:
 extends:
   - eslint:recommended
   - plugin:@typescript-eslint/recommended
+  - plugin:plugin:vue/vue3-recommended
 parserOptions:
   ecmaVersion: latest
   parser: "@typescript-eslint/parser"

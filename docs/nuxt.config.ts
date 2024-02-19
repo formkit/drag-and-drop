@@ -10,7 +10,11 @@ export default defineNuxtConfig({
     "@vueuse/nuxt",
     "@nuxtjs/color-mode",
     "nuxt-fathom",
+    "nuxt-shiki",
   ],
+  shiki: {
+    theme: "github-light",
+  },
   fathom: {
     siteId: "",
   },

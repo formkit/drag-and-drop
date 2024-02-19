@@ -62,9 +62,10 @@ const __dirname = dirname(__filename);
 
   console.log("Rewriting package.json...");
 
-  const packageJson = JSON.parse(
-    await readFile(resolve(__dirname, `package.json`), "utf8")
-  );
+  const packageJson = {
+    name: "@formkit/drag-and-drop",
+    ...JSON.parse(await readFile(resolve(__dirname, `package.json`), "utf8")),
+  };
   delete packageJson.devDependencies;
   delete packageJson.private;
   const updatedFile = JSON.stringify(packageJson, null, 2);

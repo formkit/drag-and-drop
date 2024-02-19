@@ -1,5 +1,4 @@
 {
-  "name": "@formkit/drag-and-drop",
   "version": "0.0.15",
   "private": true,
   "description": "Drag and drop package.",
@@ -23,6 +22,7 @@
     "bumpp": "^9.2.0",
     "esbuild-plugin-replace": "^1.4.0",
     "eslint": "^8.55.0",
+    "eslint-plugin-vue": "^9.21.1",
     "jiti": "^1.21.0",
     "pathe": "^1.1.2",
     "publint": "^0.2.7",

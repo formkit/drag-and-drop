@@ -1,6 +1,7 @@
 workspaces:
   - docs
   - dev
+  - dist
 
 packages:
   - "**"
