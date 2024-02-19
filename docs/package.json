@@ -12,18 +12,15 @@
     "@nuxtjs/color-mode": "^3.3.2",
     "@nuxtjs/tailwindcss": "^6.11.2",
     "@playwright/test": "^1.34.0",
+    "@shikijs/twoslash": "^1.1.5",
     "@types/node": "^18",
     "@vueuse/nuxt": "^10.7.2",
     "nuxt": "^3.10.0",
     "nuxt-fathom": "^0.0.1",
-    "nuxt-shiki": "^0.1.1"
+    "shiki": "^1.1.5"
   },
   "dependencies": {
-    "@formkit/auto-animate": "^0.8.0",
     "@formkit/drag-and-drop": "workspace:*",
-    "@formkit/icons": "^1.5.0",
-    "@formkit/nuxt": "^1.5.0",
-    "@formkit/pro": "^0.122.0",
-    "@formkit/themes": "^1.5.0"
+    "nuxt-shiki": "^0.1.1"
   }
 }

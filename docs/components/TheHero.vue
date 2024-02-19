@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { dragAndDrop } from "@formkit/drag-and-drop/vue";
+import { dragAndDrop } from "../../src/vue/index";
+import { animations } from "../../src/index";
 
 const dragList = ref(null);
 const showHand = ref(true);
@@ -41,6 +42,11 @@ dragAndDrop({
   values: features,
   draggingClass: "[&>.card]:-rotate-2 before:-rotate-2",
   dropZoneClass: "blur-sm opacity-60",
+  plugins: [
+    animations({
+      duration: 200,
+    }),
+  ],
 });
 
 onMounted(() => {
@@ -82,9 +88,9 @@ onMounted(() => {
             :data-show="showTitle"
             :class="`
               relative
-              font-display 
-              text-[max(10vh,6.5em)] 
-              text-emerald-500 
+              font-display
+              text-[max(10vh,6.5em)]
+              text-emerald-500
               mb-[max(4.5vh,1rem)]
               tall:mt-[-6vh]
               xtall:mt-[-12vh]
@@ -126,7 +132,7 @@ onMounted(() => {
           <p
             :data-show="showHeadline"
             :class="`
-              text-[max(4vh,3em)] 
+              text-[max(4vh,3em)]
               leading-[1em]
               font-semibold
               text-center

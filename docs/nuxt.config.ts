@@ -5,16 +5,20 @@ const description =
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   css: ["@/assets/css/main.css"],
+  experimental: {
+    componentIslands: true,
+  },
   modules: [
     "@nuxtjs/tailwindcss",
     "@vueuse/nuxt",
     "@nuxtjs/color-mode",
     "nuxt-fathom",
-    "nuxt-shiki",
+    // "nuxt-shiki",
   ],
-  shiki: {
-    theme: "github-light",
-  },
+  // shiki: {
+  //   theme: "github-light",
+  //   lang: "typescript",
+  // },
   fathom: {
     siteId: "",
   },

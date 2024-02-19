@@ -351,13 +351,27 @@ export function remapNodes(parent: HTMLElement, force?: boolean) {
       );
 
       if (draggedNode) draggedNode.el = node;
-
-      enabledNodeRecords.push({
-        el: node,
-        data: nodeData,
-      });
     }
-    if (!prevNodeData) config.setupNode({ node, parent, parentData, nodeData });
+
+    enabledNodeRecords.push({
+      el: node,
+      data: nodeData,
+    });
+
+    const setupNodeData = {
+      node,
+      parent,
+      parentData,
+      nodeData,
+    };
+
+    if (!prevNodeData) config.setupNode(setupNodeData);
+
+    // TODO: setupNode should maybe accept argument saying whether or not to
+    // add events
+    parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
+      plugin(parent)?.setupNode?.(setupNodeData);
+    });
   }
 
   parents.set(parent, { ...parentData, enabledNodes: enabledNodeRecords });
