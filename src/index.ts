@@ -351,6 +351,11 @@ export function remapNodes(parent: HTMLElement, force?: boolean) {
       );
 
       if (draggedNode) draggedNode.el = node;
+
+      enabledNodeRecords.push({
+        el: node,
+        data: nodeData,
+      });
     }
     if (!prevNodeData) config.setupNode({ node, parent, parentData, nodeData });
   }
