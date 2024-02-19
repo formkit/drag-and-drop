@@ -14,6 +14,10 @@ module.exports = {
         display: ["Permanent Marker", "cursive"],
         sans: ["Rubik", "ui-sans-serif", "sans-serif"],
       },
+      screens: {
+        tall: { raw: "(min-height: 800px)" },
+        xtall: { raw: "(min-height: 900px)" },
+      },
     },
   },
   plugins: [],

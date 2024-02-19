@@ -24,7 +24,7 @@ const { data, pending, error } = useLazyFetch<{ stars: number }>("/api/stars");
       <span class="sr-only">Loading...</span>
     </div>
     <div
-      class="text-sm flex items-center text-stone-500 group-hover:text-black"
+      class="text-sm flex items-center text-slate-500 group-hover:text-black dark:text-slate-300"
     >
       <svg
         viewBox="0 0 16 16"
