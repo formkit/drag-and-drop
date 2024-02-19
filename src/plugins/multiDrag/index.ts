@@ -7,6 +7,7 @@ import type {
   ParentData,
   NodeDragEventData,
   NodeTouchEventData,
+  DNDPluginData,
 } from "../../types";
 
 import type { MultiDragConfig } from "./types";
@@ -34,8 +35,6 @@ export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
     if (!parentData) return;
 
     return {
-      tearDownParent() {},
-
       setupParent() {
         parentData.config.multiDragConfig = multiDragConfig;
 
@@ -53,7 +52,7 @@ export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
 
         remapNodes(parent);
       },
-    };
+    } satisfies DNDPluginData;
   };
 }
 
