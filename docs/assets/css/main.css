@@ -145,7 +145,7 @@ html.dark #vapor-wave-container::before {
   background: linear-gradient(
     to bottom,
     transparent 0%,
-    var(--sun-color) 40%,
+    var(--sun-color) 42.5%,
     var(--sun-color-2) 45%,
     transparent 100%
   );
@@ -164,7 +164,7 @@ html.dark #vapor-wave-container::before {
     var(--sun-color) 50%,
     var(--sun-color-2) 52%,
     var(--sun-edge) 53%,
-    transparent 53%
+    transparent 53.5%
   );
   filter: blur(1px);
   z-index: -1;
