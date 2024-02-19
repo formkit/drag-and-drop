@@ -1,5 +1,4 @@
 <script setup lang="ts">
-//import { dragAndDrop } from "@formkit/drag-and-drop/vue";
 import { dragAndDrop } from "../../src/vue/index";
 import { animations } from "../../src/index";
 
@@ -43,7 +42,11 @@ dragAndDrop({
   values: features,
   draggingClass: "[&>.card]:-rotate-2 before:-rotate-2",
   dropZoneClass: "blur-sm opacity-60",
-  plugins: [animations()],
+  plugins: [
+    animations({
+      duration: 500,
+    }),
+  ],
 });
 
 onMounted(() => {
@@ -135,7 +138,6 @@ onMounted(() => {
     :class="`
       features
       flex
-      flex-col
       items-center
       justify-center
       mt-16

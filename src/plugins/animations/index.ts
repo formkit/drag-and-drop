@@ -88,7 +88,13 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
       setupNode(data: SetupNodeData) {
         if (!state) return;
 
-        if (data.nodeData.value !== state.swappedNodeValue) return;
+        if (
+          !state.affectedNodes
+            .map((x) => x.data.value)
+            .includes(data.nodeData.value)
+        ) {
+          return;
+        }
 
         switch (state.incomingDirection) {
           case "below":

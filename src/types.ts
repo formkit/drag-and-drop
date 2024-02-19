@@ -230,6 +230,7 @@ export interface DragState extends DragStateProps {
   lastValue: any;
   activeNode: NodeRecord | undefined;
   draggedNode: NodeRecord;
+  affectedNodes: Array<NodeRecord>;
   draggedNodes: Array<NodeRecord>;
   initialParent: ParentRecord;
   lastParent: ParentRecord;

@@ -78,6 +78,7 @@ export function setDragState(dragStateProps: DragStateProps): DragState {
   state = {
     incomingDirection: undefined,
     enterCount: 0,
+    affectedNodes: [],
     lastValue: undefined,
     activeNode: undefined,
     preventEnter: false,
@@ -926,6 +927,21 @@ export function validateSort(
   const xDiff = targetRect.x - dragRect.x;
 
   let incomingDirection: "above" | "below" | "left" | "right";
+
+  const range =
+    state.draggedNode.data.index > data.targetData.node.data.index
+      ? [data.targetData.node.data.index, state.draggedNode.data.index]
+      : [state.draggedNode.data.index, data.targetData.node.data.index];
+
+  state.affectedNodes = data.targetData.parent.data.enabledNodes.filter(
+    (node) => {
+      return (
+        range[0] <= node.data.index &&
+        node.data.index <= range[1] &&
+        node.el !== state.draggedNode.el
+      );
+    }
+  );
 
   if (Math.abs(yDiff) > Math.abs(xDiff)) {
     incomingDirection = yDiff > 0 ? "above" : "below";
