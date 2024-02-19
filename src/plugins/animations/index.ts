@@ -28,7 +28,7 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
 
           @keyframes slideUp {
             from {
-              transform: translateY(50%);
+              transform: translateY(100%);
             }
             to {
               transform: translateY(0);
@@ -42,7 +42,7 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
 
           @keyframes slideDown {
             from {
-              transform: translateY(-50%);
+              transform: translateY(-100%);
             }
             to {
               transform: translateY(0%);
@@ -56,7 +56,7 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
 
           @keyframes slideLeft {
             from {
-              transform: translateX(50%);
+              transform: translateX(100%);
             }
             to {
               transform: translateX(0%);
@@ -70,7 +70,7 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
 
           @keyframes slideRight {
             from {
-              transform: translateX(-50%);
+              transform: translateX(-100%);
             }
             to {
               transform: translateX(0);
