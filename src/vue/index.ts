@@ -1,7 +1,13 @@
 import type { Ref } from "vue";
 import type { VueDragAndDropData, VueParentConfig } from "./types";
-import { dragAndDrop as initParent, isBrowser } from "../index";
+import {
+  ParentConfig,
+  dragAndDrop as initParent,
+  isBrowser,
+  tearDown,
+} from "../index";
 import { handleVueElements } from "./utils";
+import { onUnmounted, ref } from "vue";
 
 export * from "./types";
 
@@ -51,8 +57,8 @@ function setValues(newValues: Array<any>, parent: HTMLElement): void {
  *
  * @returns void
  */
-export function dragAndDrop(
-  data: VueDragAndDropData | Array<VueDragAndDropData>
+export function dragAndDrop<T>(
+  data: VueDragAndDropData<T> | Array<VueDragAndDropData<T>>
 ): void {
   if (!isBrowser) return;
 
@@ -63,6 +69,24 @@ export function dragAndDrop(
 
     handleVueElements(parent, handleParent(rest, values));
   });
+}
+
+/**
+ * Creates a new instance of drag and drop and returns the parent element and
+ * a ref of the values to use in your template.
+ *
+ * @param initialValues - The initial values of the parent element.
+ * @returns The parent element and values for drag and drop.
+ */
+export function useDragAndDrop<T>(
+  initialValues: T[],
+  options: Partial<ParentConfig> = {}
+): [Ref<HTMLElement | undefined>, Ref<T[]>] {
+  const parent = ref<HTMLElement | undefined>();
+  const values = ref(initialValues) as Ref<T[]>;
+  dragAndDrop({ parent, values, ...options });
+  onUnmounted(() => parent.value && tearDown(parent.value));
+  return [parent, values];
 }
 
 /**

@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import Test1 from "./components/Test1.vue";
-
 import Test2 from "./components/Test2.vue";
-
 import vueLogo from "/vuejs-icon.svg";
 </script>
 

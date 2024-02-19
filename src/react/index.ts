@@ -29,7 +29,10 @@ function setValues(newValues: Array<unknown>, parent: HTMLElement): void {
   parentValues.set(parent, [newValues, values![1]]);
 }
 
-function handleParent<E extends RefObject<HTMLElement | null>, ListItem>(
+function handleParent<
+  E extends RefObject<HTMLElement | null> | HTMLElement,
+  ListItem
+>(
   config: Partial<ReactDragAndDropConfig<E, ListItem[]>>,
   values: [Array<any>, React.Dispatch<React.SetStateAction<Array<any>>>]
 ) {
@@ -47,8 +50,8 @@ function handleParent<E extends RefObject<HTMLElement | null>, ListItem>(
  */
 export function dragAndDrop<E extends HTMLElement, I>(
   data:
-    | ReactDragAndDropConfig<RefObject<E | null>, I[]>
-    | Array<ReactDragAndDropConfig<RefObject<E | null>, I[]>>
+    | ReactDragAndDropConfig<RefObject<E | null> | HTMLElement, I[]>
+    | Array<ReactDragAndDropConfig<RefObject<E | null> | HTMLElement, I[]>>
 ): void {
   if (!isBrowser) return;
   if (!Array.isArray(data)) data = [data];

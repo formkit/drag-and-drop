@@ -33,7 +33,7 @@ function Test2(props: { id: string; testDescription: string }) {
   useEffect(() => {
     dragAndDrop({
       parent: listRef,
-      values: [values, setValues],
+      state: [values, setValues],
     });
   }, []);
 
