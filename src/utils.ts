@@ -4,7 +4,6 @@ import type {
   NodeFromPoint,
   ParentFromPoint,
   EventHandlers,
-  AbortControllers,
 } from "./types";
 
 import { parents, nodes } from "./index";
@@ -204,29 +203,22 @@ export function isNode(el: unknown): el is Node {
  * controller.
  *
  * @param el - The element to add the event listeners to.
- *
  * @param events - The events to add to the element.
- *
  * @returns - The abort controller used for the event listeners.
  */
 export function addEvents(
   el: Document | ShadowRoot | Node | HTMLElement,
   events: EventHandlers
-): AbortControllers {
-  const keysToControllers: AbortControllers = {};
-  for (const key in events) {
-    const abortController = new AbortController();
-    const event = events[key];
-
-    el.addEventListener(key, event, {
+): AbortController {
+  const abortController = new AbortController();
+  for (const eventName in events) {
+    const handler = events[eventName];
+    el.addEventListener(eventName, handler, {
       signal: abortController.signal,
       passive: false,
     });
-
-    keysToControllers[key] = abortController;
   }
-
-  return keysToControllers;
+  return abortController;
 }
 
 export function copyNodeStyle(

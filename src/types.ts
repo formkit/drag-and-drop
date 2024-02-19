@@ -64,8 +64,8 @@ export interface ParentData {
   getValues: (parent: HTMLElement) => Array<any>;
   setValues: (values: Array<any>, parent: HTMLElement) => void;
   config: ParentConfig;
-  enabledNodes: Array<NodeRecord>;
-  abortControllers: Record<string, AbortControllers>;
+  enabledNodes: Array<Node>;
+  abortControllers: Record<string, AbortController>;
 }
 
 export interface EventListeners {
@@ -134,7 +134,7 @@ export interface NodeData {
   index: number;
   value: any;
   privateClasses: Array<string>;
-  abortControllers: Record<string, AbortControllers>;
+  abortControllers: Record<string, AbortController>;
 }
 
 export type NodeEvent = (data: NodeEventData) => void;
@@ -179,7 +179,7 @@ export interface NodeTargetData {
 
 export interface DNDPluginData {
   setupParent?: () => void;
-  tearDownParent?: () => void;
+  tearDown?: () => void;
   setupNode?: SetupNode;
   tearDownNode?: TearDownNode;
 }
@@ -260,8 +260,4 @@ export interface TouchStateProps {
   touchedNode: HTMLElement;
   touchStartLeft: number;
   touchStartTop: number;
-}
-
-export interface AbortControllers {
-  [key: string]: AbortController;
 }

@@ -7,8 +7,9 @@ import type {
   ParentData,
   NodeDragEventData,
   NodeTouchEventData,
-  SetupNodeData,
+  DNDPluginData,
   TearDownNodeData,
+  SetupNodeData,
 } from "../../types";
 
 import type {
@@ -84,7 +85,7 @@ export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
           plugin(data.parent)?.setupNode?.(data);
         });
       },
-    };
+    } satisfies DNDPluginData;
   };
 }
 

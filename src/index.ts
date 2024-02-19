@@ -4,7 +4,6 @@ import type {
   DNDPlugin,
   NodeEventData,
   TouchOverNodeEvent,
-  ParentObservers,
   ParentsData,
   NodesData,
   DragState,
@@ -51,12 +50,6 @@ export { selections } from "./plugins/multiDrag/plugins/selections";
 export const nodes: NodesData = new WeakMap<Node, NodeData>();
 
 export const parents: ParentsData = new WeakMap<HTMLElement, ParentData>();
-
-export const parentObservers: ParentObservers = new WeakMap<
-  HTMLElement,
-  MutationObserver
->();
-
 /**
  * The state of the drag and drop. Is undefined until either dragstart or
  * touchstart is called.
@@ -173,13 +166,9 @@ export function dragValues(state: DragState | TouchState): Array<any> | any {
  * Initializes the drag and drop functionality for a given parent.
  *
  * @param id - The id of the parent element.
- *
  * @param getValues - A function that returns the current values of the parent element.
- *
  * @param setValues - A function that sets the values of the parent element.
- *
  * @param config - The config for the parent element.
- *
  * @returns void
  *
  */
@@ -195,7 +184,7 @@ export function dragAndDrop({
     e.preventDefault();
   });
 
-  tearDownParent(parent);
+  tearDown(parent);
 
   const parentData: ParentData = {
     getValues,
@@ -229,8 +218,10 @@ export function dragAndDrop({
   setupParent(parent, parentData);
 
   config.plugins?.forEach((plugin) => {
-    plugin(parent)?.tearDownParent?.();
+    plugin(parent)?.tearDown?.();
   });
+
+  remapNodes(parent, true);
 
   config.plugins?.forEach((plugin: DNDPlugin) => {
     plugin(parent)?.setupParent?.();
@@ -239,28 +230,14 @@ export function dragAndDrop({
   remapNodes(parent);
 }
 
-function tearDownParent(parent: HTMLElement) {
+function tearDown(parent: HTMLElement) {
   const parentData = parents.get(parent);
 
   if (!parentData) return;
 
-  for (const event of Object.keys(parentData.abortControllers["mainParent"])) {
-    parentData.abortControllers["mainParent"][event].abort();
+  if (parentData.abortControllers.mainParent) {
+    parentData.abortControllers.mainParent.abort();
   }
-
-  for (const node of Array.from(parent.children)) {
-    if (isNode(node)) {
-      nodes.delete(node);
-    }
-  }
-
-  parents.delete(parent);
-
-  const parentObserver = parentObservers.get(parent.parentNode as HTMLElement);
-
-  if (parentObserver) parentObserver.disconnect();
-
-  parentObservers.delete(parent);
 }
 
 function setupParent(parent: HTMLElement, parentData: ParentData) {
@@ -268,47 +245,12 @@ function setupParent(parent: HTMLElement, parentData: ParentData) {
 
   nodesObserver.observe(parent, { childList: true });
 
-  if (parent.parentNode) {
-    const parentObserver = new MutationObserver(parentMutated);
-
-    parentObserver.observe(parent.parentNode, { childList: true });
-
-    if (!(parent.parentNode instanceof HTMLElement)) return;
-
-    parentObservers.set(parent.parentNode, parentObserver);
-  }
-
   parents.set(parent, { ...parentData });
 
-  const abortControllers = addEvents(parent, {
+  parentData.abortControllers.mainParent = addEvents(parent, {
     dragover: parentEventData(parentData.config.handleDragoverParent),
     touchOverParent: parentData.config.handleTouchOverParent,
   });
-
-  parentData.abortControllers["mainParent"] = abortControllers;
-}
-
-function parentMutated(mutationList: MutationRecord[]) {
-  for (const mutation of mutationList) {
-    for (const removedNode of Array.from(mutation.removedNodes)) {
-      if (!(removedNode instanceof HTMLElement)) continue;
-
-      const parentData = parents.get(removedNode);
-
-      if (!parentData) continue;
-
-      for (const node of Array.from(removedNode.childNodes)) {
-        if (
-          isNode(node) &&
-          parentData.enabledNodes.map((x) => x.el).includes(node)
-        ) {
-          nodes.delete(node);
-        }
-      }
-
-      parents.delete(removedNode);
-    }
-  }
 }
 
 /**
@@ -336,7 +278,7 @@ function nodesMutated(mutationList: MutationRecord[]) {
  *
  * @internal
  */
-export function remapNodes(parent: HTMLElement) {
+export function remapNodes(parent: HTMLElement, force?: boolean) {
   const parentData = parents.get(parent);
 
   if (!parentData) return;
@@ -351,8 +293,10 @@ export function remapNodes(parent: HTMLElement) {
     if (!isNode(node)) continue;
 
     const nodeData = nodes.get(node);
-
-    config.tearDownNode({ node, parent, nodeData, parentData });
+    // Only tear down the node if someone has explicitly called dragAndDrop.
+    if (force) {
+      config.tearDownNode({ node, parent, nodeData, parentData });
+    }
 
     if (config.disabled) return;
 
@@ -361,6 +305,7 @@ export function remapNodes(parent: HTMLElement) {
     }
   }
 
+  // TODO: maybe get rid of this?
   if (
     enabledNodes.length !== parentData.getValues(parent).length &&
     !config.disabled
@@ -378,14 +323,19 @@ export function remapNodes(parent: HTMLElement) {
 
   for (let x = 0; x < enabledNodes.length; x++) {
     const node = enabledNodes[x];
+    const prevNodeData = nodes.get(node);
+    const nodeData = Object.assign(
+      prevNodeData ?? {
+        privateClasses: [],
+        abortControllers: {},
+      },
+      {
+        value: values[x],
+        index: x,
+      }
+    );
 
-    const nodeData = {
-      value: values[x],
-      index: x,
-      privateClasses: [],
-      abortControllers: {},
-    };
-
+    // TODO: maybe get rid of this — duplicate of the next if statement
     if (state && nodeData.value === state.draggedNode.data.value) {
       state.draggedNode.data = nodeData;
 
@@ -402,17 +352,7 @@ export function remapNodes(parent: HTMLElement) {
 
       if (draggedNode) draggedNode.el = node;
     }
-    config.setupNode({
-      node: node,
-      parent,
-      parentData,
-      nodeData: nodeData,
-    });
-
-    enabledNodeRecords.push({
-      el: node,
-      data: nodeData,
-    });
+    if (!prevNodeData) config.setupNode({ node, parent, parentData, nodeData });
   }
 
   parents.set(parent, { ...parentData, enabledNodes: enabledNodeRecords });
@@ -550,9 +490,9 @@ export function setupNode(data: SetupNodeData) {
 
   const config = data.parentData.config;
 
-  data.node.setAttribute("draggable", "true");
+  data.node.draggable = true;
 
-  const abortControllers = addEvents(data.node, {
+  data.nodeData.abortControllers.mainNode = addEvents(data.node, {
     dragstart: nodeEventData(config.handleDragstart),
     dragover: nodeEventData(config.handleDragoverNode),
     dragend: nodeEventData(config.handleDragend),
@@ -561,8 +501,6 @@ export function setupNode(data: SetupNodeData) {
     touchend: nodeEventData(config.handleDragend),
     touchOverNode: config.handleTouchOverNode,
   });
-
-  data.nodeData.abortControllers["mainNode"] = abortControllers;
 
   data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
     plugin(data.parent)?.setupNode?.(data);
@@ -585,12 +523,10 @@ function reapplyDragClasses(node: Node, parentData: ParentData) {
 }
 
 export function tearDownNode(data: TearDownNodeData) {
-  data.node.setAttribute("draggable", "false");
+  data.node.draggable = false;
 
   if (data.nodeData?.abortControllers?.mainNode) {
-    for (const event of Object.keys(data.nodeData.abortControllers.mainNode)) {
-      data.nodeData.abortControllers.mainNode[event].abort();
-    }
+    data.nodeData?.abortControllers?.mainNode.abort();
   }
 
   data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
@@ -912,14 +848,13 @@ export function validateSort(
   x: number,
   y: number
 ): boolean {
-  if (!state) return false;
-
-  if (state.preventEnter) return false;
-
-  if (state.swappedNodeValue === data.targetData.node.data.value) return false;
-
-  if (data.targetData.parent.el !== state.lastParent?.el) return false;
-
+  if (
+    !state ||
+    state.preventEnter ||
+    state.swappedNodeValue === data.targetData.node.data.value ||
+    data.targetData.parent.el !== state.lastParent?.el
+  )
+    return false;
   const targetRect = data.targetData.node.el.getBoundingClientRect();
 
   const dragRect = state.draggedNode.el.getBoundingClientRect();
