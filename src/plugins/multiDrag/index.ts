@@ -51,16 +51,16 @@ export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
     return {
       setupParent() {
         multiDragParentConfig.handleDragstart =
-          multiDragConfig.handleDragstart || handleDragstart;
+          multiDragConfig.multiHandleDragstart || multiHandleDragstart;
 
         multiDragParentConfig.handleTouchstart =
-          multiDragConfig.handleTouchstart || handleTouchstart;
+          multiDragConfig.multiHandleTouchstart || multiHandleTouchstart;
 
         multiDragParentConfig.handleDragend =
-          multiDragConfig.handleDragend || handleDragend;
+          multiDragConfig.multiHandleDragend || multiHandleDragend;
 
         multiDragParentConfig.reapplyDragClasses =
-          multiDragConfig.reapplyDragClasses || reapplyDragClasses;
+          multiDragConfig.multiReapplyDragClasses || multiReapplyDragClasses;
 
         parentData.config = multiDragParentConfig;
 
@@ -88,7 +88,7 @@ export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
   };
 }
 
-function reapplyDragClasses(node: Node, parentData: ParentData) {
+function multiReapplyDragClasses(node: Node, parentData: ParentData) {
   if (!state) return;
 
   const dropZoneClass =
@@ -103,7 +103,7 @@ function reapplyDragClasses(node: Node, parentData: ParentData) {
   addClass([node], dropZoneClass, true);
 }
 
-function handleDragend(data: NodeEventData) {
+function multiHandleDragend(data: NodeEventData) {
   if (!state) return;
 
   end(data, state);
@@ -135,7 +135,7 @@ function selectionsEnd(data: NodeEventData) {
   }
 }
 
-function handleDragstart(data: NodeEventData) {
+function multiHandleDragstart(data: NodeEventData) {
   if (!(data.e instanceof DragEvent)) return;
 
   dragstart({
@@ -184,7 +184,7 @@ function dragstart(data: NodeDragEventData) {
   }
 }
 
-function handleTouchstart(data: NodeEventData) {
+function multiHandleTouchstart(data: NodeEventData) {
   if (!(data.e instanceof TouchEvent)) return;
 
   touchstart({

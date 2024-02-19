@@ -1,3 +1,10 @@
+/**
+ * Is the central entry point for the Drag and Drop library.
+ *
+ * @public
+ *
+ * @param {DragAndDrop} dragAndDrop - The configuration for the Drag and Drop library.
+ */
 export interface DragAndDrop {
   parent: HTMLElement;
   getValues: (parent: HTMLElement) => Array<any>;
@@ -10,9 +17,9 @@ export type DNDAction = (
   dragState: DragState
 ) => void;
 
-export type DNDNodeAction = (data: NodeEventData, dragState: DragState) => void;
+export type NodeAction = (data: NodeEventData, dragState: DragState) => void;
 
-export type DNDParentAction = (
+export type ParentAction = (
   data: ParentEventData,
   dragState: DragState
 ) => void;
@@ -32,10 +39,10 @@ export interface ParentConfig {
   dropZoneClass?: string;
   group?: string;
   dropZone?: boolean;
-  handleDragend: DNDNodeAction;
-  handleDragstart: DNDNodeAction;
-  handleTouchstart: DNDNodeAction;
-  handleDragoverParent: DNDParentAction;
+  handleDragend: NodeAction;
+  handleDragstart: NodeAction;
+  handleTouchstart: NodeAction;
+  handleDragoverParent: ParentAction;
   handleDragoverNode: (data: NodeDragEventData) => void;
   handleTouchmove: (data: NodeTouchEventData) => void;
   longTouchClass?: string;
