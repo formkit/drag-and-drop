@@ -2,7 +2,7 @@ import type { ReactDragAndDropConfig } from "./types";
 import type { ParentConfig } from "../types";
 import type { Dispatch, SetStateAction, RefObject } from "react";
 import { useRef, useEffect, useState } from "react";
-import { dragAndDrop as initParent, isBrowser } from "../index";
+import { dragAndDrop as initParent, isBrowser, tearDown } from "../index";
 import { handleReactElements } from "./utils";
 export * from "./types";
 
@@ -74,6 +74,9 @@ export function useDragAndDrop<E extends HTMLElement, I = unknown>(
 
   useEffect(() => {
     dragAndDrop({ parent, state: [values, setValues], ...options });
+    return () => {
+      if (parent.current) tearDown(parent.current);
+    };
   }, [parent.current]);
 
   return [parent, values, setValues];

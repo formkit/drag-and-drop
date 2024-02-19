@@ -216,7 +216,7 @@ export function dragAndDrop({
   });
 }
 
-function tearDown(parent: HTMLElement) {
+export function tearDown(parent: HTMLElement) {
   const parentData = parents.get(parent);
 
   if (!parentData) return;
