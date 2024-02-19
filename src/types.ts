@@ -1,3 +1,10 @@
+/**
+ * Is the central entry point for the Drag and Drop library.
+ *
+ * @public
+ *
+ * @param {DragAndDrop} dragAndDrop - The configuration for the Drag and Drop library.
+ */
 export interface DragAndDrop {
   parent: HTMLElement;
   getValues: (parent: HTMLElement) => Array<any>;
@@ -10,9 +17,9 @@ export type DNDAction = (
   dragState: DragState
 ) => void;
 
-export type DNDNodeAction = (data: NodeEventData, dragState: DragState) => void;
+export type NodeAction = (data: NodeEventData, dragState: DragState) => void;
 
-export type DNDParentAction = (
+export type ParentAction = (
   data: ParentEventData,
   dragState: DragState
 ) => void;
@@ -32,10 +39,10 @@ export interface ParentConfig {
   dropZoneClass?: string;
   group?: string;
   dropZone?: boolean;
-  handleDragend: DNDNodeAction;
-  handleDragstart: DNDNodeAction;
-  handleTouchstart: DNDNodeAction;
-  handleDragoverParent: DNDParentAction;
+  handleDragend: NodeAction;
+  handleDragstart: NodeAction;
+  handleTouchstart: NodeAction;
+  handleDragoverParent: ParentAction;
   handleDragoverNode: (data: NodeDragEventData) => void;
   handleTouchmove: (data: NodeTouchEventData) => void;
   longTouchClass?: string;
@@ -57,8 +64,8 @@ export interface ParentData {
   getValues: (parent: HTMLElement) => Array<any>;
   setValues: (values: Array<any>, parent: HTMLElement) => void;
   config: ParentConfig;
-  enabledNodes: Array<NodeRecord>;
-  abortControllers: Record<string, AbortControllers>;
+  enabledNodes: Array<Node>;
+  abortControllers: Record<string, AbortController>;
 }
 
 export interface EventListeners {
@@ -127,7 +134,7 @@ export interface NodeData {
   index: number;
   value: any;
   privateClasses: Array<string>;
-  abortControllers: Record<string, AbortControllers>;
+  abortControllers: Record<string, AbortController>;
 }
 
 export type NodeEvent = (data: NodeEventData) => void;
@@ -172,7 +179,7 @@ export interface NodeTargetData {
 
 export interface DNDPluginData {
   setupParent?: () => void;
-  tearDownParent?: () => void;
+  tearDown?: () => void;
   setupNode?: SetupNode;
   tearDownNode?: TearDownNode;
 }
@@ -225,11 +232,14 @@ export interface TouchState extends DragState {
 }
 
 export interface DragState extends DragStateProps {
+  ascendingDirection: boolean;
   enterCount: number;
   preventEnter: boolean;
   lastValue: any;
   activeNode: NodeRecord | undefined;
   draggedNode: NodeRecord;
+  affectedNodes: Array<NodeRecord>;
+  targetIndex: number;
   draggedNodes: Array<NodeRecord>;
   initialParent: ParentRecord;
   lastParent: ParentRecord;
@@ -250,8 +260,4 @@ export interface TouchStateProps {
   touchedNode: HTMLElement;
   touchStartLeft: number;
   touchStartTop: number;
-}
-
-export interface AbortControllers {
-  [key: string]: AbortController;
 }
