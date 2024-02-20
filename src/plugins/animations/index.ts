@@ -9,7 +9,7 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
     if (!parentData) return;
 
     return {
-      setupParent() {
+      setup() {
         parentData.config.remapFinished = () => {};
 
         const style = document.createElement("style");

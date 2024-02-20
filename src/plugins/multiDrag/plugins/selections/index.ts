@@ -20,7 +20,7 @@ export function selections(selectionsConfig: SelectionsConfig = {}) {
     if (!parentData) return;
 
     return {
-      setupParent() {
+      setup() {
         parentData.config.selectionsConfig = selectionsConfig;
 
         parentData.config.handleClick =

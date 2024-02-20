@@ -48,7 +48,7 @@ export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
     } as MultiDragParentConfig;
 
     return {
-      setupParent() {
+      setup() {
         multiDragParentConfig.handleDragstart =
           multiDragConfig.multiHandleDragstart || multiHandleDragstart;
 
@@ -68,7 +68,7 @@ export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
         });
 
         multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
-          plugin(parent)?.setupParent?.();
+          plugin(parent)?.setup?.();
         });
       },
 
