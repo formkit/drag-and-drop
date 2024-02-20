@@ -8,6 +8,7 @@
     <PageSection class="text-slate-700 dark:text-slate-200">
       <div class="docs-content">
         <h2>Introduction</h2>
+        <h3>I'm a sub-section</h3>
         <SectionIntroduction />
         <h2>Core Features:</h2>
         <CodeExample example="transfer" />

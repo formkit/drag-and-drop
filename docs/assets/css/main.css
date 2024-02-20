@@ -177,6 +177,9 @@ html.dark #vapor-wave-container::before {
 .docs-content h2 {
   @apply text-3xl md:text-4xl lg:text-5xl text-cyan-600 font-display mb-6 dark:antialiased dark:text-fuchsia-400;
 }
+.docs-content h3 {
+  @apply text-xl md:text-2xl lg:text-3xl font-bold mb-4;
+}
 .docs-content p,
 .docs-content li {
   @apply text-base;
