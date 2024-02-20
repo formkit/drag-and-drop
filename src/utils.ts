@@ -233,6 +233,7 @@ export function copyNodeStyle(
 
   const omittedKeys = [
     "position",
+    "z-index",
     "top",
     "left",
     "x",

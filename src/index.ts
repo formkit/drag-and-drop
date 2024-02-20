@@ -463,7 +463,6 @@ function touchstart<T>(data: NodeTouchEventData<T>) {
 
     return;
   }
-
   const touchState = initTouch(data);
 
   handleTouchedNode(data, touchState);
