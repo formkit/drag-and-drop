@@ -55,6 +55,76 @@
     <h4>Animations</h4>
     <h4>Selections</h4>
     <h4>Drop Zones</h4>
+
+    // Props table for config
+    <table>
+      <tr>
+        <th>Property</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+      <tr>
+        <td>group</td>
+        <td>string</td>
+        <td>
+          A string that is used to determine which parents can transfer with
+          each other.
+        </td>
+      </tr>
+      <tr>
+        <td>draggable</td>
+        <td>function</td>
+        <td>
+          A callback function that returns a boolean to determine if the given
+          child element should be draggable.
+        </td>
+      </tr>
+      <tr>
+        <td>accepts</td>
+        <td>function</td>
+        <td>
+          A callback function that returns a boolean to determine if the
+          transfer operation should be allowed.
+        </td>
+      </tr>
+      <tr>
+        <td>disabled</td>
+        <td>boolean</td>
+        <td>A boolean that determines if the parent is disabled or not.</td>
+      </tr>
+      <tr>
+        <td>dragHandle</td>
+        <td>string</td>
+        <td>
+          A string that is used as a query selector to determine which child is
+          the drag handle. Can be at any depth.
+        </td>
+      </tr>
+      <tr>
+        <td>handleDragstart</td>
+        <td>function</td>
+        <td>Function called before executing dragstart operation.</td>
+      </tr>
+      <tr>
+        <td>handleTouchstart</td>
+        <td>function</td>
+        <td>Function called before executing touchstart operation.</td>
+      </tr>
+      <tr>
+        <td>onDrop</td>
+        <td>function</td>
+        <td>
+          A callback function that is called when the drop operation ends.
+        </td>
+      </tr>
+      <tr>
+        <td>onTransfer</td>
+        <td>function</td>
+        <td>
+          A callback function that is called when the transfer operation ends.
+        </td>
+      </tr>
+    </table>
   </PageSection>
 </template>
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { dragAndDrop } from "../../src/vue/index";
-import { animations } from "../../src/index";
+import { animations, dragAndDrop as nativeDragAndDrop } from "../../src/index";
+import type { ParentConfig, DragState } from "../../src/index";
 
 const dragList = ref(null);
 const showHand = ref(true);

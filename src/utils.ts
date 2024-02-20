@@ -210,7 +210,7 @@ export function isNode(el: unknown): el is Node {
  */
 export function addEvents(
   el: Document | ShadowRoot | Node | HTMLElement,
-  events: EventHandlers
+  events: EventHandlers | any
 ): AbortController {
   const abortController = new AbortController();
   for (const eventName in events) {

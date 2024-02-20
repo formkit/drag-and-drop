@@ -10,7 +10,7 @@ import {
 export function dropZones(data: VueDropZones) {
   return (parent: HTMLElement) => {
     return {
-      tearDownParent() {
+      tearDown() {
         data.forEach((dz: VueDropZoneConfig) => {
           if (dz.el instanceof HTMLElement) {
             tearDownDropZone()(dz.el);
@@ -21,7 +21,7 @@ export function dropZones(data: VueDropZones) {
           handleVueElements(dz.el, tearDownDropZone());
         });
       },
-      setupParent() {
+      setup() {
         data.forEach((dz: VueDropZoneConfig) => {
           if (dz.el instanceof HTMLElement) {
             setupDropZone(parent, dz)(dz.el);

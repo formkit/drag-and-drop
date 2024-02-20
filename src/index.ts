@@ -160,12 +160,10 @@ export function dragValues(state: DragState | TouchState): Array<any> | any {
 /**
  * Initializes the drag and drop functionality for a given parent.
  *
- * @param id - The id of the parent element.
- * @param getValues - A function that returns the current values of the parent element.
- * @param setValues - A function that sets the values of the parent element.
- * @param config - The config for the parent element.
- * @returns void
+ * @param {DragAndDrop} dragAndDrop - The drag and drop configuration.
+ * @param {HTMLElement} dragAndDrop.parent - The parent element.
  *
+ * @returns void
  */
 export function dragAndDrop({
   parent,
@@ -210,7 +208,7 @@ export function dragAndDrop({
     abortControllers: {},
   };
 
-  setupParent(parent, parentData);
+  setup(parent, parentData);
 
   config.plugins?.forEach((plugin) => {
     plugin(parent)?.tearDown?.();
@@ -219,7 +217,7 @@ export function dragAndDrop({
   remapNodes(parent, true);
 
   config.plugins?.forEach((plugin: DNDPlugin) => {
-    plugin(parent)?.setupParent?.();
+    plugin(parent)?.setup?.();
   });
 
   remapNodes(parent);
@@ -235,7 +233,7 @@ export function tearDown(parent: HTMLElement) {
   }
 }
 
-function setupParent(parent: HTMLElement, parentData: ParentData) {
+function setup(parent: HTMLElement, parentData: ParentData) {
   const nodesObserver = new MutationObserver(nodesMutated);
 
   nodesObserver.observe(parent, { childList: true });
