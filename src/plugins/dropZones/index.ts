@@ -62,13 +62,13 @@ export function dropZoneEventData(
 export function dropZones(data: DropZones) {
   return (parent: HTMLElement) => {
     return {
-      tearDownParent() {
+      tearDown() {
         data.forEach((dzConfig) => {
           tearDownDropZone(dzConfig.el);
         });
       },
 
-      setupParent() {
+      setup() {
         data.forEach((dzConfig) => {
           setupDropZone(dzConfig, parent);
         });

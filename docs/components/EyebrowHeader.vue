@@ -1,4 +1,10 @@
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+function toggleDark() {
+  const html = document.querySelector("html");
+  if (!html) return;
+  html.classList.toggle("dark");
+}
+</script>
 
 <template>
   <div class="page-section">
@@ -54,6 +60,9 @@
               class="text-slate-700 opacity-70 group-hover/github:opacity-100 w-4 h-4 sm:w-5 sm:h-5 dark:text-slate-300"
             />
           </NuxtLink>
+        </li>
+        <li>
+          <button @click="toggleDark">Light/Dark Mode</button>
         </li>
       </ul>
     </div>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { dragAndDrop } from "../../src/vue/index";
-import { animations } from "../../src/index";
+import { animations, dragAndDrop as nativeDragAndDrop } from "../../src/index";
+import type { ParentConfig, DragState } from "../../src/index";
 
 const dragList = ref(null);
 const showHand = ref(true);
@@ -42,11 +43,7 @@ dragAndDrop({
   values: features,
   draggingClass: "[&>.card]:-rotate-2 before:-rotate-2",
   dropZoneClass: "blur-sm opacity-60",
-  plugins: [
-    animations({
-      duration: 200,
-    }),
-  ],
+  plugins: [animations({})],
 });
 
 onMounted(() => {
