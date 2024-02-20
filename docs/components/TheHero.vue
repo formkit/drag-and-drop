@@ -42,11 +42,7 @@ dragAndDrop({
   values: features,
   draggingClass: "[&>.card]:-rotate-2 before:-rotate-2",
   dropZoneClass: "blur-sm opacity-60",
-  plugins: [
-    animations({
-      duration: 200,
-    }),
-  ],
+  plugins: [animations({})],
 });
 
 onMounted(() => {

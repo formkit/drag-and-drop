@@ -145,6 +145,8 @@ export function getElFromPoint(
 
   const newY = eventData.e.touches[0].clientY;
 
+  // TODO: Should be using elementFromPoint here, but it's not working as
+  // I would expect, need to look into this.
   const els = document.elementsFromPoint(newX, newY);
 
   if (!nodes) return;
