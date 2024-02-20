@@ -20,25 +20,6 @@ export interface DragAndDrop {
   config?: Partial<ParentConfig>;
 }
 
-///**
-// * The function that is called when an event is triggered on a Node.
-// *
-// * @param data - The data passed to the event listener.
-// * @param dragState - The current state of the drag.
-// */
-//export type NodeAction = (data: NodeEventData, dragState: DragState) => void;
-
-///**
-// * The function that is called when an event is triggered on a Parent.
-// *
-// * @param data - The data passed to the event listener.
-// * @param dragState - The current state of the drag.
-// */
-//export type ParentAction = (
-//  data: ParentEventData,
-//  dragState: DragState | TouchState
-//) => void;
-
 /**
  * The configuration object for a given parent.
  */

@@ -1,7 +1,4 @@
-<setup setup lang="ts">
-// FormKit Parent Config:
-
-{
+const parentConfig: ParentConfig = {
   /**
    * A function that returns whether a given parent accepts a
    * dragged node.
@@ -167,7 +164,3 @@
      */
     touchDropZoneClass?: string;
 }
-</setup>
-<template>
-  <div></div>
-</template>
