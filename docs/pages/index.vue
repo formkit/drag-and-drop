@@ -7,6 +7,7 @@
   >
     <PageSection class="text-slate-700 dark:text-slate-200">
       <Cassettes />
+      <ToDos />
       <Introduction />
     </PageSection>
   </main>
