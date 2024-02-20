@@ -18,21 +18,30 @@ try {
     >
       <li
         class="example-tab"
-        @click="exampleLang = 'react'"
+        @click="
+          exampleLang = 'react';
+          expanded = true;
+        "
         :data-active="exampleLang === 'react'"
       >
         <IconReact class="inline-block w-5 mr-1.5" /> React
       </li>
       <li
         class="example-tab"
-        @click="exampleLang = 'vue'"
+        @click="
+          exampleLang = 'vue';
+          expanded = true;
+        "
         :data-active="exampleLang === 'vue'"
       >
         <IconVue class="inline-block w-5 mr-1.5" /> Vue
       </li>
       <li
         class="example-tab"
-        @click="exampleLang = 'native'"
+        @click="
+          exampleLang = 'native';
+          expanded = true;
+        "
         :data-active="exampleLang === 'native'"
       >
         <IconJavaScript class="inline-block w-5 h-[1.25em] mr-1.5" /> Native

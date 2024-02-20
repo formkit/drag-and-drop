@@ -9,6 +9,8 @@
       <h2 class="text-2xl">Introduction</h2>
       <SectionIntroduction />
       <h2 class="text-2xl">Core Features:</h2>
+      <CodeExample example="transfer" />
+      <CodeExample example="drag-handles" />
     </PageSection>
   </main>
 </template>

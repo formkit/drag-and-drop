@@ -175,7 +175,7 @@ html.dark #vapor-wave-container::before {
 }
 
 .shiki {
-  @apply p-2 lg:p-4 text-sm lg:text-base overflow-auto;
+  @apply p-2 lg:p-4 text-sm overflow-auto max-h-[500px];
 }
 .twoslash-popup-container {
   flex-basis: 500px;

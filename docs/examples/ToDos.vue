@@ -1,6 +1,5 @@
 <script setup lang="ts">
-//import { dragAndDrop } from "@formkit/drag-and-drop/vue";
-import { dragAndDrop } from "../../src/vue/index";
+import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
 
 const props = defineProps({
   dragHandles: {
@@ -9,34 +8,28 @@ const props = defineProps({
   },
 });
 
-const todoList = ref(undefined);
-const doneList = ref(undefined);
-const todos = ref([
-  "Schedule perm",
-  "Rewind VHS tapes",
-  "Make change for the arcade",
-  "Get disposable camera developed",
-  "Learn C++",
-  "Return Nintendo Power Glove",
-]);
-const dones = ref(["Pickup new mix-tape from Beth"]);
+const [todoList, todos] = useDragAndDrop(
+  [
+    "Schedule perm",
+    "Rewind VHS tapes",
+    "Make change for the arcade",
+    "Get disposable camera developed",
+    "Learn C++",
+    "Return Nintendo Power Glove",
+  ],
+  {
+    group: "todoList",
+    dragHandle: !!props.dragHandles ? ".kanban-handle" : undefined,
+  }
+);
+const [doneList, dones] = useDragAndDrop(["Pickup new mix-tape from Beth"], {
+  group: "todoList",
+  dragHandle: !!props.dragHandles ? ".kanban-handle" : undefined,
+});
 
 if (props.dragHandles) {
   dones.value.push("Implement drag handles");
 }
-
-dragAndDrop({
-  parent: todoList,
-  values: todos,
-  group: "todoList",
-  dragHandle: !!props.dragHandles ? ".kanban-handle" : false,
-});
-dragAndDrop({
-  parent: doneList,
-  values: dones,
-  group: "todoList",
-  dragHandle: !!props.dragHandles ? ".kanban-handle" : false,
-});
 </script>
 
 <template>
@@ -99,7 +92,7 @@ dragAndDrop({
 
 <style scoped>
 .kanban-column {
-  @apply bg-white p-4 rounded-lg shadow-md flex flex-col;
+  @apply bg-slate-50 p-4 shadow-md flex flex-col;
   @apply dark:bg-slate-600;
 }
 .kanban-title {
@@ -110,7 +103,7 @@ dragAndDrop({
   @apply list-none h-full min-h-[400px];
 }
 .kanban-item {
-  @apply bg-slate-100 text-slate-600 antialiased border p-4 font-display text-xl leading-none font-thin rounded-lg mb-2 last:mb-0 group-data-[handles=false]:cursor-grab group-data-[handles=false]:active:cursor-grabbing;
+  @apply bg-slate-200 text-slate-600 antialiased border border-slate-300 p-4 font-display text-xl leading-none font-thin mb-2 last:mb-0 group-data-[handles=false]:cursor-grab group-data-[handles=false]:active:cursor-grabbing;
   @apply dark:bg-slate-500 dark:text-slate-50 dark:border-slate-400;
 }
 .kanban-complete {
