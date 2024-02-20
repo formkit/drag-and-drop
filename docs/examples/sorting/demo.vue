@@ -10,7 +10,6 @@ const tapes = ref([
   "Bon Jovi",
   "Van Halen",
 ]);
-// tapes.value = tapes.value.sort(() => Math.random() - 0.5);
 dragAndDrop({
   parent: dragList,
   values: tapes,
@@ -28,7 +27,7 @@ dragAndDrop({
         <img
           src="/img/paper-jams.webp"
           alt="FormKit Office Jams"
-          class="contrast-120 brightness-[140%] absolute -top-4 -left-8 -rotate-12 w-full max-w-[500px] drop-shadow-md"
+          class="contrast-120 brightness-[140%] absolute -top-4 -left-8 -rotate-12 w-full max-w-[500px] drop-shadow-md pointer-events-none"
         />
 
         <ul

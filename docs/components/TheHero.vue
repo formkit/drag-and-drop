@@ -239,11 +239,11 @@ onMounted(() => {
                 dark:bg-indigo-950/80
               `"
             >
-              <h2
+              <span
                 class="text-lg font-semibold text-emerald-600 mb-0.5 dark:text-emerald-400"
               >
                 {{ feature.title }}
-              </h2>
+              </span>
               <p class="text-sm text-center text-slate-600 dark:text-slate-300">
                 {{ feature.description }}
               </p>

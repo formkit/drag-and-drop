@@ -174,6 +174,17 @@ html.dark #vapor-wave-container::before {
   @apply w-[calc(100%-2em)] md:w-[calc(100%-4em)] max-w-5xl mx-auto;
 }
 
+.docs-content h2 {
+  @apply text-3xl md:text-4xl lg:text-5xl text-cyan-600 font-display mb-6 dark:antialiased dark:text-fuchsia-400;
+}
+.docs-content p,
+.docs-content li {
+  @apply text-base;
+}
+.docs-content a {
+  @apply text-cyan-600 hover:text-cyan-800 dark:text-fuchsia-400 dark:hover:text-fuchsia-300 hover:underline hover:underline-offset-1;
+}
+
 .shiki {
   @apply p-2 lg:p-4 text-sm overflow-auto max-h-[500px];
 }
