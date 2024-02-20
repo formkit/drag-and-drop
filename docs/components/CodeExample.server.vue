@@ -5,6 +5,7 @@ import { transformerTwoslash } from "@shikijs/twoslash";
 const props = defineProps<{
   example: string;
 }>();
+console.log("res");
 const res = await import(
   `../examples/${props.example}/${props.example}.vue?raw`
 );

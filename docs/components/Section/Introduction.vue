@@ -6,13 +6,14 @@
     <!--In the spring of 2021, I was tasked with implementing sortable functionality
     for FormKitPro's taglist input. -->
     <!--<a href="https://formkit.com"></a>-->
+    <CodeExample example="introduction" />
+
     <a href="https://formkit.com/">FormKit's</a> Drag and Drop is a simple and
     easy to use JavaScript library for enabling end-users to reorder DOM nodes
     or to move DOM nodes between two separate elements. Unlike most comparable
     packages, Drag and Drop does not perform any direct DOM manipulations to do
     so. Instead, it takes a declarative approach by updating state and allowing
     the reactive framework (of your choosing) to handle the rest.
-    <CodeExample example="example" />
     <div class="divider"></div>
     <h2>Getting started</h2>
     Installation instructions here:
@@ -50,6 +51,7 @@
       callback function to the config.
     </p>
     <div class="divider"></div>
+    <CodeExample example="config" />
     <h2>Plugins</h2>
     <h4>Multi drag</h4>
     <h4>Animations</h4>
