@@ -1,4 +1,19 @@
-const parentConfig: ParentConfig = {
+import type {
+  ParentRecord,
+  DragState,
+  TouchState,
+  NodeDragEventData,
+  NodeTouchEventData,
+  NodeEventData,
+  DNDPlugin,
+  TouchOverNodeEvent,
+  TouchOverParentEvent,
+  SetupNode,
+  ParentEventData,
+  TearDownNode,
+} from "@formkit/drag-and-drop";
+
+export interface ParentConfig {
   /**
    * A function that returns whether a given parent accepts a
    * dragged node.
@@ -33,14 +48,12 @@ const parentConfig: ParentConfig = {
   /**
    * A flag to indicate whether the parent itself is a dropZone.
    */
-   dropZone?: boolean;
-
+  dropZone?: boolean;
 
   /**
    * The class to add to a node when the node is dragged over it.
    */
   dropZoneClass?: string;
-
 
   /**
    * The group that the parent belongs to. This is used for allowing multiple
@@ -66,7 +79,7 @@ const parentConfig: ParentConfig = {
   /**
    * Function that is called when a dragover event is triggered on the parent.
    */
-  handleDragoverParent: (data: ParentDragEventData) => void;
+  handleDragoverParent: (data: ParentEventData) => void;
 
   /**
    * Function that is called when a dragover event is triggered on a node.
@@ -113,17 +126,23 @@ const parentConfig: ParentConfig = {
   /**
    * Function that is called when a sort operation is to be performed.
    */
-  performSort: (state: DragState | TouchState, data: NodeDragEventData | NodeTouchEventData) => void;
+  performSort: (
+    state: DragState | TouchState,
+    data: NodeDragEventData | NodeTouchEventData
+  ) => void;
 
   /**
    * Function that is called when a transfer operation is to be performed.
    */
-  performTransfer: (state: DragState | TouchState, data: NodeEventData | NodeParentEventData) => void;
+  performTransfer: (
+    state: DragState | TouchState,
+    data: NodeEventData | ParentEventData
+  ) => void;
 
   /**
    * An array of functions to use for a given parent.
    */
-  plugins: Array<DNDPlugin>
+  plugins: Array<DNDPlugin>;
 
   /**
    * The root element to use for the parent.
@@ -133,34 +152,34 @@ const parentConfig: ParentConfig = {
   /**
    * Function that is called when a node is set up.
    */
-   setupNode: SetupNode
+  setupNode: SetupNode;
 
-   /**
-    * Flag for whether or not to allow sorting within a given parent.
-    */
-    sortable?: boolean;
+  /**
+   * Flag for whether or not to allow sorting within a given parent.
+   */
+  sortable?: boolean;
 
   /**
    * Function that is called when a node is torn down.
    */
-   tearDownNode: TearDownNode;
+  tearDownNode: TearDownNode;
 
-   /**
-    * The threshold for a drag to be considered a valid sort
-    * operation.
-    */
-   threshold {
+  /**
+   * The threshold for a drag to be considered a valid sort
+   * operation.
+   */
+  threshold: {
     horizontal: number;
     vertical: number;
-   }
+  };
 
-   /**
-    * Class to add to a node when it is being dragged via. touch.
-    */
-    touchDraggingClass?: string;
+  /**
+   * Class to add to a node when it is being dragged via. touch.
+   */
+  touchDraggingClass?: string;
 
-    /**
-     * The class to add to a node when a node is dragged over it via touch.
-     */
-    touchDropZoneClass?: string;
+  /**
+   * The class to add to a node when a node is dragged over it via touch.
+   */
+  touchDropZoneClass?: string;
 }
