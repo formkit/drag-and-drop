@@ -19,7 +19,7 @@ dragAndDrop({
 </script>
 
 <template>
-  <DemoContainer name="dragAndDrop">
+  <DemoContainer name="Sorting">
     <div class="bg-amber-800 dark:bg-amber-950">
       <div class="demo-background opacity-75 dark:opacity-40"></div>
       <div class="relative z-10 px-2 pt-[30vw] md:pt-40 lg:px-10 pb-10">
