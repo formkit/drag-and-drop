@@ -11,10 +11,10 @@ html`
   </ul>
 `(document.getElementById("app")!);
 
-dragAndDrop({
+dragAndDrop<string>({
   parent: document.getElementById("list")!,
-  getValues: () => state.items as string[],
+  getValues: () => state.items,
   setValues: (newValues) => {
-    state.items = newValues as any;
+    state.items = reactive(newValues);
   },
 });

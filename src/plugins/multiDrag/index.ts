@@ -30,13 +30,15 @@ import {
 } from "../../index";
 import { addClass, removeClass, copyNodeStyle, splitClass } from "../../utils";
 
-export const multiDragState: MultiDragState = {
-  selectedNodes: Array<NodeRecord>(),
+export const multiDragState: MultiDragState<any> = {
+  selectedNodes: Array<NodeRecord<any>>(),
 
   activeNode: undefined,
 };
 
-export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
+export function multiDrag<T>(
+  multiDragConfig: Partial<MultiDragConfig<T>> = {}
+) {
   return (parent: HTMLElement) => {
     const parentData = parents.get(parent);
 
@@ -45,7 +47,7 @@ export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
     const multiDragParentConfig = {
       ...parentData.config,
       multiDragConfig: multiDragConfig,
-    } as MultiDragParentConfig;
+    } as MultiDragParentConfig<T>;
 
     return {
       setup() {
@@ -72,13 +74,13 @@ export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
         });
       },
 
-      tearDownNode(data: TearDownNodeData) {
+      tearDownNode<T>(data: TearDownNodeData<T>) {
         multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
           plugin(data.parent)?.tearDownNode?.(data);
         });
       },
 
-      setupNode(data: SetupNodeData) {
+      setupNode<T>(data: SetupNodeData<T>) {
         multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
           plugin(data.parent)?.setupNode?.(data);
         });
@@ -87,7 +89,7 @@ export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
   };
 }
 
-function multiReapplyDragClasses(node: Node, parentData: ParentData) {
+function multiReapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
   if (!state) return;
 
   const dropZoneClass =
@@ -102,7 +104,7 @@ function multiReapplyDragClasses(node: Node, parentData: ParentData) {
   addClass([node], dropZoneClass, true);
 }
 
-function multiHandleDragend(data: NodeEventData) {
+function multiHandleDragend<T>(data: NodeEventData<T>) {
   if (!state) return;
 
   end(data, state);
@@ -112,7 +114,7 @@ function multiHandleDragend(data: NodeEventData) {
   resetState();
 }
 
-function selectionsEnd(data: NodeEventData) {
+function selectionsEnd<T>(data: NodeEventData<T>) {
   const config = data.targetData.parent.data.config;
 
   const multiDragconfig = data.targetData.parent.data.config.multiDragConfig;
@@ -134,7 +136,7 @@ function selectionsEnd(data: NodeEventData) {
   }
 }
 
-function multiHandleDragstart(data: NodeEventData) {
+function multiHandleDragstart<T>(data: NodeEventData<T>) {
   if (!(data.e instanceof DragEvent)) return;
 
   dragstart({
@@ -143,7 +145,7 @@ function multiHandleDragstart(data: NodeEventData) {
   });
 }
 
-function dragstart(data: NodeDragEventData) {
+function dragstart<T>(data: NodeDragEventData<T>) {
   const dragState = initDrag(data);
 
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
@@ -183,7 +185,7 @@ function dragstart(data: NodeDragEventData) {
   }
 }
 
-function multiHandleTouchstart(data: NodeEventData) {
+function multiHandleTouchstart<T>(data: NodeEventData<T>) {
   if (!(data.e instanceof TouchEvent)) return;
 
   touchstart({
@@ -192,7 +194,7 @@ function multiHandleTouchstart(data: NodeEventData) {
   });
 }
 
-function touchstart(data: NodeTouchEventData) {
+function touchstart<T>(data: NodeTouchEventData<T>) {
   const touchState = initTouch(data);
 
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
@@ -218,10 +220,10 @@ function touchstart(data: NodeTouchEventData) {
   handleLongTouch(data, touchState);
 }
 
-export function handleSelections(
-  data: NodeEventData,
-  selectedValues: Array<any>,
-  state: DragState | TouchState,
+export function handleSelections<T>(
+  data: NodeEventData<T>,
+  selectedValues: Array<T>,
+  state: DragState<T> | TouchState<T>,
   x: number,
   y: number
 ) {
@@ -234,7 +236,7 @@ export function handleSelections(
   }
   const config = data.targetData.parent.data.config.multiDragConfig;
 
-  const clonedEls = state.draggedNodes.map((x: NodeRecord) => {
+  const clonedEls = state.draggedNodes.map((x: NodeRecord<T>) => {
     const el = x.el.cloneNode(true) as Node;
 
     copyNodeStyle(x.el, el, true);
@@ -258,14 +260,14 @@ export function handleSelections(
   return { data, state, x, y };
 }
 
-export function stackNodes({
+export function stackNodes<T>({
   data,
   state,
   x,
   y,
 }: {
-  data: NodeEventData;
-  state: DragState | TouchState;
+  data: NodeEventData<T>;
+  state: DragState<T> | TouchState<T>;
   x: number;
   y: number;
 }) {

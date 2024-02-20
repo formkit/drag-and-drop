@@ -14,13 +14,13 @@ const parentValues: WeakMap<
   [Array<unknown>, React.Dispatch<React.SetStateAction<Array<unknown>>>]
 > = new WeakMap();
 
-function getValues(parent: HTMLElement): Array<unknown> {
+function getValues<T>(parent: HTMLElement): Array<T> {
   const values = parentValues.get(parent);
   if (!values) {
     console.warn("No values found for parent element");
     return [];
   }
-  return values[0];
+  return values[0] as Array<T>;
 }
 
 function setValues(newValues: Array<unknown>, parent: HTMLElement): void {
@@ -29,16 +29,13 @@ function setValues(newValues: Array<unknown>, parent: HTMLElement): void {
   parentValues.set(parent, [newValues, values![1]]);
 }
 
-function handleParent<
-  E extends RefObject<HTMLElement | null> | HTMLElement,
-  ListItem
->(
-  config: Partial<ReactDragAndDropConfig<E, ListItem[]>>,
+function handleParent<E extends RefObject<HTMLElement | null> | HTMLElement, T>(
+  config: Partial<ReactDragAndDropConfig<E, T[]>>,
   values: [Array<any>, React.Dispatch<React.SetStateAction<Array<any>>>]
 ) {
   return (el: HTMLElement) => {
     parentValues.set(el, values);
-    initParent({ parent: el, getValues, setValues, config });
+    initParent<T>({ parent: el, getValues, setValues, config });
   };
 }
 
@@ -68,10 +65,10 @@ export function dragAndDrop<E extends HTMLElement, I>(
  * @param options - The drag and drop configuration.
  * @returns
  */
-export function useDragAndDrop<E extends HTMLElement, I = unknown>(
-  list: I[],
-  options: Partial<ParentConfig> = {}
-): [RefObject<E>, I[], Dispatch<SetStateAction<I[]>>] {
+export function useDragAndDrop<E extends HTMLElement, T = unknown>(
+  list: T[],
+  options: Partial<ParentConfig<T>> = {}
+): [RefObject<E>, T[], Dispatch<SetStateAction<T[]>>] {
   const parent: RefObject<E> = useRef<E>(null);
   const [values, setValues] = useState(list);
 

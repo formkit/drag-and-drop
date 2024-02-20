@@ -4,6 +4,7 @@ import type {
   NodeFromPoint,
   ParentFromPoint,
   EventHandlers,
+  ParentData,
 } from "./types";
 
 import { parents, nodes } from "./index";
@@ -136,9 +137,9 @@ export function events(
   });
 }
 
-export function getElFromPoint(
-  eventData: NodeEventData
-): NodeFromPoint | ParentFromPoint | undefined {
+export function getElFromPoint<T>(
+  eventData: NodeEventData<T>
+): NodeFromPoint<T> | ParentFromPoint<T> | undefined {
   if (!(eventData.e instanceof TouchEvent)) return;
 
   const newX = eventData.e.touches[0].clientX;
@@ -168,7 +169,7 @@ export function getElFromPoint(
         },
         parent: {
           el: targetNode.parentNode,
-          data: targetParentData,
+          data: targetParentData as ParentData<T>,
         },
       };
     } else if (node instanceof HTMLElement) {
@@ -178,7 +179,7 @@ export function getElFromPoint(
         return {
           parent: {
             el: node,
-            data: parentData,
+            data: parentData as ParentData<T>,
           },
         };
       }

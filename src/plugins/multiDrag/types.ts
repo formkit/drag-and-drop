@@ -5,24 +5,24 @@ import {
   NodeDragEventData,
   NodeTouchEventData,
 } from "../../types";
-export interface MultiDragConfig {
+export interface MultiDragConfig<T> {
   [key: string]: any;
   draggingClass?: string;
   dropZoneClass?: string;
   selections?: (parent: HTMLElement) => Array<any>;
   touchDraggingClass?: string;
   touchDropZoneClass?: string;
-  handleDragend: NodeDragEventData | NodeTouchEventData;
-  handleDragstart: NodeDragEventData;
-  handleTouchstart: NodeTouchEventData;
+  handleDragend: NodeDragEventData<T> | NodeTouchEventData<T>;
+  handleDragstart: NodeDragEventData<T>;
+  handleTouchstart: NodeTouchEventData<T>;
   plugins?: Array<DNDPlugin>;
 }
 
-export interface MultiDragParentConfig extends ParentConfig {
-  multiDragConfig: MultiDragConfig;
+export interface MultiDragParentConfig<T> extends ParentConfig<T> {
+  multiDragConfig: MultiDragConfig<T>;
 }
 
-export interface MultiDragState {
-  selectedNodes: Array<NodeRecord>;
-  activeNode: NodeRecord | undefined;
+export interface MultiDragState<T> {
+  selectedNodes: Array<NodeRecord<T>>;
+  activeNode: NodeRecord<T> | undefined;
 }
