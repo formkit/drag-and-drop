@@ -186,7 +186,7 @@ export function dragAndDrop({
       handleDragstart,
       handleDragoverNode,
       handleDragoverParent,
-      handleDragend,
+      handleEnd,
       handleTouchstart,
       handleTouchmove,
       handleTouchOverNode,
@@ -507,10 +507,10 @@ export function setupNode(data: SetupNodeData) {
   data.nodeData.abortControllers.mainNode = addEvents(data.node, {
     dragstart: nodeEventData(config.handleDragstart),
     dragover: nodeEventData(config.handleDragoverNode),
-    dragend: nodeEventData(config.handleDragend),
+    dragend: nodeEventData(config.handleEnd),
     touchstart: nodeEventData(config.handleTouchstart),
     touchmove: nodeEventData(config.handleTouchmove),
-    touchend: nodeEventData(config.handleDragend),
+    touchend: nodeEventData(config.handleEnd),
     touchOverNode: config.handleTouchOverNode,
   });
 
@@ -548,7 +548,7 @@ export function tearDownNode(data: TearDownNodeData) {
   nodes.delete(data.node);
 }
 
-export function handleDragend(eventData: NodeEventData) {
+export function handleEnd(eventData: NodeEventData) {
   if (!state) return;
 
   end(eventData, state);
