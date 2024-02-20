@@ -24,8 +24,8 @@ const features = ref([
     description: "Leverages modern web APIs.",
   },
   {
-    title: "Multi-drag",
-    description: "Drag on multiple items at once.",
+    title: "Plugins",
+    description: "Multi-dag, animations, and more.",
   },
   {
     title: "TypeScript",
