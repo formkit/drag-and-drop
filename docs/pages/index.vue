@@ -7,7 +7,8 @@
   >
     <PageSection class="text-slate-700 dark:text-slate-200">
       <Cassettes />
-      <ToDos />
+      <ToDos :drag-handles="false" />
+      <ToDos :drag-handles="true" />
       <Introduction />
     </PageSection>
   </main>
