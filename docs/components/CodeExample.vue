@@ -4,7 +4,7 @@ const props = defineProps<{
 }>();
 let cmp: Component | false = false;
 try {
-  const res = await import(`../examples/${props.example}/${props.example}.vue`);
+  const res = await import(`../examples/${props.example}/demo.vue`);
   cmp = res.default;
 } catch {}
 </script>
