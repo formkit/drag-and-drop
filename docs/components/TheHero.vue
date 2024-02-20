@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { dragAndDrop } from "../../src/vue/index";
-import { animations } from "../../src/index";
+import { dragAndDrop } from "@formkit/drag-and-drop/vue";
+import { animations } from "@formkit/drag-and-drop";
 
 const dragList = ref(null);
 const showHand = ref(true);
