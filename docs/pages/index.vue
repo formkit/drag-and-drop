@@ -9,9 +9,6 @@
       <h2 class="text-2xl">Introduction</h2>
       <SectionIntroduction />
       <h2 class="text-2xl">Core Features:</h2>
-      <Sort />
-      <Transfer />
-      <ToDos :drag-handles="true" />
     </PageSection>
   </main>
 </template>

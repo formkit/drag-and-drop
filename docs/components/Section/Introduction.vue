@@ -1,6 +1,6 @@
 <template>
   <p class="text-lg">
-    <a href="https://formkit.com/">FormKit's</a> Drag and Drop is a simple and
+    <a href="https://formkit.com/">FormKit’s</a> Drag and Drop is a simple and
     easy to use JavaScript library for enabling end-users to sort an array of
     values or to transfer values from one array to another by using native drag
     and drop methods. Unlike most comparable packages, Drag and Drop does not
