@@ -11,7 +11,6 @@
   packages, Drag and Drop does not perform any direct DOM manipulations to do
   so. Instead, it takes a declarative approach by updating state and allowing
   the reactive framework (of your choosing) to handle the rest.
-  <CodeExample example="introduction" />
   <div class="divider"></div>
   <h2>Getting started</h2>
   Installation instructions here:
@@ -23,12 +22,14 @@
     When `dragAndDrop` is called with a given parent element, the immediate
     children of that parent element will be sortable.
   </p>
+  <CodeExample example="sorting" />
   <br />
   <h4>Transfer (kanban board example)</h4>
   <p>
     To enable transfer functionality between two parents, set the `group` in the
     config object of each to be the same.
   </p>
+  <!-- <CodeExample example="transfer" /> -->
   <br />
   <h4>Drag handles</h4>
   <br />
@@ -36,6 +37,7 @@
     Accepts (Accepts a callback function that returns a boolean to determine if
     transfer operation should be allowed)
   </h4>
+  <!-- <CodeExample example="drag-handles" /> -->
   <br />
   <h4>
     Disabled (show it being enabled, and then on button press, you can't drag

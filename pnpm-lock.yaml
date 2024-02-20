@@ -49,12 +49,6 @@ importers:
       '@formkit/drag-and-drop':
         specifier: workspace:*
         version: link:../dist
-<<<<<<< HEAD
-      nuxt-shiki:
-        specifier: ^0.1.1
-        version: 0.1.2
-=======
->>>>>>> 25e8924f59413648dcb9dfc10296a2141ed869ef
     devDependencies:
       '@arrow-js/core':
         specifier: 1.0.0-alpha.9
@@ -69,11 +63,7 @@ importers:
         specifier: ^1.34.0
         version: 1.41.2
       '@shikijs/twoslash':
-<<<<<<< HEAD
-        specifier: ^1.1.5
-=======
         specifier: ^1.1.6
->>>>>>> 25e8924f59413648dcb9dfc10296a2141ed869ef
         version: 1.1.6(typescript@5.3.3)
       '@types/node':
         specifier: ^18
@@ -94,11 +84,7 @@ importers:
         specifier: ^18.2.0
         version: 18.2.0(react@18.2.0)
       shiki:
-<<<<<<< HEAD
-        specifier: ^1.1.5
-=======
         specifier: ^1.1.6
->>>>>>> 25e8924f59413648dcb9dfc10296a2141ed869ef
         version: 1.1.6
       twoslash-vue:
         specifier: ^0.2.4
@@ -1876,10 +1862,7 @@ packages:
 
   /@shikijs/core@1.1.6:
     resolution: {integrity: sha512-kt9hhvrWTm0EPtRDIsoAZnSsFlIDBVBBI5CQewpA/NZCPin+MOKRXg+JiWc4y+8fZ/v0HzfDhu/UC+OTZGMt7A==}
-<<<<<<< HEAD
-=======
     dev: true
->>>>>>> 25e8924f59413648dcb9dfc10296a2141ed869ef
 
   /@shikijs/twoslash@1.1.6(typescript@5.3.3):
     resolution: {integrity: sha512-0HJK7Il7HevTpRvpPlnJ0ow8UyoQxhvxQ0/lhfw1C0xW/7eLtSAtZfSKdel5Nch6HgbbtfucEzuUFmRIRXUFUg==}
@@ -3379,14 +3362,9 @@ packages:
     engines: {node: '>= 0.8'}
     dev: true
 
-<<<<<<< HEAD
   /destr@2.0.3:
     resolution: {integrity: sha512-2N3BOUU4gYMpTP24s5rF5iP7BDr7uNTCs4ozw3kf/eKfvWSIu93GEBi5m427YoyJoeOzQ5smuu4nNAPGb8idSQ==}
-=======
-  /destr@2.0.2:
-    resolution: {integrity: sha512-65AlobnZMiCET00KaFFjUefxDX0khFA/E4myqZ7a6Sq1yZtR8+FVIvilVX66vF2uobSumxooYZChiRPCKNqhmg==}
     dev: true
->>>>>>> 25e8924f59413648dcb9dfc10296a2141ed869ef
 
   /destroy@1.2.0:
     resolution: {integrity: sha512-2sJGJTaXIIaR1w4iJSNoN0hnMY7Gpc/n8D4qSCJw8QqFWXf7cuAgnEHxBpweaVcPevC2l3KpjYCx3NypQQgaJg==}
@@ -5497,20 +5475,6 @@ packages:
       - supports-color
     dev: true
 
-<<<<<<< HEAD
-  /nuxt-shiki@0.1.2:
-    resolution: {integrity: sha512-hYBvvwxrWfEpOEoNpoqjGOxb97UMkdP6Vf3xHcM6HF1+LuJo+fnu4Ug1mMWyuf+f7GPJggAxVNcPdW156jg9OQ==}
-    dependencies:
-      '@nuxt/kit': 3.10.2
-      shiki: 1.1.6
-      unwasm: 0.3.7
-    transitivePeerDependencies:
-      - rollup
-      - supports-color
-    dev: false
-
-=======
->>>>>>> 25e8924f59413648dcb9dfc10296a2141ed869ef
   /nuxt@3.10.2(@types/node@18.19.17)(eslint@8.56.0)(typescript@5.3.3)(vite@5.1.3):
     resolution: {integrity: sha512-EYRPNPEHRoOzL5ZusOMoBvv1/yifGwdv7BLJPD/jaEDeEZvdXjLXLSRh2NukmdB1SdNmfL3wEnt5xtRpQO1niQ==}
     engines: {node: ^14.18.0 || >=16.10.0}
@@ -6719,10 +6683,7 @@ packages:
     resolution: {integrity: sha512-j4pcpvaQWHb42cHeV+W6P+X/VcK7Y2ctvEham6zB8wsuRQroT6cEMIkiUmBU2Nqg2qnHZDH6ZyRdVldcy0l6xw==}
     dependencies:
       '@shikijs/core': 1.1.6
-<<<<<<< HEAD
-=======
     dev: true
->>>>>>> 25e8924f59413648dcb9dfc10296a2141ed869ef
 
   /signal-exit@3.0.7:
     resolution: {integrity: sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==}
