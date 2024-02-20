@@ -8,6 +8,16 @@ export default defineNuxtConfig({
   experimental: {
     componentIslands: true,
   },
+  components: [
+    {
+      path: "~/components",
+      pathPrefix: false,
+    },
+    {
+      path: "~/examples",
+      pathPrefix: false,
+    },
+  ],
   modules: [
     "@nuxtjs/tailwindcss",
     "@vueuse/nuxt",

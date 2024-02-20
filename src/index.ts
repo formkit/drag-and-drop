@@ -190,7 +190,7 @@ export function dragAndDrop<T>({
       handleDragstart,
       handleDragoverNode,
       handleDragoverParent,
-      handleDragend,
+      handleEnd,
       handleTouchstart,
       handleTouchmove,
       handleTouchOverNode,
@@ -275,7 +275,7 @@ function nodesMutated(mutationList: MutationRecord[]) {
  *
  * @internal
  */
-export function remapNodes(parent: HTMLElement, force?: boolean) {
+export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
   const parentData = parents.get(parent);
 
   if (!parentData) return;
@@ -316,7 +316,7 @@ export function remapNodes(parent: HTMLElement, force?: boolean) {
 
   const values = parentData.getValues(parent);
 
-  const enabledNodeRecords: Array<NodeRecord> = [];
+  const enabledNodeRecords: Array<NodeRecord<T>> = [];
 
   for (let x = 0; x < enabledNodes.length; x++) {
     const node = enabledNodes[x];
@@ -511,10 +511,10 @@ export function setupNode<T>(data: SetupNodeData<T>) {
   data.nodeData.abortControllers.mainNode = addEvents(data.node, {
     dragstart: nodeEventData(config.handleDragstart),
     dragover: nodeEventData(config.handleDragoverNode),
-    dragend: nodeEventData(config.handleDragend),
+    dragend: nodeEventData(config.handleEnd),
     touchstart: nodeEventData(config.handleTouchstart),
     touchmove: nodeEventData(config.handleTouchmove),
-    touchend: nodeEventData(config.handleDragend),
+    touchend: nodeEventData(config.handleEnd),
     touchOverNode: config.handleTouchOverNode,
   });
 
@@ -552,7 +552,7 @@ export function tearDownNode<T>(data: TearDownNodeData<T>) {
   nodes.delete(data.node);
 }
 
-export function handleDragend<T>(eventData: NodeEventData<T>) {
+export function handleEnd<T>(eventData: NodeEventData<T>) {
   if (!state) return;
 
   end(eventData, state);
