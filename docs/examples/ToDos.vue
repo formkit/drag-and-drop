@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { dragAndDrop } from "@formkit/drag-and-drop/vue";
+//import { dragAndDrop } from "@formkit/drag-and-drop/vue";
+import { dragAndDrop } from "../../src/vue/index";
 
 const props = defineProps({
   dragHandles: {
