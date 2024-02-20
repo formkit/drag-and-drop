@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import { dragAndDrop } from "@formkit/drag-and-drop/vue";
 
-const todoList = ref(null);
-const doneList = ref(null);
+const props = defineProps({
+  dragHandles: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+const todoList = ref(undefined);
+const doneList = ref(undefined);
 const todos = ref([
   "Schedule perm",
   "Rewind VHS tapes",
@@ -11,29 +18,45 @@ const todos = ref([
   "Learn C++",
   "Return Nintendo Power Glove",
 ]);
-const dones = ref(["Pickup new mixtape from Beth"]);
+const dones = ref(["Pickup new mix-tape from Beth"]);
 
 dragAndDrop({
   parent: todoList,
   values: todos,
   group: "todoList",
+  dragHandle: !!props.dragHandles ? ".kanban-handle" : false,
 });
 dragAndDrop({
   parent: doneList,
   values: dones,
   group: "todoList",
+  dragHandle: !!props.dragHandles ? ".kanban-handle" : false,
 });
 </script>
 
 <template>
-  <DemoContainer name="Transfer">
-    <div class="bg-slate-500 dark:bg-slate-800">
+  <DemoContainer :name="dragHandles ? 'Drag Handles' : 'Transfer'">
+    <div
+      class="group bg-slate-500 dark:bg-slate-800"
+      :data-handles="dragHandles"
+    >
       <div class="kanban-board p-4 grid grid-cols-2 gap-4">
         <div class="kanban-column">
           <h2 class="kanban-title">ToDos</h2>
 
           <ul ref="todoList" class="kanban-list">
             <li v-for="todo in todos" :key="todo" class="kanban-item">
+              <span
+                v-if="dragHandles"
+                class="kanban-handle inline-block w-2 mr-2 cursor-grab active:cursor-grabbing"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 512">
+                  <path
+                    fill="currentColor"
+                    d="M48 144a48 48 0 1 0 0-96 48 48 0 1 0 0 96zm0 160a48 48 0 1 0 0-96 48 48 0 1 0 0 96zM96 416A48 48 0 1 0 0 416a48 48 0 1 0 96 0zM208 144a48 48 0 1 0 0-96 48 48 0 1 0 0 96zm48 112a48 48 0 1 0 -96 0 48 48 0 1 0 96 0zM208 464a48 48 0 1 0 0-96 48 48 0 1 0 0 96z"
+                  />
+                </svg>
+              </span>
               {{ todo }}
             </li>
           </ul>
@@ -47,6 +70,17 @@ dragAndDrop({
               :key="done"
               class="kanban-item kanban-complete"
             >
+              <span
+                v-if="dragHandles"
+                class="kanban-handle inline-block w-2 mr-2 cursor-grab active:cursor-grabbing"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 512">
+                  <path
+                    fill="currentColor"
+                    d="M48 144a48 48 0 1 0 0-96 48 48 0 1 0 0 96zm0 160a48 48 0 1 0 0-96 48 48 0 1 0 0 96zM96 416A48 48 0 1 0 0 416a48 48 0 1 0 96 0zM208 144a48 48 0 1 0 0-96 48 48 0 1 0 0 96zm48 112a48 48 0 1 0 -96 0 48 48 0 1 0 96 0zM208 464a48 48 0 1 0 0-96 48 48 0 1 0 0 96z"
+                  />
+                </svg>
+              </span>
               <span>
                 {{ done }}
               </span>
@@ -71,7 +105,7 @@ dragAndDrop({
   @apply list-none h-full min-h-[400px];
 }
 .kanban-item {
-  @apply bg-slate-100 text-slate-600 antialiased border p-4 font-display text-xl leading-none font-thin rounded-lg mb-2 last:mb-0 cursor-grab active:cursor-grabbing;
+  @apply bg-slate-100 text-slate-600 antialiased border p-4 font-display text-xl leading-none font-thin rounded-lg mb-2 last:mb-0 group-data-[handles=false]:cursor-grab group-data-[handles=false]:active:cursor-grabbing;
   @apply dark:bg-slate-500 dark:text-slate-50 dark:border-slate-400;
 }
 .kanban-complete {
