@@ -1,4 +1,10 @@
-import { NodeAction, DNDPlugin, ParentConfig, NodeRecord } from "../../types";
+import {
+  DNDPlugin,
+  ParentConfig,
+  NodeRecord,
+  NodeDragEventData,
+  NodeTouchEventData,
+} from "../../types";
 export interface MultiDragConfig {
   [key: string]: any;
   draggingClass?: string;
@@ -6,9 +12,9 @@ export interface MultiDragConfig {
   selections?: (parent: HTMLElement) => Array<any>;
   touchDraggingClass?: string;
   touchDropZoneClass?: string;
-  handleDragend: NodeAction;
-  handleDragstart: NodeAction;
-  handleTouchstart: NodeAction;
+  handleDragend: NodeDragEventData | NodeTouchEventData;
+  handleDragstart: NodeDragEventData;
+  handleTouchstart: NodeTouchEventData;
   plugins?: Array<DNDPlugin>;
 }
 
