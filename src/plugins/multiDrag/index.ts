@@ -72,13 +72,13 @@ export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
         });
       },
 
-      tearDownNode(data: TearDownNodeData) {
+      tearDownNode<T>(data: TearDownNodeData<T>) {
         multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
           plugin(data.parent)?.tearDownNode?.(data);
         });
       },
 
-      setupNode(data: SetupNodeData) {
+      setupNode<T>(data: SetupNodeData<T>) {
         multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
           plugin(data.parent)?.setupNode?.(data);
         });
@@ -87,7 +87,7 @@ export function multiDrag(multiDragConfig: Partial<MultiDragConfig> = {}) {
   };
 }
 
-function multiReapplyDragClasses(node: Node, parentData: ParentData) {
+function multiReapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
   if (!state) return;
 
   const dropZoneClass =

@@ -12,7 +12,7 @@ export interface MultiDragConfig {
   plugins?: Array<DNDPlugin>;
 }
 
-export interface MultiDragParentConfig extends ParentConfig {
+export interface MultiDragParentConfig<T> extends ParentConfig<T> {
   multiDragConfig: MultiDragConfig;
 }
 

@@ -83,7 +83,7 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
         document.head.append(style);
       },
 
-      setupNode(data: SetupNodeData) {
+      setupNode<T>(data: SetupNodeData<T>) {
         if (!state) return;
 
         if (data.nodeData.value === state.draggedNode.data.value) {

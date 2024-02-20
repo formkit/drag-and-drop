@@ -6,11 +6,11 @@
  * @param setValues - A function that sets the values assigned to the parent.
  * @param config - An optional configuration object.
  */
-export interface DragAndDrop {
+export interface DragAndDrop<T> {
   parent: HTMLElement;
-  getValues: (parent: HTMLElement) => Array<any>;
-  setValues: (values: Array<any>, parent: HTMLElement) => void;
-  config?: Partial<ParentConfig>;
+  getValues: (parent: HTMLElement) => Array<T>;
+  setValues: (values: Array<T>, parent: HTMLElement) => void;
+  config?: Partial<ParentConfig<T>>;
 }
 
 /**
@@ -19,7 +19,10 @@ export interface DragAndDrop {
  * @param data - The data passed to the event listener.
  * @param dragState - The current state of the drag.
  */
-export type NodeAction = (data: NodeEventData, dragState: DragState) => void;
+export type NodeAction = <T>(
+  data: NodeEventData<T>,
+  dragState: DragState<T>
+) => void;
 
 /**
  * The function that is called when an event is triggered on a Parent.
@@ -27,9 +30,9 @@ export type NodeAction = (data: NodeEventData, dragState: DragState) => void;
  * @param data - The data passed to the event listener.
  * @param dragState - The current state of the drag.
  */
-export type ParentAction = (
-  data: ParentEventData,
-  dragState: DragState | TouchState
+export type ParentAction<T> = (
+  data: ParentEventData<T>,
+  dragState: DragState<T> | TouchState<T>
 ) => void;
 
 /**
@@ -78,13 +81,13 @@ export type ParentAction = (
  * @param touchDropZoneClass - The class to add to a node when a node is dragged
  * over it via touch.
  */
-export interface ParentConfig {
+export interface ParentConfig<T> {
   [key: string]: any;
   accepts?: (
-    targetParentData: ParentRecord,
-    initialParentData: ParentRecord,
-    lastParentData: ParentRecord,
-    state: DragState | TouchState
+    targetParentData: ParentRecord<T>,
+    initialParentData: ParentRecord<T>,
+    lastParentData: ParentRecord<T>,
+    state: DragState<T> | TouchState<T>
   ) => boolean;
   disabled?: boolean;
   dragHandle?: string;
@@ -96,22 +99,22 @@ export interface ParentConfig {
   handleDragend: NodeAction;
   handleDragstart: NodeAction;
   handleTouchstart: NodeAction;
-  handleDragoverParent: ParentAction;
-  handleDragoverNode: (data: NodeDragEventData) => void;
-  handleTouchmove: (data: NodeTouchEventData) => void;
-  handleTouchOverNode: (data: TouchOverNodeEvent) => void;
-  handleTouchOverParent: (e: TouchOverParentEvent) => void;
+  handleDragoverParent: ParentAction<T>;
+  handleDragoverNode: (data: NodeDragEventData<T>) => void;
+  handleTouchmove: (data: NodeTouchEventData<T>) => void;
+  handleTouchOverNode: (data: TouchOverNodeEvent<T>) => void;
+  handleTouchOverParent: (e: TouchOverParentEvent<T>) => void;
   longTouch?: boolean;
   longTouchClass?: string;
   longTouchTimeout?: number;
   name?: string;
   performSort: (
-    state: DragState | TouchState,
-    data: NodeDragEventData | NodeTouchEventData
+    state: DragState<T> | TouchState<T>,
+    data: NodeDragEventData<T> | NodeTouchEventData<T>
   ) => void;
   performTransfer: (
-    state: DragState | TouchState,
-    data: NodeEventData | ParentEventData
+    state: DragState<T> | TouchState<T>,
+    data: NodeEventData<T> | ParentEventData<T>
   ) => void;
   plugins?: Array<DNDPlugin>;
   root: Document | ShadowRoot;
@@ -135,10 +138,10 @@ export interface ParentConfig {
  * @param enabledNodes - The nodes that are currently enabled for drag and drop.
  * @param abortControllers - The abort controllers for the parent.
  */
-export interface ParentData {
-  getValues: (parent: HTMLElement) => Array<any>;
-  setValues: (values: Array<any>, parent: HTMLElement) => void;
-  config: ParentConfig;
+export interface ParentData<T> {
+  getValues: (parent: HTMLElement) => Array<T>;
+  setValues: (values: Array<T>, parent: HTMLElement) => void;
+  config: ParentConfig<T>;
   enabledNodes: Array<NodeRecord>;
   abortControllers: Record<string, AbortController>;
 }
@@ -165,9 +168,9 @@ export interface NodeData {
  * @param e - The event that was triggered.
  * @param targetData - The data of the target node.
  */
-export interface NodeEventData {
+export interface NodeEventData<T> {
   e: Event;
-  targetData: NodeTargetData;
+  targetData: NodeTargetData<T>;
 }
 
 /**
@@ -175,7 +178,7 @@ export interface NodeEventData {
  *
  * @param e - The event that was triggered.
  */
-export interface NodeDragEventData extends NodeEventData {
+export interface NodeDragEventData<T> extends NodeEventData<T> {
   e: DragEvent;
 }
 
@@ -185,9 +188,9 @@ export interface NodeDragEventData extends NodeEventData {
  * @param e - The event that was triggered.
  * @param targetData - The data of the target node.
  */
-export interface NodeTouchEventData extends NodeEventData {
+export interface NodeTouchEventData<T> extends NodeEventData<T> {
   e: TouchEvent;
-  targetData: NodeTargetData;
+  targetData: NodeTargetData<T>;
 }
 
 /**
@@ -196,9 +199,9 @@ export interface NodeTouchEventData extends NodeEventData {
  * @param e - The event that was triggered.
  * @param targetData - The data of the target parent.
  */
-export interface ParentEventData {
+export interface ParentEventData<T> {
   e: Event;
-  targetData: ParentTargetData;
+  targetData: ParentTargetData<T>;
 }
 
 /**
@@ -207,8 +210,8 @@ export interface ParentEventData {
  *
  * @param param - The parent record.
  */
-export interface ParentTargetData {
-  parent: ParentRecord;
+export interface ParentTargetData<T> {
+  parent: ParentRecord<T>;
 }
 
 /**
@@ -217,9 +220,9 @@ export interface ParentTargetData {
  * @param node - The node record.
  * @param parent - The parent record.
  */
-export interface NodeTargetData {
+export interface NodeTargetData<T> {
   node: NodeRecord;
-  parent: ParentRecord;
+  parent: ParentRecord<T>;
 }
 
 /**
@@ -233,9 +236,9 @@ export interface NodeRecord {
 /**
  * The parent record, contains the el and the data in the `parents` weakmap.
  */
-export interface ParentRecord {
+export interface ParentRecord<T> {
   el: HTMLElement;
-  data: ParentData;
+  data: ParentData<T>;
 }
 
 /**
@@ -244,9 +247,9 @@ export interface ParentRecord {
  * @param node - The node record.
  * @param parent - The parent record.
  */
-export interface NodeFromPoint {
+export interface NodeFromPoint<T> {
   node: NodeRecord;
-  parent: ParentRecord;
+  parent: ParentRecord<T>;
 }
 
 /**
@@ -254,14 +257,14 @@ export interface NodeFromPoint {
  *
  * @param parent - The parent record.
  */
-export interface ParentFromPoint {
-  parent: ParentRecord;
+export interface ParentFromPoint<T> {
+  parent: ParentRecord<T>;
 }
 
 /**
  * The event listener for a node event.
  */
-export type NodeEvent = (data: NodeEventData) => void;
+export type NodeEvent = <T>(data: NodeEventData<T>) => void;
 
 /**
  * The interface for a node in the context of FormKit's Drag and Drop.
@@ -276,10 +279,10 @@ export interface Node extends HTMLElement {
  * The payload of the custom event dispatched when a node is "touched" over a
  * node.
  */
-export interface TouchOverNodeEvent extends Event {
+export interface TouchOverNodeEvent<T> extends Event {
   detail: {
     e: TouchEvent;
-    targetData: NodeTargetData;
+    targetData: NodeTargetData<T>;
   };
 }
 
@@ -287,10 +290,10 @@ export interface TouchOverNodeEvent extends Event {
  * The payload of the custom event dispatched when a node is "touched" over a
  * parent.
  */
-export interface TouchOverParentEvent extends Event {
+export interface TouchOverParentEvent<T> extends Event {
   detail: {
     e: TouchEvent;
-    targetData: ParentTargetData;
+    targetData: ParentTargetData<T>;
   };
 }
 
@@ -302,7 +305,7 @@ export type NodesData = WeakMap<Node, NodeData>;
 /**
  * The WeakMap of parents.
  */
-export type ParentsData = WeakMap<HTMLElement, ParentData>;
+export type ParentsData = WeakMap<HTMLElement, ParentData<unknown>>;
 
 /**
  * The WeakMap of parent observers.
@@ -338,9 +341,9 @@ export interface DragAndDropData {
   values: Array<any>;
 }
 
-export type SetupNode = (data: SetupNodeData) => void;
+export type SetupNode = <T>(data: SetupNodeData<T>) => void;
 
-export type TearDownNode = (data: TearDownNodeData) => void;
+export type TearDownNode = <T>(data: TearDownNodeData<T>) => void;
 
 /**
  * The payload of when the setupNode function is called in a given plugin.
@@ -350,11 +353,11 @@ export type TearDownNode = (data: TearDownNodeData) => void;
  * @param parent - The parent of the node that is being set up.
  * @param parentData - The data of the parent of the node that is being set up.
  */
-export interface SetupNodeData {
+export interface SetupNodeData<T> {
   node: Node;
   nodeData: NodeData;
   parent: HTMLElement;
-  parentData: ParentData;
+  parentData: ParentData<T>;
 }
 
 /**
@@ -365,11 +368,11 @@ export interface SetupNodeData {
  * @param parent - The parent of the node that is being torn down.
  * @param parentData - The data of the parent of the node that is being torn down.
  */
-export interface TearDownNodeData {
+export interface TearDownNodeData<T> {
   node: Node;
   nodeData?: NodeData;
   parent: HTMLElement;
-  parentData: ParentData;
+  parentData: ParentData<T>;
 }
 
 export type EventHandlers = Record<string, (e: Event) => void>;
@@ -388,7 +391,7 @@ export type EventHandlers = Record<string, (e: Event) => void>;
  * @param scrollParentOverflow - The overflow of the scroll parent.
  * @param longTouch - A flag to indicate whether a long touch has occurred.
  */
-export interface TouchState extends DragState {
+export interface TouchState<T> extends DragState<T> {
   touchMoving: boolean;
   touchStartLeft: number;
   touchStartTop: number;
@@ -427,7 +430,7 @@ export interface TouchState extends DragState {
  * @param targetIndex - The index of the node that the dragged node is moving
  * into.
  */
-export interface DragState extends DragStateProps {
+export interface DragState<T> extends DragStateProps<T> {
   activeNode: NodeRecord | undefined;
   affectedNodes: Array<NodeRecord>;
   ascendingDirection: boolean;
@@ -435,8 +438,8 @@ export interface DragState extends DragStateProps {
   draggedNode: NodeRecord;
   draggedNodes: Array<NodeRecord>;
   incomingDirection: "above" | "below" | "left" | "right" | undefined;
-  initialParent: ParentRecord;
-  lastParent: ParentRecord;
+  initialParent: ParentRecord<T>;
+  lastParent: ParentRecord<T>;
   lastValue: any;
   originalZIndex: string | undefined;
   preventEnter: boolean;
@@ -444,11 +447,11 @@ export interface DragState extends DragStateProps {
   targetIndex: number;
 }
 
-export interface DragStateProps {
+export interface DragStateProps<T> {
   draggedNode: NodeRecord;
   draggedNodes: Array<NodeRecord>;
-  initialParent: ParentRecord;
-  lastParent: ParentRecord;
+  initialParent: ParentRecord<T>;
+  lastParent: ParentRecord<T>;
 }
 
 export interface TouchStateProps {
