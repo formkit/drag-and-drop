@@ -20,6 +20,10 @@ const todos = ref([
 ]);
 const dones = ref(["Pickup new mix-tape from Beth"]);
 
+if (props.dragHandles) {
+  dones.value.push("Implement drag handles");
+}
+
 dragAndDrop({
   parent: todoList,
   values: todos,
@@ -37,7 +41,7 @@ dragAndDrop({
 <template>
   <DemoContainer :name="dragHandles ? 'Drag Handles' : 'Transfer'">
     <div
-      class="group bg-slate-500 dark:bg-slate-800"
+      class="group bg-slate-500 dark:bg-slate-800 data-[handles=true]:bg-emerald-700 dark:data-[handles=true]:bg-emerald-950"
       :data-handles="dragHandles"
     >
       <div class="kanban-board p-4 grid grid-cols-2 gap-4">
