@@ -2,6 +2,7 @@
 const props = defineProps<{
   example: string;
 }>();
+const expanded = ref(true);
 const exampleLang = useState("exampleLang", () => "react");
 let cmp: Component | false = false;
 try {
@@ -38,12 +39,19 @@ try {
       </li>
 
       <li class="faux-controls hidden md:block ml-auto">
-        <span class="faux-button minimize"></span>
-        <span class="faux-button fullscreen"></span>
-        <span class="faux-button close"></span>
+        <span
+          @click="expanded = false"
+          class="faux-button minimize cursor-pointer"
+        ></span>
+        <span
+          @click="expanded = true"
+          class="faux-button fullscreen cursor-pointer"
+        ></span>
+        <span class="faux-button close cursor-not-allowed"></span>
       </li>
     </ul>
     <div
+      v-show="expanded"
       class="editor border-l-4 border-r-4 border-slate-400 dark:border-slate-500"
     >
       <div v-show="exampleLang === 'react'">
