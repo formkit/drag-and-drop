@@ -15,19 +15,16 @@ const html = await codeToHtml(code, {
   lang: "ts",
   transformers: [transformerTwoslash()],
 });
-// const darkHtml = await codeToHtml(code, {
-//   theme: "github-dark",
-//   lang: "ts",
-//   transformers: [
-//     createTransformerFactory(createTwoslasher())({
-//       langs: ["ts", "tsx", "js"],
-//       renderer: rendererRich(),
-//     }),
-//   ],
-// });
+const darkHtml = await codeToHtml(code, {
+  theme: "github-dark",
+  lang: "ts",
+  transformers: [transformerTwoslash()],
+});
 </script>
 
 <template>
-  <div v-html="html" class="dark:hidden"></div>
-  <!-- <div v-html="darkHtml" class="hidden dark:block"></div> -->
+  <div>
+    <div v-html="html" class="dark:hidden"></div>
+    <div v-html="darkHtml" class="hidden dark:block"></div>
+  </div>
 </template>

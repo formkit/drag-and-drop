@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { dragAndDrop } from "@formkit/drag-and-drop/vue";
 
-const dragList = ref(null);
+const dragList = ref();
 const tapes = ref([
   "ACDC LIVE",
   "Metallica",
@@ -10,7 +10,7 @@ const tapes = ref([
   "Bon Jovi",
   "Van Halen",
 ]);
-tapes.value = tapes.value.sort(() => Math.random() - 0.5);
+// tapes.value = tapes.value.sort(() => Math.random() - 0.5);
 dragAndDrop({
   parent: dragList,
   values: tapes,
