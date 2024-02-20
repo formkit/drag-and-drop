@@ -39,6 +39,10 @@ export interface DragAndDrop<T> {
 //  dragState: DragState | TouchState
 //) => void;
 
+export interface ParentDragEventData<T> extends ParentEventData<T> {
+  e: DragEvent;
+}
+
 /**
  * The configuration object for a given parent.
  */

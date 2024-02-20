@@ -13,7 +13,7 @@ import { addEvents, removeClass, addClass } from "../../../../utils";
 
 import { multiDragState } from "../../index";
 
-export function selections(selectionsConfig: SelectionsConfig = {}) {
+export function selections<T>(selectionsConfig: SelectionsConfig<T> = {}) {
   return (parent: HTMLElement) => {
     const parentData = parents.get(parent);
 
@@ -43,13 +43,13 @@ export function selections(selectionsConfig: SelectionsConfig = {}) {
         parentData.abortControllers["root"] = rootAbortControllers;
       },
 
-      teardownNode(data: TearDownNodeData) {
+      teardownNode<T>(data: TearDownNodeData<T>) {
         if (data.parentData.abortControllers.mainNode) {
           data.parentData.abortControllers.mainNode.abort();
         }
       },
 
-      setupNode(data: SetupNodeData) {
+      setupNode<T>(data: SetupNodeData<T>) {
         const config = data.parentData.config;
 
         data.node.setAttribute("tabindex", "0");
@@ -104,7 +104,7 @@ export function selections(selectionsConfig: SelectionsConfig = {}) {
   //};
 }
 
-function handleRootClick(config: ParentConfig) {
+function handleRootClick<T>(config: ParentConfig<T>) {
   for (const nodeRecord of multiDragState.selectedNodes) {
     nodeRecord.el.classList.remove(config.selectionsConfig.selectedClass);
   }
@@ -112,15 +112,15 @@ function handleRootClick(config: ParentConfig) {
   multiDragState.selectedNodes = [];
 }
 
-function handleKeydown(data: NodeEventData) {
+function handleKeydown<T>(data: NodeEventData<T>) {
   keydown(data);
 }
 
-function handleClick(data: NodeEventData) {
+function handleClick<T>(data: NodeEventData<T>) {
   click(data);
 }
 
-function click(data: NodeEventData) {
+function click<T>(data: NodeEventData<T>) {
   data.e.stopPropagation();
 
   const selectionsConfig = data.targetData.parent.data.config.selectionsConfig;
@@ -290,7 +290,7 @@ function click(data: NodeEventData) {
   }
 }
 
-function keydown(data: NodeEventData) {
+function keydown<T>(data: NodeEventData<T>) {
   if (!(data.e instanceof KeyboardEvent)) return;
 
   const keys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
@@ -335,7 +335,7 @@ function keydown(data: NodeEventData) {
         (el) => el !== multiDragState.activeNode
       );
     }
-    const parentValues = [parentData.getValues(data.targetData.parent.el)];
+    const parentValues = parentData.getValues(data.targetData.parent.el);
 
     [
       parentValues[nodeData.index],

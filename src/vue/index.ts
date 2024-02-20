@@ -80,7 +80,7 @@ export function dragAndDrop<T>(
  */
 export function useDragAndDrop<T>(
   initialValues: T[],
-  options: Partial<ParentConfig> = {}
+  options: Partial<ParentConfig<T>> = {}
 ): [Ref<HTMLElement | undefined>, Ref<T[]>] {
   const parent = ref<HTMLElement | undefined>();
   const values = ref(initialValues) as Ref<T[]>;
@@ -98,8 +98,8 @@ export function useDragAndDrop<T>(
  * @param values - The values of the parent element.
  *
  */
-function handleParent(
-  config: Partial<VueParentConfig>,
+function handleParent<T>(
+  config: Partial<VueParentConfig<T>>,
   values: Ref<Array<any>>
 ) {
   return (parent: HTMLElement) => {

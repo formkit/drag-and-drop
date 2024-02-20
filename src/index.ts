@@ -42,9 +42,12 @@ export { animations } from "./plugins/animations";
 
 export { selections } from "./plugins/multiDrag/plugins/selections";
 
-export const nodes: NodesData = new WeakMap<Node, NodeData>();
+export const nodes: NodesData<any> = new WeakMap<Node, NodeData<any>>();
 
-export const parents: ParentsData = new WeakMap<HTMLElement, ParentData<any>>();
+export const parents: ParentsData<any> = new WeakMap<
+  HTMLElement,
+  ParentData<any>
+>();
 /**
  * The state of the drag and drop. Is undefined until either dragstart or
  * touchstart is called.
