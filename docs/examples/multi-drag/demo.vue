@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useDragAndDrop } from "../../../src/vue/index";
-import { multiDrag, selections } from "../../../src/index";
+import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
+import { multiDrag, selections } from "@formkit/drag-and-drop";
 
 const mockFileNames = [
   "file1.txt",

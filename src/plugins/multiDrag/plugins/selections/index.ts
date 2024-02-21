@@ -76,10 +76,6 @@ function handleRootClick<T>(config: ParentConfig<T>) {
     config.selectionsConfig.selectedClass
   );
 
-  console.log(multiDragState);
-
-  console.log("handle root click");
-
   multiDragState.selectedNodes = [];
 }
 
