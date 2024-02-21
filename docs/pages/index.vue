@@ -11,10 +11,25 @@
         <SectionIntroduction />
         <h2>Core Features:</h2>
         <h3>Sortability</h3>
+        <p>
+          Sortable lists are a common use case for drag and drop libraries. This
+          library makes it easy to create sortable lists with minimal
+          configuration.
+        </p>
         <CodeExample example="sorting" />
         <h3>Transferability</h3>
+        <p>
+          If the intention is to transfer values between lists, simply set the
+          `group` property in the configuration to the same value for each list.
+        </p>
         <CodeExample example="transfer" />
         <h3>Drag Handles</h3>
+        <p>
+          Drag handles are a common way to allow users to drag items without
+          accidentally dragging them when they don't intend to. To implement
+          drag handles, set the `dragHandle` property to a selector that will be
+          used to find the handle.
+        </p>
         <CodeExample example="drag-handles" />
         <h2>Configuration</h2>
         <CodeExampleNative example="config" />
