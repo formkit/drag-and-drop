@@ -22,12 +22,7 @@ export default defineNuxtConfig({
     "@vueuse/nuxt",
     "@nuxtjs/color-mode",
     "nuxt-fathom",
-    // "nuxt-shiki",
   ],
-  // shiki: {
-  //   theme: "github-light",
-  //   lang: "typescript",
-  // },
   fathom: {
     siteId: "",
   },
@@ -37,7 +32,7 @@ export default defineNuxtConfig({
       htmlAttrs: {
         lang: "en",
       },
-      link: [],
+      link: [{ rel: "icon", type: "image/png", href: "/favicon.png" }],
       meta: [
         {
           name: "description",
