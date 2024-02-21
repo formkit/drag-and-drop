@@ -8,6 +8,4 @@
     declarative approach by updating state and allowing the reactive framework
     (of your choosing) to handle the rest.
   </p>
-
-  <CodeExample example="sorting" />
 </template>
