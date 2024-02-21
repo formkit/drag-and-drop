@@ -1,68 +1,61 @@
 // TODO:
 import React from "react";
 import { useDragAndDrop } from "@formkit/drag-and-drop/react";
+import { multiDrag, selections } from "@formkit/drag-and-drop";
 
 export function myComponent() {
-  const todoItems = [
-    "Schedule perm",
-    "Rewind VHS tapes",
-    "Make change for the arcade",
-    "Get disposable camera developed",
-    "Learn C++",
-    "Return Nintendo Power Glove",
+  const mockFileNames = [
+    "file1.txt",
+    "file2.txt",
+    "file3.txt",
+    "file4.txt",
+    "file5.txt",
+    "file6.txt",
+    "file7.txt",
   ];
-  const doneItems = ["Pickup new mix-tape from Beth", "Implement drag handles"];
 
-  const [todoList, todos] = useDragAndDrop<HTMLUListElement, string>(
-    todoItems,
+  const [parent1, files1] = useDragAndDrop<HTMLUListElement, string>(
+    mockFileNames,
     {
-      group: "todoList",
-      dragHandle: ".kanban-handle",
+      group: "A",
+      plugins: [
+        multiDrag({
+          plugins: [
+            selections({
+              selectedClass: "bg-blue-500 color-white",
+            }),
+          ],
+        }),
+      ],
     }
   );
-  const [doneList, dones] = useDragAndDrop<HTMLUListElement, string>(
-    doneItems,
-    {
-      group: "todoList",
-      dragHandle: ".kanban-handle",
-    }
-  );
+  const [parent2, files2] = useDragAndDrop<HTMLUListElement, string>([], {
+    group: "A",
+    plugins: [
+      multiDrag({
+        plugins: [
+          selections({
+            selectedClass: "bg-blue-500 color-white",
+          }),
+        ],
+      }),
+    ],
+  });
+
   return (
-    <div className="kanban-board">
-      <ul ref={todoList}>
-        {todos.map((todo) => (
-          <li className="kanban-item" key={todo}>
-            <svg
-              className="kanban-handle"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 256 512"
-            >
-              <path
-                fill="currentColor"
-                d="M48 144a48 48 0 1 0 0-96 48 48 0 1 0 0 96zm0 160a48 48 0 1 0 0-96 48 48 0 1 0 0 96zM96 416A48 48 0 1 0 0 416a48 48 0 1 0 96 0zM208 144a48 48 0 1 0 0-96 48 48 0 1 0 0 96zm48 112a48 48 0 1 0 -96 0 48 48 0 1 0 96 0zM208 464a48 48 0 1 0 0-96 48 48 0 1 0 0 96z"
-              />
-            </svg>
-            {todo}
-          </li>
-        ))}
-      </ul>
-      <ul ref={doneList}>
-        {dones.map((done) => (
-          <li className="kanban-item" key={done}>
-            <svg
-              className="kanban-handle"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 256 512"
-            >
-              <path
-                fill="currentColor"
-                d="M48 144a48 48 0 1 0 0-96 48 48 0 1 0 0 96zm0 160a48 48 0 1 0 0-96 48 48 0 1 0 0 96zM96 416A48 48 0 1 0 0 416a48 48 0 1 0 96 0zM208 144a48 48 0 1 0 0-96 48 48 0 1 0 0 96zm48 112a48 48 0 1 0 -96 0 48 48 0 1 0 96 0zM208 464a48 48 0 1 0 0-96 48 48 0 1 0 0 96z"
-              />
-            </svg>
-            {done}
-          </li>
-        ))}
-      </ul>
+    <div className="group bg-slate-500 dark:bg-slate-800 data-[handles=true]:bg-emerald-700 dark:data-[handles=true]:bg-emerald-950">
+      <div className="kanban-board p-4 flex bg-white justify-between">
+        <ul ref={parent1}>
+          {files1.map((file) => (
+            <li key={file}>{file}</li>
+          ))}
+        </ul>
+        <ul ref={parent2}>
+          {files2.map((file) => (
+            <li key={file}>{file}</li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

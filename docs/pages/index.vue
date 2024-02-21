@@ -17,7 +17,6 @@
         <h3>Drag Handles</h3>
         <CodeExample example="drag-handles" />
         <h2>Configuration</h2>
-        // Not Rendering
         <CodeExampleNative example="config" />
 
         <h2>Plugins</h2>

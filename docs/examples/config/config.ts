@@ -71,7 +71,7 @@ export interface ParentConfig<T> {
   /**
    * Function that is called when a dragover event is triggered on the parent.
    */
-  handleDragoverParent: (data: ParentDragEventData<T>) => void;
+  handleDragoverParent: (data: ParentEventData<T>) => void;
   /**
    * Function that is called when a dragover event is triggered on a node.
    */

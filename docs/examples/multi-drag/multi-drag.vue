@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useDragAndDrop } from "../../../src/vue/index";
-import { multiDrag, selections } from "../../../src/index";
+import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
+import { multiDrag, selections } from "@formkit/drag-and-drop";
 
 const mockFileNames = [
   "file1.txt",
@@ -40,7 +40,7 @@ const [parent2, files2] = useDragAndDrop([], {
 </script>
 
 <template>
-  <DemoContainer name="multiDrag">
+  <div>
     <div
       class="group bg-slate-500 dark:bg-slate-800 data-[handles=true]:bg-emerald-700 dark:data-[handles=true]:bg-emerald-950"
     >
@@ -59,5 +59,5 @@ const [parent2, files2] = useDragAndDrop([], {
         </ul>
       </div>
     </div>
-  </DemoContainer>
+  </div>
 </template>
