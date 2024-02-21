@@ -11,12 +11,23 @@
     >
       <h2>Introduction</h2>
       <SectionIntroduction />
+      <h2>Getting Started</h2>
+      <p>
+        Whether using a composable <code>useDragAndDrop</code> or a direct
+        invocation of the core <code>dragAndDrop</code>, the API remains largely
+        the same. The first parameter accepts an HTMLElement that represents the
+        "parent" or the element containing the draggable elements. The second
+        paramter is an array of values that are to be assigned to the draggable
+        elements. The third parameter is an optional configuration object. This
+        configuation object can be used to set characteristics/behaviors of the
+        given parent.
+      </p>
       <h2>Core Features</h2>
       <h3>Sortability</h3>
       <p>
-        Sortable lists are a common use case for drag and drop libraries. This
-        library makes it easy to create sortable lists with minimal
-        configuration.
+        When calling <code>useDragAndDrop</code> or <code>dragAndDrop</code>,
+        the default behavior is to allow sorting. This means that items can be
+        reordered within a given list.
       </p>
       <CodeExample example="sorting" />
       <h3>Transferability</h3>
@@ -34,6 +45,14 @@
       </p>
       <CodeExample example="drag-handles" />
       <h2>Configuration</h2>
+      <p>
+        Each list can be passed a configuration object. This object can be used
+        to set options like <code>group</code>, <code>drag handles</code>, and
+        or more dynamic options such as determining which direct descendants of
+        a list are <code>draggable</code>. Invocation of
+        <code>useDragAndDrop</code> or <code>dragAndDrop</code> can be used
+        idempotently to update the configuration for a given list.
+      </p>
       <CodeExampleNative :full-height="true" example="config" />
 
       <h2>Plugins</h2>
