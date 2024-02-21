@@ -98,6 +98,7 @@ html.dark body::after {
   z-index: 1;
 }
 #vapor-wave-container::before {
+  @apply transform-gpu;
   content: "";
   position: absolute;
   z-index: 0;

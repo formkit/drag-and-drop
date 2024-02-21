@@ -13,7 +13,8 @@ dragAndDrop<string>({
     state.todos = reactive(newValues);
   },
   config: {
-    group: 'todoList'
+    group: 'todoList',
+    sortable: false
   }
 });
 
@@ -24,7 +25,8 @@ dragAndDrop<string>({
     state.dones = reactive(newValues);
   },
   config: {
-    group: 'todoList'
+    group: 'todoList',
+    sortable: false
   }
 });
 
