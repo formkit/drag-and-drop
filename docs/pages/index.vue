@@ -43,6 +43,13 @@
         `group` property in the configuration to the same value for each list.
       </p>
       <CodeExample example="transfer" />
+      <p>
+        If you would like to prevent sorting within a given list, but still
+        allow transfer, set the <code>sortable</code> property to `false` in the
+        configuration.
+      </p>
+      <CodeExample example="sortable" />
+
       <h3>Drag Handles</h3>
       <p>
         Drag handles are a common way to allow users to drag items without

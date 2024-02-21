@@ -6,6 +6,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  sortable: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const [todoList, todos] = useDragAndDrop(
@@ -20,11 +24,13 @@ const [todoList, todos] = useDragAndDrop(
   {
     group: "todoList",
     dragHandle: !!props.dragHandles ? ".kanban-handle" : undefined,
+    sortable: props.sortable,
   }
 );
 const [doneList, dones] = useDragAndDrop(["Pickup new mix-tape from Beth"], {
   group: "todoList",
   dragHandle: !!props.dragHandles ? ".kanban-handle" : undefined,
+  sortable: props.sortable,
 });
 
 if (props.dragHandles) {

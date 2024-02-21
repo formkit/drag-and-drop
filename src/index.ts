@@ -899,7 +899,8 @@ export function validateSort<T>(
     !state ||
     state.preventEnter ||
     state.swappedNodeValue === data.targetData.node.data.value ||
-    data.targetData.parent.el !== state.lastParent?.el
+    data.targetData.parent.el !== state.lastParent?.el ||
+    !data.targetData.parent.data.config.sortable
   )
     return false;
   const targetRect = data.targetData.node.el.getBoundingClientRect();
