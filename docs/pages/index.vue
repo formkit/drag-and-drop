@@ -7,7 +7,7 @@
   >
     <TheSidebar />
     <div
-      class="docs-content min-w-0 px-4 w-full max-w-[1000px] lg:pl-8 min-[1400px]:pl-12"
+      class="docs-content min-w-0 px-4 w-full max-w-[1000px] lg:pl-8 xl:pl-12"
     >
       <h2>Introduction</h2>
       <SectionIntroduction />

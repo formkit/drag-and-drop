@@ -55,11 +55,9 @@ onMounted(() => {
       hidden
       lg:flex
       flex-col
-      border-r
-      border-r-slate-400/50
+      pl-2
       min-[1400px]:ml-[5%]
       min-[1600px]:ml-auto
-      dark:border-r-slate-700
       w-full
       max-w-[180px]
       min-[1400px]:max-w-[220px]
@@ -69,19 +67,27 @@ onMounted(() => {
       :class="`
         docs-sidebar-nav
         sticky
+        px-4
+        py-4
+        bg-slate-100/10
+        dark:bg-slate-800/10
+        backdrop-blur-sm
+        border
+        rounded-lg
+        border-sky-200/50
+        dark:border-fuchsia-400/20
         min-[1400px]:pr-10
-        px-2
-        pt-0
         top-2
+        shadow-sm
         max-h-[calc(100dvh-0.5rem)]
         overflow-auto
       `"
     >
-      <ul class="pb-5 pl-2">
+      <ul class="pl-2">
         <li v-for="section in h2s">
           <a
             :href="`#${section.id}`"
-            class="inline-block text-base text-cyan-800 hover:text-cyan-600 py-1 dark:text-fuchsia-300 dark:hover:text-fuchsia-100"
+            class="inline-block text-base font-semibold text-cyan-800 hover:text-cyan-600 py-1 dark:text-fuchsia-300 dark:hover:text-fuchsia-100"
           >
             {{ section.textContent }}
           </a>
