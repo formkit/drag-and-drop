@@ -179,7 +179,7 @@ html.dark #vapor-wave-container::before {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: url("/img/carpet.jpg");
+  background: url("/img/carpet.webp");
   filter: saturate(3);
   opacity: 0.025;
 }

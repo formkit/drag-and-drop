@@ -79,7 +79,7 @@ try {
 
 <style scoped>
 .example-tabs {
-  background: url("/img/dither.png");
+  background: url("/img/dither.webp");
   background-size: cover;
   @apply pl-1;
 }

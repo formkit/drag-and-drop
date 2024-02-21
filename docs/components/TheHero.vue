@@ -132,7 +132,7 @@ onMounted(() => {
               leading-[1em]
               font-semibold
               text-center
-              text-emerald-900
+              text-slate-700
               max-w-[800px]
               text-balance
 
