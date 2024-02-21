@@ -34,7 +34,7 @@
       </p>
       <CodeExample example="drag-handles" />
       <h2>Configuration</h2>
-      <CodeExampleNative example="config" />
+      <CodeExampleNative :full-height="true" example="config" />
 
       <h2>Plugins</h2>
       <p>
@@ -55,7 +55,7 @@
         already written logic for selecting items), you can pass your own
         selected values to the `selections` property.
       </p>
-      <CodeExampleNative example="multi-drag-config" />
+      <CodeExampleNative full-height="true" example="multi-drag-config" />
     </div>
   </main>
 </template>
