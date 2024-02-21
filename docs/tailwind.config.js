@@ -13,6 +13,7 @@ module.exports = {
       fontFamily: {
         display: ["Permanent Marker", "cursive"],
         sans: ["Rubik", "ui-sans-serif", "sans-serif"],
+        oldschool: ["VT323", "monospace"],
       },
       screens: {
         tall: { raw: "(min-height: 800px)" },

@@ -4,7 +4,10 @@ import { transformerTwoslash } from "@shikijs/twoslash";
 
 const props = defineProps<{
   example: string;
-  fullHeight: boolean;
+  fullHeight: {
+    type: Boolean;
+    default: false;
+  };
 }>();
 const res = await import(
   `../examples/${props.example}/${props.example}.ts?raw`

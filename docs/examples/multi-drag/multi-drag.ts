@@ -27,7 +27,7 @@ dragAndDrop<string>({
       multiDrag({
         plugins: [
           selections({
-            selectedClass: "bg-blue-500 color-white",
+            selectedClass: "bg-blue-500 text-white",
           }),
         ],
       }),
@@ -47,7 +47,7 @@ dragAndDrop<string>({
       multiDrag({
         plugins: [
           selections({
-            selectedClass: "bg-blue-500 color-white",
+            selectedClass: "bg-blue-500 text-white",
           }),
         ],
       }),

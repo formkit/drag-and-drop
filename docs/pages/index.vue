@@ -56,6 +56,8 @@
         selected values to the `selections` property.
       </p>
       <CodeExampleNative :full-height="true" example="multi-drag-config" />
+
+      <SectionSupport />
     </div>
   </main>
   <TheFooter />

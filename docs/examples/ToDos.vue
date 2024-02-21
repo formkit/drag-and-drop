@@ -96,14 +96,14 @@ if (props.dragHandles) {
   @apply dark:bg-slate-600;
 }
 .kanban-title {
-  @apply font-display text-slate-800 text-4xl mb-4 text-center;
+  @apply font-oldschool text-slate-800 text-4xl mb-4 text-center;
   @apply dark:text-slate-200 dark:antialiased;
 }
 .kanban-list {
   @apply list-none h-full min-h-[400px];
 }
 .kanban-item {
-  @apply bg-slate-200 text-slate-600 antialiased border border-slate-300 p-4 font-display text-xl leading-none font-thin mb-2 last:mb-0 group-data-[handles=false]:cursor-grab group-data-[handles=false]:active:cursor-grabbing;
+  @apply bg-slate-200 text-slate-600 antialiased border border-slate-300 p-4 font-oldschool text-xl leading-none font-thin mb-2 last:mb-0 group-data-[handles=false]:cursor-grab group-data-[handles=false]:active:cursor-grabbing;
   @apply dark:bg-slate-500 dark:text-slate-50 dark:border-slate-400;
 }
 .kanban-complete {
