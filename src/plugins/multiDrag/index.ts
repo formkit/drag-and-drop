@@ -65,18 +65,30 @@ export function multiDrag<T>(
 
         parentData.config = multiDragParentConfig;
 
-        multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
+        multiDragParentConfig.multiDragConfig.plugins?.forEach((plugin) => {
           plugin(parent)?.tearDown?.();
         });
 
-        multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
+        multiDragParentConfig.multiDragConfig.plugins?.forEach((plugin) => {
           plugin(parent)?.setup?.();
+        });
+      },
+
+      tearDownNodeRemap<T>(data: TearDownNodeData<T>) {
+        multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
+          plugin(data.parent)?.tearDownNodeRemap?.(data);
         });
       },
 
       tearDownNode<T>(data: TearDownNodeData<T>) {
         multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
           plugin(data.parent)?.tearDownNode?.(data);
+        });
+      },
+
+      setupNodeRemap<T>(data: SetupNodeData<T>) {
+        multiDragParentConfig.multiDragConfig?.plugins?.forEach((plugin) => {
+          plugin(data.parent)?.setupNodeRemap?.(data);
         });
       },
 
@@ -150,10 +162,16 @@ function dragstart<T>(data: NodeDragEventData<T>) {
 
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
 
-  let selectedValues =
-    multiDragState.selectedNodes.map((node) => node.data.value) ||
-    (multiDragConfig.selections &&
-      multiDragConfig.selections(data.targetData.parent.el));
+  const parentValues = data.targetData.parent.data.getValues(
+    data.targetData.parent.el
+  );
+
+  let selectedValues = multiDragState.selectedNodes.length
+    ? multiDragState.selectedNodes.map((x) => x.data.value)
+    : multiDragConfig.selections &&
+      multiDragConfig.selections(parentValues, data.targetData.parent.el);
+
+  if (selectedValues === undefined) return;
 
   if (!selectedValues.includes(data.targetData.node.data.value)) {
     selectedValues = [data.targetData.node.data.value, ...selectedValues];
@@ -199,9 +217,14 @@ function touchstart<T>(data: NodeTouchEventData<T>) {
 
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
 
-  const selectedValues =
-    multiDragConfig?.selections &&
-    multiDragConfig?.selections(data.targetData.parent.el);
+  const parentValues = data.targetData.parent.data.getValues(
+    data.targetData.parent.el
+  );
+
+  let selectedValues = multiDragState.selectedNodes.length
+    ? multiDragState.selectedNodes.map((x) => x.data.value)
+    : multiDragConfig.selections &&
+      multiDragConfig.selections(parentValues, data.targetData.parent.el);
 
   if (Array.isArray(selectedValues) && selectedValues.length) {
     stackNodes(
@@ -282,6 +305,7 @@ export function stackNodes<T>({
         flex-direction: column;
         width: ${width}px;
         position: absolute;
+        z-index: 9999;
         left: -9999px
       `;
 

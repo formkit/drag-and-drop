@@ -43,15 +43,20 @@ export function selections<T>(selectionsConfig: SelectionsConfig<T> = {}) {
         parentData.abortControllers["root"] = rootAbortControllers;
       },
 
-      teardownNode<T>(data: TearDownNodeData<T>) {
-        if (data.parentData.abortControllers.mainNode) {
-          data.parentData.abortControllers.mainNode.abort();
+      tearDown() {
+        if (parentData.abortControllers.root) {
+          parentData.abortControllers.root.abort();
+        }
+      },
+
+      tearDownNode<T>(data: TearDownNodeData<T>) {
+        if (data.parentData.abortControllers.selectionsNode) {
+          data.parentData.abortControllers.selectionsNode.abort();
         }
       },
 
       setupNode<T>(data: SetupNodeData<T>) {
         const config = data.parentData.config;
-
         data.node.setAttribute("tabindex", "0");
 
         const abortControllers = addEvents(data.node, {
@@ -63,51 +68,17 @@ export function selections<T>(selectionsConfig: SelectionsConfig<T> = {}) {
       },
     };
   };
-  //return {
-  //  s(parent: HTMLElement, config: Config) {
-  //    const parentData = state.parentData.get(parent);
-  //    if (!parentData) return;
-  //    multiDragConfig.multiDragstart = multiDragstart;
-  //    parentData.multiDragConfig = multiDragConfig;
-  //    state.parentData.set(parent, {
-  //      ...parentData,
-  //    });
-  //    document.addEventListener("click", docClick);
-  //    document.addEventListener("keydown", keydown);
-  //    const parentConfig = parentData.config;
-  //    if (
-  //      !parentConfig ||
-  //      !parentConfig.setDraggable ||
-  //      !parentConfig.removeDraggable
-  //    )
-  //      return;
-  //    const setDraggable = parentConfig.setDraggable;
-  //    parentConfig.setDraggable = (node: Node) => {
-  //      setDraggable(node);
-  //      setEvents(node);
-  //      return node;
-  //    };
-  //    const removeDraggable = parentConfig.removeDraggable;
-  //    state.removeDraggable = (el: Node) => {
-  //      removeDraggable(el);
-  //      removeEvents(el);
-  //      return el;
-  //    };
-  //  },
-  //  tearDown(parent: HTMLElement) {
-  //    document.removeEventListener("click", docClick);
-  //    document.removeEventListener("keydown", keydown);
-  //    const parentData = state.parentData.get(parent);
-  //    if (!parentData) return;
-  //    delete parentData.multiDragConfig;
-  //  },
-  //};
 }
 
 function handleRootClick<T>(config: ParentConfig<T>) {
-  for (const nodeRecord of multiDragState.selectedNodes) {
-    nodeRecord.el.classList.remove(config.selectionsConfig.selectedClass);
-  }
+  removeClass(
+    multiDragState.selectedNodes.map((x) => x.el),
+    config.selectionsConfig.selectedClass
+  );
+
+  console.log(multiDragState);
+
+  console.log("handle root click");
 
   multiDragState.selectedNodes = [];
 }
@@ -151,7 +122,7 @@ function click<T>(data: NodeEventData<T>) {
       for (let x = 0; x <= data.targetData.node.data.index; x++) {
         multiDragState.selectedNodes.push(ctParentData.enabledNodes[x]);
         if (selectedClass) {
-          addClass([ctParentData.enabledNodes[x].el], selectedClass);
+          addClass([ctParentData.enabledNodes[x].el], selectedClass, true);
         }
       }
     } else {
@@ -203,7 +174,7 @@ function click<T>(data: NodeEventData<T>) {
           ];
 
           if (selectedClass) {
-            addClass([ctParentData.enabledNodes[x].el], selectedClass);
+            addClass([ctParentData.enabledNodes[x].el], selectedClass, true);
           }
         } else {
           break;
@@ -231,7 +202,7 @@ function click<T>(data: NodeEventData<T>) {
         }
 
         if (selectedClass) {
-          addClass([node.el], selectedClass);
+          addClass([node.el], selectedClass, true);
         }
       }
     }
@@ -254,7 +225,7 @@ function click<T>(data: NodeEventData<T>) {
           removeClass([el.el], selectedClass);
         }
 
-        addClass([data.targetData.node.el], selectedClass);
+        addClass([data.targetData.node.el], selectedClass, true);
       }
       multiDragState.selectedNodes = [
         {
@@ -274,7 +245,7 @@ function click<T>(data: NodeEventData<T>) {
     } else {
       multiDragState.activeNode = targetNode;
       if (selectedClass) {
-        addClass([targetNode.el], selectedClass);
+        addClass([targetNode.el], selectedClass, true);
       }
       multiDragState.selectedNodes.push(targetNode);
     }
@@ -353,7 +324,7 @@ function keydown<T>(data: NodeEventData<T>) {
       multiDragState.selectedNodes.push(adjacentNode);
 
       if (selectedClass) {
-        addClass([adjacentNode.el], selectedClass);
+        addClass([adjacentNode.el], selectedClass, true);
       }
 
       multiDragState.activeNode = adjacentNode;
@@ -385,7 +356,7 @@ function keydown<T>(data: NodeEventData<T>) {
 
     multiDragState.selectedNodes = [adjacentNode];
 
-    addClass([adjacentNode.el], selectedClass);
+    addClass([adjacentNode.el], selectedClass, true);
 
     multiDragState.activeNode = adjacentNode;
   }

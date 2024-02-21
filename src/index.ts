@@ -202,8 +202,10 @@ export function dragAndDrop<T>({
       performTransfer,
       root: document,
       setupNode,
+      setupNodeRemap,
       reapplyDragClasses,
       tearDownNode,
+      tearDownNodeRemap,
       remapFinished,
       threshold: {
         horizontal: 0,
@@ -221,13 +223,11 @@ export function dragAndDrop<T>({
     plugin(parent)?.tearDown?.();
   });
 
-  remapNodes(parent, true);
-
   config.plugins?.forEach((plugin: DNDPlugin) => {
     plugin(parent)?.setup?.();
   });
 
-  remapNodes(parent);
+  remapNodes(parent, true);
 }
 
 export function tearDown(parent: HTMLElement) {
@@ -293,10 +293,13 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     if (!isNode(node)) continue;
 
     const nodeData = nodes.get(node);
+
     // Only tear down the node if someone has explicitly called dragAndDrop.
-    if (force) {
+    if (force || !nodeData) {
       config.tearDownNode({ node, parent, nodeData, parentData });
     }
+
+    //config.tearDownNodeRemap({ node, parent, nodeData, parentData });
 
     if (config.disabled) return;
 
@@ -365,13 +368,11 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
       nodeData,
     };
 
-    if (!prevNodeData) config.setupNode(setupNodeData);
+    if (force || !prevNodeData) {
+      config.setupNode(setupNodeData);
+    }
 
-    // TODO: setupNode should maybe accept argument saying whether or not to
-    // add events
-    parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
-      plugin(parent)?.setupNode?.(setupNodeData);
-    });
+    setupNodeRemap(setupNodeData);
   }
 
   parents.set(parent, { ...parentData, enabledNodes: enabledNodeRecords });
@@ -501,11 +502,10 @@ export function handleTouchOverNode<T>(e: TouchOverNodeEvent<T>) {
 
   if (e.detail.targetData.parent.el === state.lastParent.el)
     sort(e.detail, state);
+  else transfer(e.detail, state);
 }
 
 export function setupNode<T>(data: SetupNodeData<T>) {
-  nodes.set(data.node, data.nodeData);
-
   const config = data.parentData.config;
 
   data.node.draggable = true;
@@ -520,11 +520,21 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     touchOverNode: config.handleTouchOverNode,
   });
 
+  config.reapplyDragClasses(data.node, data.parentData);
+
+  // TODO: setupNode should maybe accept argument saying whether or not to
+  // add events
   data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
     plugin(data.parent)?.setupNode?.(data);
   });
+}
 
-  config.reapplyDragClasses(data.node, data.parentData);
+export function setupNodeRemap<T>(data: SetupNodeData<T>) {
+  nodes.set(data.node, data.nodeData);
+
+  data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
+    plugin(data.parent)?.setupNodeRemap?.(data);
+  });
 }
 
 function reapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
@@ -540,18 +550,22 @@ function reapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
   addClass([node], dropZoneClass, true);
 }
 
+export function tearDownNodeRemap<T>(data: TearDownNodeData<T>) {
+  data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
+    plugin(data.parent)?.tearDownNodeRemap?.(data);
+  });
+}
+
 export function tearDownNode<T>(data: TearDownNodeData<T>) {
+  data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
+    plugin(data.parent)?.tearDownNode?.(data);
+  });
+
   data.node.draggable = false;
 
   if (data.nodeData?.abortControllers?.mainNode) {
     data.nodeData?.abortControllers?.mainNode.abort();
   }
-
-  data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
-    plugin(data.parent)?.tearDownNode?.(data);
-  });
-
-  nodes.delete(data.node);
 }
 
 export function handleEnd<T>(eventData: NodeEventData<T>) {

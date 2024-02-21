@@ -404,13 +404,21 @@ export interface DNDPluginData {
    */
   tearDown?: () => void;
   /**
-   * The function to call when a node is set up.
+   * Called when entry point function is invoked on parent.
    */
   setupNode?: SetupNode;
   /**
-   * The function to call when a node is torn down.
+   * Called when entry point function is invoked on parent.
    */
   tearDownNode?: TearDownNode;
+  /**
+   * Called anytime the nodes are mutated
+   */
+  setupNodeRemap?: SetupNode;
+  /**
+   * Called when the parent is dragged over.
+   */
+  tearDownNodeRemap?: TearDownNode;
 }
 
 /**

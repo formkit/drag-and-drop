@@ -8,7 +8,7 @@
   "scripts": {
     "test": "npx playwright test vue",
     "dev": "cd docs && pnpm run dev",
-    "playground": "cd dev && pnpm run dev",
+    "playground": "cd playground && pnpm run dev",
     "build": "jiti build.ts",
     "release": "npx bumpp --no-tag --no-push --no-commit && pnpm run build && cd dist && npx publint && pnpm publish --no-git-checks",
     "lint": "eslint ."
