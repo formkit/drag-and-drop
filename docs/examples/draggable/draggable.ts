@@ -17,7 +17,7 @@ html`
     ${state.tapes.map((tape) =>
       html`<li class="cassette" data-label="${tape}">${tape}</li>`.key(tape)
     )}
-    <div id="no-drag">Random element that should not be draggable</div>
+    <div id="no-drag">I am NOT draggable</div>
   </ul>
 `(document.getElementById("app")!);
 

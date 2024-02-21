@@ -46,7 +46,7 @@ dragAndDrop({
           >
             <CassetteTape :label="tape" :data-label="tape" />
           </li>
-          <div id="no-drag">Random element that shouldnt' be draggable</div>
+          <div id="no-drag">I am NOT draggable</div>
         </ul>
       </div>
     </div>
@@ -80,5 +80,15 @@ dragAndDrop({
 [data-label="Bon Jovi"] {
   filter: hue-rotate(40deg) saturate(300%) brightness(105%);
   transform: rotate(-3deg);
+}
+
+#no-drag {
+  margin-top: 1rem;
+  background: #fff;
+  padding: 0.5em 1em;
+  color: red;
+  border-radius: 0.25rem;
+  cursor: grab;
+  @apply shadow-md;
 }
 </style>
