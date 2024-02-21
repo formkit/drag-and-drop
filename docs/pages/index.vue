@@ -30,6 +30,13 @@
         reordered within a given list.
       </p>
       <CodeExample example="sorting" />
+      <p>
+        If there is a direct descendant of the parent that should not become
+        draggable, set the <code>draggable</code> property of the parent config.
+        <code>draggable</code> is a callback function that lets you determine
+        whether or not a given element should be draggable.
+      </p>
+      <CodeExample example="draggable" />
       <h3>Transferability</h3>
       <p>
         If the intention is to transfer values between lists, simply set the
