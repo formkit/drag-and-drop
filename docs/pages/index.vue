@@ -55,7 +55,8 @@
         already written logic for selecting items), you can pass your own
         selected values to the `selections` property.
       </p>
-      <CodeExampleNative full-height="true" example="multi-drag-config" />
+      <CodeExampleNative :full-height="true" example="multi-drag-config" />
     </div>
   </main>
+  <TheFooter />
 </template>
