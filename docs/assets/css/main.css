@@ -170,10 +170,30 @@ html.dark #vapor-wave-container::before {
   z-index: -1;
 }
 
+.page-container {
+  position: relative;
+  overflow: clip;
+}
+.page-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: url("/img/carpet.jpg");
+  filter: saturate(1);
+  opacity: 0.04;
+}
+.dark .page-container::before {
+  filter: saturate(2);
+  opacity: 0.025;
+}
 .page-section {
   @apply w-[calc(100%-2em)] md:w-[calc(100%-4em)] max-w-5xl mx-auto;
 }
 
+.docs-content {
+  @apply text-slate-800 dark:text-slate-200;
+}
 .docs-content h2 {
   @apply text-3xl md:text-4xl lg:text-5xl text-cyan-600 font-display mb-6 dark:antialiased dark:text-fuchsia-400;
 }
