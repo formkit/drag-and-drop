@@ -100,4 +100,7 @@ export default defineNuxtConfig({
     classSuffix: "",
     storageKey: "dnd-color-mode",
   },
+  routeRules: {
+    "/": { prerender: true },
+  },
 });
