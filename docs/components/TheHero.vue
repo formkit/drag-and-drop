@@ -25,7 +25,7 @@ const features = ref([
   },
   {
     title: "Plugins",
-    description: "Multi-dag, animations, and more.",
+    description: "Multi-drag, animations, and more.",
   },
   {
     title: "TypeScript",
