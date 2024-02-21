@@ -192,7 +192,7 @@ html.dark #vapor-wave-container::before {
 }
 
 .docs-content {
-  @apply text-slate-700 dark:text-slate-200;
+  @apply text-slate-700 dark:text-slate-200 pb-12;
 }
 .docs-content h2 {
   @apply text-3xl md:text-4xl lg:text-5xl text-cyan-600 font-display mb-6 mt-12 dark:antialiased dark:text-fuchsia-400 first:mt-0;
@@ -220,6 +220,9 @@ html.dark #vapor-wave-container::before {
 .shiki {
   @apply p-2 lg:p-4 text-sm overflow-auto max-h-[500px];
   @apply dark:!bg-[#091e32];
+}
+[data-full-height="true"] .shiki {
+  @apply max-h-none overflow-visible mb-8;
 }
 .twoslash-popup-container {
   flex-basis: 500px;
