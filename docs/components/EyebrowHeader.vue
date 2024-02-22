@@ -43,7 +43,7 @@ function toggleDark() {
       `"
       >
         <LogoMark
-          class="w-3 mr-2 fill-[#FCAB5E] grayscale group-hover/logo:grayscale-0"
+          class="w-3 mr-2 fill-[#FCAB5E] grayscale brightness-50 dark:brightness-100 group-hover/logo:brightness-100 group-hover/logo:grayscale-0"
         />
         Made with <span class="text-pink-500 mx-[0.25ch]">♥</span> by
         <span class="hidden sm:inline sm:mx-[0.5ch]">the</span> FormKit

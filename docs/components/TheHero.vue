@@ -9,10 +9,12 @@ const openHand = ref(false);
 const exitHand = ref(false);
 const showHeadline = ref(false);
 const showDemo = ref(false);
+const showFrameworkList = ref(false);
+const framework = useState("exampleLang", () => "react");
 
 const features = ref([
   {
-    title: "Declarative",
+    title: "Data-first",
     description: "No direct DOM manipulations.",
   },
   {
@@ -44,6 +46,23 @@ dragAndDrop({
   dropZoneClass: "blur-[2px] opacity-60",
   plugins: [animations({})],
 });
+
+function toggleFrameworkList(setting: boolean) {
+  if (typeof setting === "boolean") {
+    showFrameworkList.value = setting;
+    return;
+  }
+  showFrameworkList.value = !showFrameworkList.value;
+}
+
+function handleFrameworkSelect(selection: string) {
+  showFrameworkList.value = false;
+  framework.value = selection;
+  const el = document.getElementById("introduction");
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth" });
+  }
+}
 
 onMounted(() => {
   setTimeout(() => {
@@ -84,7 +103,7 @@ onMounted(() => {
               font-display
               text-[max(10vh,6.5em)]
               text-emerald-500
-              mb-[max(4.5vh,1rem)]
+              mb-[max(4vh,1rem)]
               tall:mt-[-6vh]
               xtall:mt-[-12vh]
               transition-all
@@ -124,36 +143,123 @@ onMounted(() => {
             />
           </h1>
 
-          <p
+          <div
             :data-show="showHeadline"
             :class="`
-              text-[max(4vh,3em)]
-              leading-[1em]
-              font-semibold
-              text-center
-              text-slate-700
-              max-w-[800px]
-              text-balance
-
+              relative
+              z-30
               transition-all
               duration-500
               translate-y-10
               opacity-0
               data-[show=true]:translate-y-0
               data-[show=true]:opacity-100
-
-              dark:text-slate-50
-              dark:[text-shadow:-1px_1px_#000]
             `"
           >
-            A
-            <span class="text-3xl mr-2.5 text-emerald-600 dark:text-green-400"
-              >tiny</span
+            <p
+              :class="`
+                text-[max(4vh,3em)]
+                leading-[1em]
+                font-semibold
+                text-center
+                text-slate-700
+                max-w-[800px]
+                text-balance
+                mb-[max(2.5vh,1rem)]
+
+                dark:text-slate-50
+                dark:[text-shadow:-1px_1px_#000]
+              `"
             >
-            <span class="text-pink-600 dark:text-cyan-300">declarative</span>
-            library<br />
-            for modern apps
-          </p>
+              A
+              <span class="text-3xl mr-2.5 text-emerald-600 dark:text-green-400"
+                >tiny</span
+              >
+              <span class="text-pink-600 dark:text-cyan-300">data-first</span>
+              library<br />
+              for modern apps
+            </p>
+
+            <div
+              class="action-buttons flex flex-wrap items-center justify-center"
+            >
+              <div class="inline-flex cursor-pointer mr-3">
+                <span
+                  class="bg-slate-600 border border-slate-500 shadow-md !text-white rounded-lg flex text-sm !no-underline dark:bg-fuchsia-950 dark:border-fuchsia-600"
+                >
+                  <span
+                    @click="handleFrameworkSelect(framework)"
+                    class="py-3 px-6 border-r hover:bg-white/10 rounded-l-lg border-r-white/10 dark:border-fuchsia-800"
+                  >
+                    Get Started
+                  </span>
+                  <div
+                    class="relative py-2 px-3 flex hover:bg-white/10 rounded-r-lg"
+                    @mouseenter="toggleFrameworkList(true)"
+                    @mouseleave="toggleFrameworkList(false)"
+                  >
+                    <FrameworkIcons :active="framework" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="w-3 ml-2"
+                      viewBox="0 0 512 512"
+                    >
+                      <path
+                        fill="currentColor"
+                        d="M256 429.3l22.6-22.6 192-192L493.3 192 448 146.7l-22.6 22.6L256 338.7 86.6 169.4 64 146.7 18.7 192l22.6 22.6 192 192L256 429.3z"
+                      />
+                    </svg>
+                    <ul
+                      v-show="showFrameworkList"
+                      :class="`
+                        absolute
+                        top-full
+                        left-0
+                        w-full
+                        flex
+                        flex-col
+                        border
+                        -translate-y-1
+                        pt-1
+                        z-[-1]
+                        overflow-hidden
+                        shadow-lg
+                        bg-slate-700
+                        dark:bg-fuchsia-950
+                        dark:border-fuchsia-600
+                        items-center
+                        rounded-b-lg
+                        justify-center
+                      `"
+                    >
+                      <li
+                        v-if="framework !== 'react'"
+                        @click="handleFrameworkSelect('react')"
+                        class="p-2 w-full text-center hover:bg-white/20"
+                      >
+                        <FrameworkIcons active="react" />
+                      </li>
+                      <li
+                        v-if="framework !== 'vue'"
+                        @click="handleFrameworkSelect('vue')"
+                        class="p-2 w-full text-center hover:bg-white/20"
+                      >
+                        <FrameworkIcons active="vue" />
+                      </li>
+                      <li
+                        v-if="framework !== 'native'"
+                        @click="handleFrameworkSelect('native')"
+                        class="p-2 w-full text-center hover:bg-white/20"
+                      >
+                        <FrameworkIcons active="native" />
+                      </li>
+                    </ul>
+                  </div>
+                </span>
+              </div>
+              <CopyCode :base-delay="1500" />
+            </div>
+          </div>
         </div>
 
         <ul
