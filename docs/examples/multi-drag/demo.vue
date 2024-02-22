@@ -44,15 +44,15 @@ const [parent2, files2] = useDragAndDrop([], {
     <div
       class="group bg-slate-500 dark:bg-slate-800 data-[handles=true]:bg-emerald-700 dark:data-[handles=true]:bg-emerald-950"
     >
-      <div class="p-2 mr-2 flex justify-between font-oldschool">
+      <div class="p-2 flex justify-between font-oldschool">
         <ul
           ref="parent1"
-          class="bg-white border-4 border-slate-400 w-full p-3 dark:bg-neutral-700"
+          class="bg-white min-w-0 grow-0 border-2 md:border-4 border-slate-400 w-full p-3 dark:bg-neutral-700"
         >
           <li
             v-for="item in files1"
             :key="item"
-            class="py-2 px-4 last:mb-0 !text-2xl"
+            class="py-1 px-2 md:py-2 md:px-4 last:mb-0 !text-lg sm:!text-xl md:!text-2xl antialiased"
           >
             {{ item }}
           </li>
@@ -60,13 +60,13 @@ const [parent2, files2] = useDragAndDrop([], {
 
         <ul
           ref="parent2"
-          class="bg-white border-4 border-slate-400 ml-2 w-full p-3 dark:bg-neutral-700"
+          class="bg-white min-w-0 grow-0 border-2 md:border-4 border-slate-400 ml-2 w-full p-3 dark:bg-neutral-700"
         >
           <li
             v-if="files2.length"
             v-for="item in files2"
             :key="item"
-            class="py-2 px-4 last:mb-0 !text-2xl"
+            class="py-1 px-2 md:py-2 md:px-4 last:mb-0 !text-lg sm:!text-xl md:!text-2xl antialiased"
           >
             {{ item }}
           </li>
