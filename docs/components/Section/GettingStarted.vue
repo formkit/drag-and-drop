@@ -26,11 +26,12 @@
     </p>
     <h4>useDragAndDrop</h4>
     <p>
-      The <code>useDragAndDrop</code> hook is most convenient way to add Drag
-      and Drop to your app. Call this function with your initial list of items.
-      It returns a tuple whose first value is a ref which must be assigned to
-      the parent DOM element of your list. The second value is the list of items
-      that should be used in your template to create the list items.
+      The <code>useDragAndDrop</code> hook is the most convenient way to add
+      Drag and Drop to your app. Call this function with your initial list of
+      items. It returns a tuple whose first value is a ref which must be
+      assigned to the parent DOM element of your list. The second value is the
+      list of items that should be used in your template to create the list
+      items.
     </p>
     <code class="block"
       ><span class="def">const</span> [<span class="var">parent</span>,
