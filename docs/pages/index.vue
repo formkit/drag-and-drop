@@ -17,7 +17,7 @@
       <h2>Getting Started</h2>
       <p>
         Whether using a composable <code>useDragAndDrop</code> or a direct
-        invocation of the core <code>dragAndDrop</code>, function the API
+        invocation of the core <code>dragAndDrop</code> function, the API
         remains the same. The first parameter accepts an HTMLElement that
         represents the "parent" or the element containing the draggable
         elements. The second paramter is an array of values that are assigned to
@@ -29,8 +29,7 @@
       <h3>Sortability</h3>
       <p>
         When calling <code>useDragAndDrop</code> or <code>dragAndDrop</code>,
-        the default behavior is to allow sorting. This means that items can be
-        reordered within a given list.
+        the default behavior is to allow sorting.
       </p>
       <CodeExample example="sorting" />
       <p>
@@ -39,6 +38,7 @@
         <code>draggable</code> is a callback function that lets you determine
         whether or not a given element should be draggable.
       </p>
+      <h4>Draggable</h4>
       <CodeExample example="draggable" />
       <h3>Transferability</h3>
       <p>
@@ -69,17 +69,6 @@
         to find the handle.
       </p>
       <CodeExample example="drag-handles" />
-      <h2>Configuration</h2>
-      <p>
-        Each list can be passed a configuration object. This object can be used
-        to set options like <code>group</code>, <code>drag handles</code>, and
-        or more dynamic options such as determining which direct descendants of
-        a list are <code>draggable</code>. Invocation of
-        <code>useDragAndDrop</code> or <code>dragAndDrop</code> can be used
-        idempotently to update the configuration for a given list.
-      </p>
-      <CodeExampleNative :full-height="true" example="config" />
-
       <h2>Plugins</h2>
       <p>
         Plugins are a powerful way to extend the functionality of the library.
@@ -99,7 +88,22 @@
         already written logic for selecting items), you can pass your own
         selected values to the `selections` property.
       </p>
+
+      <h2>Configuration</h2>
+      <h3>Core configuration</h3>
+      <p>
+        Each list can be passed a configuration object. This object can be used
+        to set options like <code>group</code>, <code>drag handles</code>, and
+        or more dynamic options such as determining which direct descendants of
+        a list are <code>draggable</code>. Invocation of
+        <code>useDragAndDrop</code> or <code>dragAndDrop</code> can be used
+        idempotently to update the configuration for a given list.
+      </p>
+      <h3>Plugin configuration</h3>
+      <h4>Multi-drag</h4>
       <CodeExampleNative :full-height="true" example="multi-drag-config" />
+
+      <CodeExampleNative :full-height="true" example="config" />
 
       <SectionSupport />
     </div>
