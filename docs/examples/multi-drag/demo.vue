@@ -42,12 +42,12 @@ const [parent2, files2] = useDragAndDrop([], {
 <template>
   <DemoContainer name="multiDrag">
     <div
-      class="group bg-slate-500 dark:bg-slate-800 data-[handles=true]:bg-emerald-700 dark:data-[handles=true]:bg-emerald-950"
+      class="group bg-slate-200 dark:bg-slate-800 data-[handles=true]:bg-emerald-700 dark:data-[handles=true]:bg-emerald-950"
     >
-      <div class="p-2 flex justify-between font-oldschool">
+      <div class="p-px flex justify-between font-oldschool">
         <ul
           ref="parent1"
-          class="bg-white min-w-0 grow-0 border-2 md:border-4 border-slate-400 w-full p-3 dark:bg-neutral-700"
+          class="min-w-0 grow-0 border-2 md:border-4 border-indigo-300 w-full p-3 dark:bg-slate-800"
         >
           <li
             v-for="item in files1"
@@ -60,7 +60,7 @@ const [parent2, files2] = useDragAndDrop([], {
 
         <ul
           ref="parent2"
-          class="bg-white min-w-0 grow-0 border-2 md:border-4 border-slate-400 ml-2 w-full p-3 dark:bg-neutral-700"
+          class="min-w-0 grow-0 border-2 md:border-4 border-indigo-300 ml-2 w-full p-3 dark:bg-slate-800"
         >
           <li
             v-if="files2.length"

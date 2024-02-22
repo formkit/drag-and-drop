@@ -9,7 +9,9 @@
       Drag and Drop is published as <code>@formkit/drag-and-drop</code> on npm.
       Click to copy the install command for your package manager of choice:
     </p>
-    <ul class="my-8 flex flex-col md:grid grid-cols-2 gap-4 max-w-2xl">
+    <ul
+      class="my-8 flex flex-col md:grid grid-cols-2 gap-4 max-w-2xl !list-none !ml-0"
+    >
       <li><CopyCodeSingle command="npm install @formkit/drag-and-drop" /></li>
       <li><CopyCodeSingle command="pnpm add @formkit/drag-and-drop" /></li>
       <li><CopyCodeSingle command="yarn add @formkit/drag-and-drop" /></li>

@@ -257,11 +257,11 @@ html.dark body::after {
 }
 
 .shiki {
-  @apply p-2 lg:p-4 text-sm overflow-auto max-h-[500px];
+  @apply p-2 lg:p-4 text-sm overflow-auto min-h-[500px] max-h-[500px];
   @apply dark:!bg-[#091e32];
 }
 [data-full-height="true"] .shiki {
-  @apply max-h-none overflow-y-clip overflow-x-auto mb-8;
+  @apply max-h-none min-h-0 overflow-y-clip overflow-x-auto mb-8;
 }
 .twoslash-popup-container {
   flex-basis: 500px;
