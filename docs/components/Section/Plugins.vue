@@ -8,6 +8,12 @@
       They can be used to add new features, modify existing ones, or even create
       entirely new experiences.
     </p>
+    <h3 id="multi-drag">Animations</h3>
+    <p>
+      To add animations to your drag and drop experience, you can use the
+      first-party <code>animations</code> plugin.
+    </p>
+    <CodeExample example="animations" />
     <h3 id="multi-drag">Multi Drag</h3>
     <p>
       The multi-drag plugin allows you to select multiple items and drag them

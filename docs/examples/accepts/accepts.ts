@@ -16,18 +16,6 @@ const state = reactive({
 });
 
 dragAndDrop<string>({
-  parent: document.getElementById("todo-list")!,
-  getValues: () => state.todos,
-  setValues: (newValues) => {
-    state.todos = reactive(newValues);
-  },
-  config: {
-    group: "todoList",
-    dragHandle: ".kanban-handle",
-  },
-});
-
-dragAndDrop<string>({
   parent: document.getElementById("source")!,
   getValues: () => state.items1,
   setValues: (newValues) => {
