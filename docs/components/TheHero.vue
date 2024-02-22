@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { dragAndDrop } from "../../src/vue/index";
-import { animations } from "../../src/index";
+import { dragAndDrop } from "@formkit/drag-and-drop/vue";
+import { animations } from "@formkit/drag-and-drop";
 
 const dragList = ref(null);
 const showHand = ref(true);
@@ -41,7 +41,7 @@ dragAndDrop({
   parent: dragList,
   values: features,
   draggingClass: "[&>.card]:-rotate-2 before:-rotate-2",
-  dropZoneClass: "blur-[2px] opacity-60",
+  dropZoneClass: "blur-sm opacity-60",
   plugins: [animations({})],
 });
 
