@@ -171,6 +171,12 @@ function dragstart<T>(data: NodeDragEventData<T>) {
 
   if (!selectedValues.includes(data.targetData.node.data.value)) {
     selectedValues = [data.targetData.node.data.value, ...selectedValues];
+
+    const selectionConfig = data.targetData.parent.data.config.selectionsConfig;
+
+    addClass([data.targetData.node.el], selectionConfig?.selectedClass);
+
+    multiDragState.selectedNodes.push(data.targetData.node);
   }
 
   const originalZIndex = data.targetData.node.el.style.zIndex;

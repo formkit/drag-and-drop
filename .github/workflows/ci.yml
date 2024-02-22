@@ -1,24 +1,6 @@
 name: Drag and drop tests
 on: [push, workflow_dispatch]
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.x
-
-      - name: Setup
-        run: npm i -g @antfu/ni
-
-      - name: Install
-        run: nci
-
-      - name: Lint
-        run: nr lint
-
   playwright:
     name: "Playwright tests"
     timeout-minutes: 30
@@ -34,13 +16,13 @@ jobs:
           version: 8
       - run: pnpm install --frozen-lockfile
       - name: Build Nuxt
-        run: cd docs && pnpm install && cd ..
+        run: cd playground && pnpm install && cd ..
       - name: Install Playwright
         run: pnpm exec playwright install --with-deps
       - name: Spin up dev
-        run: pnpm dev &
+        run: pnpm playground &
       - name: Run Playwright tests
-        run: npx playwright test vue
+        run: npx playwright test
       - uses: actions/upload-artifact@v3
         if: always()
         with:

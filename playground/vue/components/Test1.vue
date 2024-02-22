@@ -1,31 +1,24 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../../src/vue/index";
-import { animations } from "../../../src/index";
 
 const props = defineProps<{
   id: string;
   testDescription: string;
 }>();
-const [parent, values] = useDragAndDrop(
-  [
-    {
-      id: "10_of_clubs",
-      src: "/cards/10_of_clubs.png",
-    },
-    {
-      id: "jack_of_hearts",
-      src: "/cards/jack_of_hearts.png",
-    },
-    {
-      id: "queen_of_spades",
-      src: "/cards/queen_of_spades.png",
-    },
-  ],
+const [parent, values] = useDragAndDrop([
   {
-    plugins: [animations()],
-    dropZoneClass: "blur-[2px] opacity-60",
-  }
-);
+    id: "10_of_clubs",
+    src: "/cards/10_of_clubs.png",
+  },
+  {
+    id: "jack_of_hearts",
+    src: "/cards/jack_of_hearts.png",
+  },
+  {
+    id: "queen_of_spades",
+    src: "/cards/queen_of_spades.png",
+  },
+]);
 </script>
 
 <template>

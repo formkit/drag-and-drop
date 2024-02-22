@@ -8,18 +8,18 @@ const headingsTree = new Map<HTMLElement, HTMLElement[]>();
 onMounted(() => {
   h2s.value =
     (Array.from(
-      document.querySelectorAll(".docs-content > h2")
+      document.querySelectorAll(".docs-content h2:not(.demo-container h2)")
     ) as HTMLElement[]) || [];
   h3s.value =
     (Array.from(
-      document.querySelectorAll(".docs-content > h3")
+      document.querySelectorAll(".docs-content h3:not(.demo-container h3)")
     ) as HTMLElement[]) || [];
 
   // add ids to all headings based on their text content
-  const headings = Array.from(document.querySelectorAll("h2, h3"));
+  const headings = Array.from(h2s.value).concat(Array.from(h3s.value));
   headings.forEach((heading) => {
-    const id = heading.textContent?.toLowerCase().replace(/\s/g, "-");
-    if (id) {
+    if (!heading.id) {
+      const id = heading.textContent?.toLowerCase().replace(/\s/g, "-")!;
       heading.id = id;
     }
   });
