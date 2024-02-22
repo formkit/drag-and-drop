@@ -43,7 +43,7 @@ function copyCode() {
     <span class="ml-2 mr-3" v-if="!didCopy">@formkit/drag-and-drop</span>
     <IconCopy
       v-if="!didCopy"
-      class="w-3 basis-3 flex-shrink-0 ml-auto text-gray-500 group-hover:text-sky-600 dark:group-hover:text-sky-300"
+      class="w-3 basis-3 flex-shrink-0 ml-auto text-gray-500 dark:text-gray-300 group-hover:text-sky-600 dark:group-hover:text-sky-300"
     />
     <span
       v-if="didCopy"
