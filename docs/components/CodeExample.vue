@@ -73,7 +73,9 @@ try {
         <CodeExampleNative :example="example" />
       </div>
     </div>
-    <component v-if="cmp" :is="cmp" />
+    <div class="demo-container">
+      <component v-if="cmp" :is="cmp" />
+    </div>
   </div>
 </template>
 
