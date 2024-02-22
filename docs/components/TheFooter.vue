@@ -18,9 +18,9 @@
           </NuxtLink>
         </div>
         <div>
-          <h4 class="font-bold mb-4 text-slate-700 dark:text-slate-300">
+          <h3 class="font-bold mb-4 text-slate-700 dark:text-slate-300">
             Our Other Projects
-          </h4>
+          </h3>
           <ul class="text-slate-600 mb-8 sm:mr-20 dark:text-slate-200">
             <li class="mb-2">
               <a
@@ -53,9 +53,9 @@
           </ul>
         </div>
         <div class="">
-          <h4 class="font-bold mb-4 text-slate-700 dark:text-slate-300">
+          <h3 class="font-bold mb-4 text-slate-700 dark:text-slate-300">
             Connect
-          </h4>
+          </h3>
           <ul class="socials mb-4 text-slate-400 dark:text-slate-300">
             <li class="mb-2">
               <a

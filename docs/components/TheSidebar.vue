@@ -56,11 +56,8 @@ onMounted(() => {
       lg:flex
       flex-col
       pl-2
-      min-[1400px]:ml-[5%]
-      min-[1600px]:ml-auto
       w-full
       max-w-[180px]
-      min-[1400px]:max-w-[220px]
     `"
   >
     <nav
@@ -76,7 +73,6 @@ onMounted(() => {
         rounded-lg
         border-sky-200/50
         dark:border-fuchsia-400/20
-        min-[1400px]:pr-10
         top-2
         shadow-sm
         max-h-[calc(100dvh-0.5rem)]

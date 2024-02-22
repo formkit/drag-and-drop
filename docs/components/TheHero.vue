@@ -2,7 +2,7 @@
 import { dragAndDrop } from "@formkit/drag-and-drop/vue";
 import { animations } from "@formkit/drag-and-drop";
 
-const dragList = ref(null);
+const dragList = ref(undefined);
 const showHand = ref(true);
 const showTitle = ref(false);
 const openHand = ref(false);
@@ -41,7 +41,7 @@ dragAndDrop({
   parent: dragList,
   values: features,
   draggingClass: "[&>.card]:-rotate-2 before:-rotate-2",
-  dropZoneClass: "blur-sm opacity-60",
+  dropZoneClass: "blur-[2px] opacity-60",
   plugins: [animations({})],
 });
 
@@ -70,12 +70,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="-mt-8 w-full overflow-hidden transform-gpu">
+  <div class="-mt-8 w-full transform-gpu">
     <div id="vapor-wave-sun" class="transform-gpu" aria-hidden="true" />
-    <div
-      class="flex flex-col pb-10 min-h-[85dvh] overflow-hidden"
-      id="vapor-wave-container"
-    >
+    <div class="flex flex-col pb-10 min-h-[85dvh]" id="vapor-wave-container">
       <div class="page-section my-auto relative z-10">
         <div
           class="mt-[min(6vh,12em)] mb-[min(6vh,3.5em)] flex flex-col items-center"

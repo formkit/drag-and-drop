@@ -2,13 +2,14 @@
 import { codeToHtml } from "shiki";
 import { transformerTwoslash } from "@shikijs/twoslash";
 
-const props = defineProps<{
-  example: string;
+const props = defineProps({
+  example: String,
   fullHeight: {
-    type: Boolean;
-    default: false;
-  };
-}>();
+    type: Boolean,
+    default: false,
+    required: false,
+  },
+});
 const res = await import(
   `../examples/${props.example}/${props.example}.ts?raw`
 );

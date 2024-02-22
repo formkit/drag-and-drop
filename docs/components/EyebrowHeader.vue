@@ -64,6 +64,7 @@ function toggleDark() {
         <li>
           <button
             @click="toggleDark"
+            aria-label="Toggle color mode"
             class="text-slate-500 hove:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
           >
             <svg

@@ -46,7 +46,7 @@ dragAndDrop({
           >
             <CassetteTape :label="tape" :data-label="tape" />
           </li>
-          <div id="no-drag">I am NOT draggable</div>
+          <li id="no-drag">I am NOT draggable</li>
         </ul>
       </div>
     </div>
