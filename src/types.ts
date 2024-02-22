@@ -20,25 +20,6 @@ export interface DragAndDrop<T> {
   config?: Partial<ParentConfig<T>>;
 }
 
-///**
-// * The function that is called when an event is triggered on a Node.
-// *
-// * @param data - The data passed to the event listener.
-// * @param dragState - The current state of the drag.
-// */
-//export type NodeAction = (data: NodeEventData, dragState: DragState) => void;
-
-///**
-// * The function that is called when an event is triggered on a Parent.
-// *
-// * @param data - The data passed to the event listener.
-// * @param dragState - The current state of the drag.
-// */
-//export type ParentAction = (
-//  data: ParentEventData,
-//  dragState: DragState | TouchState
-//) => void;
-
 export interface ParentDragEventData<T> extends ParentEventData<T> {
   e: DragEvent;
 }
@@ -587,6 +568,10 @@ export interface DragState<T> extends DragStateProps<T> {
    */
   incomingDirection: "above" | "below" | "left" | "right" | undefined;
   /**
+   * The index of the node that the dragged node was initially in.
+   */
+  initialIndex: number;
+  /**
    * The parent that the dragged node was initially in.
    */
   initialParent: ParentRecord<T>;
@@ -620,6 +605,7 @@ export interface DragState<T> extends DragStateProps<T> {
 export interface DragStateProps<T> {
   draggedNode: NodeRecord<T>;
   draggedNodes: Array<NodeRecord<T>>;
+  initialIndex: number;
   initialParent: ParentRecord<T>;
   lastParent: ParentRecord<T>;
 }

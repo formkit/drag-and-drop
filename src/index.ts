@@ -112,6 +112,7 @@ export function dragStateProps<T>(
         data: targetData.node.data,
       },
     ],
+    initialIndex: targetData.node.data.index,
     initialParent: {
       el: targetData.parent.el,
       data: targetData.parent.data,
@@ -1054,13 +1055,25 @@ export function performTransfer<T>(
     data.targetData.parent.data
   );
 
-  "node" in data.targetData
-    ? targetParentValues.splice(
-        data.targetData.node.data.index,
-        0,
-        ...draggedValues
-      )
-    : targetParentValues.push(...draggedValues);
+  const reset =
+    state.initialParent.el === data.targetData.parent.el &&
+    data.targetData.parent.data.config.sortable === false;
+
+  if ("node" in data.targetData) {
+    const targetIndex = reset
+      ? state.initialIndex
+      : data.targetData.node.data.index;
+
+    targetParentValues.splice(targetIndex, 0, ...draggedValues);
+  } else {
+    const targetIndex = reset
+      ? state.initialIndex
+      : data.targetData.parent.data.enabledNodes.length;
+
+    reset
+      ? targetParentValues.splice(targetIndex, 0, ...draggedValues)
+      : targetParentValues.push(...draggedValues);
+  }
 
   setParentValues(state.lastParent.el, state.lastParent.data, lastParentValues);
 
