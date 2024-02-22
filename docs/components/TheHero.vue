@@ -201,16 +201,33 @@ onMounted(() => {
             >
               <div class="inline-flex cursor-pointer mr-3 mb-3 relative z-10">
                 <span
-                  class="bg-slate-600 border border-slate-500 shadow-md !text-white rounded-lg flex text-sm !no-underline dark:bg-fuchsia-950 dark:border-fuchsia-600"
+                  :data-list-open="showFrameworkList"
+                  :class="`
+                    group
+                    bg-blue-100/40
+                    backdrop-blur-sm
+                    border
+                    border-sky-400
+                    shadow-md
+                    text-black
+                    dark:text-white
+                    rounded-lg
+                    data-[list-open=true]:rounded-br-none
+                    flex
+                    text-sm
+                    !no-underline
+                    dark:bg-fuchsia-950 
+                    dark:border-fuchsia-600
+                  `"
                 >
                   <span
                     @click="handleFrameworkSelect(framework)"
-                    class="py-3 px-6 border-r hover:bg-white/10 rounded-l-lg border-r-white/10 dark:border-fuchsia-800"
+                    class="py-3 px-6 border-r hover:bg-white/10 rounded-l-lg border-r-sky-400 dark:border-fuchsia-800"
                   >
                     Get Started
                   </span>
                   <div
-                    class="relative py-2 px-3 flex hover:bg-white/10 rounded-r-lg"
+                    class="relative py-2 px-3 flex hover:bg-white/10 rounded-r-lg group-data-[list-open]:rounded-br-none"
                     @mouseover="toggleFrameworkList(true)"
                     @mouseleave="toggleFrameworkList(false)"
                   >
@@ -231,16 +248,17 @@ onMounted(() => {
                         absolute
                         top-full
                         left-0
-                        w-full
+                        w-[calc(100%+2px)]
                         flex
                         flex-col
                         border
-                        -translate-y-1
-                        pt-1
                         z-[-1]
+                        -translate-x-px
                         overflow-hidden
                         shadow-lg
-                        bg-slate-700
+                        bg-blue-100/40
+                        backdrop-blur-sm
+                        border-sky-400
                         dark:bg-fuchsia-950
                         dark:border-fuchsia-600
                         items-center
@@ -251,21 +269,21 @@ onMounted(() => {
                       <li
                         v-if="framework !== 'react'"
                         @click="handleFrameworkSelect('react')"
-                        class="p-2 w-full text-center hover:bg-white/20"
+                        class="p-2 w-full text-center hover:bg-white/60 dark:hover:bg-white/20"
                       >
                         <FrameworkIcons active="react" />
                       </li>
                       <li
                         v-if="framework !== 'vue'"
                         @click="handleFrameworkSelect('vue')"
-                        class="p-2 w-full text-center hover:bg-white/20"
+                        class="p-2 w-full text-center hover:bg-white/60 dark:hover:bg-white/20"
                       >
                         <FrameworkIcons active="vue" />
                       </li>
                       <li
                         v-if="framework !== 'native'"
                         @click="handleFrameworkSelect('native')"
-                        class="p-2 w-full text-center hover:bg-white/20"
+                        class="p-2 w-full text-center hover:bg-white/60 dark:hover:bg-white/20"
                       >
                         <FrameworkIcons active="native" />
                       </li>
