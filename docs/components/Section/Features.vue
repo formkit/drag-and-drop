@@ -6,7 +6,8 @@
     <p>
       Drag and drop ships out of the box with the ability to sort and transfer
       individual items between lists. Further customization is also available
-      via first-party plugins, and of course you can always write your own.
+      via <a href="#plugins">first-party plugins</a>, and of course you can
+      always <a href="#custom-plugins">write your own</a>.
     </p>
     <h3 id="sortability">Sortability</h3>
     <p>
@@ -51,41 +52,6 @@
       find the handle.
     </p>
     <CodeExample example="drag-handles" />
-    <h2 id="plugins">Plugins</h2>
-    <p>
-      Plugins are a powerful way to extend the functionality of the library.
-      They can be used to add new features, modify existing ones, or even create
-      entirely new experiences.
-    </p>
-    <h3 id="multi-drag">Multi Drag</h3>
-    <p>
-      The multi-drag plugin allows you to select multiple items and drag them
-      together. Try selecting files like you would on your machine.
-    </p>
-    <CodeExample example="multi-drag" />
-    <p>
-      Notice in the last example we are passing a separate plugin to the
-      multi-drag plugin. This is the selections plugin, which sets things like
-      click handlers. If you would like to write your own logic (or have already
-      written logic for selecting items), you can pass your own selected values
-      to the `selections` property.
-    </p>
-
-    <h2 id="configuration">Configuration</h2>
-    <h3 id="core-configuration">Core configuration</h3>
-    <p>
-      Each list can be passed a configuration object. This object can be used to
-      set options like <code>group</code>, <code>drag handles</code>, and or
-      more dynamic options such as determining which direct descendants of a
-      list are <code>draggable</code>. Invocation of
-      <code>useDragAndDrop</code> or <code>dragAndDrop</code> can be used
-      idempotently to update the configuration for a given list.
-    </p>
-    <h3 id="plugin-configuration">Plugin configuration</h3>
-    <h4 id="multi-drag">Multi-drag</h4>
-    <CodeExampleNative :full-height="true" example="multi-drag-config" />
-
-    <CodeExampleNative :full-height="true" example="config" />
   </SectionWrapper>
 </template>
 

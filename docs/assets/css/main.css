@@ -210,10 +210,10 @@ html.dark body::after {
 }
 .docs-content p,
 .docs-content li {
-  @apply text-lg max-w-[750px];
+  @apply text-base md:text-lg max-w-[750px];
 }
 .docs-content p {
-  @apply mb-4;
+  @apply mb-4 leading-7;
 }
 .docs-content p + h2 {
   @apply mt-12;

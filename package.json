@@ -1,7 +1,6 @@
 {
   "version": "0.0.15",
   "private": true,
-  "name": "drag-and-drop",
   "description": "Drag and drop package.",
   "main": "./index.cjs",
   "types": "./index.d.cts",
