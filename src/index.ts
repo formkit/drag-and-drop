@@ -846,16 +846,13 @@ export function validateTransfer<T>(
 
   const initialParentConfig = state.initialParent.data.config;
 
-  if (
-    targetConfig.accepts &&
-    !targetConfig.accepts(
+  if (targetConfig.accepts) {
+    return targetConfig.accepts(
       data.targetData.parent,
       state.initialParent,
       state.lastParent,
       state
-    )
-  ) {
-    return false;
+    );
   } else if (
     !targetConfig.group ||
     targetConfig.group !== initialParentConfig.group
