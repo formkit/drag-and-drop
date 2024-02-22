@@ -11,6 +11,7 @@ const showHeadline = ref(false);
 const showDemo = ref(false);
 const showFrameworkList = ref(false);
 const framework = useState("exampleLang", () => "react");
+let closeTimeout = setTimeout(() => {});
 
 const features = ref([
   {
@@ -49,7 +50,14 @@ dragAndDrop({
 
 function toggleFrameworkList(setting: boolean) {
   if (typeof setting === "boolean") {
-    showFrameworkList.value = setting;
+    if (setting) {
+      clearTimeout(closeTimeout);
+      showFrameworkList.value = setting;
+    } else {
+      closeTimeout = setTimeout(() => {
+        showFrameworkList.value = setting;
+      }, 250);
+    }
     return;
   }
   showFrameworkList.value = !showFrameworkList.value;
@@ -195,7 +203,7 @@ onMounted(() => {
                   </span>
                   <div
                     class="relative py-2 px-3 flex hover:bg-white/10 rounded-r-lg"
-                    @mouseenter="toggleFrameworkList(true)"
+                    @mouseover="toggleFrameworkList(true)"
                     @mouseleave="toggleFrameworkList(false)"
                   >
                     <FrameworkIcons :active="framework" />
