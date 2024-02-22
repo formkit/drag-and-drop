@@ -42,7 +42,6 @@ onMounted(() => {
   const hash = window.location.hash.slice(1);
   const el = document.getElementById(hash);
   if (el) {
-    // TODO: figure out why this delay is necessary
     setTimeout(() => {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 800);

@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
 
-const todoItems = [ "Schedule perm", "Rewind VHS tapes", "Make change for the arcade", "Get disposable camera developed", "Learn C++", "Return Nintendo Power Glove"]
-const doneItems = ["Pickup new mix-tape from Beth"]
+const todoItems = [
+  "Schedule perm",
+  "Rewind VHS tapes",
+  "Make change for the arcade",
+  "Get disposable camera developed",
+  "Learn C++",
+  "Return Nintendo Power Glove",
+];
+const doneItems = ["Pickup new mix-tape from Beth"];
 
-const [todoList, todos] = useDragAndDrop(
-  todoItems,
-  { group: "todoList" }
-);
-const [doneList, dones] = useDragAndDrop(
-  doneItems,
-  { group: "todoList" }
-);
+const [todoList, todos] = useDragAndDrop(todoItems, { group: "todoList" });
+const [doneList, dones] = useDragAndDrop(doneItems, { group: "todoList" });
 </script>
 
 <template>
