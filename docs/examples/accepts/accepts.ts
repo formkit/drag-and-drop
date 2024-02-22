@@ -2,17 +2,9 @@ import { reactive, html } from "@arrow-js/core";
 import { dragAndDrop } from "@formkit/drag-and-drop";
 
 const state = reactive({
-  items1: [
-    "dungeon_master.exe",
-    "map_1.dat",
-    "map_2.dat",
-    "character1.txt",
-    "character2.txt",
-    "shell32.dll",
-    "README.txt",
-  ],
-  items2: ["item1", "item2"],
-  items3: ["items3", "item4"],
+  items1: ["dungeon_master.exe", "map_1.dat", "map_2.dat", "character1.txt", "character2.txt", "shell32.dll", "README.txt"],
+  items2: ["knight.bmp", "dragon.bmp"],
+  items3: ["brick.bmp", "moss.bmp"],
 });
 
 dragAndDrop<string>({

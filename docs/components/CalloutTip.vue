@@ -1,7 +1,9 @@
 <script lang="ts" setup></script>
 
 <template>
-  <aside class="block bg-cyan-200 dark:bg-purple-900 p-4 my-8 rounded">
+  <aside
+    class="block bg-sky-100 dark:border-none border border-sky-200 dark:bg-purple-900 p-4 my-8 rounded"
+  >
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"

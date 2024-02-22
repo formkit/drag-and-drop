@@ -52,18 +52,23 @@ const [parent, flavors] = useDragAndDrop(
 
 <template>
   <DemoContainer name="custom-plugin">
-    <div class="font-mono p-4">
-      <strong>Rank your favorite flavors</strong>
-      <div>Drag count: {{ dragCount }}</div>
-      <div>Drag status: {{ dragStatus }}</div>
-    </div>
-    <div ref="parent" class="p-4">
+    <div class="border-4 p-4 border-indigo-300 dark:bg-slate-800 antialiased">
+      <div class="font-oldschool mb-4 text-lg md:text-xl lg:text-2xl">
+        <span class="antialiased">=== Rank your favorite flavors ===</span>
+        <div>Drag count: {{ dragCount }}</div>
+        <div>Drag status: {{ dragStatus }}</div>
+      </div>
       <div
-        v-for="flavor in flavors"
-        :key="flavor"
-        class="border border-slate-300 rounded mb-2 p-2"
+        ref="parent"
+        class="border-2 border-indigo-300 font-oldschool text-lg md:text-xl lg:text-2xl antialiased"
       >
-        {{ flavor }}
+        <div
+          v-for="flavor in flavors"
+          :key="flavor"
+          class="border-2 border-indigo-300 p-2"
+        >
+          {{ flavor }}
+        </div>
       </div>
     </div>
   </DemoContainer>
