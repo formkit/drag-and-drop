@@ -1054,20 +1054,24 @@ export function performTransfer<T>(
     state.initialParent.el === data.targetData.parent.el &&
     data.targetData.parent.data.config.sortable === false;
 
+  let targetIndex: number;
+
   if ("node" in data.targetData) {
-    const targetIndex = reset
-      ? state.initialIndex
-      : data.targetData.node.data.index;
+    if (reset) {
+      targetIndex = state.initialIndex;
+    } else if (data.targetData.parent.data.config.sortable === false) {
+      targetIndex = data.targetData.parent.data.enabledNodes.length;
+    } else {
+      targetIndex = data.targetData.node.data.index;
+    }
 
     targetParentValues.splice(targetIndex, 0, ...draggedValues);
   } else {
-    const targetIndex = reset
+    targetIndex = reset
       ? state.initialIndex
       : data.targetData.parent.data.enabledNodes.length;
 
-    reset
-      ? targetParentValues.splice(targetIndex, 0, ...draggedValues)
-      : targetParentValues.push(...draggedValues);
+    targetParentValues.splice(targetIndex, 0, ...draggedValues);
   }
 
   setParentValues(state.lastParent.el, state.lastParent.data, lastParentValues);
