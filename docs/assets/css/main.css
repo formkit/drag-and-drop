@@ -238,7 +238,8 @@ html.dark body::after {
   @apply text-gray-500 dark:text-gray-400;
 }
 
-.docs-content p code {
+.docs-content p code,
+.docs-content li code {
   @apply font-mono text-base;
   @apply text-fuchsia-600 dark:text-fuchsia-400;
   @apply bg-slate-100/50 dark:bg-slate-700;
@@ -246,6 +247,13 @@ html.dark body::after {
 }
 .docs-content a {
   @apply text-cyan-700 hover:text-cyan-800 dark:text-fuchsia-400 dark:hover:text-fuchsia-300 hover:underline hover:underline-offset-1;
+}
+
+.docs-content ul:not(.code-example ul) {
+  @apply list-disc ml-6 my-8;
+}
+.docs-content li:not(.code-example li) {
+  @apply mb-2;
 }
 
 .shiki {
