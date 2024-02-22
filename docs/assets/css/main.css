@@ -220,7 +220,7 @@ html.dark body::after {
 }
 
 .docs-content code.block {
-  @apply text-black dark:text-white bg-blue-50 dark:bg-slate-900 p-3 max-w-2xl;
+  @apply text-black text-sm md:text-base dark:text-white bg-blue-50 dark:bg-slate-900 p-3 max-w-2xl;
 }
 .docs-content code.block .var {
   @apply text-cyan-700 dark:text-pink-500;
@@ -239,7 +239,8 @@ html.dark body::after {
 }
 
 .docs-content p code {
-  @apply text-cyan-700 dark:text-fuchsia-400;
+  @apply font-mono text-base;
+  @apply text-fuchsia-600 dark:text-fuchsia-400;
   @apply bg-slate-100/50 dark:bg-slate-700;
   @apply px-1.5 py-0.5 rounded;
 }

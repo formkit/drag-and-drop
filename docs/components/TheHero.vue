@@ -99,10 +99,7 @@ onMounted(() => {
 <template>
   <div class="-mt-8 w-full transform-gpu">
     <div id="vapor-wave-sun" class="transform-gpu" aria-hidden="true" />
-    <div
-      class="flex flex-col pb-20 lg:pb-10 min-h-[85dvh]"
-      id="vapor-wave-container"
-    >
+    <div class="flex flex-col pb-20 min-h-[85dvh]" id="vapor-wave-container">
       <div class="page-section my-auto relative z-10">
         <div
           class="mt-[min(6vh,12em)] mb-[min(6vh,3.5em)] flex flex-col items-center"
@@ -257,7 +254,7 @@ onMounted(() => {
                         overflow-hidden
                         shadow-lg
                         bg-blue-100/40
-                        backdrop-blur-sm
+                        backdrop-blur-md
                         border-sky-400
                         dark:bg-fuchsia-950
                         dark:border-fuchsia-600
