@@ -14,7 +14,6 @@ const [source, items1] = useDragAndDrop(
   ],
   {
     accepts: () => {
-      console.log("accepts called");
       return true;
     },
   }
