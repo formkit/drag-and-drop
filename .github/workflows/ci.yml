@@ -34,7 +34,7 @@ jobs:
           version: 8
       - run: pnpm install --frozen-lockfile
       - name: Build Nuxt
-        run: cd docs && pnpm install && cd ..
+        run: cd playground && pnpm install && cd ..
       - name: Install Playwright
         run: pnpm exec playwright install --with-deps
       - name: Spin up dev
