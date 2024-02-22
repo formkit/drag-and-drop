@@ -1,7 +1,7 @@
 import { build } from "tsup";
 import { fileURLToPath } from "url";
 import { resolve, dirname } from "pathe";
-import { readFile, writeFile } from "fs/promises";
+import { readFile, writeFile, copyFile, mkdir } from "fs/promises";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -85,5 +85,10 @@ const __dirname = dirname(__filename);
     resolve(__dirname, `./dist/LICENSE`),
     await readFile(resolve(__dirname, `./LICENSE`), "utf8"),
     "utf8"
+  );
+  await mkdir(resolve(__dirname, `./dist/docs/public`), { recursive: true });
+  await copyFile(
+    resolve(__dirname, `./docs/public/drag-drop.gif`),
+    resolve(__dirname, `./dist/docs/public/drag-drop.gif`)
   );
 })();

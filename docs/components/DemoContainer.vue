@@ -11,7 +11,7 @@ defineProps({
   <div
     class="relative p-px mb-10 bg-white shadow-md border-4 border-slate-400 dark:bg-slate-700 dark:border-slate-500 select-none"
   >
-    <div class="bg-slate-200 relative overflow-clip">
+    <div class="relative overflow-clip">
       <slot />
     </div>
   </div>
