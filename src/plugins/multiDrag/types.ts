@@ -31,15 +31,15 @@ export interface MultiDragConfig<T> {
   /**
    * Function that is called when dragend event occurrs event occurs.
    */
-  handleDragend: NodeDragEventData<T> | NodeTouchEventData<T>;
+  handleEnd: (data: NodeDragEventData<T> | NodeTouchEventData<T>) => void;
   /**
    * Function that is called when dragstart occurs.
    */
-  handleDragstart: NodeDragEventData<T>;
+  handleDragstart: (data: NodeDragEventData<T>) => void;
   /**
    * Function that is called when dragstart event occurs.
    */
-  handleTouchstart: NodeTouchEventData<T>;
+  handleTouchstart: (data: NodeTouchEventData<T>) => void;
   /**
    * An array of functions to use for a given parent.
    */
