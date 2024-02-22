@@ -3,7 +3,7 @@
 <template>
   <SectionWrapper>
     <h2 id="configuration">Configuration</h2>
-    <h3 id="core-configuration">Core configuration</h3>
+    <h3 id="core-configuration">Core</h3>
     <p>
       Each list can be passed a configuration object. This object can be used to
       set options like <code>group</code>, <code>drag handles</code>, and or
@@ -13,7 +13,7 @@
       idempotently to update the configuration for a given list.
     </p>
     <CodeExampleNative :full-height="true" example="config" />
-    <h3 id="plugin-configuration">Plugin configuration</h3>
+    <h3 id="plugin-configuration">Plugins</h3>
     <h4 id="multi-drag">Multi-drag</h4>
     <CodeExampleNative :full-height="true" example="multi-drag-config" />
   </SectionWrapper>

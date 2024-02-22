@@ -16,6 +16,7 @@
       <SectionGettingStarted />
       <SectionFeatures />
       <SectionPlugins />
+      <SectionConfiguration />
       <SectionSupport />
     </div>
   </main>
