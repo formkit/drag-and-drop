@@ -99,7 +99,10 @@ onMounted(() => {
 <template>
   <div class="-mt-8 w-full transform-gpu">
     <div id="vapor-wave-sun" class="transform-gpu" aria-hidden="true" />
-    <div class="flex flex-col pb-10 min-h-[85dvh]" id="vapor-wave-container">
+    <div
+      class="flex flex-col pb-20 lg:pb-10 min-h-[85dvh]"
+      id="vapor-wave-container"
+    >
       <div class="page-section my-auto relative z-10">
         <div
           class="mt-[min(6vh,12em)] mb-[min(6vh,3.5em)] flex flex-col items-center"
@@ -111,17 +114,19 @@ onMounted(() => {
               font-display
               text-[max(10vh,6.5em)]
               text-emerald-500
-              mb-[max(4vh,1rem)]
-              tall:mt-[-6vh]
-              xtall:mt-[-12vh]
+              mb-6
+              lg:mb-[max(4vh,1rem)]
+              tall:mt-[max(-6vh,-3rem)]
+              xtall:mt-[max(-12vh,-3rem)]
               transition-all
               duration-[1500ms]
               -translate-x-[100vw]
               data-[show=true]:translate-x-0
               text-center
               leading-[0.5em]
-              w-3/4
-              max-w-[45vh]
+              w-48
+              lg:w-3/4
+              lg:max-w-[45vh]
               tall:max-w-[min(22rem,50vh)]
               drop-shadow-[-1px_1px_0_rgba(255,255,255,1)]
               transform-gpu
@@ -140,7 +145,8 @@ onMounted(() => {
                 top-10
                 -right-10
                 -rotate-0
-                w-32
+                max-w-32
+                w-[33%]
                 transition-all
                 duration-1000
                 translate-x-0
@@ -166,7 +172,8 @@ onMounted(() => {
           >
             <p
               :class="`
-                text-[max(4vh,3em)]
+                text-2xl
+                lg:text-[max(4vh,3em)]
                 leading-[1em]
                 font-semibold
                 text-center
@@ -180,7 +187,8 @@ onMounted(() => {
               `"
             >
               A
-              <span class="text-3xl mr-2.5 text-emerald-600 dark:text-green-400"
+              <span
+                class="text-lg lg:text-3xl mr-1 lg:mr-2.5 text-emerald-600 dark:text-green-400"
                 >tiny</span
               >
               <span class="text-pink-600 dark:text-cyan-300">data-first</span>
@@ -189,9 +197,9 @@ onMounted(() => {
             </p>
 
             <div
-              class="action-buttons flex flex-wrap items-center justify-center"
+              class="action-buttons flex flex-wrap items-center justify-center -mb-3"
             >
-              <div class="inline-flex cursor-pointer mr-3">
+              <div class="inline-flex cursor-pointer mr-3 mb-3 relative z-10">
                 <span
                   class="bg-slate-600 border border-slate-500 shadow-md !text-white rounded-lg flex text-sm !no-underline dark:bg-fuchsia-950 dark:border-fuchsia-600"
                 >
@@ -265,7 +273,7 @@ onMounted(() => {
                   </div>
                 </span>
               </div>
-              <CopyCode :base-delay="1500" />
+              <CopyCode :base-delay="1500" class="mb-3" />
             </div>
           </div>
         </div>
@@ -277,8 +285,6 @@ onMounted(() => {
             features
             flex
             flex-wrap
-            items-center
-            justify-center
             mt-4
             bg-blue-100/40
             border
@@ -313,11 +319,11 @@ onMounted(() => {
             :key="feature.title"
             :class="`
               relative
-              z-10
+              z-20
               flex
               flex-col
+              grow
               basis-[30%]
-              items-center
               m-2
               cursor-grab
               active:cursor-grabbing
@@ -340,7 +346,10 @@ onMounted(() => {
               :class="`
                 card
                 rounded-md
-                p-3
+                px-1.5
+                py-2
+                md:p-3
+                grow
                 w-full
                 bg-white
                 border-t
@@ -353,11 +362,13 @@ onMounted(() => {
               `"
             >
               <span
-                class="text-lg font-semibold text-emerald-600 mb-0.5 dark:text-emerald-400"
+                class="text-sm md:text-lg block font-semibold text-emerald-600 mb-0.5 dark:text-emerald-400"
               >
                 {{ feature.title }}
               </span>
-              <p class="text-sm text-center text-slate-600 dark:text-slate-300">
+              <p
+                class="text-xs md:text-md text-center text-slate-600 dark:text-slate-300"
+              >
                 {{ feature.description }}
               </p>
             </div>
