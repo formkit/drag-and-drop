@@ -25,14 +25,12 @@ const [todoList, todos] = useDragAndDrop(
     group: "todoList",
     dragHandle: !!props.dragHandles ? ".kanban-handle" : undefined,
     sortable: props.sortable,
-    dropZoneClass: "blur-[2px] opacity-60",
   }
 );
 const [doneList, dones] = useDragAndDrop(["Pickup new mix-tape from Beth"], {
   group: "todoList",
   dragHandle: !!props.dragHandles ? ".kanban-handle" : undefined,
   sortable: props.sortable,
-  dropZoneClass: "blur-[2px] opacity-60",
 });
 
 if (props.dragHandles) {
@@ -43,10 +41,10 @@ if (props.dragHandles) {
 <template>
   <DemoContainer :name="dragHandles ? 'Drag Handles' : 'Transfer'">
     <div
-      class="group bg-slate-500 dark:bg-slate-800 data-[handles=true]:bg-emerald-700 dark:data-[handles=true]:bg-emerald-950"
+      class="group bg-slate-200 dark:bg-slate-800"
       :data-handles="dragHandles"
     >
-      <div class="kanban-board p-2 md:p-4 grid grid-cols-2 gap-2 md:gap-4">
+      <div class="kanban-board p-px grid grid-cols-2 gap-px">
         <div class="kanban-column">
           <h2 class="kanban-title">ToDos</h2>
 
@@ -104,19 +102,18 @@ if (props.dragHandles) {
 
 <style scoped>
 .kanban-column {
-  @apply bg-slate-50 p-2 md:p-4 shadow-md flex flex-col;
-  @apply dark:bg-slate-600;
+  @apply p-2 md:p-4 shadow-md flex flex-col border-4 border-indigo-300;
 }
 .kanban-title {
-  @apply font-oldschool text-slate-800 text-xl md:text-2xl lg:text-3xl xl:text-4xl mb-4 text-center;
+  @apply font-oldschool text-slate-500 text-xl md:text-2xl lg:text-3xl xl:text-4xl mb-4 text-center;
   @apply dark:text-slate-200 dark:antialiased;
 }
 .kanban-list {
   @apply list-none h-full min-h-[300px] md:min-h-[400px];
 }
 .kanban-item {
-  @apply bg-slate-200 text-slate-600 antialiased border border-slate-300 p-2 md:p-4 font-oldschool text-base md:text-lg lg:text-xl leading-none font-thin mb-2 last:mb-0 group-data-[handles=false]:cursor-grab group-data-[handles=false]:active:cursor-grabbing;
-  @apply dark:bg-slate-500 dark:text-slate-50 dark:border-slate-400;
+  @apply bg-slate-100 text-slate-600 antialiased border border-slate-300 p-2 md:p-4 font-oldschool text-base md:text-lg lg:text-xl leading-none font-thin mb-2 last:mb-0 group-data-[handles=false]:cursor-grab group-data-[handles=false]:active:cursor-grabbing;
+  @apply dark:bg-slate-600 dark:text-slate-50 dark:border-slate-400;
 }
 .kanban-complete {
   @apply line-through text-red-500/50;
