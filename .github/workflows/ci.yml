@@ -34,11 +34,11 @@ jobs:
           version: 8
       - run: pnpm install --frozen-lockfile
       - name: Build Nuxt
-        run: cd playground && pnpm install
+        run: cd playground && pnpm install && cd ..
       - name: Install Playwright
         run: pnpm exec playwright install --with-deps
       - name: Spin up dev
-        run: pnpm dev &
+        run: pnpm playground &
       - name: Run Playwright tests
         run: npx playwright test vue
       - uses: actions/upload-artifact@v3
