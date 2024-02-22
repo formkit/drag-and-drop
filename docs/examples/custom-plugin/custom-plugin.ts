@@ -4,11 +4,9 @@ import { dragAndDrop, parents } from "@formkit/drag-and-drop";
 
 const state = reactive({
   items: ["🍦 vanilla", "🍫 chocolate", "🍓 strawberry"],
+  dragStatus: "Not dragging",
+  dragCount: 0,
 });
-
-const dragStatus = ref("Not dragging");
-
-const dragCount = ref(0);
 
 const dragStatusPlugin: DNDPlugin = (parent) => {
   const parentData = parents.get(parent);
@@ -17,12 +15,12 @@ const dragStatusPlugin: DNDPlugin = (parent) => {
 
   function dragstart(event: DragEvent) {
     const node = event.target as HTMLElement;
-    dragStatus.value = `Dragging ${node.textContent}`;
-    dragCount.value++;
+    state.dragStatus = `Dragging ${node.textContent}`;
+    state.dragCount++;
   }
 
   function dragend() {
-    dragStatus.value = "Not dragging";
+    state.dragStatus = "Not dragging";
   }
 
   return {
@@ -46,8 +44,8 @@ const dragStatusPlugin: DNDPlugin = (parent) => {
 
 html`
   <div>
-    <h1>${dragStatus}</h1>
-    <h1>${dragCount}</h1>
+    <h1>${state.dragStatus}</h1>
+    <h1>${state.dragCount}</h1>
     <ul id="list">
       ${state.items.map((item) => html`<li>${item}</li>`.key(item))}
     </ul>
