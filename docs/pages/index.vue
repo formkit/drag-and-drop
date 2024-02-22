@@ -46,13 +46,21 @@
         `group` property in the configuration to the same value for each list.
       </p>
       <CodeExample example="transfer" />
+      <h4>Sortable</h4>
       <p>
         If you would like to prevent sorting within a given list, but still
         allow transfer, set the <code>sortable</code> property to `false` in the
         configuration.
       </p>
       <CodeExample example="sortable" />
-
+      <h4>Accepts</h4>
+      <p>
+        For a more nuanced transfer experience, define the `accepts` property in
+        the configuration. This property is a callback function that lets you
+        determine whether or not a given element can be transferred into the
+        given list.
+      </p>
+      <CodeExample example="accepts" />
       <h3>Drag Handles</h3>
       <p>
         Drag handles are a common way to allow users to drag items without
