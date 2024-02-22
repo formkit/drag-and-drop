@@ -1,39 +1,18 @@
-# Drag and Drop
+<img src="docs/public/tempo.png" alt="TEMPO" width="500" height="195">
 
-# Introduction
+[![Vitest](https://github.com/formkit/drag-and-drop/actions/workflows/tests.yml/badge.svg)](https://github.com/formkit/drag-and-drop/actions/workflows/tests.yml)
+![GitHub Sponsors](https://img.shields.io/github/sponsors/formkit)
+![NPM Version](https://img.shields.io/npm/v/%40formkit%2Ftempo)
 
-Drag and Drop is a lightweight JavaScript library that allows you to sort values within a given list or transfer values from one list to another. FormKit Drag and Drop differs from other drag and drop libraries such as <a href="https://github.com/SortableJS/Sortable">SortableJS</a> in that it performs no DOM manipulation to move one element to another. Instead, it relies on the reactive values passed to it, and updates the values based on events from <a href="https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API">HTML5 Drag and Drop API</a>.
 
-# 💻 Install
+## Introduction
 
-via npm
+FormKit’s Drag and Drop is a small library for adding data-first drag and drop sorting and transferring for lists in your app. It’s simple, flexible, framework agnostic, and clocks in at only ~4Kb gzipped.
 
-```sh
-npm install @formkit/drag-and-drop
-```
+<a href="https://drag-and-drop.formkit.com">
+<img src="docs/public/read-the-docs.png" alt="Read the docs" width="200" height="43">
+</a>
 
-or via yarn
+---
 
-```sh
-yarn add @formkit/drag-and-drop
-```
-
-or via pnpm
-
-```sh
-pnpm install @formkit/drag-and-drop
-```
-
-# 🕹 Usage
-
-Features:
-
-## Reactive framework wrappers
-
-## Multi-drag
-
-## Drag handles
-
-## Written in TypeScript
-
-## Animations
+Created by the <a href="https://formkit.com">FormKit team</a>.
