@@ -40,7 +40,7 @@ jobs:
       - name: Spin up dev
         run: pnpm playground &
       - name: Run Playwright tests
-        run: npx playwright test vue
+        run: npx playwright test
       - uses: actions/upload-artifact@v3
         if: always()
         with:
