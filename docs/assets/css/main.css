@@ -207,7 +207,7 @@ html.dark body::after {
 }
 .docs-content p,
 .docs-content li {
-  @apply text-base max-w-[750px];
+  @apply text-lg max-w-[750px];
 }
 .docs-content p {
   @apply mb-4;

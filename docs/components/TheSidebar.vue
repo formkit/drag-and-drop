@@ -16,10 +16,10 @@ onMounted(() => {
     ) as HTMLElement[]) || [];
 
   // add ids to all headings based on their text content
-  const headings = Array.from(document.querySelectorAll("h2, h3"));
+  const headings = Array.from(h2s.value).concat(Array.from(h3s.value));
   headings.forEach((heading) => {
-    const id = heading.textContent?.toLowerCase().replace(/\s/g, "-");
-    if (id) {
+    if (!heading.id) {
+      const id = heading.textContent?.toLowerCase().replace(/\s/g, "-")!;
       heading.id = id;
     }
   });
