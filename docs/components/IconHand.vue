@@ -13,6 +13,6 @@ onMounted(() => {
 </script>
 
 <template>
-  <img v-if="open" src="/img/hand-open.png" />
-  <img v-else src="/img/hand-closed.png" />
+  <img v-if="open" src="/img/hand-open.png" alt="grab cursor" />
+  <img v-else src="/img/hand-closed.png" alt="grab cursor" />
 </template>
