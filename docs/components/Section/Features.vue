@@ -30,7 +30,7 @@
       each list.
     </p>
     <CodeExample example="transfer" />
-    <h4 id="sortable">Sortable</h4>
+    <h4 id="disable-sort">Disable sort</h4>
     <p>
       If you would like to prevent sorting within a given list, but still allow
       transfer, set the <code>sortable</code> property to <code>false</code> in
