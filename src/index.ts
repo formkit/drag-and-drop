@@ -33,7 +33,6 @@ import {
   addEvents,
   copyNodeStyle,
   eventCoordinates,
-  splitClass,
 } from "./utils";
 export { isBrowser };
 export * from "./types";
@@ -586,8 +585,6 @@ export function end<T>(
 
   const config = parents.get(state.initialParent.el)?.config;
 
-  const root = config?.root || document;
-
   const isTouch = "touchedNode" in state;
 
   const dropZoneClass = isTouch
@@ -603,13 +600,10 @@ export function end<T>(
     true
   );
 
-  if (dropZoneClass) {
-    const elsWithDropZoneClass = root.querySelectorAll(
-      `.${splitClass(dropZoneClass)}`
-    );
-
-    removeClass(Array.from(elsWithDropZoneClass), dropZoneClass);
-  }
+  removeClass(
+    state.draggedNodes.map((x) => x.el),
+    dropZoneClass
+  );
 
   if (config?.longTouchClass) {
     removeClass(

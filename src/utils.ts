@@ -9,7 +9,7 @@ import type {
 
 import { parents, nodes } from "./index";
 
-export function splitClass(className: string): Array<string> {
+function splitClass(className: string): Array<string> {
   return className.split(" ").filter((x) => x);
 }
 

@@ -28,7 +28,7 @@ import {
   state,
   resetState,
 } from "../../index";
-import { addClass, removeClass, copyNodeStyle, splitClass } from "../../utils";
+import { addClass, removeClass, copyNodeStyle } from "../../utils";
 
 export const multiDragState: MultiDragState<any> = {
   selectedNodes: Array<NodeRecord<any>>(),
@@ -121,17 +121,16 @@ function multiHandleDragend<T>(data: NodeEventData<T>) {
 
   end(data, state);
 
-  selectionsEnd(data);
+  selectionsEnd(data, state);
 
   resetState();
 }
 
-function selectionsEnd<T>(data: NodeEventData<T>) {
-  const config = data.targetData.parent.data.config;
-
+function selectionsEnd<T>(
+  data: NodeEventData<T>,
+  state: DragState<T> | TouchState<T>
+) {
   const multiDragconfig = data.targetData.parent.data.config.multiDragConfig;
-
-  const root = config.root || document;
 
   const isTouch = state && "touchedNode" in state;
 
@@ -139,13 +138,10 @@ function selectionsEnd<T>(data: NodeEventData<T>) {
     ? multiDragconfig.selectionDropZoneClass
     : multiDragconfig.touchSelectionDraggingClass;
 
-  if (dropZoneClass) {
-    const elsWithDropZoneClass = root.querySelectorAll(
-      `.${splitClass(dropZoneClass)}`
-    );
-
-    removeClass(Array.from(elsWithDropZoneClass), dropZoneClass);
-  }
+  removeClass(
+    state.draggedNodes.map((x) => x.el),
+    dropZoneClass
+  );
 }
 
 function multiHandleDragstart<T>(data: NodeEventData<T>) {

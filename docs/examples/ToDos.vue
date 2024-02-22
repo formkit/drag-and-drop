@@ -25,12 +25,14 @@ const [todoList, todos] = useDragAndDrop(
     group: "todoList",
     dragHandle: !!props.dragHandles ? ".kanban-handle" : undefined,
     sortable: props.sortable,
+    dropZoneClass: "blur-[2px] opacity-60",
   }
 );
 const [doneList, dones] = useDragAndDrop(["Pickup new mix-tape from Beth"], {
   group: "todoList",
   dragHandle: !!props.dragHandles ? ".kanban-handle" : undefined,
   sortable: props.sortable,
+  dropZoneClass: "blur-[2px] opacity-60",
 });
 
 if (props.dragHandles) {
