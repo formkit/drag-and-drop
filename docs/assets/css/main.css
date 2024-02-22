@@ -7,7 +7,7 @@
   --grid-strength: 1px;
   --grid-dash: 0px;
   --grid-gap: 0px;
-  --grid-size: 16px;
+  --grid-size: 18px;
   --grid-color: #409baf;
   --bg-color: #e6f1fa;
   --bg-color-2: #9eb1d1;
@@ -56,6 +56,7 @@ html.dark body {
   @apply selection:bg-fuchsia-600;
 }
 body::before {
+  @apply transform-gpu;
   content: "";
   position: fixed;
   z-index: -2;
@@ -70,6 +71,7 @@ body::before {
     url("data:image/svg+xml,%3Csvg viewBox='0 0 3000 3000' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 html.dark body::before {
+  @apply transform-gpu;
   mix-blend-mode: overlay;
   background-image: radial-gradient(
       circle at 50% 40%,
@@ -79,6 +81,7 @@ html.dark body::before {
     url("data:image/svg+xml,%3Csvg viewBox='0 0 3000 3000' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='3' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 html.dark body::after {
+  @apply transform-gpu;
   content: "";
   position: absolute;
   z-index: -3;
@@ -93,6 +96,7 @@ html.dark body::after {
 }
 
 #vapor-wave-container {
+  @apply transform-gpu;
   position: relative;
   perspective: 150px;
   z-index: 1;
@@ -102,13 +106,13 @@ html.dark body::after {
   position: absolute;
   z-index: 0;
   top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  background-position: 0 0;
-  backdrop-filter: blur(10px);
+  background-color: var(--bg-color);
   animation: gridLines 0.75s linear infinite;
-  transform: rotateX(45deg) scaleY(0.5) scaleX(3);
-  backface-visibility: hidden;
+  transform: rotateX(45deg) scaleY(0.5) scaleX(3) translateZ(0) skewX(0)
+    skewY(0);
   background-size: var(--grid-dash) var(--grid-dash),
     var(--grid-size) var(--grid-size);
   background-image: linear-gradient(
@@ -132,11 +136,9 @@ html.dark body::after {
       transparent var(--grid-strength)
     );
 }
-html.dark #vapor-wave-container::before {
-  background-color: var(--bg-color);
-}
 
 #vapor-wave-container::after {
+  @apply transform-gpu;
   content: "";
   position: absolute;
   height: 100%;
@@ -152,6 +154,7 @@ html.dark #vapor-wave-container::before {
   z-index: 1;
 }
 #vapor-wave-sun {
+  @apply transform-gpu;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -166,7 +169,6 @@ html.dark #vapor-wave-container::before {
     var(--sun-edge) 53%,
     transparent 53.5%
   );
-  filter: blur(1px);
   z-index: -1;
 }
 

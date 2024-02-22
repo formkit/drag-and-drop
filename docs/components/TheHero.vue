@@ -70,8 +70,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="-mt-8 w-full overflow-hidden">
-    <div id="vapor-wave-sun" aria-hidden="true" />
+  <div class="-mt-8 w-full overflow-hidden transform-gpu">
+    <div id="vapor-wave-sun" class="transform-gpu" aria-hidden="true" />
     <div
       class="flex flex-col pb-10 min-h-[85dvh] overflow-hidden"
       id="vapor-wave-container"
@@ -100,12 +100,13 @@ onMounted(() => {
               max-w-[45vh]
               tall:max-w-[min(22rem,50vh)]
               drop-shadow-[-1px_1px_0_rgba(255,255,255,1)]
+              transform-gpu
 
               dark:text-white
             `"
           >
             <DnDLogo
-              class="block w-full mb-0 brightness-90 dark:brightness-[115%]"
+              class="block w-full mb-0 brightness-90 dark:brightness-[115%] transform-gpu"
             />
             <IconHand
               v-if="showHand"
@@ -119,7 +120,8 @@ onMounted(() => {
                 transition-all
                 duration-1000
                 translate-x-0
-                data-[exit=true]:translate-x-[100vw]
+                data-[exit=true]:translate-x-[100vw] 
+                transform-gpu
               `"
               :open="openHand"
             />

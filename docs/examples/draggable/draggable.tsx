@@ -24,7 +24,7 @@ export function myComponent() {
           {tape}
         </li>
       ))}
-      <div id="no-drag">Random elemet that should not be draggable</div>
+      <div id="no-drag">I am NOT draggable</div>
     </ul>
   );
 }
