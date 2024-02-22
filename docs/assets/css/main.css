@@ -252,7 +252,7 @@ html.dark body::after {
   @apply dark:!bg-[#091e32];
 }
 [data-full-height="true"] .shiki {
-  @apply max-h-none overflow-visible mb-8;
+  @apply max-h-none overflow-y-clip overflow-x-auto mb-8;
 }
 .twoslash-popup-container {
   flex-basis: 500px;

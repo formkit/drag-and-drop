@@ -12,7 +12,9 @@ onMounted(() => {
     ) as HTMLElement[]) || [];
   h3s.value =
     (Array.from(
-      document.querySelectorAll(".docs-content h3:not(.demo-container h3)")
+      document.querySelectorAll(
+        ".docs-content h3:not(.demo-container h3), .docs-content h4:not(.demo-container h4)"
+      )
     ) as HTMLElement[]) || [];
 
   // add ids to all headings based on their text content
