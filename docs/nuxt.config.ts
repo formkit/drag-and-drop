@@ -24,7 +24,7 @@ export default defineNuxtConfig({
     "nuxt-fathom",
   ],
   fathom: {
-    siteId: "",
+    siteId: "KRFNTIEB",
   },
   app: {
     head: {
