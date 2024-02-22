@@ -219,9 +219,29 @@ html.dark body::after {
   @apply mt-12;
 }
 
-.docs-content code {
-  @apply text-cyan-700 dark:text-fuchsia-400;
-  @apply bg-slate-100/50 dark:bg-slate-800;
+.docs-content code.block {
+  @apply text-black text-sm md:text-base dark:text-white bg-blue-50 dark:bg-slate-900 p-3 max-w-2xl;
+}
+.docs-content code.block .var {
+  @apply text-cyan-700 dark:text-pink-500;
+}
+.docs-content code.block .def {
+  @apply text-red-500 dark:text-red-400;
+}
+.docs-content code.block .fn {
+  @apply text-purple-600 dark:text-purple-500;
+}
+.docs-content code.block .indent {
+  @apply inline-block ml-4;
+}
+.docs-content code.block .comment {
+  @apply text-gray-500 dark:text-gray-400;
+}
+
+.docs-content p code {
+  @apply font-mono text-base;
+  @apply text-fuchsia-600 dark:text-fuchsia-400;
+  @apply bg-slate-100/50 dark:bg-slate-700;
   @apply px-1.5 py-0.5 rounded;
 }
 .docs-content a {
@@ -233,7 +253,7 @@ html.dark body::after {
   @apply dark:!bg-[#091e32];
 }
 [data-full-height="true"] .shiki {
-  @apply max-h-none overflow-visible mb-8;
+  @apply max-h-none overflow-y-clip overflow-x-auto mb-8;
 }
 .twoslash-popup-container {
   flex-basis: 500px;

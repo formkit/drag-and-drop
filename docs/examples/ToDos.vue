@@ -46,15 +46,19 @@ if (props.dragHandles) {
       class="group bg-slate-500 dark:bg-slate-800 data-[handles=true]:bg-emerald-700 dark:data-[handles=true]:bg-emerald-950"
       :data-handles="dragHandles"
     >
-      <div class="kanban-board p-4 grid grid-cols-2 gap-4">
+      <div class="kanban-board p-2 md:p-4 grid grid-cols-2 gap-2 md:gap-4">
         <div class="kanban-column">
           <h2 class="kanban-title">ToDos</h2>
 
           <ul ref="todoList" class="kanban-list">
-            <li v-for="todo in todos" :key="todo" class="kanban-item">
+            <li
+              v-for="todo in todos"
+              :key="todo"
+              class="kanban-item flex items-center"
+            >
               <span
                 v-if="dragHandles"
-                class="kanban-handle inline-block w-2 mr-2 cursor-grab active:cursor-grabbing"
+                class="kanban-handle inline-block shrink-0 w-2 mr-2 cursor-grab active:cursor-grabbing"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 512">
                   <path
@@ -74,11 +78,11 @@ if (props.dragHandles) {
             <li
               v-for="done in dones"
               :key="done"
-              class="kanban-item kanban-complete"
+              class="kanban-item kanban-complete flex items-center"
             >
               <span
                 v-if="dragHandles"
-                class="kanban-handle inline-block w-2 mr-2 cursor-grab active:cursor-grabbing"
+                class="kanban-handle block w-2 mr-2 shrink-0 cursor-grab active:cursor-grabbing"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 512">
                   <path
@@ -100,18 +104,18 @@ if (props.dragHandles) {
 
 <style scoped>
 .kanban-column {
-  @apply bg-slate-50 p-4 shadow-md flex flex-col;
+  @apply bg-slate-50 p-2 md:p-4 shadow-md flex flex-col;
   @apply dark:bg-slate-600;
 }
 .kanban-title {
-  @apply font-oldschool text-slate-800 text-4xl mb-4 text-center;
+  @apply font-oldschool text-slate-800 text-xl md:text-2xl lg:text-3xl xl:text-4xl mb-4 text-center;
   @apply dark:text-slate-200 dark:antialiased;
 }
 .kanban-list {
-  @apply list-none h-full min-h-[400px];
+  @apply list-none h-full min-h-[300px] md:min-h-[400px];
 }
 .kanban-item {
-  @apply bg-slate-200 text-slate-600 antialiased border border-slate-300 p-4 font-oldschool text-xl leading-none font-thin mb-2 last:mb-0 group-data-[handles=false]:cursor-grab group-data-[handles=false]:active:cursor-grabbing;
+  @apply bg-slate-200 text-slate-600 antialiased border border-slate-300 p-2 md:p-4 font-oldschool text-base md:text-lg lg:text-xl leading-none font-thin mb-2 last:mb-0 group-data-[handles=false]:cursor-grab group-data-[handles=false]:active:cursor-grabbing;
   @apply dark:bg-slate-500 dark:text-slate-50 dark:border-slate-400;
 }
 .kanban-complete {

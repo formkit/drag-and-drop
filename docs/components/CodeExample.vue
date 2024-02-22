@@ -24,7 +24,7 @@ try {
         "
         :data-active="exampleLang === 'react'"
       >
-        <IconReact class="inline-block w-5 mr-1.5" /> React
+        <IconReact class="inline-block w-4 sm:w-5 mr-1.5" /> React
       </li>
       <li
         class="example-tab"
@@ -34,7 +34,7 @@ try {
         "
         :data-active="exampleLang === 'vue'"
       >
-        <IconVue class="inline-block w-5 mr-1.5" /> Vue
+        <IconVue class="inline-block w-4 sm:w-5 mr-1.5" /> Vue
       </li>
       <li
         class="example-tab"
@@ -44,7 +44,8 @@ try {
         "
         :data-active="exampleLang === 'native'"
       >
-        <IconJavaScript class="inline-block w-5 h-[1.25em] mr-1.5" /> Native
+        <IconJavaScript class="inline-block w-4 sm:w-5 h-[1.25em] mr-1.5" />
+        Native
       </li>
 
       <li class="faux-controls hidden md:block ml-auto">
@@ -86,14 +87,14 @@ try {
   @apply pl-1;
 }
 .example-tab {
-  @apply px-3 py-1 flex items-center cursor-pointer data-[active=true]:underline underline-offset-2 data-[active=true]:outline-dashed outline-1 outline-white;
+  @apply px-3 py-1 flex text-xs sm:text-sm md:text-base items-center cursor-pointer data-[active=true]:underline underline-offset-2 data-[active=true]:outline-dashed outline-1 outline-white;
   @apply bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 my-1 mr-1;
 }
 .faux-controls {
   @apply flex items-center mr-1;
 }
 .faux-button {
-  @apply inline-block relative w-6 h-6 bg-slate-300 mr-1 text-black border border-slate-800 shadow-[inset_2px_2px_0px_0px_rgba(255,255,255,1)];
+  @apply inline-block relative w-5 h-5 md:w-6 md:h-6 bg-slate-300 mr-1 text-black border border-slate-800 shadow-[inset_2px_2px_0px_0px_rgba(255,255,255,1)];
 }
 .faux-button::before,
 .faux-button::after {

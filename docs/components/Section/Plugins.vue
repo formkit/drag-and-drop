@@ -19,7 +19,7 @@
       multi-drag plugin. This is the selections plugin, which sets things like
       click handlers. If you would like to write your own logic (or have already
       written logic for selecting items), you can pass your own selected values
-      to the `selections` property.
+      to the <code>selections</code> property.
     </p>
     <h3 id="sortable">Custom Plugins</h3>
     <p>
