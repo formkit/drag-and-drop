@@ -11,9 +11,15 @@
     </p>
     <h3 id="sortability">Sortability</h3>
     <p>
-      When calling <code>useDragAndDrop</code> or <code>dragAndDrop</code>, the
-      default behavior is to allow sorting.
+      Using <code>useDragAndDrop</code> or
+      <code>dragAndDrop</code> automatically makes a lists sortable. Dragging
+      items within your list will automatically change your list’s state to
+      reflect the new order (which in turn allows the framework to re-render to
+      the correct order).
     </p>
+    <CalloutTip>
+      It’s important to use a unique key on each item of your list.
+    </CalloutTip>
     <CodeExample example="sorting" />
     <p>
       If there is a direct descendant of the parent that should not become
