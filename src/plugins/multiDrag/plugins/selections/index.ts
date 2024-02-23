@@ -7,7 +7,7 @@ import type {
 
 import type { SelectionsConfig } from "./types";
 
-import { parents, nodeEventData } from "../../../../index";
+import { parents, nodeEventData, state } from "../../../../index";
 
 import { addEvents, removeClass, addClass } from "../../../../utils";
 
@@ -77,6 +77,8 @@ function handleRootClick<T>(config: ParentConfig<T>) {
   );
 
   multiDragState.selectedNodes = [];
+
+  multiDragState.activeNode = undefined;
 }
 
 function handleKeydown<T>(data: NodeEventData<T>) {
@@ -92,21 +94,20 @@ function click<T>(data: NodeEventData<T>) {
 
   const selectionsConfig = data.targetData.parent.data.config.selectionsConfig;
 
-  let commandKey;
-
-  let shiftKey;
-
-  if (data.e instanceof MouseEvent) {
-    commandKey = data.e.ctrlKey || data.e.metaKey;
-
-    shiftKey = data.e.shiftKey;
-  }
-
   const ctParentData = data.targetData.parent.data;
 
   const selectedClass = selectionsConfig.selectedClass;
 
   const targetNode = data.targetData.node;
+
+  let commandKey = false;
+
+  let shiftKey = false;
+
+  if (data.e instanceof MouseEvent) {
+    commandKey = data.e.ctrlKey || data.e.metaKey;
+    shiftKey = data.e.shiftKey;
+  }
 
   if (shiftKey) {
     if (!multiDragState.activeNode) {
@@ -202,7 +203,23 @@ function click<T>(data: NodeEventData<T>) {
         }
       }
     }
-  } else if (!commandKey) {
+  } else if (commandKey) {
+    if (multiDragState.selectedNodes.map((x) => x.el).includes(targetNode.el)) {
+      multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
+        (el) => el.el !== targetNode.el
+      );
+      if (selectedClass) {
+        removeClass([targetNode.el], selectedClass);
+      }
+    } else {
+      multiDragState.activeNode = targetNode;
+      if (selectedClass) {
+        addClass([targetNode.el], selectedClass, true);
+      }
+      multiDragState.selectedNodes.push(targetNode);
+    }
+  } else if ((!commandKey && !state) || !("touchedNode" in state!)) {
+    console.log("getting here", data.e.type);
     if (multiDragState.selectedNodes.map((x) => x.el).includes(targetNode.el)) {
       multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
         (el) => el.el !== targetNode.el
@@ -230,7 +247,7 @@ function click<T>(data: NodeEventData<T>) {
         },
       ];
     }
-  } else if (commandKey) {
+  } else {
     if (multiDragState.selectedNodes.map((x) => x.el).includes(targetNode.el)) {
       multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
         (el) => el.el !== targetNode.el
@@ -245,15 +262,6 @@ function click<T>(data: NodeEventData<T>) {
       }
       multiDragState.selectedNodes.push(targetNode);
     }
-    //if (multiDragConfig.selected) {
-    //  //const nodeData = multiDragState.nodeData.get(e.currentTarget);
-    //  //if (!nodeData) return;
-    //  multiDragConfig.selected({
-    //    el: e.currentTarget,
-    //    nodeData,
-    //    parent: e.currentTarget.parentNode as HTMLElement,
-    //    parentData: ctParentData,
-    //  });
   }
 }
 
