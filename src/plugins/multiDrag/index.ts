@@ -121,7 +121,13 @@ function multiHandleEnd<T>(data: NodeEventData<T>) {
 
   const isTouch = state && "touchedNode" in state;
 
-  if (isTouch && "touchMoving" in state && !state.touchMoving) return;
+  if (isTouch && "touchMoving" in state && !state.touchMoving) {
+    multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
+      (x) => x.el !== data.targetData.node.el
+    );
+
+    return;
+  }
 
   end(data, state);
 
@@ -241,10 +247,23 @@ function touchstart<T>(data: NodeTouchEventData<T>) {
     data.targetData.parent.el
   );
 
-  let selectedValues = multiDragState.selectedNodes.length
-    ? multiDragState.selectedNodes.map((x) => x.data.value)
-    : multiDragConfig.selections &&
+  multiDragState.selectedNodes.push(data.targetData.node);
+
+  let selectedValues = [];
+
+  if (data.targetData.parent.data.config.selectionsConfig) {
+    selectedValues = multiDragState.selectedNodes.map((x) => x.data.value);
+  } else {
+    selectedValues =
+      multiDragConfig.selections &&
       multiDragConfig.selections(parentValues, data.targetData.parent.el);
+  }
+
+  selectedValues = [data.targetData.node.data.value, ...selectedValues];
+
+  const selectionConfig = data.targetData.parent.data.config.selectionsConfig;
+
+  addClass([data.targetData.node.el], selectionConfig?.selectedClass);
 
   if (Array.isArray(selectedValues) && selectedValues.length) {
     stackNodes(
@@ -277,6 +296,7 @@ export function handleSelections<T>(
 
     state.draggedNodes.push(child);
   }
+
   const config = data.targetData.parent.data.config.multiDragConfig;
 
   const clonedEls = state.draggedNodes.map((x: NodeRecord<T>) => {
