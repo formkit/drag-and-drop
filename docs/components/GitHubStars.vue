@@ -1,5 +1,7 @@
 <script setup lang="ts">
-const { data, pending, error } = useLazyFetch<{ stars: number }>("/api/stars");
+const { data, pending, error } = useLazyFetch<{ stars: number }>("/api/stars", {
+  server: false,
+});
 </script>
 
 <template>

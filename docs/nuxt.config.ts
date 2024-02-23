@@ -2,11 +2,26 @@ const title = "Drag & Drop • by FormKit";
 const description =
   "An open-source JavaScript library for declarative data-first drag & drop.";
 
+const storageConfig = process.env.KV_DRIVER
+  ? {
+      storage: {
+        kv: {
+          driver: process.env.KV_DRIVER,
+          accountId: process.env.KV_ACCOUNT_ID,
+          namespaceId: process.env.KV_NAMESPACE_ID,
+          apiToken: process.env.KV_API_TOKEN,
+        },
+      },
+    }
+  : {};
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   css: ["@/assets/css/main.css"],
   experimental: {
     componentIslands: true,
+  },
+  runtimeConfig: {
+    includeStars: !!process.env.KV_DRIVER,
   },
   components: [
     {
@@ -98,14 +113,5 @@ export default defineNuxtConfig({
   routeRules: {
     "/": { prerender: true },
   },
-  nitro: {
-    storage: {
-      kv: {
-        driver: process.env.KV_DRIVER,
-        accountId: process.env.KV_ACCOUNT_ID,
-        namespaceId: process.env.KV_NAMESPACE_ID,
-        apiToken: process.env.KV_API_TOKEN,
-      },
-    },
-  },
+  nitro: storageConfig,
 });
