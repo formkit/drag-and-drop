@@ -8,7 +8,7 @@
       They can be used to add new features, modify existing ones, or even create
       entirely new experiences.
     </p>
-    <h3 id="multi-drag">Animations</h3>
+    <h3 id="animations">Animations</h3>
     <p>
       To add animations to your drag and drop experience, you can use the
       first-party <code>animations</code> plugin.
@@ -27,7 +27,7 @@
       written logic for selecting items), you can pass your own selected values
       to the <code>selections</code> property.
     </p>
-    <h3 id="sortable">Custom Plugins</h3>
+    <h3 id="custom-plugin">Custom Plugins</h3>
     <p>
       You can create your own plugins to extend the functionality of the
       library. Here is an example of a custom plugin that adds a drag and drop
