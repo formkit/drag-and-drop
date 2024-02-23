@@ -134,6 +134,10 @@ function selectionsEnd<T>(
 
   const isTouch = state && "touchedNode" in state;
 
+  multiDragState.selectedNodes = [];
+
+  multiDragState.activeNode = undefined;
+
   const dropZoneClass = isTouch
     ? multiDragconfig.selectionDropZoneClass
     : multiDragconfig.touchSelectionDraggingClass;
