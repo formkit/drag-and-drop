@@ -57,8 +57,8 @@ export function multiDrag<T>(
         multiDragParentConfig.handleTouchstart =
           multiDragConfig.multiHandleTouchstart || multiHandleTouchstart;
 
-        multiDragParentConfig.handleDragend =
-          multiDragConfig.multiHandleDragend || multiHandleDragend;
+        multiDragParentConfig.handleEnd =
+          multiDragConfig.multiHandleEnd || multiHandleEnd;
 
         multiDragParentConfig.reapplyDragClasses =
           multiDragConfig.multiReapplyDragClasses || multiReapplyDragClasses;
@@ -116,7 +116,7 @@ function multiReapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
   addClass([node], dropZoneClass, true);
 }
 
-function multiHandleDragend<T>(data: NodeEventData<T>) {
+function multiHandleEnd<T>(data: NodeEventData<T>) {
   if (!state) return;
 
   end(data, state);
