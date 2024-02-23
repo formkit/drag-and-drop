@@ -21,7 +21,7 @@ export function myComponent() {
   );
   return (
     <div className="kanban-board">
-      <ul ref={todoList}>
+      <ul ref={todoList} className="kanban-column">
         {todos.map((todo) => (
           <li className="kanban-item" key={todo}>
             <span className="kanban-handle"></span>
@@ -29,7 +29,7 @@ export function myComponent() {
           </li>
         ))}
       </ul>
-      <ul ref={doneList}>
+      <ul ref={doneList} className="kanban-column">
         {dones.map((done) => (
           <li className="kanban-item" key={done}>
             <span className="kanban-handle"></span>

@@ -32,21 +32,21 @@ dragAndDrop<string>({
 
 html`
   <div class="kanban-board">
-    <ul class="kanban-list" id="todo-list">
+    <ul class="kanban-column" id="todo-list">
       ${state.todos.map((todo) =>
         html`
-          <span class="kanban-handle"></span>
           <li class="kanban-item">
+            <span class="kanban-handle"></span>
             ${todo}
           </li>
         `.key(todo)
       )}
     </ul>
-    <ul class="kanban-list" id="done-list">
+    <ul class="kanban-column" id="done-list">
       ${state.dones.map((done) =>
         html`
-          <span class="kanban-handle"></span>
           <li class="kanban-item">
+            <span class="kanban-handle"></span>
             ${done}
           </li>
         `.key(done)
