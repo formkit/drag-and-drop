@@ -202,11 +202,9 @@ html.dark body::after {
 .docs-content h2 + h3 {
   @apply mt-4;
 }
-.docs-content h3 {
-  @apply text-xl md:text-2xl lg:text-3xl font-semibold mb-4 mt-8 antialiased font-display text-cyan-600 dark:text-white;
-}
+.docs-content h3,
 .docs-content h4 {
-  @apply text-xl md:text-xl lg:text-xl font-semibold mb-4 mt-8 antialiased text-slate-700 dark:text-white;
+  @apply text-xl lg:text-2xl font-semibold mb-4 mt-8 antialiased text-slate-700 dark:text-white;
 }
 .docs-content p,
 .docs-content li {
