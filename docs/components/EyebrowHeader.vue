@@ -4,6 +4,7 @@ const colorMode = useColorMode();
 function toggleDark() {
   colorMode.preference = colorMode.value === "light" ? "dark" : "light";
 }
+const includeStars = useRuntimeConfig().includeStars;
 </script>
 
 <template>
@@ -55,7 +56,7 @@ function toggleDark() {
             to="https://github.com/formkit/drag-and-drop"
             class="group/github flex items-center relative"
           >
-            <GitHubStars />
+            <GitHubStars v-if="includeStars" />
             <GitHubLogo
               class="text-slate-700 opacity-70 group-hover/github:opacity-100 w-4 h-4 sm:w-5 sm:h-5 dark:text-slate-300"
             />
