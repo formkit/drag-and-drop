@@ -1,338 +1,245 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { dragAndDrop } from "../../src/vue/index";
-import { multiDrag } from "../../src";
-import { animations } from "../../src";
-import { selections } from "../../src";
+import type {
+  DNDPlugin,
+  DragState,
+  TouchState,
+  NodeEventData,
+  ParentEventData,
+} from "@formkit/drag-and-drop";
+import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
+import {
+  parents,
+  parentValues,
+  dragValues,
+  setParentValues,
+} from "@formkit/drag-and-drop";
 
-let firstList = ref();
-let secondList = ref();
-let thirdList = ref();
+interface Todo {
+  label: string;
+  key: string;
+}
 
-let dropZone = ref(null);
-let dropZone2 = ref(null);
+function sourceTransfer<T>(
+  state: DragState<T> | TouchState<T>,
+  data: NodeEventData<T> | ParentEventData<T>
+) {
+  const draggedValues = dragValues(state);
 
-let firstListValues = ref(["Apple", "Banana", "Orange"]);
-// list of countries
-//let firstListValues = ref([
-//  "Afghanistan",
-//  "Albania",
-//  "Algeria",
-//  "Andorra",
-//  "Angola",
-//  "Antigua and Barbuda",
-//  "Argentina",
-//  "Armenia",
-//  "Australia",
-//  "Austria",
-//  "Azerbaijan",
-//  "Bahamas",
-//  "Bahrain",
-//  "Bangladesh",
-//  "Barbados",
-//  "Belarus",
-//  "Belgium",
-//  "Belize",
-//  "Benin",
-//  "Bhutan",
-//  "Bolivia",
-//  "Bosnia and Herzegovina",
-//  "Botswana",
-//  "Brazil",
-//  "Brunei",
-//  "Bulgaria",
-//  "Burkina Faso",
-//  "Burundi",
-//  "Côte d'Ivoire",
-//  "Cabo Verde",
-//  "Cambodia",
-//  "Cameroon",
-//  "Canada",
-//  "Central African Republic",
-//  "Chad",
-//  "Chile",
-//  "China",
-//  "Colombia",
-//  "Comoros",
-//  "Congo (Congo-Brazzaville)",
-//  "Costa Rica",
-//  "Croatia",
-//  "Cuba",
-//  "Cyprus",
-//  "Czechia (Czech Republic)",
-//  "Democratic Republic of the Congo",
-//  "Denmark",
-//  "Djibouti",
-//  "Dominica",
-//  "Dominican Republic",
-//  "Ecuador",
-//  "Egypt",
-//  "El Salvador",
-//  "Equatorial Guinea",
-//  "Eritrea",
-//  "Estonia",
-//  "Eswatini (fmr. 'waziland')",
-//  "Ethiopia",
-//  "Fiji",
-//  "Finland",
-//  "France",
-//  "Gabon",
-//  "Gambia",
-//  "Georgia",
-//  "Germany",
-//  "Ghana",
-//  "Greece",
-//  "Grenada",
-//  "Guatemala",
-//  "Guinea",
-//  "Guinea-Bissau",
-//  "Guyana",
-//  "Haiti",
-//  "Holy See",
-//  "Honduras",
-//  "Hungary",
-//  "Iceland",
-//  "India",
-//  "Indonesia",
-//  "Iran",
-//  "Iraq",
-//]);
-let secondListValues = ref(["Pear", "Peach", "Grape"]);
-let thirdListValues = ref(["Pineapple", "Kiwi", "Mango"]);
+  const lastParentValues = parentValues(
+    state.lastParent.el,
+    state.lastParent.data
+  ).filter((x: any) => !draggedValues.includes(x));
 
-let showList1 = ref(true);
+  setParentValues(state.lastParent.el, state.lastParent.data, lastParentValues);
+}
 
-setTimeout(() => {
-  showList1.value = false;
-}, 2000);
+function findDuplicates<T>(values: Array<T>) {
+  const uniqueElements = new Set();
+  const duplicates: Array<T> = [];
 
-onMounted(() => {
-  //const el = document.getElementById("dropZone");
-
-  //if (!(el instanceof HTMLElement)) return;
-
-  dragAndDrop({
-    parent: firstList,
-    values: firstListValues,
-    dropZoneClass: "opacity",
-    group: "group a",
-    dragImage: false,
-    draggingClass: "active",
-    draggable: (child: HTMLElement) => {
-      return child.classList.contains("item");
-    },
-    plugins: [
-      multiDrag({
-        draggingClass: "active",
-        plugins: [
-          selections({
-            selectedClass: "active",
-          }),
-        ],
-      }),
-    ],
+  values.forEach((item) => {
+    if (uniqueElements.has(item)) {
+      duplicates.push(item);
+    } else {
+      uniqueElements.add(item);
+    }
   });
 
-  dragAndDrop({
-    parent: secondList,
-    values: secondListValues,
-    dropZoneClass: "opacity",
-    group: "group a",
-    draggable: (child: HTMLElement) => {
-      return child.classList.contains("item");
+  return duplicates;
+}
+
+function targetTransfer<T>(
+  state: DragState<T> | TouchState<T>,
+  data: NodeEventData<T> | ParentEventData<T>
+) {
+  const draggedValues = dragValues(state);
+
+  const targetParentValues = parentValues(
+    data.targetData.parent.el,
+    data.targetData.parent.data
+  );
+
+  const reset =
+    state.initialParent.el === data.targetData.parent.el &&
+    data.targetData.parent.data.config.sortable === false;
+
+  let targetIndex: number;
+
+  if ("node" in data.targetData) {
+    if (reset) {
+      targetIndex = state.initialIndex;
+    } else if (data.targetData.parent.data.config.sortable === false) {
+      targetIndex = data.targetData.parent.data.enabledNodes.length;
+    } else {
+      targetIndex = data.targetData.node.data.index;
+    }
+
+    targetParentValues.splice(targetIndex, 0, ...draggedValues);
+  } else {
+    targetIndex = reset
+      ? state.initialIndex
+      : data.targetData.parent.data.enabledNodes.length;
+
+    targetParentValues.splice(targetIndex, 0, ...draggedValues);
+  }
+
+  const duplicates = findDuplicates(targetParentValues);
+
+  for (const duplicate of duplicates as Array<Todo>) {
+    if (!("key" in duplicate) || typeof duplicate !== "object") continue;
+    const index = targetParentValues.indexOf(duplicate as T);
+    const newKey = `${duplicate.key}-${Math.random()
+      .toString(36)
+      .substring(2, 15)}`;
+
+    targetParentValues[index] = {
+      ...(targetParentValues[index] as T),
+      key: newKey,
+    };
+  }
+
+  setParentValues(
+    data.targetData.parent.el,
+    data.targetData.parent.data,
+    targetParentValues
+  );
+}
+
+const targetClone: DNDPlugin = (parent) => {
+  const parentData = parents.get(parent);
+
+  if (!parentData) return;
+
+  return {
+    setup() {
+      parentData.config.performTransfer = targetTransfer;
     },
-    plugins: [
-      multiDrag({
-        dropZoneClass: "opacity",
-      }),
-    ],
-  });
+  };
+};
 
-  dragAndDrop({
-    parent: thirdList,
-    values: thirdListValues,
-    group: "group a",
-    draggable: (child: HTMLElement) => {
-      return child.classList.contains("item");
+const sourceClone: DNDPlugin = (parent) => {
+  const parentData = parents.get(parent);
+
+  if (!parentData) return;
+
+  return {
+    setup() {
+      parentData.config.performTransfer = sourceTransfer;
     },
-  });
+  };
+};
+
+const initialTodos: Array<Todo> = [
+  {
+    label: "Schedule perm",
+    key: "schedule-perm",
+  },
+  {
+    label: "Rewind VHS tapes",
+    key: "rewind-vhs",
+  },
+  {
+    label: "Make change for the arcade",
+    key: "make-change",
+  },
+  {
+    label: "Get disposable camera developed",
+    key: "disposable-camera",
+  },
+  {
+    label: "Learn C++",
+    key: "learn-cpp",
+  },
+  {
+    label: "Return Nintendo Power Glove",
+    key: "return-power-glove",
+  },
+];
+
+const [todoList, todos] = useDragAndDrop(initialTodos, {
+  group: "todoList",
+  sortable: false,
+  plugins: [sourceClone],
 });
 
-const testValues1 = computed(() => {
-  return firstListValues.value.join(" ");
-});
+const doneValues: Array<Todo> = [
+  {
+    label: "Pickup new mix-tape from Beth",
+    key: "mix-tape",
+  },
+];
 
-const testValues2 = computed(() => {
-  return secondListValues.value.join(" ");
+const [doneList, dones] = useDragAndDrop(doneValues, {
+  group: "todoList",
+  plugins: [targetClone],
 });
-
-const testValues3 = computed(() => {
-  return thirdListValues.value.join(" ");
-});
-
-let showFirstList = ref(true);
 </script>
 
 <template>
-  <main style="display: flex">
-    <div class="container">
-      <div id="test" ref="dropZoneHere"></div>
-      <div id="first_list" class="list" ref="firstList" v-if="showFirstList">
-        <div
-          v-for="item in firstListValues"
-          :key="item"
-          :id="item"
-          class="item"
-        >
-          <div class="content">
-            {{ item }}
-          </div>
+  <DemoContainer>
+    <h2>Cloning example</h2>
+    <div class="group bg-slate-200 dark:bg-slate-800">
+      <div class="kanban-board p-px grid grid-cols-2 gap-px">
+        <div class="kanban-column">
+          <h2 class="kanban-title">ToDos</h2>
+
+          <ul ref="todoList" class="kanban-list">
+            <li
+              v-for="todo in todos"
+              :key="todo.key"
+              class="kanban-item flex items-center"
+            >
+              {{ todo.label }}
+            </li>
+          </ul>
         </div>
-        <div id="first_list_target"></div>
-        <input
-          ref="cartoon"
-          type="text"
-          :value="testValues1"
-          id="first_list_values"
-          class="values"
-        />
+        <div class="kanban-column">
+          <h2 class="kanban-title">Complete</h2>
+
+          <ul ref="doneList" class="kanban-list">
+            <li
+              v-for="done in dones"
+              :key="done.key"
+              class="kanban-item kanban-complete flex items-center"
+            >
+              <span>
+                {{ done.label }}
+              </span>
+            </li>
+          </ul>
+        </div>
+        <pre style="font-size: 10px; color: white">
+          {{ todos }}
+        </pre>
+        <pre style="font-size: 10px; color: white">
+          {{ dones }}
+        </pre>
       </div>
     </div>
-    <div v-if="true" class="container">
-      <div id="second_list" class="list" ref="secondList">
-        <div
-          v-for="item in secondListValues"
-          :key="item"
-          :id="item"
-          class="item"
-        >
-          <div class="content">
-            {{ item }}
-            <div class="handle">+</div>
-          </div>
-        </div>
-        <div id="second_list_target"></div>
-        <input
-          ref="cartoon"
-          type="text"
-          :value="testValues2"
-          id="second_list_values"
-          class="values"
-        />
-      </div>
-      <div v-if="false" class="container">
-        <div id="third_list" class="list" ref="thirdList">
-          <div
-            v-for="item in thirdListValues"
-            :key="item"
-            :id="item"
-            class="item"
-          >
-            <div class="content">
-              {{ item }}
-              <div class="handle">+</div>
-            </div>
-          </div>
-          <div id="third_list_target"></div>
-          <input
-            ref="cartoon"
-            type="text"
-            :value="testValues3"
-            id="third_list_vlaues"
-            class="values"
-          />
-        </div>
-      </div>
-    </div>
-    <div id="dropZone" style="position: absolute; bottom: 20%" ref="dropZone">
-      Target
-    </div>
-  </main>
+  </DemoContainer>
 </template>
 
 <style scoped>
-.dragging-class .content {
-  background-color: green !important;
+.kanban-column {
+  @apply p-2 md:p-4 shadow-md flex flex-col border-4 border-indigo-300;
 }
-
-#dropZone {
-  width: 200px;
-  height: 200px;
-  background-color: red;
+.kanban-title {
+  @apply font-oldschool text-slate-500 text-xl md:text-2xl lg:text-3xl xl:text-4xl mb-4 text-center;
+  @apply dark:text-slate-200 dark:antialiased;
 }
-
-#dropZone2 {
-  width: 200px;
-  height: 200px;
-  background-color: blue;
+.kanban-list {
+  @apply list-none h-full min-h-[300px] md:min-h-[400px];
 }
-
-.opacity {
-  opacity: 0.5;
+.kanban-item {
+  @apply bg-slate-100 text-slate-600 antialiased border border-slate-300 p-2 md:p-4 font-oldschool text-base md:text-lg lg:text-xl leading-none font-thin mb-2 last:mb-0 group-data-[handles=false]:cursor-grab group-data-[handles=false]:active:cursor-grabbing;
+  @apply dark:bg-slate-600 dark:text-slate-50 dark:border-slate-400;
 }
-
-#drag-leave-zone {
-  margin-top: 100px;
-  width: 200px;
-  height: 200px;
-  background-color: cyan;
+.kanban-complete {
+  @apply line-through text-red-500/50;
+  @apply dark:text-red-400/80;
 }
-.container {
-  display: flex;
-}
-.list {
-  margin: 0 1em;
-  border: 1px solid black;
-  padding: 2em;
-  min-width: 300px;
-  height: 500px;
-  position: relative;
-}
-
-.item {
-  border: 1px solid white;
-  height: 10em;
-}
-
-.item.active .content {
-  background-color: red;
-}
-
-.content {
-  background-color: teal;
-  /*padding: 1em;*/
-  text-align: center;
-  color: white;
-  height: 100%;
-  display: flex;
-}
-
-.values {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  left: 0;
-}
-
-#first_list_target,
-#second_list_target {
-  position: absolute;
-  bottom: 25%;
-}
-
-.handle {
-  margin-left: auto;
-  cursor: grab;
-  padding: 0.5em;
-  background-color: white;
-  color: black;
-  border-radius: 50%;
-  width: 1em;
-  height: 1em;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-weight: bold;
-  font-size: 1.5em;
+.kanban-complete span {
+  @apply text-slate-600;
+  @apply dark:text-slate-100;
 }
 </style>

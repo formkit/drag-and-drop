@@ -82,7 +82,6 @@ export function removeClass(
     const nodeData = nodes.get(node);
 
     if (!nodeData) continue;
-
     for (const className of classNames) {
       if (!nodeData.privateClasses.includes(className)) {
         node.classList.remove(className);

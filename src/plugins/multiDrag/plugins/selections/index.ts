@@ -57,6 +57,7 @@ export function selections<T>(selectionsConfig: SelectionsConfig<T> = {}) {
 
       setupNode<T>(data: SetupNodeData<T>) {
         const config = data.parentData.config;
+
         data.node.setAttribute("tabindex", "0");
 
         const abortControllers = addEvents(data.node, {
@@ -77,6 +78,8 @@ function handleRootClick<T>(config: ParentConfig<T>) {
   );
 
   multiDragState.selectedNodes = [];
+
+  multiDragState.activeNode = undefined;
 }
 
 function handleKeydown<T>(data: NodeEventData<T>) {
@@ -92,23 +95,22 @@ function click<T>(data: NodeEventData<T>) {
 
   const selectionsConfig = data.targetData.parent.data.config.selectionsConfig;
 
-  let commandKey;
-
-  let shiftKey;
-
-  if (data.e instanceof MouseEvent) {
-    commandKey = data.e.ctrlKey || data.e.metaKey;
-
-    shiftKey = data.e.shiftKey;
-  }
-
   const ctParentData = data.targetData.parent.data;
 
   const selectedClass = selectionsConfig.selectedClass;
 
   const targetNode = data.targetData.node;
 
-  if (shiftKey) {
+  let commandKey = false;
+
+  let shiftKey = false;
+
+  if (data.e instanceof MouseEvent) {
+    commandKey = data.e.ctrlKey || data.e.metaKey;
+    shiftKey = data.e.shiftKey;
+  }
+
+  if (shiftKey && multiDragState.isTouch === false) {
     if (!multiDragState.activeNode) {
       multiDragState.activeNode = {
         el: data.targetData.node.el,
@@ -202,7 +204,22 @@ function click<T>(data: NodeEventData<T>) {
         }
       }
     }
-  } else if (!commandKey) {
+  } else if (commandKey) {
+    if (multiDragState.selectedNodes.map((x) => x.el).includes(targetNode.el)) {
+      multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
+        (el) => el.el !== targetNode.el
+      );
+      if (selectedClass) {
+        removeClass([targetNode.el], selectedClass);
+      }
+    } else {
+      multiDragState.activeNode = targetNode;
+      if (selectedClass) {
+        addClass([targetNode.el], selectedClass, true);
+      }
+      multiDragState.selectedNodes.push(targetNode);
+    }
+  } else if (!commandKey && multiDragState.isTouch === false) {
     if (multiDragState.selectedNodes.map((x) => x.el).includes(targetNode.el)) {
       multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
         (el) => el.el !== targetNode.el
@@ -230,7 +247,7 @@ function click<T>(data: NodeEventData<T>) {
         },
       ];
     }
-  } else if (commandKey) {
+  } else {
     if (multiDragState.selectedNodes.map((x) => x.el).includes(targetNode.el)) {
       multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
         (el) => el.el !== targetNode.el
@@ -245,15 +262,6 @@ function click<T>(data: NodeEventData<T>) {
       }
       multiDragState.selectedNodes.push(targetNode);
     }
-    //if (multiDragConfig.selected) {
-    //  //const nodeData = multiDragState.nodeData.get(e.currentTarget);
-    //  //if (!nodeData) return;
-    //  multiDragConfig.selected({
-    //    el: e.currentTarget,
-    //    nodeData,
-    //    parent: e.currentTarget.parentNode as HTMLElement,
-    //    parentData: ctParentData,
-    //  });
   }
 }
 
@@ -313,7 +321,7 @@ function keydown<T>(data: NodeEventData<T>) {
     ];
 
     parentData.setValues(parentValues, data.targetData.parent.el);
-  } else if (data.e.shiftKey) {
+  } else if (data.e.shiftKey && multiDragState.isTouch === false) {
     if (
       !multiDragState.selectedNodes.map((x) => x.el).includes(adjacentNode.el)
     ) {

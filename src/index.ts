@@ -464,6 +464,7 @@ function touchstart<T>(data: NodeTouchEventData<T>) {
 
     return;
   }
+
   const touchState = initTouch(data);
 
   handleTouchedNode(data, touchState);
@@ -643,6 +644,7 @@ export function initTouch<T>(data: NodeTouchEventData<T>): TouchState<T> {
       touchStartLeft: data.e.touches[0].clientX - rect.left,
       touchStartTop: data.e.touches[0].clientY - rect.top,
       touchedNode: clonedNode,
+      touchMoving: false,
     }
   );
 

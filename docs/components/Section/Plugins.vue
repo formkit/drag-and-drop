@@ -17,7 +17,7 @@
     <h3 id="multi-drag">Multi Drag</h3>
     <p>
       The multi-drag plugin allows you to select multiple items and drag them
-      together. Try selecting files like you would on your machine.
+      together.
     </p>
     <CodeExample example="multi-drag" />
     <p>

@@ -26,7 +26,7 @@
       the <code>dragAndDrop</code> function is also available at
       <code>@formkit/drag-and-drop</code>.
     </p>
-    <h4>useDragAndDrop</h4>
+    <h3>useDragAndDrop</h3>
     <p>
       The <code>useDragAndDrop</code> hook is the most convenient way to add
       Drag and Drop to your app. Call this function with your initial list of
@@ -41,7 +41,7 @@
       <span class="fn">useDragAndDrop</span>(<span class="var">initialList</span
       >)</code
     >
-    <h4>dragAndDrop</h4>
+    <h3>dragAndDrop</h3>
     <p>
       The <code>dragAndDrop</code> hook allows you to define your own ref and
       list state. This is useful if you need to integrate with a pre-existing
