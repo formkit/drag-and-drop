@@ -56,11 +56,11 @@
           <h3 class="font-bold mb-4 text-slate-700 dark:text-slate-300">
             Connect
           </h3>
-          <ul class="socials mb-4 text-slate-400 dark:text-slate-300">
+          <ul class="socials mb-4 text-slate-500 dark:text-slate-300">
             <li class="mb-2">
               <a
                 href="https://x.com/formkit"
-                class="hover:text-slate-500 flex items-center gap-2 dark:hover:text-fuchsia-300"
+                class="hover:text-slate-600 flex items-center gap-2 dark:hover:text-fuchsia-300"
               >
                 <svg
                   width="1200"
@@ -81,7 +81,7 @@
             <li class="mb-2">
               <a
                 href="https://discord.formkit.com"
-                class="hover:text-slate-500 flex items-center gap-2 dark:hover:text-fuchsia-300"
+                class="hover:text-slate-600 flex items-center gap-2 dark:hover:text-fuchsia-300"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -99,7 +99,7 @@
             <li class="mb-2">
               <a
                 href="https://www.youtube.com/formkit"
-                class="hover:text-slate-500 flex items-center gap-2 dark:hover:text-fuchsia-300"
+                class="hover:text-slate-600 flex items-center gap-2 dark:hover:text-fuchsia-300"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -117,7 +117,7 @@
             <li class="mb-2">
               <a
                 href="https://github.com/formkit/drag-and-drop"
-                class="hover:text-slate-500 flex items-center gap-2 dark:hover:text-fuchsia-300"
+                class="hover:text-slate-600 flex items-center gap-2 dark:hover:text-fuchsia-300"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -136,7 +136,7 @@
         </div>
       </div>
 
-      <span class="text-slate-400 block mt-4 text-sm dark:text-fuchsia-200/50">
+      <span class="text-slate-500 block mt-4 text-sm dark:text-fuchsia-200/50">
         Released under the MIT License. &copy;
         {{ new Date().getFullYear() }} FormKit. All rights reserved.
       </span>
