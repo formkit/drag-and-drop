@@ -7,7 +7,7 @@ import type {
 
 import type { SelectionsConfig } from "./types";
 
-import { parents, nodeEventData } from "../../../../index";
+import { parents, nodeEventData, state } from "../../../../index";
 
 import { addEvents, removeClass, addClass } from "../../../../utils";
 
@@ -99,7 +99,17 @@ function click<T>(data: NodeEventData<T>) {
   const selectedClass = selectionsConfig.selectedClass;
 
   const targetNode = data.targetData.node;
-  if ("shiftKey" in data.e && data.e?.shiftKey) {
+
+  let commandKey = false;
+
+  let shiftKey = false;
+
+  if (data.e instanceof MouseEvent) {
+    commandKey = data.e.ctrlKey || data.e.metaKey;
+    shiftKey = data.e.shiftKey;
+  }
+
+  if (shiftKey) {
     if (!multiDragState.activeNode) {
       multiDragState.activeNode = {
         el: data.targetData.node.el,
@@ -192,6 +202,50 @@ function click<T>(data: NodeEventData<T>) {
           addClass([node.el], selectedClass, true);
         }
       }
+    }
+  } else if (commandKey) {
+    if (multiDragState.selectedNodes.map((x) => x.el).includes(targetNode.el)) {
+      multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
+        (el) => el.el !== targetNode.el
+      );
+      if (selectedClass) {
+        removeClass([targetNode.el], selectedClass);
+      }
+    } else {
+      multiDragState.activeNode = targetNode;
+      if (selectedClass) {
+        addClass([targetNode.el], selectedClass, true);
+      }
+      multiDragState.selectedNodes.push(targetNode);
+    }
+  } else if ((!commandKey && !state) || !("touchedNode" in state!)) {
+    console.log("getting here", data.e.type);
+    if (multiDragState.selectedNodes.map((x) => x.el).includes(targetNode.el)) {
+      multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
+        (el) => el.el !== targetNode.el
+      );
+      if (selectedClass) {
+        removeClass([targetNode.el], selectedClass);
+      }
+    } else {
+      multiDragState.activeNode = {
+        el: data.targetData.node.el,
+        data: data.targetData.node.data,
+      };
+
+      if (selectedClass) {
+        for (const el of multiDragState.selectedNodes) {
+          removeClass([el.el], selectedClass);
+        }
+
+        addClass([data.targetData.node.el], selectedClass, true);
+      }
+      multiDragState.selectedNodes = [
+        {
+          el: data.targetData.node.el,
+          data: data.targetData.node.data,
+        },
+      ];
     }
   } else {
     if (multiDragState.selectedNodes.map((x) => x.el).includes(targetNode.el)) {
