@@ -208,6 +208,12 @@ const [doneList, dones] = useDragAndDrop(doneValues, {
             </li>
           </ul>
         </div>
+        <pre style="font-size: 10px; color: white">
+          {{ todos }}
+        </pre>
+        <pre style="font-size: 10px; color: white">
+          {{ dones }}
+        </pre>
       </div>
     </div>
   </DemoContainer>
