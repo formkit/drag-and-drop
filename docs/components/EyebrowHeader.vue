@@ -4,7 +4,7 @@ const colorMode = useColorMode();
 function toggleDark() {
   colorMode.preference = colorMode.value === "light" ? "dark" : "light";
 }
-const includeStars = useRuntimeConfig().includeStars;
+const includeStars = useRuntimeConfig().public.includeStars;
 </script>
 
 <template>
