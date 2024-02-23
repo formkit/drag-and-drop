@@ -16,6 +16,7 @@ dragAndDrop({
   values: tapes,
   dropZoneClass: "saturate-0 opacity-20",
   draggable: (el) => {
+    console.log(el.id !== "no-drag");
     return el.id !== "no-drag";
   },
 });
@@ -42,11 +43,13 @@ dragAndDrop({
             v-for="tape in tapes"
             :key="tape"
             class="basis-1/2 md:basis-1/3 text-center cursor-grab active:cursor-grabbing"
-            :class="tape === 'ACDC LIVE' ? 'no-drag' : ''"
+            :id="tape === 'Duran Duran' ? 'no-drag' : undefined"
           >
-            <CassetteTape :label="tape" :data-label="tape" />
+            <CassetteTape
+              :label="tape === 'Duran Duran' ? 'Not Draggable' : tape"
+              :data-label="tape"
+            />
           </li>
-          <li id="no-drag">I am NOT draggable</li>
         </ul>
       </div>
     </div>
@@ -67,7 +70,7 @@ dragAndDrop({
 }
 [data-label="Duran Duran"] {
   filter: hue-rotate(160deg) saturate(250%) brightness(90%);
-  transform: rotate(5deg);
+  transform: rotate(0deg);
 }
 [data-label="Pet Shop Boys"] {
   filter: hue-rotate(240deg) saturate(150%) brightness(85%);
@@ -83,12 +86,6 @@ dragAndDrop({
 }
 
 #no-drag {
-  margin-top: 1rem;
-  background: #fff;
-  padding: 0.5em 1em;
-  color: red;
-  border-radius: 0.25rem;
-  cursor: grab;
-  @apply shadow-md;
+  @apply bg-fuchsia-400 rounded-xl shadow-md cursor-not-allowed;
 }
 </style>
