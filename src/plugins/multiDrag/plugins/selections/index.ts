@@ -90,8 +90,6 @@ function handleClick<T>(data: NodeEventData<T>) {
 }
 
 function click<T>(data: NodeEventData<T>) {
-  if (!(data.e instanceof PointerEvent)) return;
-
   data.e.stopPropagation();
 
   const selectionsConfig = data.targetData.parent.data.config.selectionsConfig;
@@ -101,7 +99,7 @@ function click<T>(data: NodeEventData<T>) {
   const selectedClass = selectionsConfig.selectedClass;
 
   const targetNode = data.targetData.node;
-  if (data.e.shiftKey) {
+  if ("shiftKey" in data.e && data.e?.shiftKey) {
     if (!multiDragState.activeNode) {
       multiDragState.activeNode = {
         el: data.targetData.node.el,
