@@ -53,4 +53,5 @@ export interface MultiDragParentConfig<T> extends ParentConfig<T> {
 export interface MultiDragState<T> {
   selectedNodes: Array<NodeRecord<T>>;
   activeNode: NodeRecord<T> | undefined;
+  isTouch: boolean;
 }

@@ -34,6 +34,8 @@ export const multiDragState: MultiDragState<any> = {
   selectedNodes: Array<NodeRecord<any>>(),
 
   activeNode: undefined,
+
+  isTouch: false,
 };
 
 export function multiDrag<T>(
@@ -121,13 +123,7 @@ function multiHandleEnd<T>(data: NodeEventData<T>) {
 
   const isTouch = state && "touchedNode" in state;
 
-  if (isTouch && "touchMoving" in state && !state.touchMoving) {
-    multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
-      (x) => x.el !== data.targetData.node.el
-    );
-
-    return;
-  }
+  if (isTouch && "touchMoving" in state && !state.touchMoving) return;
 
   end(data, state);
 
@@ -180,6 +176,8 @@ function multiHandleDragstart<T>(data: NodeEventData<T>) {
 function dragstart<T>(data: NodeDragEventData<T>) {
   const dragState = initDrag(data);
 
+  multiDragState.isTouch = false;
+
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
 
   const parentValues = data.targetData.parent.data.getValues(
@@ -198,7 +196,7 @@ function dragstart<T>(data: NodeDragEventData<T>) {
 
     const selectionConfig = data.targetData.parent.data.config.selectionsConfig;
 
-    addClass([data.targetData.node.el], selectionConfig?.selectedClass);
+    addClass([data.targetData.node.el], selectionConfig?.selectedClass, true);
 
     multiDragState.selectedNodes.push(data.targetData.node);
   }
@@ -241,13 +239,15 @@ function multiHandleTouchstart<T>(data: NodeEventData<T>) {
 function touchstart<T>(data: NodeTouchEventData<T>) {
   const touchState = initTouch(data);
 
+  multiDragState.isTouch = true;
+
+  multiDragState.activeNode = data.targetData.node;
+
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
 
   const parentValues = data.targetData.parent.data.getValues(
     data.targetData.parent.el
   );
-
-  multiDragState.selectedNodes.push(data.targetData.node);
 
   let selectedValues = [];
 
@@ -263,7 +263,7 @@ function touchstart<T>(data: NodeTouchEventData<T>) {
 
   const selectionConfig = data.targetData.parent.data.config.selectionsConfig;
 
-  addClass([data.targetData.node.el], selectionConfig?.selectedClass);
+  addClass([data.targetData.node.el], selectionConfig?.selectedClass, true);
 
   if (Array.isArray(selectedValues) && selectedValues.length) {
     stackNodes(

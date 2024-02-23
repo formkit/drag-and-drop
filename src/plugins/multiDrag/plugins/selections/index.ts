@@ -57,6 +57,7 @@ export function selections<T>(selectionsConfig: SelectionsConfig<T> = {}) {
 
       setupNode<T>(data: SetupNodeData<T>) {
         const config = data.parentData.config;
+
         data.node.setAttribute("tabindex", "0");
 
         const abortControllers = addEvents(data.node, {
@@ -109,7 +110,7 @@ function click<T>(data: NodeEventData<T>) {
     shiftKey = data.e.shiftKey;
   }
 
-  if (shiftKey) {
+  if (shiftKey && multiDragState.isTouch === false) {
     if (!multiDragState.activeNode) {
       multiDragState.activeNode = {
         el: data.targetData.node.el,
@@ -218,8 +219,7 @@ function click<T>(data: NodeEventData<T>) {
       }
       multiDragState.selectedNodes.push(targetNode);
     }
-  } else if ((!commandKey && !state) || !("touchedNode" in state!)) {
-    console.log("getting here", data.e.type);
+  } else if (!commandKey && multiDragState.isTouch === false) {
     if (multiDragState.selectedNodes.map((x) => x.el).includes(targetNode.el)) {
       multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
         (el) => el.el !== targetNode.el
@@ -321,7 +321,7 @@ function keydown<T>(data: NodeEventData<T>) {
     ];
 
     parentData.setValues(parentValues, data.targetData.parent.el);
-  } else if (data.e.shiftKey) {
+  } else if (data.e.shiftKey && multiDragState.isTouch === false) {
     if (
       !multiDragState.selectedNodes.map((x) => x.el).includes(adjacentNode.el)
     ) {
