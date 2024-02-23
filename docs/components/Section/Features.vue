@@ -27,7 +27,7 @@
       <code>draggable</code> is a callback function that lets you determine
       whether or not a given element should be draggable.
     </p>
-    <h4 id="draggable">Draggable</h4>
+    <h3 id="draggable">Draggable</h3>
     <CodeExample example="draggable" />
     <h3>Transferability</h3>
     <p>
@@ -36,14 +36,14 @@
       each list.
     </p>
     <CodeExample example="transfer" />
-    <h4 id="disable-sort">Disable sort</h4>
+    <h3 id="disable-sort">Disable sort</h3>
     <p>
       If you would like to prevent sorting within a given list, but still allow
       transfer, set the <code>sortable</code> property to <code>false</code> in
       the configuration.
     </p>
     <CodeExample example="sortable" />
-    <h4 id="accepts">Accepts</h4>
+    <h3 id="accepts">Accepts</h3>
     <p>
       For a more nuanced transfer experience, define the
       <code>accepts</code> property in the configuration. This property is a
