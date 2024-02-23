@@ -643,6 +643,7 @@ export function initTouch<T>(data: NodeTouchEventData<T>): TouchState<T> {
       touchStartLeft: data.e.touches[0].clientX - rect.left,
       touchStartTop: data.e.touches[0].clientY - rect.top,
       touchedNode: clonedNode,
+      touchMoving: false,
     }
   );
 

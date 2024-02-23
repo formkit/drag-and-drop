@@ -119,6 +119,10 @@ function multiReapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
 function multiHandleEnd<T>(data: NodeEventData<T>) {
   if (!state) return;
 
+  const isTouch = state && "touchedNode" in state;
+
+  if (isTouch && "touchMoving" in state && !state.touchMoving) return;
+
   end(data, state);
 
   selectionsEnd(data, state);
@@ -130,17 +134,27 @@ function selectionsEnd<T>(
   data: NodeEventData<T>,
   state: DragState<T> | TouchState<T>
 ) {
-  const multiDragconfig = data.targetData.parent.data.config.multiDragConfig;
+  const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
+
+  const selectedClass =
+    data.targetData.parent.data.config.selectionsConfig?.selectedClass;
 
   const isTouch = state && "touchedNode" in state;
+
+  if (selectedClass) {
+    removeClass(
+      multiDragState.selectedNodes.map((x) => x.el),
+      selectedClass
+    );
+  }
 
   multiDragState.selectedNodes = [];
 
   multiDragState.activeNode = undefined;
 
   const dropZoneClass = isTouch
-    ? multiDragconfig.selectionDropZoneClass
-    : multiDragconfig.touchSelectionDraggingClass;
+    ? multiDragConfig.selectionDropZoneClass
+    : multiDragConfig.touchSelectionDraggingClass;
 
   removeClass(
     state.draggedNodes.map((x) => x.el),
