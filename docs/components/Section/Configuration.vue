@@ -14,7 +14,7 @@
     </p>
     <CodeExampleNative :full-height="true" example="config" />
     <h3 id="plugin-configuration">Plugins</h3>
-    <h4 id="multi-drag">Multi-drag</h4>
+    <h4 id="multi-drag-configuration">Multi-drag</h4>
     <CodeExampleNative :full-height="true" example="multi-drag-config" />
   </SectionWrapper>
 </template>
