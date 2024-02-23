@@ -2,6 +2,7 @@
 module.exports = {
   content: [
     "./components/**/*.{js,vue,ts}",
+    "./examples/**/*.{js,vue,ts}",
     "./layouts/**/*.vue",
     "./pages/**/*.vue",
     "./plugins/**/*.{js,ts}",
@@ -11,6 +12,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
+        mono: ["Menlo", "Monaco", "monospace"],
         display: ["Permanent Marker", "cursive"],
         sans: ["Rubik", "ui-sans-serif", "sans-serif"],
         oldschool: ["VT323", "monospace"],

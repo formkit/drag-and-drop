@@ -12,10 +12,6 @@ export default defineNuxtConfig({
     {
       path: "~/components",
     },
-    {
-      path: "~/examples",
-      pathPrefix: false,
-    },
   ],
   modules: [
     "@nuxtjs/tailwindcss",
@@ -84,11 +80,6 @@ export default defineNuxtConfig({
   tailwindcss: {
     config: {
       darkMode: "class",
-      theme: {
-        fontFamily: {
-          mono: ["Menlo", "Monaco", "monospace"],
-        },
-      },
     },
   },
   colorMode: {
