@@ -221,7 +221,8 @@ function eventCoordinates(data) {
 // src/plugins/multiDrag/index.ts
 var multiDragState = {
   selectedNodes: Array(),
-  activeNode: void 0
+  activeNode: void 0,
+  isTouch: false
 };
 function multiDrag(multiDragConfig = {}) {
   return (parent) => {
@@ -236,7 +237,7 @@ function multiDrag(multiDragConfig = {}) {
       setup() {
         multiDragParentConfig.handleDragstart = multiDragConfig.multiHandleDragstart || multiHandleDragstart;
         multiDragParentConfig.handleTouchstart = multiDragConfig.multiHandleTouchstart || multiHandleTouchstart;
-        multiDragParentConfig.handleDragend = multiDragConfig.multiHandleDragend || multiHandleDragend;
+        multiDragParentConfig.handleEnd = multiDragConfig.multiHandleEnd || multiHandleEnd;
         multiDragParentConfig.reapplyDragClasses = multiDragConfig.multiReapplyDragClasses || multiReapplyDragClasses;
         parentData.config = multiDragParentConfig;
         multiDragParentConfig.multiDragConfig.plugins?.forEach((plugin) => {
@@ -278,17 +279,29 @@ function multiReapplyDragClasses(node, parentData) {
     return;
   addClass([node], dropZoneClass, true);
 }
-function multiHandleDragend(data) {
+function multiHandleEnd(data) {
   if (!state)
+    return;
+  const isTouch = state && "touchedNode" in state;
+  if (isTouch && "touchMoving" in state && !state.touchMoving)
     return;
   end(data, state);
   selectionsEnd(data, state);
   resetState();
 }
 function selectionsEnd(data, state2) {
-  const multiDragconfig = data.targetData.parent.data.config.multiDragConfig;
+  const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
+  const selectedClass = data.targetData.parent.data.config.selectionsConfig?.selectedClass;
   const isTouch = state2 && "touchedNode" in state2;
-  const dropZoneClass = isTouch ? multiDragconfig.selectionDropZoneClass : multiDragconfig.touchSelectionDraggingClass;
+  if (selectedClass) {
+    removeClass(
+      multiDragState.selectedNodes.map((x) => x.el),
+      selectedClass
+    );
+  }
+  multiDragState.selectedNodes = [];
+  multiDragState.activeNode = void 0;
+  const dropZoneClass = isTouch ? multiDragConfig.selectionDropZoneClass : multiDragConfig.touchSelectionDraggingClass;
   removeClass(
     state2.draggedNodes.map((x) => x.el),
     dropZoneClass
@@ -304,6 +317,7 @@ function multiHandleDragstart(data) {
 }
 function dragstart(data) {
   const dragState = initDrag(data);
+  multiDragState.isTouch = false;
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
   const parentValues2 = data.targetData.parent.data.getValues(
     data.targetData.parent.el
@@ -314,7 +328,7 @@ function dragstart(data) {
   if (!selectedValues.includes(data.targetData.node.data.value)) {
     selectedValues = [data.targetData.node.data.value, ...selectedValues];
     const selectionConfig = data.targetData.parent.data.config.selectionsConfig;
-    addClass([data.targetData.node.el], selectionConfig?.selectedClass);
+    addClass([data.targetData.node.el], selectionConfig?.selectedClass, true);
     multiDragState.selectedNodes.push(data.targetData.node);
   }
   const originalZIndex = data.targetData.node.el.style.zIndex;
@@ -346,11 +360,21 @@ function multiHandleTouchstart(data) {
 }
 function touchstart(data) {
   const touchState = initTouch(data);
+  multiDragState.isTouch = true;
+  multiDragState.activeNode = data.targetData.node;
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
   const parentValues2 = data.targetData.parent.data.getValues(
     data.targetData.parent.el
   );
-  let selectedValues = multiDragState.selectedNodes.length ? multiDragState.selectedNodes.map((x) => x.data.value) : multiDragConfig.selections && multiDragConfig.selections(parentValues2, data.targetData.parent.el);
+  let selectedValues = [];
+  if (data.targetData.parent.data.config.selectionsConfig) {
+    selectedValues = multiDragState.selectedNodes.map((x) => x.data.value);
+  } else {
+    selectedValues = multiDragConfig.selections && multiDragConfig.selections(parentValues2, data.targetData.parent.el);
+  }
+  selectedValues = [data.targetData.node.data.value, ...selectedValues];
+  const selectionConfig = data.targetData.parent.data.config.selectionsConfig;
+  addClass([data.targetData.node.el], selectionConfig?.selectedClass, true);
   if (Array.isArray(selectedValues) && selectedValues.length) {
     stackNodes(
       handleSelections(
@@ -661,6 +685,7 @@ function handleRootClick(config) {
     config.selectionsConfig.selectedClass
   );
   multiDragState.selectedNodes = [];
+  multiDragState.activeNode = void 0;
 }
 function handleKeydown(data) {
   keydown(data);
@@ -671,16 +696,16 @@ function handleClick(data) {
 function click(data) {
   data.e.stopPropagation();
   const selectionsConfig = data.targetData.parent.data.config.selectionsConfig;
-  let commandKey;
-  let shiftKey;
+  const ctParentData = data.targetData.parent.data;
+  const selectedClass = selectionsConfig.selectedClass;
+  const targetNode = data.targetData.node;
+  let commandKey = false;
+  let shiftKey = false;
   if (data.e instanceof MouseEvent) {
     commandKey = data.e.ctrlKey || data.e.metaKey;
     shiftKey = data.e.shiftKey;
   }
-  const ctParentData = data.targetData.parent.data;
-  const selectedClass = selectionsConfig.selectedClass;
-  const targetNode = data.targetData.node;
-  if (shiftKey) {
+  if (shiftKey && multiDragState.isTouch === false) {
     if (!multiDragState.activeNode) {
       multiDragState.activeNode = {
         el: data.targetData.node.el,
@@ -760,7 +785,22 @@ function click(data) {
         }
       }
     }
-  } else if (!commandKey) {
+  } else if (commandKey) {
+    if (multiDragState.selectedNodes.map((x) => x.el).includes(targetNode.el)) {
+      multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
+        (el) => el.el !== targetNode.el
+      );
+      if (selectedClass) {
+        removeClass([targetNode.el], selectedClass);
+      }
+    } else {
+      multiDragState.activeNode = targetNode;
+      if (selectedClass) {
+        addClass([targetNode.el], selectedClass, true);
+      }
+      multiDragState.selectedNodes.push(targetNode);
+    }
+  } else if (!commandKey && multiDragState.isTouch === false) {
     if (multiDragState.selectedNodes.map((x) => x.el).includes(targetNode.el)) {
       multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
         (el) => el.el !== targetNode.el
@@ -786,7 +826,7 @@ function click(data) {
         }
       ];
     }
-  } else if (commandKey) {
+  } else {
     if (multiDragState.selectedNodes.map((x) => x.el).includes(targetNode.el)) {
       multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
         (el) => el.el !== targetNode.el
@@ -842,7 +882,7 @@ function keydown(data) {
       parentValues2[nodeData.index]
     ];
     parentData.setValues(parentValues2, data.targetData.parent.el);
-  } else if (data.e.shiftKey) {
+  } else if (data.e.shiftKey && multiDragState.isTouch === false) {
     if (!multiDragState.selectedNodes.map((x) => x.el).includes(adjacentNode.el)) {
       multiDragState.selectedNodes.push(adjacentNode);
       if (selectedClass) {
@@ -1288,7 +1328,8 @@ function initTouch(data) {
     {
       touchStartLeft: data.e.touches[0].clientX - rect.left,
       touchStartTop: data.e.touches[0].clientY - rect.top,
-      touchedNode: clonedNode
+      touchedNode: clonedNode,
+      touchMoving: false
     }
   );
   return touchState;

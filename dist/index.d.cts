@@ -570,6 +570,7 @@ interface TouchStateProps {
     touchedNode: HTMLElement;
     touchStartLeft: number;
     touchStartTop: number;
+    touchMoving: boolean;
 }
 
 /**
