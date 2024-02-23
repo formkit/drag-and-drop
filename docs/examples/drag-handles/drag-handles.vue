@@ -18,31 +18,13 @@ const [doneList, dones] = useDragAndDrop(doneItems, {
   <div class="kanban-board">
     <ul ref="todoList" class="kanban-column">
       <li v-for="todo in todos" :key="todo" class="kanban-item">
-        <svg
-          class="kanban-handle"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 256 512"
-        >
-          <path
-            fill="currentColor"
-            d="M48 144a48 48 0 1 0 0-96 48 48 0 1 0 0 96zm0 160a48 48 0 1 0 0-96 48 48 0 1 0 0 96zM96 416A48 48 0 1 0 0 416a48 48 0 1 0 96 0zM208 144a48 48 0 1 0 0-96 48 48 0 1 0 0 96zm48 112a48 48 0 1 0 -96 0 48 48 0 1 0 96 0zM208 464a48 48 0 1 0 0-96 48 48 0 1 0 0 96z"
-          />
-        </svg>
+        <span class="kanban-handle"></span>
         {{ todo }}
       </li>
     </ul>
     <ul ref="doneList" class="kanban-column">
       <li v-for="done in dones" :key="done" class="kanban-item">
-        <svg
-          class="kanban-handle"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 256 512"
-        >
-          <path
-            fill="currentColor"
-            d="M48 144a48 48 0 1 0 0-96 48 48 0 1 0 0 96zm0 160a48 48 0 1 0 0-96 48 48 0 1 0 0 96zM96 416A48 48 0 1 0 0 416a48 48 0 1 0 96 0zM208 144a48 48 0 1 0 0-96 48 48 0 1 0 0 96zm48 112a48 48 0 1 0 -96 0 48 48 0 1 0 96 0zM208 464a48 48 0 1 0 0-96 48 48 0 1 0 0 96z"
-          />
-        </svg>
+        <span class="kanban-handle"></span>
         {{ done }}
       </li>
     </ul>
