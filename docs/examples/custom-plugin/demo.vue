@@ -19,6 +19,12 @@ const dragStatusPlugin: DNDPlugin = (parent) => {
     dragCount.value++;
   }
 
+  function touchstart(event: TouchEvent) {
+    const node = event.target as HTMLElement;
+    dragStatus.value = `Dragging ${node.textContent}`;
+    dragCount.value++;
+  }
+
   function dragend() {
     dragStatus.value = "Not dragging";
   }
@@ -29,10 +35,14 @@ const dragStatusPlugin: DNDPlugin = (parent) => {
     setupNode(data) {
       data.node.addEventListener("dragstart", dragstart);
 
+      data.node.addEventListener("touchstart", touchstart);
+
       data.node.addEventListener("dragend", dragend);
     },
     tearDownNode(data) {
       data.node.removeEventListener("dragstart", dragstart);
+
+      data.node.removeEventListener("touchstart", touchstart);
 
       data.node.removeEventListener("dragend", dragend);
     },

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { dragAndDrop } from "@formkit/drag-and-drop/vue";
+import { animations } from "@formkit/drag-and-drop";
 
 const dragList = ref();
 const tapes = ref([
@@ -14,6 +15,7 @@ dragAndDrop({
   parent: dragList,
   values: tapes,
   dropZoneClass: "saturate-0 opacity-20",
+  plugins: [animations()],
 });
 </script>
 

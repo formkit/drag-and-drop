@@ -45,7 +45,11 @@ dragAndDrop({
   values: features,
   draggingClass: "[&>.card]:-rotate-2 before:-rotate-2",
   dropZoneClass: "blur-[2px] opacity-60",
-  plugins: [animations({})],
+  plugins: [
+    animations({
+      duration: 200,
+    }),
+  ],
 });
 
 function toggleFrameworkList(setting: boolean) {
@@ -213,7 +217,7 @@ onMounted(() => {
                     flex
                     text-sm
                     !no-underline
-                    dark:bg-fuchsia-950 
+                    dark:bg-fuchsia-950
                     dark:border-fuchsia-600
                   `"
                 >
