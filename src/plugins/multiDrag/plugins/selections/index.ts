@@ -282,15 +282,14 @@ function keydown<T>(data: NodeEventData<T>) {
 
   const enabledNodes = parentData.enabledNodes;
 
+  const moveUp = data.e.key === "ArrowUp" || data.e.key === "ArrowLeft";
+  const moveDown = data.e.key === "ArrowDown" || data.e.key === "ArrowRight";
+
   const invalidKeydown =
-    ((data.e.key === "ArrowUp" || data.e.key === "ArrowRight") &&
-      nodeData.index === 0) ||
-    ((data.e.key === "ArrowDown" || data.e.key === "ArrowLeft") &&
-      nodeData.index === enabledNodes.length - 1);
+    (moveUp && nodeData.index === 0) ||
+    (moveDown && nodeData.index === enabledNodes.length - 1);
 
   if (invalidKeydown) return;
-
-  const moveUp = data.e.key === "ArrowUp" || data.e.key === "ArrowLeft";
 
   const adjacentNode = enabledNodes[nodeData.index + (moveUp ? -1 : 1)];
 
