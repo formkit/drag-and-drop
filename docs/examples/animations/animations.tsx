@@ -5,12 +5,12 @@ import { useDragAndDrop } from "@formkit/drag-and-drop/react";
 export function myComponent() {
   const [parent, tapes] = useDragAndDrop<HTMLUListElement, string>(
     [
-      "ACDC LIVE",
-      "Metallica",
-      "Guns N' Roses",
-      "Def Leppard",
-      "Bon Jovi",
-      "Van Halen",
+      "Depeche Mode",
+      "Duran Duran",
+      "Pet Shop Boys",
+      "Kraftwerk",
+      "Tears for Fears",
+      "Spandau Ballet",
     ],
     { plugins: [animations()] }
   );

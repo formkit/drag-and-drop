@@ -3,12 +3,12 @@ import { dragAndDrop, animations } from "@formkit/drag-and-drop";
 
 const state = reactive({
   tapes: [
-    "ACDC LIVE",
-    "Metallica",
-    "Guns N' Roses",
-    "Def Leppard",
-    "Bon Jovi",
-    "Van Halen",
+    "Depeche Mode",
+    "Duran Duran",
+    "Pet Shop Boys",
+    "Kraftwerk",
+    "Tears for Fears",
+    "Spandau Ballet",
   ],
 });
 

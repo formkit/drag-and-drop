@@ -3,12 +3,12 @@ import { animations } from "@formkit/drag-and-drop";
 import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
 const [parent, tapes] = useDragAndDrop(
   [
-    "ACDC LIVE",
-    "Metallica",
-    "Guns N' Roses",
-    "Def Leppard",
-    "Bon Jovi",
-    "Van Halen",
+    "Depeche Mode",
+    "Duran Duran",
+    "Pet Shop Boys",
+    "Kraftwerk",
+    "Tears for Fears",
+    "Spandau Ballet",
   ],
   { plugins: [animations()] }
 );

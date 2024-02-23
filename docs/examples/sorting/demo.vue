@@ -3,12 +3,12 @@ import { dragAndDrop } from "@formkit/drag-and-drop/vue";
 
 const dragList = ref();
 const tapes = ref([
-  "ACDC LIVE",
-  "Metallica",
-  "Guns N' Roses",
-  "Def Leppard",
-  "Bon Jovi",
-  "Van Halen",
+  "Depeche Mode",
+  "Duran Duran",
+  "Pet Shop Boys",
+  "Kraftwerk",
+  "Tears for Fears",
+  "Spandau Ballet",
 ]);
 dragAndDrop({
   parent: dragList,
@@ -55,23 +55,23 @@ dragAndDrop({
   background-size: 100%;
 }
 
-[data-label="ACDC LIVE"] {
+[data-label="Depeche Mode"] {
   filter: hue-rotate(80deg) saturate(150%);
   transform: rotate(-5deg);
 }
-[data-label="Metallica"] {
+[data-label="Duran Duran"] {
   filter: hue-rotate(160deg) saturate(250%) brightness(90%);
   transform: rotate(5deg);
 }
-[data-label="Guns N' Roses"] {
+[data-label="Pet Shop Boys"] {
   filter: hue-rotate(240deg) saturate(150%) brightness(85%);
   transform: rotate(-2deg);
 }
-[data-label="Def Leppard"] {
+[data-label="Kraftwerk"] {
   filter: hue-rotate(320deg) saturate(200%) brightness(110%);
   transform: rotate(2deg);
 }
-[data-label="Bon Jovi"] {
+[data-label="Tears for Fears"] {
   filter: hue-rotate(40deg) saturate(300%) brightness(105%);
   transform: rotate(-3deg);
 }
