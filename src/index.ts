@@ -655,7 +655,6 @@ export function handleTouchedNode<T>(
   data: NodeTouchEventData<T>,
   touchState: TouchState<T>
 ) {
-  console.log("handle touched node");
   touchState.touchedNodeDisplay = touchState.touchedNode.style.display;
 
   const rect = data.targetData.node.el.getBoundingClientRect();
