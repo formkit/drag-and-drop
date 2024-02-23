@@ -7,7 +7,7 @@ import type {
 
 import type { SelectionsConfig } from "./types";
 
-import { parents, nodeEventData, state } from "../../../../index";
+import { parents, nodeEventData } from "../../../../index";
 
 import { addEvents, removeClass, addClass } from "../../../../utils";
 
