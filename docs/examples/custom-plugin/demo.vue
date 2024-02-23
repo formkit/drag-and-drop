@@ -2,10 +2,9 @@
 import { ref } from "vue";
 import type { DNDPlugin } from "@formkit/drag-and-drop";
 import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
-import { parents, state } from "@formkit/drag-and-drop";
+import { parents } from "@formkit/drag-and-drop";
 
 const dragStatus = ref("Not dragging");
-
 const dragCount = ref(0);
 
 const dragStatusPlugin: DNDPlugin = (parent) => {
@@ -34,19 +33,14 @@ const dragStatusPlugin: DNDPlugin = (parent) => {
     teardown() {},
     setupNode(data) {
       data.node.addEventListener("dragstart", dragstart);
-
       data.node.addEventListener("touchstart", touchstart);
-
       data.node.addEventListener("dragend", dragend);
     },
     tearDownNode(data) {
       data.node.removeEventListener("dragstart", dragstart);
-
       data.node.removeEventListener("touchstart", touchstart);
-
       data.node.removeEventListener("dragend", dragend);
     },
-
     setupNodeRemap(data) {},
     tearDownNodeRemap(data) {},
   };

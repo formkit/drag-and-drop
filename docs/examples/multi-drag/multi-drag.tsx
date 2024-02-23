@@ -33,19 +33,17 @@ export function myComponent() {
   });
 
   return (
-    <div className="group bg-slate-500 dark:bg-slate-800 data-[handles=true]:bg-emerald-700 dark:data-[handles=true]:bg-emerald-950">
-      <div className="kanban-board p-4 flex bg-white justify-between">
-        <ul ref={parent1}>
-          {files1.map((file) => (
-            <li key={file}>{file}</li>
-          ))}
-        </ul>
-        <ul ref={parent2}>
-          {files2.map((file) => (
-            <li key={file}>{file}</li>
-          ))}
-        </ul>
-      </div>
+    <div className="file-manager">
+      <ul ref={parent1} className="file-list">
+        {files1.map((file) => (
+          <li key={file} className="file">{file}</li>
+        ))}
+      </ul>
+      <ul ref={parent2} className="file-list">
+        {files2.map((file) => (
+          <li key={file} className="file">{file}</li>
+        ))}
+      </ul>
     </div>
   );
 }

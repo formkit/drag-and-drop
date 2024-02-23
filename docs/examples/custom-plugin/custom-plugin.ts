@@ -18,13 +18,11 @@ const dragStatusPlugin: DNDPlugin = (parent) => {
     state.dragStatus = `Dragging ${node.textContent}`;
     state.dragCount++;
   }
-
   function touchstart(event: TouchEvent) {
     const node = event.target as HTMLElement;
     state.dragStatus = `Dragging ${node.textContent}`;
     state.dragCount++;
   }
-
   function dragend() {
     state.dragStatus = "Not dragging";
   }
@@ -34,19 +32,14 @@ const dragStatusPlugin: DNDPlugin = (parent) => {
     teardown() {},
     setupNode(data) {
       data.node.addEventListener("dragstart", dragstart);
-
       data.node.addEventListener("touchstart", touchstart);
-
       data.node.addEventListener("dragend", dragend);
     },
     tearDownNode(data) {
       data.node.removeEventListener("dragstart", dragstart);
-
       data.node.removeEventListener("touchstart", touchstart);
-
       data.node.removeEventListener("dragend", dragend);
     },
-
     setupNodeRemap() {},
     tearDownNodeRemap() {},
   };
@@ -54,8 +47,9 @@ const dragStatusPlugin: DNDPlugin = (parent) => {
 
 html`
   <div>
-    <h1>${state.dragStatus}</h1>
-    <h1>${state.dragCount}</h1>
+    <strong>Rank your favorite flavors</strong>
+    <span>${state.dragStatus}</span>
+    <span>${state.dragCount}</span>
     <ul id="list">
       ${state.items.map((item) => html`<li>${item}</li>`.key(item))}
     </ul>

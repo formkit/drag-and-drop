@@ -6,7 +6,6 @@ import { parents } from "@formkit/drag-and-drop";
 
 export function myComponent() {
   const [dragStatus, setDragStatus] = useState("Not dragging");
-
   const [dragCount, setCount] = useState(0);
 
   const dragStatusPlugin: DNDPlugin = (parent) => {
@@ -19,7 +18,6 @@ export function myComponent() {
       setDragStatus(`Dragging ${node.textContent}`);
       setCount(dragCount + 1);
     }
-
     function dragend() {
       setDragStatus("Not dragging");
     }
@@ -27,18 +25,14 @@ export function myComponent() {
     return {
       setup() {},
       teardown() {},
-
       setupNode(data) {
         data.node.addEventListener("dragstart", dragstart);
-
         data.node.addEventListener("dragend", dragend);
       },
       tearDownNode(data) {
         data.node.removeEventListener("dragstart", dragstart);
-
         data.node.removeEventListener("dragend", dragend);
       },
-
       setupNodeRemap(data) {},
       tearDownNodeRemap(data) {},
     };
@@ -52,8 +46,9 @@ export function myComponent() {
   );
   return (
     <div>
-      <h1>{dragStatus}</h1>
-      <h1>{dragCount}</h1>
+      <strong>Rank your favorite flavors</strong>
+      <span>{dragStatus}</span>
+      <span>{dragCount}</span>
       <ul ref={parent}>
         {items.map((item) => (
           <li key={item}>{item}</li>
