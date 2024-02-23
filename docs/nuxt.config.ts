@@ -21,7 +21,9 @@ export default defineNuxtConfig({
     componentIslands: true,
   },
   runtimeConfig: {
-    includeStars: !!process.env.KV_DRIVER,
+    public: {
+      includeStars: !!process.env.KV_DRIVER,
+    },
   },
   components: [
     {
