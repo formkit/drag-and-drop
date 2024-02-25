@@ -1,7 +1,6 @@
 <img src="docs/public/drag-drop.gif" alt="FormKit Drag & Drop" width="250" height="250">
 
-[![Vitest](https://github.com/formkit/drag-and-drop/actions/workflows/tests.yml/badge.svg)](https://github.com/formkit/drag-and-drop/actions/workflows/tests.yml)
-![GitHub Sponsors](https://img.shields.io/github/sponsors/formkit)
+[![Tests](https://github.com/formkit/drag-and-drop/actions/workflows/ci.yml/badge.svg)](https://github.com/formkit/drag-and-drop/actions/workflows/ci.yml)![GitHub Sponsors](https://img.shields.io/github/sponsors/formkit)
 ![NPM Version](https://img.shields.io/npm/v/%40formkit%2Ftempo)
 
 ## Introduction
