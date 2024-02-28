@@ -388,8 +388,6 @@ export function remapFinished() {
 export function handleDragstart<T>(data: NodeEventData<T>) {
   if (!(data.e instanceof DragEvent)) return;
 
-  data.e.stopPropagation();
-
   dragstart({
     e: data.e,
     targetData: data.targetData,
@@ -412,6 +410,8 @@ export function dragstartClasses(
 
 export function initDrag<T>(eventData: NodeDragEventData<T>): DragState<T> {
   const dragState = setDragState(dragStateProps(eventData.targetData));
+
+  eventData.e.stopPropagation();
 
   if (eventData.e.dataTransfer) {
     eventData.e.dataTransfer.dropEffect = "move";
