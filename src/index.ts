@@ -299,8 +299,6 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
       config.tearDownNode({ node, parent, nodeData, parentData });
     }
 
-    //config.tearDownNodeRemap({ node, parent, nodeData, parentData });
-
     if (config.disabled) return;
 
     if (!config.draggable || (config.draggable && config.draggable(node))) {

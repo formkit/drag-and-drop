@@ -2,6 +2,42 @@ import type { SetupNodeData, Node } from "../../types";
 import type { AnimationsConfig } from "./types";
 import { state, parents } from "../../index";
 
+const slideUp = [
+  {
+    transform: "translateY(100%)",
+  },
+  {
+    transform: "translateY(0)",
+  },
+];
+
+const slideDown = [
+  {
+    transform: "translateY(-100%)",
+  },
+  {
+    transform: "translateY(0)",
+  },
+];
+
+const slideLeft = [
+  {
+    transform: "translateX(100%)",
+  },
+  {
+    transform: "translateX(0)",
+  },
+];
+
+const slideRight = [
+  {
+    transform: "translateX(-100%)",
+  },
+  {
+    transform: "translateX(0)",
+  },
+];
+
 export function animations(animationsConfig: AnimationsConfig = {}) {
   return (parent: HTMLElement) => {
     const parentData = parents.get(parent);
@@ -12,109 +48,33 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
       setup() {
         parentData.config.remapFinished = () => {};
 
-        const style = document.createElement("style");
-
         if (document.head.querySelector("[data-drag-and-drop]")) return;
-
-        const duration = (animationsConfig.duration || 100) / 1000;
-
-        style.innerHTML = `
-          .drag-and-drop-slide-up {
-            animation-name: slideUp;
-            animation-duration: ${duration}s;
-          }
-
-          @keyframes slideUp {
-            from {
-              transform: translateY(100%);
-            }
-            to {
-              transform: translateY(0);
-            }
-          }
-
-          .drag-and-drop-slide-down {
-            animation-name: slideDown;
-            animation-duration: ${duration}s;
-          }
-
-          @keyframes slideDown {
-            from {
-              transform: translateY(-100%);
-            }
-            to {
-              transform: translateY(0%);
-            }
-          }
-
-          .drag-and-drop-slide-left {
-            animation-name: slideLeft;
-            animation-duration: ${duration}s;
-          }
-
-          @keyframes slideLeft {
-            from {
-              transform: translateX(100%);
-            }
-            to {
-              transform: translateX(0%);
-            }
-          }
-
-          .drag-and-drop-slide-right {
-            animation-name: slideRight;
-            animation-duration: ${duration}s;
-          }
-
-          @keyframes slideRight {
-            from {
-              transform: translateX(-100%);
-            }
-            to {
-              transform: translateX(0);
-            }
-          }
-        `;
-
-        style.setAttribute("type", "text/css");
-
-        style.setAttribute("data-drag-and-drop", "true");
-
-        document.head.append(style);
       },
 
       setupNodeRemap<T>(data: SetupNodeData<T>) {
         if (!state) return;
 
+        const duration = animationsConfig.duration || 150;
+
+        console.log("duration", duration);
+
         if (data.nodeData.value === state.draggedNode.data.value) {
           switch (state.incomingDirection) {
             case "below":
-              setClasses(
-                data.node,
-                "drag-and-drop-slide-up",
-                animationsConfig.duration || 100
-              );
+              animate(data.node, slideUp, duration);
+
               break;
             case "above":
-              setClasses(
-                data.node,
-                "drag-and-drop-slide-down",
-                animationsConfig.duration || 100
-              );
+              animate(data.node, slideDown, duration);
+
               break;
             case "left":
-              setClasses(
-                data.node,
-                "drag-and-drop-slide-right",
-                animationsConfig.duration || 100
-              );
+              animate(data.node, slideRight, duration);
+
               break;
             case "right":
-              setClasses(
-                data.node,
-                "drag-and-drop-slide-left",
-                animationsConfig.duration || 100
-              );
+              animate(data.node, slideLeft, duration);
+
               break;
           }
 
@@ -139,6 +99,7 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
         const ascendingDirection = draggedNodeIndex >= state.targetIndex;
 
         let adjacentNode;
+
         if (ascendingDirection) {
           adjacentNode = state.affectedNodes[nodeIndex + 1]
             ? state.affectedNodes[nodeIndex + 1]
@@ -159,47 +120,27 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
           );
 
           if (xDiff > yDiff && ascendingDirection) {
-            setClasses(
-              data.node,
-              "drag-and-drop-slide-right",
-              animationsConfig.duration || 100
-            );
+            animate(data.node, slideRight, duration);
           } else if (xDiff > yDiff && !ascendingDirection) {
-            setClasses(
-              data.node,
-              "drag-and-drop-slide-left",
-              animationsConfig.duration || 100
-            );
+            animate(data.node, slideLeft, duration);
           }
         } else {
           switch (state.incomingDirection) {
             case "below":
-              setClasses(
-                data.node,
-                "drag-and-drop-slide-down",
-                animationsConfig.duration || 100
-              );
+              animate(data.node, slideDown, duration);
+
               break;
             case "above":
-              setClasses(
-                data.node,
-                "drag-and-drop-slide-up",
-                animationsConfig.duration || 100
-              );
+              animate(data.node, slideUp, duration);
+
               break;
             case "left":
-              setClasses(
-                data.node,
-                "drag-and-drop-slide-left",
-                animationsConfig.duration || 100
-              );
+              animate(data.node, slideLeft, duration);
+
               break;
             case "right":
-              setClasses(
-                data.node,
-                "drag-and-drop-slide-right",
-                animationsConfig.duration || 100
-              );
+              animate(data.node, slideRight, duration);
+
               break;
           }
         }
@@ -208,15 +149,19 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
   };
 }
 
-function setClasses(node: Node, nodeClass: string, duration: number) {
-  node.classList.add(nodeClass);
+function animate(
+  node: Node,
+  animation: Keyframe[] | PropertyIndexedKeyframes,
+  duration: number
+) {
+  node.animate(animation, {
+    duration: duration,
+  });
 
   setTimeout(() => {
     if (!state) return;
 
     state.swappedNodeValue = undefined;
-
-    node.classList.remove(nodeClass);
 
     state.preventEnter = false;
   }, duration);

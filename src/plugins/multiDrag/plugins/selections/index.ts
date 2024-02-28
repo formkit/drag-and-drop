@@ -283,6 +283,7 @@ function keydown<T>(data: NodeEventData<T>) {
   const enabledNodes = parentData.enabledNodes;
 
   const moveUp = data.e.key === "ArrowUp" || data.e.key === "ArrowLeft";
+
   const moveDown = data.e.key === "ArrowDown" || data.e.key === "ArrowRight";
 
   const invalidKeydown =
