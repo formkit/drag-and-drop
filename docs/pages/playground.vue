@@ -1,399 +1,245 @@
 <script setup lang="ts">
-import { dragAndDrop } from "../../src/vue/index";
-import { animations } from "../../src/index";
+import type {
+  DNDPlugin,
+  DragState,
+  TouchState,
+  NodeEventData,
+  ParentEventData,
+} from "@formkit/drag-and-drop";
+import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
+import {
+  parents,
+  parentValues,
+  dragValues,
+  setParentValues,
+} from "@formkit/drag-and-drop";
 
-const dragList = ref(undefined);
-const showHand = ref(true);
-const showTitle = ref(false);
-const openHand = ref(false);
-const exitHand = ref(false);
-const showHeadline = ref(false);
-const showDemo = ref(false);
-const showFrameworkList = ref(false);
-const framework = useState("exampleLang", () => "react");
-let closeTimeout = setTimeout(() => {});
+interface Todo {
+  label: string;
+  key: string;
+}
 
-const features = ref([
-  {
-    title: "Data-first",
-    description: "No direct DOM manipulations.",
-  },
-  {
-    title: "Lightweight",
-    description: "~4kb min-gzip. No dependencies.",
-  },
-  {
-    title: "Modern",
-    description: "Leverages modern web APIs.",
-  },
-  {
-    title: "Plugins",
-    description: "Multi-drag, animations, and more.",
-  },
-  {
-    title: "TypeScript",
-    description: "First-class TypeScript support.",
-  },
-  {
-    title: "Production-ready",
-    description: "Used on FormKit Pro inputs.",
-  },
-]);
+function sourceTransfer<T>(
+  state: DragState<T> | TouchState<T>,
+  data: NodeEventData<T> | ParentEventData<T>
+) {
+  const draggedValues = dragValues(state);
 
-dragAndDrop({
-  parent: dragList,
-  values: features,
-  draggingClass: "[&>.card]:-rotate-2 before:-rotate-2",
-  dropZoneClass: "blur-[2px] opacity-60",
-  plugins: [
-    animations({
-      duration: 200,
-    }),
-  ],
+  const lastParentValues = parentValues(
+    state.lastParent.el,
+    state.lastParent.data
+  ).filter((x: any) => !draggedValues.includes(x));
+
+  setParentValues(state.lastParent.el, state.lastParent.data, lastParentValues);
+}
+
+function findDuplicates<T>(values: Array<T>) {
+  const uniqueElements = new Set();
+  const duplicates: Array<T> = [];
+
+  values.forEach((item) => {
+    if (uniqueElements.has(item)) {
+      duplicates.push(item);
+    } else {
+      uniqueElements.add(item);
+    }
+  });
+
+  return duplicates;
+}
+
+function targetTransfer<T>(
+  state: DragState<T> | TouchState<T>,
+  data: NodeEventData<T> | ParentEventData<T>
+) {
+  const draggedValues = dragValues(state);
+
+  const targetParentValues = parentValues(
+    data.targetData.parent.el,
+    data.targetData.parent.data
+  );
+
+  const reset =
+    state.initialParent.el === data.targetData.parent.el &&
+    data.targetData.parent.data.config.sortable === false;
+
+  let targetIndex: number;
+
+  if ("node" in data.targetData) {
+    if (reset) {
+      targetIndex = state.initialIndex;
+    } else if (data.targetData.parent.data.config.sortable === false) {
+      targetIndex = data.targetData.parent.data.enabledNodes.length;
+    } else {
+      targetIndex = data.targetData.node.data.index;
+    }
+
+    targetParentValues.splice(targetIndex, 0, ...draggedValues);
+  } else {
+    targetIndex = reset
+      ? state.initialIndex
+      : data.targetData.parent.data.enabledNodes.length;
+
+    targetParentValues.splice(targetIndex, 0, ...draggedValues);
+  }
+
+  const duplicates = findDuplicates(targetParentValues);
+
+  for (const duplicate of duplicates as Array<Todo>) {
+    if (!("key" in duplicate) || typeof duplicate !== "object") continue;
+    const index = targetParentValues.indexOf(duplicate as T);
+    const newKey = `${duplicate.key}-${Math.random()
+      .toString(36)
+      .substring(2, 15)}`;
+
+    targetParentValues[index] = {
+      ...(targetParentValues[index] as T),
+      key: newKey,
+    };
+  }
+
+  setParentValues(
+    data.targetData.parent.el,
+    data.targetData.parent.data,
+    targetParentValues
+  );
+}
+
+const targetClone: DNDPlugin = (parent) => {
+  const parentData = parents.get(parent);
+
+  if (!parentData) return;
+
+  return {
+    setup() {
+      parentData.config.performTransfer = targetTransfer;
+    },
+  };
+};
+
+const sourceClone: DNDPlugin = (parent) => {
+  const parentData = parents.get(parent);
+
+  if (!parentData) return;
+
+  return {
+    setup() {
+      parentData.config.performTransfer = sourceTransfer;
+    },
+  };
+};
+
+const initialTodos: Array<Todo> = [
+  {
+    label: "Schedule perm",
+    key: "schedule-perm",
+  },
+  {
+    label: "Rewind VHS tapes",
+    key: "rewind-vhs",
+  },
+  {
+    label: "Make change for the arcade",
+    key: "make-change",
+  },
+  {
+    label: "Get disposable camera developed",
+    key: "disposable-camera",
+  },
+  {
+    label: "Learn C++",
+    key: "learn-cpp",
+  },
+  {
+    label: "Return Nintendo Power Glove",
+    key: "return-power-glove",
+  },
+];
+
+const [todoList, todos] = useDragAndDrop(initialTodos, {
+  group: "todoList",
+  sortable: false,
+  plugins: [sourceClone],
 });
 
-function toggleFrameworkList(setting: boolean) {
-  if (typeof setting === "boolean") {
-    if (setting) {
-      clearTimeout(closeTimeout);
-      showFrameworkList.value = setting;
-    } else {
-      closeTimeout = setTimeout(() => {
-        showFrameworkList.value = setting;
-      }, 250);
-    }
-    return;
-  }
-  showFrameworkList.value = !showFrameworkList.value;
-}
+const doneValues: Array<Todo> = [
+  {
+    label: "Pickup new mix-tape from Beth",
+    key: "mix-tape",
+  },
+];
 
-function handleFrameworkSelect(selection: string) {
-  showFrameworkList.value = false;
-  framework.value = selection;
-  const el = document.getElementById("introduction");
-  if (el) {
-    el.scrollIntoView({ behavior: "smooth" });
-  }
-}
-
-onMounted(() => {
-  setTimeout(() => {
-    setTimeout(() => {
-      showTitle.value = true;
-    }, 0);
-    setTimeout(() => {
-      openHand.value = true;
-    }, 1500);
-    setTimeout(() => {
-      exitHand.value = true;
-    }, 2000);
-    setTimeout(() => {
-      showHand.value = false;
-    }, 3000);
-    setTimeout(() => {
-      showHeadline.value = true;
-    }, 2000);
-    setTimeout(() => {
-      showDemo.value = true;
-    }, 2200);
-  }, 200);
+const [doneList, dones] = useDragAndDrop(doneValues, {
+  group: "todoList",
+  plugins: [targetClone],
 });
 </script>
 
 <template>
-  <div class="-mt-8 w-full transform-gpu">
-    <div id="vapor-wave-sun" class="transform-gpu" aria-hidden="true" />
-    <div class="flex flex-col pb-20 min-h-[85dvh]" id="vapor-wave-container">
-      <div class="page-section my-auto relative z-10">
-        <div
-          class="mt-[min(6vh,12em)] mb-[min(6vh,3.5em)] flex flex-col items-center"
-        >
-          <h1
-            :data-show="showTitle"
-            :class="`
-              relative
-              font-display
-              text-[max(10vh,6.5em)]
-              text-emerald-500
-              mb-6
-              lg:mb-[max(4vh,1rem)]
-              tall:mt-[max(-6vh,-3rem)]
-              xtall:mt-[max(-12vh,-3rem)]
-              transition-all
-              duration-[1500ms]
-              -translate-x-[100vw]
-              data-[show=true]:translate-x-0
-              text-center
-              leading-[0.5em]
-              w-48
-              lg:w-3/4
-              lg:max-w-[45vh]
-              tall:max-w-[min(22rem,50vh)]
-              drop-shadow-[-1px_1px_0_rgba(255,255,255,1)]
-              transform-gpu
+  <DemoContainer>
+    <h2>Cloning example</h2>
+    <div class="group bg-slate-200 dark:bg-slate-800">
+      <div class="kanban-board p-px grid grid-cols-2 gap-px">
+        <div class="kanban-column">
+          <h2 class="kanban-title">ToDos</h2>
 
-              dark:text-white
-            `"
-          >
-            <DnDLogo
-              class="block w-full mb-0 brightness-90 dark:brightness-[115%] transform-gpu"
-            />
-            <IconHand
-              v-if="showHand"
-              :data-exit="exitHand"
-              :class="`
-                absolute
-                top-10
-                -right-10
-                -rotate-0
-                max-w-32
-                w-[33%]
-                transition-all
-                duration-1000
-                translate-x-0
-                data-[exit=true]:translate-x-[100vw]
-                transform-gpu
-              `"
-              :open="openHand"
-            />
-          </h1>
-
-          <div
-            :data-show="showHeadline"
-            :class="`
-              relative
-              z-30
-              transition-all
-              duration-500
-              translate-y-10
-              opacity-0
-              data-[show=true]:translate-y-0
-              data-[show=true]:opacity-100
-            `"
-          >
-            <p
-              :class="`
-                text-2xl
-                lg:text-[max(4vh,3em)]
-                leading-[1em]
-                font-semibold
-                text-center
-                text-slate-700
-                max-w-[800px]
-                text-balance
-                mb-[max(2.5vh,1rem)]
-
-                dark:text-slate-50
-                dark:[text-shadow:-1px_1px_#000]
-              `"
+          <ul ref="todoList" class="kanban-list">
+            <li
+              v-for="todo in todos"
+              :key="todo.key"
+              class="kanban-item flex items-center"
             >
-              A
-              <span
-                class="text-lg lg:text-3xl mr-1 lg:mr-2.5 text-emerald-600 dark:text-green-400"
-                >tiny</span
-              >
-              <span class="text-pink-600 dark:text-cyan-300">data-first</span>
-              library<br />
-              for modern apps
-            </p>
-
-            <div
-              class="action-buttons flex flex-wrap items-center justify-center -mb-3"
-            >
-              <div class="inline-flex cursor-pointer mr-3 mb-3 relative z-10">
-                <span
-                  :data-list-open="showFrameworkList"
-                  :class="`
-                    group
-                    bg-blue-100/40
-                    backdrop-blur-sm
-                    border
-                    border-sky-400
-                    shadow-md
-                    text-black
-                    dark:text-white
-                    rounded-lg
-                    data-[list-open=true]:rounded-br-none
-                    flex
-                    text-sm
-                    !no-underline
-                    dark:bg-fuchsia-950
-                    dark:border-fuchsia-600
-                  `"
-                >
-                  <span
-                    @click="handleFrameworkSelect(framework)"
-                    class="py-3 px-6 border-r hover:bg-white/10 rounded-l-lg border-r-sky-400 dark:border-fuchsia-800"
-                  >
-                    Get Started
-                  </span>
-                  <div
-                    class="relative py-2 px-3 flex hover:bg-white/10 rounded-r-lg group-data-[list-open]:rounded-br-none"
-                    @mouseover="toggleFrameworkList(true)"
-                    @mouseleave="toggleFrameworkList(false)"
-                  >
-                    <FrameworkIcons :active="framework" />
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="w-3 ml-2"
-                      viewBox="0 0 512 512"
-                    >
-                      <path
-                        fill="currentColor"
-                        d="M256 429.3l22.6-22.6 192-192L493.3 192 448 146.7l-22.6 22.6L256 338.7 86.6 169.4 64 146.7 18.7 192l22.6 22.6 192 192L256 429.3z"
-                      />
-                    </svg>
-                    <ul
-                      v-show="showFrameworkList"
-                      :class="`
-                        absolute
-                        top-full
-                        left-0
-                        w-[calc(100%+2px)]
-                        flex
-                        flex-col
-                        border
-                        z-[-1]
-                        -translate-x-px
-                        overflow-hidden
-                        shadow-lg
-                        bg-blue-100/40
-                        backdrop-blur-md
-                        border-sky-400
-                        dark:bg-fuchsia-950
-                        dark:border-fuchsia-600
-                        items-center
-                        rounded-b-lg
-                        justify-center
-                      `"
-                    >
-                      <li
-                        v-if="framework !== 'react'"
-                        @click="handleFrameworkSelect('react')"
-                        class="p-2 w-full text-center hover:bg-white/60 dark:hover:bg-white/20"
-                      >
-                        <FrameworkIcons active="react" />
-                      </li>
-                      <li
-                        v-if="framework !== 'vue'"
-                        @click="handleFrameworkSelect('vue')"
-                        class="p-2 w-full text-center hover:bg-white/60 dark:hover:bg-white/20"
-                      >
-                        <FrameworkIcons active="vue" />
-                      </li>
-                      <li
-                        v-if="framework !== 'native'"
-                        @click="handleFrameworkSelect('native')"
-                        class="p-2 w-full text-center hover:bg-white/60 dark:hover:bg-white/20"
-                      >
-                        <FrameworkIcons active="native" />
-                      </li>
-                    </ul>
-                  </div>
-                </span>
-              </div>
-              <CopyCode :base-delay="1500" class="mb-3" />
-            </div>
-          </div>
+              {{ todo.label }}
+            </li>
+          </ul>
         </div>
+        <div class="kanban-column">
+          <h2 class="kanban-title">Complete</h2>
 
-        <ul
-          ref="dragList"
-          :data-show="showDemo"
-          :class="`
-            features
-            flex
-            flex-wrap
-            mt-4
-            bg-blue-100/40
-            border
-            border-sky-400
-            rounded-xl
-            p-3
-            backdrop-blur-[8px]
-
-            transition-all
-            duration-500
-            translate-y-10
-            opacity-0
-            data-[show=true]:translate-y-0
-            data-[show=true]:opacity-100
-
-            dark:bg-slate-800/20
-            dark:border-pink-500
-
-            before:content-['try_me']
-            before:absolute
-            before:bottom-full
-            before:left-2
-            before:text-blue-400
-            before:text-xs
-            before:uppercase
-
-            dark:before:text-pink-300
-          `"
-        >
-          <li
-            v-for="feature in features"
-            :key="feature.title"
-            :class="`
-              relative
-              z-20
-              flex
-              flex-col
-              grow
-              basis-[30%]
-              m-2
-              cursor-grab
-              active:cursor-grabbing
-              active:shadow-xl
-              active:select-none
-
-              before:absolute
-              before:z-[-1]
-              before:bg-pink-500
-              before:top-[3px]
-              before:-left-[3px]
-              before:w-full
-              before:h-full
-              before:rounded-md
-
-              dark:before:bg-pink-400
-            `"
-          >
-            <div
-              :class="`
-                card
-                rounded-md
-                px-1.5
-                py-2
-                md:p-3
-                grow
-                w-full
-                bg-white
-                border-t
-                border-r
-                border-sky-500
-                text-center
-
-                dark:border-red-400
-                dark:bg-indigo-950/80
-              `"
+          <ul ref="doneList" class="kanban-list">
+            <li
+              v-for="done in dones"
+              :key="done.key"
+              class="kanban-item kanban-complete flex items-center"
             >
-              <span
-                class="text-sm md:text-lg block font-semibold text-emerald-600 mb-0.5 dark:text-emerald-400"
-              >
-                {{ feature.title }}
+              <span>
+                {{ done.label }}
               </span>
-              <p
-                class="text-xs md:text-md text-center text-slate-600 dark:text-slate-300"
-              >
-                {{ feature.description }}
-              </p>
-            </div>
-          </li>
-        </ul>
+            </li>
+          </ul>
+        </div>
+        <pre style="font-size: 10px; color: white">
+          {{ todos }}
+        </pre>
+        <pre style="font-size: 10px; color: white">
+          {{ dones }}
+        </pre>
       </div>
     </div>
-  </div>
+  </DemoContainer>
 </template>
+
+<style scoped>
+.kanban-column {
+  @apply p-2 md:p-4 shadow-md flex flex-col border-4 border-indigo-300;
+}
+.kanban-title {
+  @apply font-oldschool text-slate-500 text-xl md:text-2xl lg:text-3xl xl:text-4xl mb-4 text-center;
+  @apply dark:text-slate-200 dark:antialiased;
+}
+.kanban-list {
+  @apply list-none h-full min-h-[300px] md:min-h-[400px];
+}
+.kanban-item {
+  @apply bg-slate-100 text-slate-600 antialiased border border-slate-300 p-2 md:p-4 font-oldschool text-base md:text-lg lg:text-xl leading-none font-thin mb-2 last:mb-0 group-data-[handles=false]:cursor-grab group-data-[handles=false]:active:cursor-grabbing;
+  @apply dark:bg-slate-600 dark:text-slate-50 dark:border-slate-400;
+}
+.kanban-complete {
+  @apply line-through text-red-500/50;
+  @apply dark:text-red-400/80;
+}
+.kanban-complete span {
+  @apply text-slate-600;
+  @apply dark:text-slate-100;
+}
+</style>
