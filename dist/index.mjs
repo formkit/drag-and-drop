@@ -425,7 +425,6 @@ function animations(animationsConfig = {}) {
         if (!state)
           return;
         const duration = animationsConfig.duration || 150;
-        console.log("duration", duration);
         if (data.nodeData.value === state.draggedNode.data.value) {
           switch (state.incomingDirection) {
             case "below":
@@ -1010,8 +1009,6 @@ function remapFinished() {
 function handleDragstart(data) {
   if (!(data.e instanceof DragEvent))
     return;
-  data.e.stopPropagation();
-  console.log("dragstart", data.targetData.node.el);
   dragstart2({
     e: data.e,
     targetData: data.targetData
@@ -1026,6 +1023,7 @@ function dragstartClasses(el, draggingClass, dropZoneClass) {
 }
 function initDrag(eventData) {
   const dragState = setDragState(dragStateProps(eventData.targetData));
+  eventData.e.stopPropagation();
   if (eventData.e.dataTransfer) {
     eventData.e.dataTransfer.dropEffect = "move";
     eventData.e.dataTransfer.effectAllowed = "move";
