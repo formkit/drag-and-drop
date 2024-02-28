@@ -35,6 +35,15 @@ export default defineNuxtConfig({
     "@vueuse/nuxt",
     "@nuxtjs/color-mode",
     "nuxt-fathom",
+    (options, nuxt) => {
+      nuxt.hook("components:extend", (components) => {
+        for (const component of components) {
+          if (component.pascalName.startsWith("CodeExample")) {
+            component.mode = nuxt.options.dev ? "client" : "server";
+          }
+        }
+      });
+    },
   ],
   fathom: {
     siteId: "KRFNTIEB",

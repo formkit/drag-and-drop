@@ -15,16 +15,18 @@ const res = await import(
 );
 const code = res.default;
 
-const html = await codeToHtml(code, {
-  theme: "github-light",
-  lang: "ts",
-  transformers: [transformerTwoslash()],
-});
-const darkHtml = await codeToHtml(code, {
-  theme: "github-dark",
-  lang: "ts",
-  transformers: [transformerTwoslash()],
-});
+const [html, darkHtml] = await Promise.all([
+  codeToHtml(code, {
+    theme: "github-light",
+    lang: "ts",
+    transformers: [transformerTwoslash()],
+  }),
+  codeToHtml(code, {
+    theme: "github-dark",
+    lang: "ts",
+    transformers: [transformerTwoslash()],
+  }),
+]);
 </script>
 
 <template>
