@@ -59,6 +59,15 @@ export interface ParentConfig<T> {
    */
   dropZoneClass?: string;
   /**
+   * Function that assigned dragging and dropZone classes on dragstart
+   * or touchstart.
+   */
+  dragstartClasses?: (
+    el: HTMLElement | Node | Element,
+    draggingClass: string | undefined,
+    dropZoneClass: string | undefined
+  ) => void;
+  /**
    * A flag to indicate whether the parent itself is a dropZone.
    */
   dropZone?: boolean;

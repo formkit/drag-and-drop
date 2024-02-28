@@ -195,6 +195,7 @@ export function dragAndDrop<T>({
       handleDragoverParent,
       handleEnd,
       handleTouchstart,
+      dragstartClasses,
       handleTouchmove,
       handleTouchOverNode,
       handleTouchOverParent,
@@ -489,7 +490,7 @@ export function dragstart<T>(data: NodeDragEventData<T>) {
 
   data.targetData.node.el.style.zIndex = "9999";
 
-  dragstartClasses(
+  config.dragstartClasses(
     dragState.draggedNode.el,
     config.draggingClass,
     config.dropZoneClass
