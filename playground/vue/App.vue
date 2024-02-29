@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Test1 from "./components/Test1.vue";
 import Test2 from "./components/Test2.vue";
+import Test4 from "./components/Test4.vue";
 import vueLogo from "/vuejs-icon.svg";
 </script>
 
@@ -19,6 +20,7 @@ import vueLogo from "/vuejs-icon.svg";
         id="vue_2"
         test-description="Init parent by passing in a Vue ref directly to `dragAndDrop` function."
       />
+      <Test4 id="vue_4" test-description="Another test" />
     </div>
   </div>
 </template>

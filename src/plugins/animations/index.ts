@@ -56,6 +56,8 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
 
         const duration = animationsConfig.duration || 150;
 
+        console.log("setupNodeRemap");
+
         if (data.nodeData.value === state.draggedNode.data.value) {
           switch (state.incomingDirection) {
             case "below":
