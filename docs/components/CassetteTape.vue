@@ -23,7 +23,7 @@ defineProps({
         leading-0
         text-[3vw]
         md:text-base
-        lg:text-lg 
+        lg:text-lg
         whitespace-nowrap
       `"
     >

@@ -131,7 +131,6 @@ export async function touchDrop(
       dragleave?: boolean;
     }) => {
       const getPayload = (element: Element) => {
-        console.log("element", element);
         const rect = element.getBoundingClientRect();
 
         const [x, y] = [rect.x + rect.width / 2, rect.y + rect.height / 2];
@@ -146,11 +145,15 @@ export async function touchDrop(
         };
       };
 
-      const touchStartObj = new Touch({
-        identifier: 0,
-        target: originElement,
-        ...getPayload(originElement),
-      });
+      let touchStartObj;
+
+      if (touchStart && originElement) {
+        touchStartObj = new Touch({
+          identifier: 0,
+          target: originElement,
+          ...getPayload(originElement),
+        });
+      }
 
       const touchMoveObj = new Touch({
         identifier: 0,

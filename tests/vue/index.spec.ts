@@ -1,5 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
-import { dragDrop } from "../utils";
+import { dragDrop, touchDrop } from "../utils";
 
 let page: Page;
 
@@ -92,46 +92,45 @@ test.describe("Vue wrapper correctly inits parent", async () => {
     );
   });
 
-  //test("Touch it", async () => {
-  //  const listitems = page.locator("#vue_3 .item");
-  //  for (let i = 0; i < (await listitems.count()); i++) {
-  //    await expect(listitems.nth(i)).toHaveAttribute("draggable", "true");
-  //  }
-  //  touchDrop(page, {
-  //    origin: "#vue_3_10_of_clubs",
-  //    destination: "#vue_3_jack_of_hearts",
-  //    touchStart: true,
-  //    drop: false,
-  //  });
-  //  await expect(page.locator("#vue_3_values")).toHaveText(
-  //    "jack_of_hearts 10_of_clubs queen_of_spades"
-  //  );
-  //  await new Promise((r) => setTimeout(r, 10000));
-
-  //  await touchDrop(page, {
-  //    destination: "#vue_3_queen_of_spades",
-  //    touchStart: false,
-  //    drop: true,
-  //  });
-  //  await expect(page.locator("#vue_3_values")).toHaveText(
-  //    "jack_of_hearts queen_of_spades 10_of_clubs"
-  //  );
-  //  await touchDrop(page, {
-  //    origin: "#vue_3_jack_of_hearts",
-  //    destination: "#vue_3_queen_of_spades",
-  //    touchStart: true,
-  //    drop: false,
-  //  });
-  //  await expect(page.locator("#vue_3_values")).toHaveText(
-  //    "queen_of_spades jack_of_hearts 10_of_clubs"
-  //  );
-  //  await touchDrop(page, {
-  //    destination: "#vue_3_10_of_clubs",
-  //    touchStart: false,
-  //    drop: true,
-  //  });
-  //  await expect(page.locator("#vue_3_values")).toHaveText(
-  //    "queen_of_spades 10_of_clubs jack_of_hearts"
-  //  );
-  //});
+  test("Touch it", async () => {
+    await page.locator("#vue_3_10_of_clubs").scrollIntoViewIfNeeded();
+    const listitems = page.locator("#vue_3 .item");
+    for (let i = 0; i < (await listitems.count()); i++) {
+      await expect(listitems.nth(i)).toHaveAttribute("draggable", "true");
+    }
+    touchDrop(page, {
+      origin: "#vue_3_10_of_clubs",
+      destination: "#vue_3_jack_of_hearts",
+      touchStart: true,
+      drop: false,
+    });
+    await expect(page.locator("#vue_3_values")).toHaveText(
+      "jack_of_hearts 10_of_clubs queen_of_spades"
+    );
+    await touchDrop(page, {
+      destination: "#vue_3_queen_of_spades",
+      touchStart: false,
+      drop: true,
+    });
+    await expect(page.locator("#vue_3_values")).toHaveText(
+      "jack_of_hearts queen_of_spades 10_of_clubs"
+    );
+    await touchDrop(page, {
+      origin: "#vue_3_jack_of_hearts",
+      destination: "#vue_3_queen_of_spades",
+      touchStart: true,
+      drop: false,
+    });
+    await expect(page.locator("#vue_3_values")).toHaveText(
+      "queen_of_spades jack_of_hearts 10_of_clubs"
+    );
+    await touchDrop(page, {
+      destination: "#vue_3_10_of_clubs",
+      touchStart: false,
+      drop: true,
+    });
+    await expect(page.locator("#vue_3_values")).toHaveText(
+      "queen_of_spades 10_of_clubs jack_of_hearts"
+    );
+  });
 });
