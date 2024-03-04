@@ -8,7 +8,7 @@ test.beforeAll(async ({ browser }) => {
   await page.goto("http://localhost:3001/transfer");
 });
 
-test.describe.only("Transferring", async () => {
+test.describe("Transferring", async () => {
   test("Drag transferring works as expected.", async () => {
     await dragDrop(page, {
       origin: "#transfer_1_Apple",
