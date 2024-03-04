@@ -6,9 +6,10 @@
   "types": "./index.d.cts",
   "type": "module",
   "scripts": {
-    "test": "npx playwright test vue",
+    "docs": "cd docs && pnpm run dev",
     "dev": "cd docs && pnpm run dev",
-    "playground": "cd playground && pnpm run dev",
+    "tests": "cd tests && pnpm run dev",
+    "tests-frameworks": "cd tests-frameworks && pnpm run dev",
     "build": "jiti build.ts",
     "release": "npx bumpp --no-tag --no-push --no-commit && pnpm run build && cd dist && npx publint && pnpm publish --no-git-checks",
     "lint": "eslint ."

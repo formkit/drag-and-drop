@@ -1,6 +1,7 @@
 workspaces:
   - docs
-  - dev
+  - tests
+  - test-frameworks
   - dist
 
 packages:

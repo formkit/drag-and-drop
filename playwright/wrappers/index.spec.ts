@@ -1,5 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
-import { dragDrop } from "./utils";
+import { dragDrop } from "../utils";
 
 let page: Page;
 
