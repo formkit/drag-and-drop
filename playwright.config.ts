@@ -15,8 +15,12 @@ export default defineConfig({
 
   projects: [
     {
-      name: "Wrappers",
-      testMatch: "wrappers/**/*.spec.ts",
+      name: "Tests",
+      testMatch: "tests/**/*.spec.ts",
+    },
+    {
+      name: "Framework Tests",
+      testMatch: "tests-frameworks/**/*.spec.ts",
       use: { ...devices["Desktop Chrome"] },
     },
   ],
