@@ -8,7 +8,7 @@ test.beforeAll(async ({ browser }) => {
   await page.goto("http://localhost:5173/");
 });
 
-test.describe("Vue wrapper correctly inits parent", async () => {
+test.describe("Vue wrappers correctly init dragAndDrop", async () => {
   test("Init parent by passing in the parent elmeent directly to `dragAndDrop `function.", async () => {
     const listitems = page.locator("#vue_1 .item");
     for (let i = 0; i < (await listitems.count()); i++) {
@@ -52,7 +52,6 @@ test.describe("Vue wrapper correctly inits parent", async () => {
 
   test("init parent by passing in a Vue ref directly to `dragAndDrop` function.", async () => {
     const listitems = page.locator("#vue_2 .item");
-    console.log(await listitems);
     for (let i = 0; i < (await listitems.count()); i++) {
       await expect(listitems.nth(i)).toHaveAttribute("draggable", "true");
     }
@@ -92,41 +91,40 @@ test.describe("Vue wrapper correctly inits parent", async () => {
     );
   });
 
-  test("Touch it", async () => {
-    await page.locator("#vue_3_10_of_clubs").scrollIntoViewIfNeeded();
+  test("Init parent by calling `useDragAndDrop`.", async () => {
     const listitems = page.locator("#vue_3 .item");
     for (let i = 0; i < (await listitems.count()); i++) {
       await expect(listitems.nth(i)).toHaveAttribute("draggable", "true");
     }
-    touchDrop(page, {
+    await dragDrop(page, {
       origin: "#vue_3_10_of_clubs",
       destination: "#vue_3_jack_of_hearts",
-      touchStart: true,
+      dragStart: true,
       drop: false,
     });
     await expect(page.locator("#vue_3_values")).toHaveText(
       "jack_of_hearts 10_of_clubs queen_of_spades"
     );
-    await touchDrop(page, {
+    await dragDrop(page, {
       destination: "#vue_3_queen_of_spades",
-      touchStart: false,
+      dragStart: false,
       drop: true,
     });
     await expect(page.locator("#vue_3_values")).toHaveText(
       "jack_of_hearts queen_of_spades 10_of_clubs"
     );
-    await touchDrop(page, {
+    await dragDrop(page, {
       origin: "#vue_3_jack_of_hearts",
       destination: "#vue_3_queen_of_spades",
-      touchStart: true,
+      dragStart: true,
       drop: false,
     });
     await expect(page.locator("#vue_3_values")).toHaveText(
       "queen_of_spades jack_of_hearts 10_of_clubs"
     );
-    await touchDrop(page, {
+    await dragDrop(page, {
       destination: "#vue_3_10_of_clubs",
-      touchStart: false,
+      dragStart: false,
       drop: true,
     });
     await expect(page.locator("#vue_3_values")).toHaveText(

@@ -22,6 +22,11 @@ function App() {
           id="react_2"
           testDescription="Init parent by passing in a React ref to `dragAndDrop` function."
         />
+        <div className="divider"></div>
+        <Test2
+          id="react_3"
+          testDescription="Init parent by using `useDragAndDrop` function."
+        />
       </div>
     </>
   );
