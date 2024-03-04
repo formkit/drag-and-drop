@@ -1,5 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
-import { dragDrop, touchDrop } from "../utils";
+import { touchDrop } from "../../utils";
 
 let page: Page;
 
@@ -9,36 +9,36 @@ test.beforeAll(async ({ browser }) => {
 });
 
 test.describe("Sorting", async () => {
-  test("Drag sort works as expected. Take 'Apple' and drag and drop it to the sbottom of list. Take 'Banana' and drag and drop it to the bottom of the lists.", async () => {
-    await dragDrop(page, {
+  test("Touch sort works as expected.", async () => {
+    await touchDrop(page, {
       origin: "#Apple",
       destination: "#Banana",
-      dragStart: true,
+      touchStart: true,
       drop: false,
     });
     await expect(page.locator("#sort_values")).toHaveText(
       "Banana Apple Orange"
     );
-    await dragDrop(page, {
+    await touchDrop(page, {
       destination: "#Orange",
-      dragStart: false,
+      touchStart: false,
       drop: true,
     });
     await expect(page.locator("#sort_values")).toHaveText(
       "Banana Orange Apple"
     );
-    await dragDrop(page, {
+    await touchDrop(page, {
       origin: "#Banana",
       destination: "#Orange",
-      dragStart: true,
+      touchStart: true,
       drop: false,
     });
     await expect(page.locator("#sort_values")).toHaveText(
       "Orange Banana Apple"
     );
-    await dragDrop(page, {
+    await touchDrop(page, {
       destination: "#Apple",
-      dragStart: false,
+      touchStart: false,
       drop: true,
     });
     await expect(page.locator("#sort_values")).toHaveText(

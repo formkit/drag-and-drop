@@ -2,10 +2,10 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./playwright",
-  fullyParallel: true,
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 6,
+  workers: 1,
   timeout: 20000,
   reporter: "list",
   use: {
@@ -15,8 +15,46 @@ export default defineConfig({
 
   projects: [
     {
-      name: "Tests",
-      testMatch: "tests/**/*.spec.ts",
+      name: "Desktop Chrome Drag Tests",
+      testMatch: "tests/drag/**/*.spec.ts",
+      use: {
+        ...devices["Desktop Chrome"],
+      },
+    },
+    {
+      name: "Desktop Safari Drag Tests",
+      testMatch: "tests/drag/**/*.spec.ts",
+      use: {
+        ...devices["Desktop Safari"],
+      },
+    },
+    {
+      name: "Desktop Firefox Drag Tests",
+      testMatch: "tests/drag/**/*.spec.ts",
+      use: {
+        ...devices["Desktop Firefox"],
+      },
+    },
+    {
+      name: "Mobile Chrome Touch Tests",
+      testMatch: "tests/touch/**/*.spec.ts",
+      use: {
+        ...devices["Mobile Chrome"],
+      },
+    },
+    {
+      name: "Mobile Safari Touch Tests",
+      testMatch: "tests/touch/**/*.spec.ts",
+      use: {
+        ...devices["Mobile Safari"],
+      },
+    },
+    {
+      name: "Mobile Firefox Touch Tests",
+      testMatch: "tests/touch/**/*.spec.ts",
+      use: {
+        ...devices["Mobile Firefox"],
+      },
     },
     {
       name: "Framework Tests",
