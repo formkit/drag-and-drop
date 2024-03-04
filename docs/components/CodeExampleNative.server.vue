@@ -14,17 +14,18 @@ const res = await import(
   `../examples/${props.example}/${props.example}.ts?raw`
 );
 const code = res.default;
+const twoslash = transformerTwoslash();
 
 const [html, darkHtml] = await Promise.all([
   codeToHtml(code, {
     theme: "github-light",
     lang: "ts",
-    transformers: [transformerTwoslash()],
+    transformers: [twoslash],
   }),
   codeToHtml(code, {
     theme: "github-dark",
     lang: "ts",
-    transformers: [transformerTwoslash()],
+    transformers: [twoslash],
   }),
 ]);
 </script>
