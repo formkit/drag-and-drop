@@ -85,11 +85,13 @@ function useDragAndDrop(list, options = {}) {
   const [values, setValues2] = (0, import_react.useState)(list);
   (0, import_react.useEffect)(() => {
     dragAndDrop({ parent, state: [values, setValues2], ...options });
+  }, [values]);
+  (0, import_react.useEffect)(() => {
     return () => {
       if (parent.current)
         (0, import__.tearDown)(parent.current);
     };
-  }, [parent.current]);
+  }, []);
   return [parent, values, setValues2];
 }
 // Annotate the CommonJS export names for ESM import in node:

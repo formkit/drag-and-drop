@@ -60,11 +60,13 @@ function useDragAndDrop(list, options = {}) {
   const [values, setValues2] = useState(list);
   useEffect(() => {
     dragAndDrop({ parent, state: [values, setValues2], ...options });
+  }, [values]);
+  useEffect(() => {
     return () => {
       if (parent.current)
         tearDown(parent.current);
     };
-  }, [parent.current]);
+  }, []);
   return [parent, values, setValues2];
 }
 export {
