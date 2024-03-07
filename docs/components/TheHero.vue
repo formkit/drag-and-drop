@@ -47,7 +47,7 @@ dragAndDrop({
   dropZoneClass: "blur-[2px] opacity-60",
   plugins: [
     animations({
-      duration: 200,
+      duration: 150,
     }),
   ],
 });
