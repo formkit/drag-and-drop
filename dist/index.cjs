@@ -20,13 +20,20 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // src/index.ts
 var src_exports = {};
 __export(src_exports, {
+  addClass: () => addClass,
+  addEvents: () => addEvents,
   animations: () => animations,
+  copyNodeStyle: () => copyNodeStyle,
   dragAndDrop: () => dragAndDrop,
   dragStateProps: () => dragStateProps,
   dragValues: () => dragValues,
   dragstart: () => dragstart2,
   dragstartClasses: () => dragstartClasses,
   end: () => end,
+  eventCoordinates: () => eventCoordinates,
+  events: () => events,
+  getElFromPoint: () => getElFromPoint,
+  getScrollParent: () => getScrollParent,
   handleDragoverNode: () => handleDragoverNode,
   handleDragoverParent: () => handleDragoverParent,
   handleDragstart: () => handleDragstart,
@@ -40,6 +47,7 @@ __export(src_exports, {
   initDrag: () => initDrag,
   initTouch: () => initTouch,
   isBrowser: () => isBrowser,
+  isNode: () => isNode,
   multiDrag: () => multiDrag,
   nodeEventData: () => nodeEventData,
   nodes: () => nodes,
@@ -50,6 +58,7 @@ __export(src_exports, {
   performTransfer: () => performTransfer,
   remapFinished: () => remapFinished,
   remapNodes: () => remapNodes,
+  removeClass: () => removeClass,
   resetState: () => resetState,
   selections: () => selections,
   setDragState: () => setDragState,
@@ -132,6 +141,11 @@ function getScrollParent(node) {
   }
   return void 0;
 }
+function events(el, events2, fn, remove = false) {
+  events2.forEach((event) => {
+    remove ? el.removeEventListener(event, fn) : el.addEventListener(event, fn);
+  });
+}
 function getElFromPoint(eventData) {
   if (!(eventData.e instanceof TouchEvent))
     return;
@@ -174,10 +188,10 @@ function getElFromPoint(eventData) {
 function isNode(el) {
   return el instanceof HTMLElement && el.parentNode instanceof HTMLElement;
 }
-function addEvents(el, events) {
+function addEvents(el, events2) {
   const abortController = new AbortController();
-  for (const eventName in events) {
-    const handler = events[eventName];
+  for (const eventName in events2) {
+    const handler = events2[eventName];
     el.addEventListener(eventName, handler, {
       signal: abortController.signal,
       passive: false
@@ -1571,13 +1585,20 @@ function parentEventData(callback) {
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  addClass,
+  addEvents,
   animations,
+  copyNodeStyle,
   dragAndDrop,
   dragStateProps,
   dragValues,
   dragstart,
   dragstartClasses,
   end,
+  eventCoordinates,
+  events,
+  getElFromPoint,
+  getScrollParent,
   handleDragoverNode,
   handleDragoverParent,
   handleDragstart,
@@ -1591,6 +1612,7 @@ function parentEventData(callback) {
   initDrag,
   initTouch,
   isBrowser,
+  isNode,
   multiDrag,
   nodeEventData,
   nodes,
@@ -1601,6 +1623,7 @@ function parentEventData(callback) {
   performTransfer,
   remapFinished,
   remapNodes,
+  removeClass,
   resetState,
   selections,
   setDragState,

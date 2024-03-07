@@ -62,6 +62,11 @@ function getScrollParent(node) {
   }
   return void 0;
 }
+function events(el, events2, fn, remove = false) {
+  events2.forEach((event) => {
+    remove ? el.removeEventListener(event, fn) : el.addEventListener(event, fn);
+  });
+}
 function getElFromPoint(eventData) {
   if (!(eventData.e instanceof TouchEvent))
     return;
@@ -104,10 +109,10 @@ function getElFromPoint(eventData) {
 function isNode(el) {
   return el instanceof HTMLElement && el.parentNode instanceof HTMLElement;
 }
-function addEvents(el, events) {
+function addEvents(el, events2) {
   const abortController = new AbortController();
-  for (const eventName in events) {
-    const handler = events[eventName];
+  for (const eventName in events2) {
+    const handler = events2[eventName];
     el.addEventListener(eventName, handler, {
       signal: abortController.signal,
       passive: false
@@ -1500,13 +1505,20 @@ function parentEventData(callback) {
   };
 }
 export {
+  addClass,
+  addEvents,
   animations,
+  copyNodeStyle,
   dragAndDrop,
   dragStateProps,
   dragValues,
   dragstart2 as dragstart,
   dragstartClasses,
   end,
+  eventCoordinates,
+  events,
+  getElFromPoint,
+  getScrollParent,
   handleDragoverNode,
   handleDragoverParent,
   handleDragstart,
@@ -1520,6 +1532,7 @@ export {
   initDrag,
   initTouch,
   isBrowser,
+  isNode,
   multiDrag,
   nodeEventData,
   nodes,
@@ -1530,6 +1543,7 @@ export {
   performTransfer,
   remapFinished,
   remapNodes,
+  removeClass,
   resetState,
   selections,
   setDragState,

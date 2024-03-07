@@ -579,6 +579,55 @@ interface TouchStateProps {
  * @internal
  */
 declare const isBrowser: boolean;
+declare function addClass(els: Array<Node | HTMLElement | Element>, className: string | undefined, omitAppendPrivateClass?: boolean): void;
+declare function removeClass(els: Array<Node | HTMLElement | Element>, className: string | undefined): void;
+/**
+ * Used for getting the closest scrollable parent of a given element.
+ *
+ * @param node - The element to get the closest scrollable parent of.
+ *
+ * @internal
+ */
+declare function getScrollParent(node: HTMLElement | null): HTMLElement | undefined;
+/**
+ * Used for setting a single event listener on x number of events for a given
+ * element.
+ *
+ * @param el - The element to set the event listener on.
+ *
+ * @param events - An array of events to set the event listener on.
+ *
+ * @param fn - The function to run when the event is triggered.
+ *
+ * @param remove - Whether or not to remove the event listener.
+ *
+ * @internal
+ */
+declare function events(el: Node | HTMLElement, events: Array<string>, fn: any, remove?: boolean): void;
+declare function getElFromPoint<T>(eventData: NodeEventData<T>): NodeFromPoint<T> | ParentFromPoint<T> | undefined;
+/**
+ * Checks to see that a given element and its parent node are instances of
+ * HTML Elements.
+ *
+ * @param {unknown} el - The element to check.
+ *
+ * @returns {boolean} - Whether or not provided element is of type Node.
+ */
+declare function isNode(el: unknown): el is Node;
+/**
+ * Takes a given el and event handlers, assigns them, and returns the used abort
+ * controller.
+ *
+ * @param el - The element to add the event listeners to.
+ * @param events - The events to add to the element.
+ * @returns - The abort controller used for the event listeners.
+ */
+declare function addEvents(el: Document | ShadowRoot | Node | HTMLElement, events: EventHandlers | any): AbortController;
+declare function copyNodeStyle(sourceNode: Node, targetNode: Node, omitKeys?: boolean): void;
+declare function eventCoordinates(data: DragEvent | TouchEvent): {
+    x: number;
+    y: number;
+};
 
 interface MultiDragConfig<T> {
     [key: string]: any;
@@ -739,4 +788,4 @@ declare function performTransfer<T>(state: DragState<T> | TouchState<T>, data: N
 declare function transfer<T>(data: NodeEventData<T> | ParentEventData<T>, state: DragState<T> | TouchState<T>): void;
 declare function parentEventData<T>(callback: any): (e: Event) => NodeEventData<T> | undefined;
 
-export { type DNDPlugin, type DNDPluginData, type DragAndDrop, type DragAndDropData, type DragState, type DragStateProps, type EventHandlers, type Node, type NodeData, type NodeDragEventData, type NodeEvent, type NodeEventData, type NodeFromPoint, type NodeRecord, type NodeTargetData, type NodeTouchEventData, type NodesData, type ParentConfig, type ParentData, type ParentDragEventData, type ParentEventData, type ParentFromPoint, type ParentObservers, type ParentRecord, type ParentTargetData, type ParentsData, type PluginData, type SetupNode, type SetupNodeData, type TearDownNode, type TearDownNodeData, type TouchOverNodeEvent, type TouchOverParentEvent, type TouchState, type TouchStateProps, animations, dragAndDrop, dragStateProps, dragValues, dragstart, dragstartClasses, end, handleDragoverNode, handleDragoverParent, handleDragstart, handleEnd, handleLongTouch, handleTouchOverNode, handleTouchOverParent, handleTouchedNode, handleTouchmove, handleTouchstart, initDrag, initTouch, isBrowser, multiDrag, nodeEventData, nodes, parentEventData, parentValues, parents, performSort, performTransfer, remapFinished, remapNodes, resetState, selections, setDragState, setParentValues, setTouchState, setupNode, setupNodeRemap, sort, state, tearDown, tearDownNode, tearDownNodeRemap, transfer, validateSort, validateTransfer };
+export { type DNDPlugin, type DNDPluginData, type DragAndDrop, type DragAndDropData, type DragState, type DragStateProps, type EventHandlers, type Node, type NodeData, type NodeDragEventData, type NodeEvent, type NodeEventData, type NodeFromPoint, type NodeRecord, type NodeTargetData, type NodeTouchEventData, type NodesData, type ParentConfig, type ParentData, type ParentDragEventData, type ParentEventData, type ParentFromPoint, type ParentObservers, type ParentRecord, type ParentTargetData, type ParentsData, type PluginData, type SetupNode, type SetupNodeData, type TearDownNode, type TearDownNodeData, type TouchOverNodeEvent, type TouchOverParentEvent, type TouchState, type TouchStateProps, addClass, addEvents, animations, copyNodeStyle, dragAndDrop, dragStateProps, dragValues, dragstart, dragstartClasses, end, eventCoordinates, events, getElFromPoint, getScrollParent, handleDragoverNode, handleDragoverParent, handleDragstart, handleEnd, handleLongTouch, handleTouchOverNode, handleTouchOverParent, handleTouchedNode, handleTouchmove, handleTouchstart, initDrag, initTouch, isBrowser, isNode, multiDrag, nodeEventData, nodes, parentEventData, parentValues, parents, performSort, performTransfer, remapFinished, remapNodes, removeClass, resetState, selections, setDragState, setParentValues, setTouchState, setupNode, setupNodeRemap, sort, state, tearDown, tearDownNode, tearDownNodeRemap, transfer, validateSort, validateTransfer };

@@ -38,8 +38,8 @@ export { isBrowser };
 export * from "./types";
 export { multiDrag } from "./plugins/multiDrag";
 export { animations } from "./plugins/animations";
-
 export { selections } from "./plugins/multiDrag/plugins/selections";
+export * from "./utils";
 
 export const nodes: NodesData<any> = new WeakMap<Node, NodeData<any>>();
 

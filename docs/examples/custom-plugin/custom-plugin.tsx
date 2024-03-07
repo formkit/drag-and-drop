@@ -1,23 +1,22 @@
 import React from "react";
 import { useState } from "react";
-import type { DNDPlugin } from "@formkit/drag-and-drop";
 import { useDragAndDrop } from "@formkit/drag-and-drop/react";
-import { parents } from "@formkit/drag-and-drop";
+import { parents, addEvents } from "@formkit/drag-and-drop";
 
-export function myComponent() {
+function App() {
   const [dragStatus, setDragStatus] = useState("Not dragging");
-  const [dragCount, setCount] = useState(0);
+  const [dragCount, setDragCount] = useState(0);
 
-  const dragStatusPlugin: DNDPlugin = (parent) => {
+  const dragStatusPlugin = (parent) => {
     const parentData = parents.get(parent);
-
     if (!parentData) return;
 
-    function dragstart(event: DragEvent) {
-      const node = event.target as HTMLElement;
+    function dragstart(event) {
+      const node = event.target;
       setDragStatus(`Dragging ${node.textContent}`);
-      setCount(dragCount + 1);
+      setDragCount((count) => count + 1);
     }
+
     function dragend() {
       setDragStatus("Not dragging");
     }
@@ -26,34 +25,38 @@ export function myComponent() {
       setup() {},
       teardown() {},
       setupNode(data) {
-        data.node.addEventListener("dragstart", dragstart);
-        data.node.addEventListener("dragend", dragend);
+        data.nodeData.abortControllers.customPlugin = addEvents(data.node, {
+          dragstart: dragstart,
+          dragend: dragend,
+        });
       },
       tearDownNode(data) {
-        data.node.removeEventListener("dragstart", dragstart);
-        data.node.removeEventListener("dragend", dragend);
+        if (data.nodeData?.abortControllers?.customPlugin) {
+          data.nodeData?.abortControllers?.customPlugin.abort();
+        }
       },
-      setupNodeRemap(data) {},
-      tearDownNodeRemap(data) {},
+      setupNodeRemap() {},
+      tearDownNodeRemap() {},
     };
   };
-
-  const [parent, items] = useDragAndDrop<HTMLUListElement, string>(
+  const [parent, items] = useDragAndDrop(
     ["🍦 vanilla", "🍫 chocolate", "🍓 strawberry"],
-    {
-      plugins: [dragStatusPlugin],
-    }
+    { plugins: [dragStatusPlugin] }
   );
   return (
     <div>
       <strong>Rank your favorite flavors</strong>
+      <br />
       <span>{dragStatus}</span>
+      <br />
       <span>{dragCount}</span>
       <ul ref={parent}>
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
+        {items.map((item) => {
+          return <li key={item}>{item}</li>;
+        })}
       </ul>
     </div>
   );
 }
+
+export default App;
