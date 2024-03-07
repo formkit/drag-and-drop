@@ -1,5 +1,6 @@
 import React from "react";
 import { useState } from "react";
+import type { DNDPlugin } from "@formkit/drag-and-drop";
 import { useDragAndDrop } from "@formkit/drag-and-drop/react";
 import { parents, addEvents } from "@formkit/drag-and-drop";
 
@@ -7,12 +8,12 @@ function App() {
   const [dragStatus, setDragStatus] = useState("Not dragging");
   const [dragCount, setDragCount] = useState(0);
 
-  const dragStatusPlugin = (parent) => {
+  const dragStatusPlugin: DNDPlugin = (parent) => {
     const parentData = parents.get(parent);
     if (!parentData) return;
 
-    function dragstart(event) {
-      const node = event.target;
+    function dragstart(event: DragEvent) {
+      const node = event.target as HTMLElement;
       setDragStatus(`Dragging ${node.textContent}`);
       setDragCount((count) => count + 1);
     }
@@ -39,7 +40,7 @@ function App() {
       tearDownNodeRemap() {},
     };
   };
-  const [parent, items] = useDragAndDrop(
+  const [parent, items] = useDragAndDrop<HTMLUListElement, string>(
     ["🍦 vanilla", "🍫 chocolate", "🍓 strawberry"],
     { plugins: [dragStatusPlugin] }
   );
