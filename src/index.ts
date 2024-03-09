@@ -830,21 +830,21 @@ export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
 export function handleDragoverParent<T>(eventData: ParentEventData<T>) {
   if (!state) return;
 
-  const scrollParent = getScrollParent(eventData.targetData.parent.el);
+  const parent = eventData.targetData.parent.el;
 
-  if (scrollParent && eventData.e instanceof DragEvent) {
-    const rect = eventData.targetData.parent.el.getBoundingClientRect();
+  if (parent && eventData.e instanceof DragEvent) {
+    const rect = parent.getBoundingClientRect();
 
     const { x, y } = eventCoordinates(eventData.e);
 
     if (x > rect.right * 0.75) {
-      scrollParent.scrollBy(10, 0);
+      parent.scrollBy(10, 0);
     } else if (x < rect.left + rect.width * 0.25) {
-      scrollParent.scrollBy(-10, 0);
+      parent.scrollBy(-10, 0);
     } else if (y > rect.bottom * 0.75) {
-      scrollParent.scrollBy(0, 10);
+      parent.scrollBy(0, 10);
     } else if (y < rect.top + rect.height * 0.25) {
-      scrollParent.scrollBy(0, -10);
+      parent.scrollBy(0, -10);
     }
   }
 
@@ -950,10 +950,6 @@ export function validateSort<T>(
     incomingDirection = yDiff > 0 ? "above" : "below";
   } else {
     incomingDirection = xDiff > 0 ? "left" : "right";
-  }
-
-  if (incomingDirection === "below") {
-    data.targetData.node.el.scrollIntoView(true);
   }
 
   const threshold = state.lastParent.data.config.threshold;
