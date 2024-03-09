@@ -119,8 +119,6 @@ export function getScrollParent(
     node.scrollHeight > node.clientHeight ||
     node.scrollWidth > node.clientWidth
   ) {
-    console.log(node.scrollHeight, node.clientHeight);
-    console.log(node.scrollWidth, node.clientWidth);
     return node;
   } else if (node.parentNode instanceof HTMLElement) {
     return getScrollParent(node.parentNode);

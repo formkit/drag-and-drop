@@ -148,8 +148,6 @@ function getScrollParent(node) {
   if (node == null)
     return void 0;
   if (node.scrollHeight > node.clientHeight || node.scrollWidth > node.clientWidth) {
-    console.log(node.scrollHeight, node.clientHeight);
-    console.log(node.scrollWidth, node.clientWidth);
     return node;
   } else if (node.parentNode instanceof HTMLElement) {
     return getScrollParent(node.parentNode);
@@ -1416,23 +1414,24 @@ function handleDragoverNode(data) {
     return;
   dragoverNode(data, state);
 }
+function handleScroll(parent, e) {
+  const rect = parent.getBoundingClientRect();
+  const { x, y } = eventCoordinates(e);
+  if (x > rect.right * 0.75) {
+    parent.scrollBy(10, 0);
+  } else if (x < rect.left + rect.width * 0.25) {
+    parent.scrollBy(-10, 0);
+  } else if (y > rect.bottom * 0.75) {
+    parent.scrollBy(0, 10);
+  } else if (y < rect.top + rect.height * 0.25) {
+    parent.scrollBy(0, -10);
+  }
+}
 function handleDragoverParent(eventData) {
   if (!state)
     return;
-  const parent = eventData.targetData.parent.el;
-  if (parent && eventData.e instanceof DragEvent) {
-    const rect = parent.getBoundingClientRect();
-    const { x, y } = eventCoordinates(eventData.e);
-    if (x > rect.right * 0.75) {
-      parent.scrollBy(10, 0);
-    } else if (x < rect.left + rect.width * 0.25) {
-      parent.scrollBy(-10, 0);
-    } else if (y > rect.bottom * 0.75) {
-      parent.scrollBy(0, 10);
-    } else if (y < rect.top + rect.height * 0.25) {
-      parent.scrollBy(0, -10);
-    }
-  }
+  if (eventData.e instanceof DragEvent)
+    handleScroll(eventData.targetData.parent.el, eventData.e);
   transfer(eventData, state);
 }
 function handleTouchOverParent(e) {

@@ -827,29 +827,27 @@ export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
   dragoverNode(data, state);
 }
 
+function handleScroll(parent: HTMLElement, e: DragEvent | TouchEvent) {
+  const rect = parent.getBoundingClientRect();
+
+  const { x, y } = eventCoordinates(e);
+
+  if (x > rect.right * 0.75) {
+    parent.scrollBy(10, 0);
+  } else if (x < rect.left + rect.width * 0.25) {
+    parent.scrollBy(-10, 0);
+  } else if (y > rect.bottom * 0.75) {
+    parent.scrollBy(0, 10);
+  } else if (y < rect.top + rect.height * 0.25) {
+    parent.scrollBy(0, -10);
+  }
+}
+
 export function handleDragoverParent<T>(eventData: ParentEventData<T>) {
   if (!state) return;
 
-  const parent = eventData.targetData.parent.el;
-
-  if (
-    (parent && eventData.e instanceof DragEvent) ||
-    eventData.e instanceof TouchEvent
-  ) {
-    const rect = parent.getBoundingClientRect();
-
-    const { x, y } = eventCoordinates(eventData.e);
-
-    if (x > rect.right * 0.75) {
-      parent.scrollBy(10, 0);
-    } else if (x < rect.left + rect.width * 0.25) {
-      parent.scrollBy(-10, 0);
-    } else if (y > rect.bottom * 0.75) {
-      parent.scrollBy(0, 10);
-    } else if (y < rect.top + rect.height * 0.25) {
-      parent.scrollBy(0, -10);
-    }
-  }
+  if (eventData.e instanceof DragEvent)
+    handleScroll(eventData.targetData.parent.el, eventData.e);
 
   transfer(eventData, state);
 }
