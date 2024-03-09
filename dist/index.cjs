@@ -71,6 +71,7 @@ __export(src_exports, {
   tearDown: () => tearDown,
   tearDownNode: () => tearDownNode,
   tearDownNodeRemap: () => tearDownNodeRemap,
+  throttle: () => throttle,
   transfer: () => transfer,
   validateSort: () => validateSort,
   validateTransfer: () => validateTransfer
@@ -78,6 +79,18 @@ __export(src_exports, {
 module.exports = __toCommonJS(src_exports);
 
 // src/utils.ts
+function throttle(callback, limit) {
+  var wait = false;
+  return function(...args) {
+    if (!wait) {
+      callback.call(null, ...args);
+      wait = true;
+      setTimeout(function() {
+        wait = false;
+      }, limit);
+    }
+  };
+}
 function splitClass(className) {
   return className.split(" ").filter((x) => x);
 }
@@ -134,7 +147,7 @@ function removeClass(els, className) {
 function getScrollParent(node) {
   if (node == null)
     return void 0;
-  if (node.scrollHeight > node.clientHeight) {
+  if (node.scrollHeight > node.clientHeight || node.scrollWidth > node.clientWidth) {
     return node;
   } else if (node.parentNode instanceof HTMLElement) {
     return getScrollParent(node.parentNode);
@@ -1004,7 +1017,9 @@ function setup(parent, parentData) {
   nodesObserver.observe(parent, { childList: true });
   parents.set(parent, parentData);
   parentData.abortControllers.mainParent = addEvents(parent, {
-    dragover: parentEventData(parentData.config.handleDragoverParent),
+    dragover: parentEventData(
+      throttle(parentData.config.handleDragoverParent, 10)
+    ),
     touchOverParent: parentData.config.handleTouchOverParent
   });
 }
@@ -1402,6 +1417,20 @@ function handleDragoverNode(data) {
 function handleDragoverParent(eventData) {
   if (!state)
     return;
+  const scrollParent = getScrollParent(eventData.targetData.parent.el);
+  if (scrollParent && eventData.e instanceof DragEvent) {
+    const rect = eventData.targetData.parent.el.getBoundingClientRect();
+    const { x, y } = eventCoordinates(eventData.e);
+    if (x > rect.right * 0.75) {
+      scrollParent.scrollBy(10, 0);
+    } else if (x < rect.left + rect.width * 0.25) {
+      scrollParent.scrollBy(-10, 0);
+    } else if (y > rect.bottom * 0.75) {
+      scrollParent.scrollBy(0, 10);
+    } else if (y < rect.top + rect.height * 0.25) {
+      scrollParent.scrollBy(0, -10);
+    }
+  }
   transfer(eventData, state);
 }
 function handleTouchOverParent(e) {
@@ -1453,6 +1482,9 @@ function validateSort(data, state2, x, y) {
     incomingDirection = yDiff > 0 ? "above" : "below";
   } else {
     incomingDirection = xDiff > 0 ? "left" : "right";
+  }
+  if (incomingDirection === "below") {
+    data.targetData.node.el.scrollIntoView(true);
   }
   const threshold = state2.lastParent.data.config.threshold;
   switch (incomingDirection) {
@@ -1636,6 +1668,7 @@ function parentEventData(callback) {
   tearDown,
   tearDownNode,
   tearDownNodeRemap,
+  throttle,
   transfer,
   validateSort,
   validateTransfer

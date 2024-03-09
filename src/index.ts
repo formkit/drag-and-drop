@@ -832,10 +832,11 @@ export function handleDragoverParent<T>(eventData: ParentEventData<T>) {
 
   const scrollParent = getScrollParent(eventData.targetData.parent.el);
 
-  if (scrollParent) {
+  if (scrollParent && eventData.e instanceof DragEvent) {
     const rect = eventData.targetData.parent.el.getBoundingClientRect();
 
     const { x, y } = eventCoordinates(eventData.e);
+
     if (x > rect.right * 0.75) {
       scrollParent.scrollBy(10, 0);
     } else if (x < rect.left + rect.width * 0.25) {

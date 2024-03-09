@@ -256,7 +256,7 @@ export interface NodeTouchEventData<T> extends NodeEventData<T> {
  * @param targetData - The data of the target parent.
  */
 export interface ParentEventData<T> {
-  e: DragEvent | TouchEvent;
+  e: Event;
   targetData: ParentTargetData<T>;
 }
 
