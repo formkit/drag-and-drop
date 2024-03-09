@@ -832,7 +832,10 @@ export function handleDragoverParent<T>(eventData: ParentEventData<T>) {
 
   const parent = eventData.targetData.parent.el;
 
-  if (parent && eventData.e instanceof DragEvent) {
+  if (
+    (parent && eventData.e instanceof DragEvent) ||
+    eventData.e instanceof TouchEvent
+  ) {
     const rect = parent.getBoundingClientRect();
 
     const { x, y } = eventCoordinates(eventData.e);
