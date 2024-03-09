@@ -1405,8 +1405,6 @@ function validateSort(data, state2, x, y) {
   } else {
     incomingDirection = xDiff > 0 ? "left" : "right";
   }
-  if (incomingDirection === "below") {
-  }
   const threshold = state2.lastParent.data.config.threshold;
   switch (incomingDirection) {
     case "left":
