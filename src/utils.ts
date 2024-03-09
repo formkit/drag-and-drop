@@ -9,6 +9,19 @@ import type {
 
 import { parents, nodes } from "./index";
 
+export function throttle(callback: any, limit: number) {
+  var wait = false;
+  return function (...args: any[]) {
+    if (!wait) {
+      callback.call(null, ...args);
+      wait = true;
+      setTimeout(function () {
+        wait = false;
+      }, limit);
+    }
+  };
+}
+
 function splitClass(className: string): Array<string> {
   return className.split(" ").filter((x) => x);
 }
@@ -102,7 +115,10 @@ export function getScrollParent(
 ): HTMLElement | undefined {
   if (node == null) return undefined;
 
-  if (node.scrollHeight > node.clientHeight) {
+  if (
+    node.scrollHeight > node.clientHeight ||
+    node.scrollWidth > node.clientWidth
+  ) {
     return node;
   } else if (node.parentNode instanceof HTMLElement) {
     return getScrollParent(node.parentNode);
