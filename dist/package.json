@@ -1,6 +1,6 @@
 {
   "name": "@formkit/drag-and-drop",
-  "version": "0.0.26",
+  "version": "0.0.27",
   "description": "Drag and drop package.",
   "main": "./index.cjs",
   "types": "./index.d.cts",

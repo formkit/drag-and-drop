@@ -1416,15 +1416,11 @@ function handleDragoverNode(data) {
 }
 function handleScroll(parent, e) {
   const rect = parent.getBoundingClientRect();
-  const { x, y } = eventCoordinates(e);
+  const { x } = eventCoordinates(e);
   if (x > rect.right * 0.75) {
     parent.scrollBy(10, 0);
   } else if (x < rect.left + rect.width * 0.25) {
     parent.scrollBy(-10, 0);
-  } else if (y > rect.bottom * 0.75) {
-    parent.scrollBy(0, 10);
-  } else if (y < rect.top + rect.height * 0.25) {
-    parent.scrollBy(0, -10);
   }
 }
 function handleDragoverParent(eventData) {
