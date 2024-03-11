@@ -272,6 +272,7 @@ function nodesMutated(mutationList: MutationRecord[]) {
 
   remapNodes(parentEl);
 }
+
 /**
  * Remaps the data of the parent element's children.
  *
@@ -836,10 +837,6 @@ function handleScroll(parent: HTMLElement, e: DragEvent | TouchEvent) {
     parent.scrollBy(10, 0);
   } else if (x < rect.left + rect.width * 0.25) {
     parent.scrollBy(-10, 0);
-  } else if (y > rect.bottom * 0.75) {
-    parent.scrollBy(0, 10);
-  } else if (y < rect.top + rect.height * 0.25) {
-    parent.scrollBy(0, -10);
   }
 }
 
