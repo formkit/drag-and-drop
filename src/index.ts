@@ -831,7 +831,7 @@ export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
 function handleScroll(parent: HTMLElement, e: DragEvent | TouchEvent) {
   const rect = parent.getBoundingClientRect();
 
-  const { x, y } = eventCoordinates(e);
+  const { x } = eventCoordinates(e);
 
   if (x > rect.right * 0.75) {
     parent.scrollBy(10, 0);
