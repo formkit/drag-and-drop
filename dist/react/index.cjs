@@ -38,14 +38,10 @@ function getEl(parent) {
     return;
   }
 }
-function handleReactElements(elements, cb) {
-  if (!Array.isArray(elements))
-    elements = [elements];
-  for (const element of elements) {
-    const el = getEl(element);
-    if (el)
-      cb(el);
-  }
+function handleReactElements(element, cb) {
+  const el = getEl(element);
+  if (el)
+    cb(el);
 }
 
 // src/react/index.ts

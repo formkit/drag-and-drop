@@ -498,6 +498,7 @@ interface DragStateProps<T> {
     lastParent: ParentRecord<T>;
 }
 
+type VueElement = HTMLElement | Ref<HTMLElement | undefined>;
 interface VueDragAndDropData<T> extends VueParentConfig<T> {
     parent: HTMLElement | Ref<HTMLElement | undefined>;
     values: Ref<Array<T>>;
@@ -521,4 +522,4 @@ declare function dragAndDrop<T>(data: VueDragAndDropData<T> | Array<VueDragAndDr
  */
 declare function useDragAndDrop<T>(initialValues: T[], options?: Partial<ParentConfig$1<T>>): [Ref<HTMLElement | undefined>, Ref<T[]>];
 
-export { type VueDragAndDropData, type VueParentConfig, dragAndDrop, useDragAndDrop };
+export { type VueDragAndDropData, type VueElement, type VueParentConfig, dragAndDrop, useDragAndDrop };
