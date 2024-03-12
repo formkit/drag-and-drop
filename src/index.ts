@@ -833,9 +833,9 @@ function handleScroll(parent: HTMLElement, e: DragEvent | TouchEvent) {
 
   const { x } = eventCoordinates(e);
 
-  if (x > rect.right * 0.75) {
+  if (x > rect.right * 0.85) {
     parent.scrollBy(10, 0);
-  } else if (x < rect.left + rect.width * 0.25) {
+  } else if (x < rect.left + rect.width * 0.15) {
     parent.scrollBy(-10, 0);
   }
 }

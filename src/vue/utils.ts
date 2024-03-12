@@ -1,4 +1,3 @@
-import type { Ref } from "vue";
 import type { VueElement } from "./types";
 import { watch } from "vue";
 
@@ -7,9 +6,7 @@ import { watch } from "vue";
  *
  * @param dnd - The drag and drop configuration.
  */
-export function getEl(
-  parent: HTMLElement | Ref<HTMLElement | null>
-): HTMLElement | void {
+export function getEl(parent: VueElement): HTMLElement | void {
   if (parent instanceof HTMLElement) return parent;
   else if (parent.value instanceof HTMLElement) return parent.value;
   else if ("$el" in parent && parent.$el instanceof HTMLElement)

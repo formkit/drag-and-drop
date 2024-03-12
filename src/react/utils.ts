@@ -1,11 +1,13 @@
-import type { ReactElement } from "./types";
+import type { RefObject } from "react";
 
 /**
  * Checks if the given parent is an HTMLElement.
  *
  * @param dnd - The drag and drop configuration.
  */
-export function getEl(parent: HTMLElement | ReactElement): HTMLElement | void {
+export function getEl<E>(
+  parent: HTMLElement | RefObject<E | null>
+): HTMLElement | void {
   if (parent instanceof HTMLElement) return parent;
   else if ("current" in parent && parent.current instanceof HTMLElement)
     return parent.current;
@@ -16,15 +18,11 @@ export function getEl(parent: HTMLElement | ReactElement): HTMLElement | void {
   }
 }
 
-export function handleReactElements(
-  elements: Array<ReactElement> | ReactElement,
+export function handleReactElements<E>(
+  element: HTMLElement | RefObject<E | null>,
   cb: (el: HTMLElement) => void
 ): void {
-  if (!Array.isArray(elements)) elements = [elements];
+  const el = getEl(element);
 
-  for (const element of elements) {
-    const el = getEl(element);
-
-    if (el) cb(el);
-  }
+  if (el) cb(el);
 }
