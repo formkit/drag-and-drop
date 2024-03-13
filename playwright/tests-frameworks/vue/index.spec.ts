@@ -8,127 +8,84 @@ test.beforeAll(async ({ browser }) => {
   await page.goto("http://localhost:5173/");
 });
 
-test.describe("Vue wrappers correctly init dragAndDrop", async () => {
-  test("Init parent by passing in the parent elmeent directly to `dragAndDrop `function.", async () => {
-    const listitems = page.locator("#vue_1 .item");
-    for (let i = 0; i < (await listitems.count()); i++) {
-      await expect(listitems.nth(i)).toHaveAttribute("draggable", "true");
-    }
+test.describe("Vue wrappers working as expected", async () => {
+  test("dragAndDrop() can enable sorting, accept new values, and update the parent config", async () => {
+    // Check that the list items can be sorted
     await dragDrop(page, {
-      origin: "#vue_1_10_of_clubs",
-      destination: "#vue_1_jack_of_hearts",
+      origin: "#vue_drag_and_drop_10_of_clubs",
+      destination: "#vue_drag_and_drop_jack_of_hearts",
       dragStart: true,
-      drop: false,
+      drop: true,
     });
-    await expect(page.locator("#vue_1_values")).toHaveText(
+    await expect(page.locator("#vue_drag_and_drop_values")).toHaveText(
+      "jack_of_hearts 10_of_clubs"
+    );
+    // Add value
+    await page.locator("#vue_drag_and_drop_add_value").click();
+    await expect(page.locator("#vue_drag_and_drop_values")).toHaveText(
       "jack_of_hearts 10_of_clubs queen_of_spades"
     );
+    // Check that the list items can be sorted
     await dragDrop(page, {
-      destination: "#vue_1_queen_of_spades",
-      dragStart: false,
+      origin: "#vue_drag_and_drop_10_of_clubs",
+      destination: "#vue_drag_and_drop_queen_of_spades",
+      dragStart: true,
       drop: true,
     });
-    await expect(page.locator("#vue_1_values")).toHaveText(
+    await expect(page.locator("#vue_drag_and_drop_values")).toHaveText(
       "jack_of_hearts queen_of_spades 10_of_clubs"
     );
+    // Disable drag and drop
+    await page.locator("#vue_drag_and_drop_disable").click();
+    // Check that the list items can not be sorted
     await dragDrop(page, {
-      origin: "#vue_1_jack_of_hearts",
-      destination: "#vue_1_queen_of_spades",
+      origin: "#vue_drag_and_drop_10_of_clubs",
+      destination: "#vue_drag_and_drop_queen_of_spades",
       dragStart: true,
-      drop: false,
-    });
-    await expect(page.locator("#vue_1_values")).toHaveText(
-      "queen_of_spades jack_of_hearts 10_of_clubs"
-    );
-    await dragDrop(page, {
-      destination: "#vue_1_10_of_clubs",
-      dragStart: false,
       drop: true,
     });
-    await expect(page.locator("#vue_1_values")).toHaveText(
-      "queen_of_spades 10_of_clubs jack_of_hearts"
+    await expect(page.locator("#vue_drag_and_drop_values")).toHaveText(
+      "jack_of_hearts queen_of_spades 10_of_clubs"
     );
   });
 
-  test("init parent by passing in a Vue ref directly to `dragAndDrop` function.", async () => {
-    const listitems = page.locator("#vue_2 .item");
-    for (let i = 0; i < (await listitems.count()); i++) {
-      await expect(listitems.nth(i)).toHaveAttribute("draggable", "true");
-    }
+  test("useDragAndDrop() can enable sorting, accept new values, and update the parent config", async () => {
+    // Check that the list items can be sorted
     await dragDrop(page, {
-      origin: "#vue_2_10_of_clubs",
-      destination: "#vue_2_jack_of_hearts",
+      origin: "#vue_use_drag_and_drop_10_of_clubs",
+      destination: "#vue_use_drag_and_drop_jack_of_hearts",
       dragStart: true,
-      drop: false,
+      drop: true,
     });
-    await expect(page.locator("#vue_2_values")).toHaveText(
+    await expect(page.locator("#vue_use_drag_and_drop_values")).toHaveText(
+      "jack_of_hearts 10_of_clubs"
+    );
+    // Add value
+    await page.locator("#vue_use_drag_and_drop_add_value").click();
+    await expect(page.locator("#vue_use_drag_and_drop_values")).toHaveText(
       "jack_of_hearts 10_of_clubs queen_of_spades"
     );
+    // Check that the list items can be sorted
     await dragDrop(page, {
-      destination: "#vue_2_queen_of_spades",
-      dragStart: false,
+      origin: "#vue_use_drag_and_drop_10_of_clubs",
+      destination: "#vue_use_drag_and_drop_queen_of_spades",
+      dragStart: true,
       drop: true,
     });
-    await expect(page.locator("#vue_2_values")).toHaveText(
+    await expect(page.locator("#vue_use_drag_and_drop_values")).toHaveText(
       "jack_of_hearts queen_of_spades 10_of_clubs"
     );
+    // Disable drag and drop
+    await page.locator("#vue_use_drag_and_drop_disable").click();
+    // Check that the list items can not be sorted
     await dragDrop(page, {
-      origin: "#vue_2_jack_of_hearts",
-      destination: "#vue_2_queen_of_spades",
+      origin: "#vue_use_drag_and_drop_10_of_clubs",
+      destination: "#vue_use_drag_and_drop_queen_of_spades",
       dragStart: true,
-      drop: false,
-    });
-    await expect(page.locator("#vue_2_values")).toHaveText(
-      "queen_of_spades jack_of_hearts 10_of_clubs"
-    );
-    await dragDrop(page, {
-      destination: "#vue_2_10_of_clubs",
-      dragStart: false,
       drop: true,
     });
-    await expect(page.locator("#vue_2_values")).toHaveText(
-      "queen_of_spades 10_of_clubs jack_of_hearts"
-    );
-  });
-
-  test("Init parent by calling `useDragAndDrop`.", async () => {
-    const listitems = page.locator("#vue_3 .item");
-    for (let i = 0; i < (await listitems.count()); i++) {
-      await expect(listitems.nth(i)).toHaveAttribute("draggable", "true");
-    }
-    await dragDrop(page, {
-      origin: "#vue_3_10_of_clubs",
-      destination: "#vue_3_jack_of_hearts",
-      dragStart: true,
-      drop: false,
-    });
-    await expect(page.locator("#vue_3_values")).toHaveText(
-      "jack_of_hearts 10_of_clubs queen_of_spades"
-    );
-    await dragDrop(page, {
-      destination: "#vue_3_queen_of_spades",
-      dragStart: false,
-      drop: true,
-    });
-    await expect(page.locator("#vue_3_values")).toHaveText(
+    await expect(page.locator("#vue_use_drag_and_drop_values")).toHaveText(
       "jack_of_hearts queen_of_spades 10_of_clubs"
-    );
-    await dragDrop(page, {
-      origin: "#vue_3_jack_of_hearts",
-      destination: "#vue_3_queen_of_spades",
-      dragStart: true,
-      drop: false,
-    });
-    await expect(page.locator("#vue_3_values")).toHaveText(
-      "queen_of_spades jack_of_hearts 10_of_clubs"
-    );
-    await dragDrop(page, {
-      destination: "#vue_3_10_of_clubs",
-      dragStart: false,
-      drop: true,
-    });
-    await expect(page.locator("#vue_3_values")).toHaveText(
-      "queen_of_spades 10_of_clubs jack_of_hearts"
     );
   });
 });

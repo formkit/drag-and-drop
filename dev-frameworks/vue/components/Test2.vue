@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import { ref } from "vue";
-
-import { dragAndDrop } from "../../../src/vue/index";
+import { useDragAndDrop } from "../../../src/vue/index";
 
 const props = defineProps<{
   id: string;
   testDescription: string;
 }>();
 
-const values = ref([
+const [parent, values, setConfig] = useDragAndDrop([
   {
     id: "10_of_clubs",
     src: "/cards/10_of_clubs.png",
@@ -17,18 +15,18 @@ const values = ref([
     id: "jack_of_hearts",
     src: "/cards/jack_of_hearts.png",
   },
-  {
-    id: "queen_of_spades",
-    src: "/cards/queen_of_spades.png",
-  },
 ]);
 
-const list = ref();
+function addValue() {
+  values.value.push({
+    id: "queen_of_spades",
+    src: "/cards/queen_of_spades.png",
+  });
+}
 
-dragAndDrop({
-  parent: list,
-  values,
-});
+function disable() {
+  setConfig({ disabled: true });
+}
 </script>
 
 <template>
@@ -37,7 +35,7 @@ dragAndDrop({
     <h4>
       {{ props.testDescription }}
     </h4>
-    <ul :id="props.id" ref="list">
+    <ul ref="parent">
       <li
         v-for="card in values"
         :key="card.id"
@@ -47,6 +45,8 @@ dragAndDrop({
         <img :src="`${card.src}`" />
       </li>
     </ul>
+    <button :id="props.id + '_add_value'" @click="addValue">Add value</button>
+    <button :id="props.id + '_disable'" @click="disable">Disable</button>
     <span :id="props.id + '_values'">
       {{ values.map((x) => x.id).join(" ") }}
     </span>

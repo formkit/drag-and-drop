@@ -81,12 +81,25 @@ export function dragAndDrop<T>(
 export function useDragAndDrop<T>(
   initialValues: T[],
   options: Partial<ParentConfig<T>> = {}
-): [Ref<HTMLElement | undefined>, Ref<T[]>] {
+): [
+  Ref<HTMLElement | undefined>,
+  Ref<T[]>,
+  (config: Partial<VueParentConfig<T>>) => void
+] {
   const parent = ref<HTMLElement | undefined>();
+
   const values = ref(initialValues) as Ref<T[]>;
+
+  function setConfig(config: Partial<VueParentConfig<T>> = {}) {
+    console.log("set config", config);
+    dragAndDrop({ parent, values, ...config });
+  }
+
   dragAndDrop({ parent, values, ...options });
+
   onUnmounted(() => parent.value && tearDown(parent.value));
-  return [parent, values];
+
+  return [parent, values, setConfig];
 }
 
 /**

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import Test1 from "./components/Test1.vue";
 import Test2 from "./components/Test2.vue";
-import Test3 from "./components/Test3.vue";
 import vueLogo from "/vuejs-icon.svg";
 </script>
 
@@ -11,20 +10,9 @@ import vueLogo from "/vuejs-icon.svg";
       <img :src="vueLogo" className="logo" alt="Vite logo" />
     </div>
     <div class="content">
-      <Test1
-        id="vue_1"
-        test-description="Init parent by passing in the parent element directly to `dragAndDrop` function."
-      />
+      <Test1 id="vue_drag_and_drop" test-description="dragAndDrop" />
       <div class="divider"></div>
-      <Test2
-        id="vue_2"
-        test-description="Init parent by passing in a Vue ref directly to `dragAndDrop` function."
-      />
-      <div class="divider"></div>
-      <Test3
-        id="vue_3"
-        test-description="Init parent by calling `useDragAndDrop` function."
-      />
+      <Test2 id="vue_use_drag_and_drop" test-description="useDragAndDrop" />
     </div>
   </div>
 </template>

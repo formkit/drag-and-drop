@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { useDragAndDrop } from "../../../src/vue/index";
+import { ref } from "vue";
+import { dragAndDrop } from "../../../src/vue/index";
 
 const props = defineProps<{
   id: string;
   testDescription: string;
 }>();
-const [parent, values] = useDragAndDrop([
+
+const values = ref([
   {
     id: "10_of_clubs",
     src: "/cards/10_of_clubs.png",
@@ -14,11 +16,29 @@ const [parent, values] = useDragAndDrop([
     id: "jack_of_hearts",
     src: "/cards/jack_of_hearts.png",
   },
-  {
+]);
+
+const parent = ref();
+
+dragAndDrop({
+  parent,
+  values,
+});
+
+function addValue() {
+  values.value.push({
     id: "queen_of_spades",
     src: "/cards/queen_of_spades.png",
-  },
-]);
+  });
+}
+
+function disable() {
+  dragAndDrop({
+    parent,
+    values,
+    disabled: true,
+  });
+}
 </script>
 
 <template>
@@ -37,6 +57,8 @@ const [parent, values] = useDragAndDrop([
         <img :src="`${card.src}`" />
       </li>
     </ul>
+    <button :id="props.id + '_add_value'" @click="addValue">Add value</button>
+    <button :id="props.id + '_disable'" @click="disable">Disable</button>
     <span :id="props.id + '_values'">
       {{ values.map((x) => x.id).join(" ") }}
     </span>

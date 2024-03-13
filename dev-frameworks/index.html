@@ -23,6 +23,7 @@
     <div id="app-vue" class="app"></div>
     <script type="module" src="./vue/main.ts"></script>
     <div id="app-react" class="app"></div>
+    <input type="number" step="0.1" />
     <script type="module" src="./react/main.tsx"></script>
   </body>
 </html>
@@ -45,7 +46,6 @@
   .app {
     width: 25%;
     height: 100vh;
-    border: 1px solid #000;
     position: relative;
   }
 
@@ -75,6 +75,7 @@
     display: inline-block;
     margin: 10px;
     background-color: white !important;
-    width: 100px;
+    width: 50px;
+    min-width: 50px;
   }
 </style>
