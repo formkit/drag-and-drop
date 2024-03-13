@@ -1044,7 +1044,7 @@ function remapNodes(parent, force) {
       config.tearDownNode({ node, parent, nodeData, parentData });
     }
     if (config.disabled)
-      return;
+      continue;
     if (!config.draggable || config.draggable && config.draggable(node)) {
       enabledNodes.push(node);
     }
