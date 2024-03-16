@@ -1,4 +1,5 @@
 import type { RefObject } from "react";
+import { useEffect } from "react";
 
 /**
  * Checks if the given parent is an HTMLElement.
@@ -25,4 +26,6 @@ export function handleReactElements<E>(
   const el = getEl(element);
 
   if (el) cb(el);
+
+  console.log("useEffect", el);
 }

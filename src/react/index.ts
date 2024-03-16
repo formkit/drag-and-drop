@@ -16,16 +16,21 @@ const parentValues: WeakMap<
 
 function getValues<T>(parent: HTMLElement): Array<T> {
   const values = parentValues.get(parent);
+
   if (!values) {
     console.warn("No values found for parent element");
+
     return [];
   }
+
   return values[0] as Array<T>;
 }
 
 function setValues(newValues: Array<unknown>, parent: HTMLElement): void {
   const values = parentValues.get(parent);
+
   if (values) values[1](newValues);
+
   parentValues.set(parent, [newValues, values![1]]);
 }
 
@@ -35,6 +40,7 @@ function handleParent<E extends RefObject<HTMLElement | null> | HTMLElement, T>(
 ) {
   return (el: HTMLElement) => {
     parentValues.set(el, values);
+
     initParent<T>({ parent: el, getValues, setValues, config });
   };
 }
@@ -51,9 +57,14 @@ export function dragAndDrop<E extends HTMLElement, I>(
     | Array<ReactDragAndDropConfig<RefObject<E | null> | HTMLElement, I[]>>
 ): void {
   if (!isBrowser) return;
+
+  console.log("drag and drop");
+
   if (!Array.isArray(data)) data = [data];
+
   data.forEach((dnd) => {
     const { parent, state, ...rest } = dnd;
+
     handleReactElements(parent, handleParent(rest, state));
   });
 }
@@ -68,9 +79,19 @@ export function dragAndDrop<E extends HTMLElement, I>(
 export function useDragAndDrop<E extends HTMLElement, T = unknown>(
   list: T[],
   options: Partial<ParentConfig<T>> = {}
-): [RefObject<E>, T[], Dispatch<SetStateAction<T[]>>] {
+): [
+  RefObject<E>,
+  T[],
+  Dispatch<SetStateAction<T[]>>,
+  (config: Partial<ParentConfig<T>>) => void
+] {
   const parent: RefObject<E> = useRef<E>(null);
+
   const [values, setValues] = useState(list);
+
+  function setConfig(config: Partial<ParentConfig<T>> = {}) {
+    dragAndDrop({ parent, state: [values, setValues], ...config });
+  }
 
   useEffect(() => {
     dragAndDrop({ parent, state: [values, setValues], ...options });
@@ -82,5 +103,5 @@ export function useDragAndDrop<E extends HTMLElement, T = unknown>(
     };
   }, []);
 
-  return [parent, values, setValues];
+  return [parent, values, setValues, setConfig];
 }

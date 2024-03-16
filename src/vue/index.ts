@@ -91,7 +91,6 @@ export function useDragAndDrop<T>(
   const values = ref(initialValues) as Ref<T[]>;
 
   function setConfig(config: Partial<VueParentConfig<T>> = {}) {
-    console.log("set config", config);
     dragAndDrop({ parent, values, ...config });
   }
 
