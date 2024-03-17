@@ -1,0 +1,52 @@
+{
+  "name": "@formkit/drag-and-drop",
+  "version": "0.0.30",
+  "description": "Drag and drop package.",
+  "main": "./index.cjs",
+  "types": "./index.d.cts",
+  "type": "module",
+  "scripts": {
+    "dev": "cd dev && pnpm run dev",
+    "dev-frameworks": "cd dev-frameworks && pnpm run dev",
+    "docs": "cd docs && pnpm run dev",
+    "build": "jiti build.ts",
+    "release": "npx bumpp --no-tag --no-push --no-commit && pnpm run build && cd dist && npx publint && pnpm publish --no-git-checks",
+    "lint": "eslint ."
+  },
+  "packages": [],
+  "keywords": [],
+  "author": "Sasha Milenkovic <sasha@formkit.com>",
+  "license": "MIT",
+  "exports": {
+    "./vue": {
+      "require": {
+        "types": "./vue/index.d.cts",
+        "default": "./vue/index.cjs"
+      },
+      "import": {
+        "types": "./vue/index.d.ts",
+        "default": "./vue/index.mjs"
+      }
+    },
+    "./react": {
+      "require": {
+        "types": "./react/index.d.cts",
+        "default": "./react/index.cjs"
+      },
+      "import": {
+        "types": "./react/index.d.ts",
+        "default": "./react/index.mjs"
+      }
+    },
+    ".": {
+      "require": {
+        "types": "./index.d.cts",
+        "default": "./index.cjs"
+      },
+      "import": {
+        "types": "./index.d.ts",
+        "default": "./index.mjs"
+      }
+    }
+  }
+}

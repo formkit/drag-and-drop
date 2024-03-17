@@ -892,6 +892,8 @@ function setDragState(dragStateProps2) {
     affectedNodes: [],
     lastValue: void 0,
     activeNode: void 0,
+    lastTargetValue: void 0,
+    remapJustFinished: false,
     preventEnter: false,
     clonedDraggedEls: [],
     swappedNodeValue: false,

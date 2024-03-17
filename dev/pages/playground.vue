@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useDragAndDrop } from "../../src/vue/index";
-import { animations } from "../../src/index";
 
 const items = ref([
   { name: "Depeche Mode", hasClass: false, cols: 1 },
@@ -13,7 +12,6 @@ const items = ref([
 ]);
 
 const [parent, tapes] = useDragAndDrop(items.value, {
-  plugins: [animations()],
   dragHandle: ".drag-handle",
 });
 </script>
