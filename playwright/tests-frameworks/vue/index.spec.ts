@@ -24,6 +24,7 @@ test.describe("Vue wrappers correctly init dragAndDrop", async () => {
       "jack_of_hearts 10_of_clubs queen_of_spades"
     );
     await dragDrop(page, {
+      origin: "#vue_1_10_of_clubs",
       destination: "#vue_1_queen_of_spades",
       dragStart: false,
       drop: true,
@@ -41,6 +42,7 @@ test.describe("Vue wrappers correctly init dragAndDrop", async () => {
       "queen_of_spades jack_of_hearts 10_of_clubs"
     );
     await dragDrop(page, {
+      origin: "#vue_1_jack_of_hearts",
       destination: "#vue_1_10_of_clubs",
       dragStart: false,
       drop: true,
@@ -65,6 +67,7 @@ test.describe("Vue wrappers correctly init dragAndDrop", async () => {
       "jack_of_hearts 10_of_clubs queen_of_spades"
     );
     await dragDrop(page, {
+      origin: "#vue_2_10_of_clubs",
       destination: "#vue_2_queen_of_spades",
       dragStart: false,
       drop: true,
@@ -82,6 +85,7 @@ test.describe("Vue wrappers correctly init dragAndDrop", async () => {
       "queen_of_spades jack_of_hearts 10_of_clubs"
     );
     await dragDrop(page, {
+      origin: "#vue_2_jack_of_hearts",
       destination: "#vue_2_10_of_clubs",
       dragStart: false,
       drop: true,
@@ -106,6 +110,7 @@ test.describe("Vue wrappers correctly init dragAndDrop", async () => {
       "jack_of_hearts 10_of_clubs queen_of_spades"
     );
     await dragDrop(page, {
+      origin: "#vue_3_10_of_clubs",
       destination: "#vue_3_queen_of_spades",
       dragStart: false,
       drop: true,
@@ -123,6 +128,7 @@ test.describe("Vue wrappers correctly init dragAndDrop", async () => {
       "queen_of_spades jack_of_hearts 10_of_clubs"
     );
     await dragDrop(page, {
+      origin: "#vue_3_jack_of_hearts",
       destination: "#vue_3_10_of_clubs",
       dragStart: false,
       drop: true,

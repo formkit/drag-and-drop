@@ -72,6 +72,10 @@ export async function dragDrop(
         originElement.dispatchEvent(new DragEvent("dragstart", originPayload));
       }
 
+      if (originElement) {
+        originElement.dispatchEvent(new DragEvent("dragover", originPayload));
+      }
+
       if (destinationElement) {
         destinationElement.dispatchEvent(
           new DragEvent("dragover", destinationPayload)
