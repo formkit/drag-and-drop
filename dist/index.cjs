@@ -940,6 +940,7 @@ function performSort(state2, data) {
     ...targetParentValues.filter((x) => !draggedValues.includes(x))
   ];
   newParentValues.splice(data.targetData.node.data.index, 0, ...draggedValues);
+  state2.lastTargetValue = data.targetData.node.data.value;
   setParentValues(data.targetData.parent.el, data.targetData.parent.data, [
     ...newParentValues
   ]);
@@ -1103,6 +1104,7 @@ function remapFinished() {
   if (state) {
     state.preventEnter = false;
     state.swappedNodeValue = void 0;
+    state.remapJustFinished = true;
   }
 }
 function handleDragstart(data) {
@@ -1456,6 +1458,14 @@ function validateTransfer(data, state2) {
 }
 function dragoverNode(eventData, dragState) {
   eventData.e.preventDefault();
+  if (dragState.remapJustFinished) {
+    dragState.lastTargetValue = eventData.targetData.node.data.value;
+    dragState.remapJustFinished = false;
+  } else if (dragState.draggedNode.el === eventData.targetData.node.el) {
+    dragState.lastTargetValue = dragState.draggedNode.data.value;
+  }
+  if (dragState.lastTargetValue === eventData.targetData.node.data.value)
+    return;
   if (dragState.draggedNodes.map((x) => x.el).includes(eventData.targetData.node.el))
     return;
   eventData.targetData.parent.el === dragState.lastParent?.el ? sort(eventData, dragState) : transfer(eventData, dragState);

@@ -76,6 +76,8 @@ export function setDragState<T>(
     affectedNodes: [],
     lastValue: undefined,
     activeNode: undefined,
+    lastTargetValue: undefined,
+    remapJustFinished: false,
     preventEnter: false,
     clonedDraggedEls: [],
     swappedNodeValue: false,
