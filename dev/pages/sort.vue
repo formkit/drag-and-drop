@@ -1,7 +1,18 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../src/vue/index";
+import { animations } from "../../src/index";
 
-const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"]);
+const values = ["Apple", "Banana", "Orange"];
+
+const [parent, reactiveValues] = useDragAndDrop(values, {
+  //threshold: {
+  //  horizontal: 0.5,
+  //  vertical: 0.5,
+  //},
+});
+
+//console.log("parent", parent);
+//console.log("values", values);
 </script>
 
 <template>
@@ -9,7 +20,7 @@ const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"]);
   <div>
     <ul ref="parent">
       <li
-        v-for="value in values"
+        v-for="value in reactiveValues"
         :id="value"
         :key="value"
         class="border-2 border-indigo-600 w-1/4 text-center my-2"

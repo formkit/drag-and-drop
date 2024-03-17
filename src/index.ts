@@ -141,6 +141,8 @@ export function performSort<T>(
 
   newParentValues.splice(data.targetData.node.data.index, 0, ...draggedValues);
 
+  state.lastTargetValue = data.targetData.node.data.value;
+
   setParentValues(data.targetData.parent.el, data.targetData.parent.data, [
     ...newParentValues,
   ]);
@@ -386,6 +388,7 @@ export function remapFinished() {
   if (state) {
     state.preventEnter = false;
     state.swappedNodeValue = undefined;
+    state.remapJustFinished = true;
   }
 }
 
@@ -889,6 +892,17 @@ function dragoverNode<T>(
   dragState: DragState<T>
 ) {
   eventData.e.preventDefault();
+
+  if (dragState.remapJustFinished) {
+    dragState.lastTargetValue = eventData.targetData.node.data.value;
+
+    dragState.remapJustFinished = false;
+  } else if (dragState.draggedNode.el === eventData.targetData.node.el) {
+    dragState.lastTargetValue = dragState.draggedNode.data.value;
+  }
+
+  if (dragState.lastTargetValue === eventData.targetData.node.data.value)
+    return;
 
   if (
     dragState.draggedNodes
