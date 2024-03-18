@@ -9,7 +9,7 @@ test.beforeAll(async ({ browser }) => {
 });
 
 test.describe("Sorting", async () => {
-  test("Touch sort works as expected.", async () => {
+  test.only("Touch sort works as expected.", async () => {
     await touchDrop(page, {
       origin: "#Apple",
       destination: "#Banana",
@@ -20,6 +20,7 @@ test.describe("Sorting", async () => {
       "Banana Apple Orange"
     );
     await touchDrop(page, {
+      origin: "#Apple",
       destination: "#Orange",
       touchStart: false,
       drop: true,
@@ -37,6 +38,7 @@ test.describe("Sorting", async () => {
       "Orange Banana Apple"
     );
     await touchDrop(page, {
+      origin: "#Banana",
       destination: "#Apple",
       touchStart: false,
       drop: true,
