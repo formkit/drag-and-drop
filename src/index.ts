@@ -508,8 +508,6 @@ export function dragstart<T>(data: NodeDragEventData<T>) {
 export function handleTouchOverNode<T>(e: TouchOverNodeEvent<T>) {
   if (!state) return;
 
-  if (state.draggedNode.el === e.detail.targetData.node.el) return;
-
   if (e.detail.targetData.parent.el === state.lastParent.el)
     sort(e.detail, state);
   else transfer(e.detail, state);
@@ -798,15 +796,6 @@ function touchmove<T>(data: NodeTouchEventData<T>, touchState: TouchState<T>) {
 
   if (!elFromPoint) return;
 
-  if (
-    "node" in elFromPoint &&
-    elFromPoint.node.el === touchState.draggedNodes[0].el
-  ) {
-    touchState.lastValue = data.targetData.node.data.value;
-
-    return;
-  }
-
   const touchMoveEventData = {
     e: data.e,
     targetData: elFromPoint,
@@ -895,24 +884,6 @@ function dragoverNode<T>(
 ) {
   eventData.e.preventDefault();
 
-  if (dragState.remapJustFinished) {
-    dragState.lastTargetValue = eventData.targetData.node.data.value;
-
-    dragState.remapJustFinished = false;
-  } else if (dragState.draggedNode.el === eventData.targetData.node.el) {
-    dragState.lastTargetValue = dragState.draggedNode.data.value;
-  }
-
-  if (dragState.lastTargetValue === eventData.targetData.node.data.value)
-    return;
-
-  if (
-    dragState.draggedNodes
-      .map((x) => x.el)
-      .includes(eventData.targetData.node.el)
-  )
-    return;
-
   eventData.targetData.parent.el === dragState.lastParent?.el
     ? sort(eventData, dragState)
     : transfer(eventData, dragState);
@@ -924,8 +895,20 @@ export function validateSort<T>(
   x: number,
   y: number
 ): boolean {
+  if (state.remapJustFinished) {
+    state.lastTargetValue = data.targetData.node.data.value;
+
+    state.remapJustFinished = false;
+  } else if (state.draggedNode.el === data.targetData.node.el) {
+    state.lastTargetValue = state.draggedNode.data.value;
+  }
+
+  if (state.lastTargetValue === data.targetData.node.data.value) return false;
+
+  if (state.draggedNodes.map((x) => x.el).includes(data.targetData.node.el))
+    return false;
+
   if (
-    !state ||
     state.preventEnter ||
     state.swappedNodeValue === data.targetData.node.data.value ||
     data.targetData.parent.el !== state.lastParent?.el ||
