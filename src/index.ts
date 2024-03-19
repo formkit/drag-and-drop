@@ -588,6 +588,8 @@ export function end<T>(
   _eventData: NodeEventData<T>,
   state: DragState<T> | TouchState<T>
 ) {
+  document.removeEventListener("contextmenu", preventDefault);
+
   if ("longTouchTimeout" in state && state.longTouchTimeout)
     clearTimeout(state.longTouchTimeout);
 
@@ -658,6 +660,10 @@ export function initTouch<T>(data: NodeTouchEventData<T>): TouchState<T> {
   return touchState;
 }
 
+function preventDefault(e: Event) {
+  e.preventDefault();
+}
+
 export function handleTouchedNode<T>(
   data: NodeTouchEventData<T>,
   touchState: TouchState<T>
@@ -680,6 +686,8 @@ export function handleTouchedNode<T>(
   copyNodeStyle(data.targetData.node.el, touchState.touchedNode as Node);
 
   touchState.touchedNode.style.display = "none";
+
+  document.addEventListener("contextmenu", preventDefault);
 }
 
 export function handleLongTouch<T>(
@@ -712,10 +720,6 @@ export function handleLongTouch<T>(
       );
 
     data.e.preventDefault();
-
-    document.addEventListener("contextmenu", function (e) {
-      e.preventDefault();
-    });
   }, config.longTouchTimeout || 200);
 }
 

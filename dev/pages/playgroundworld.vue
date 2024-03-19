@@ -16,6 +16,7 @@ dragAndDrop({
   parent: dragList,
   values: tapes,
   dropZoneClass: "saturate-0 opacity-20",
+  longTouch: true,
 });
 </script>
 
@@ -48,33 +49,6 @@ dragAndDrop({
     </div>
   </DemoContainer>
   <div style="height: 1000px">dklsjfkldsajfkljds</div>
-  <DemoContainer name="Sorting">
-    <div class="bg-amber-800 dark:bg-amber-950">
-      <div
-        class="demo-background opacity-75 dark:opacity-40 dark:saturate-50"
-      ></div>
-      <div class="relative z-10 px-2 pt-[30vw] md:pt-40 lg:px-10 pb-10">
-        <img
-          src="/img/paper-jams.webp"
-          alt="FormKit Office Jams"
-          class="contrast-120 brightness-[140%] absolute -top-4 -left-8 -rotate-12 w-full max-w-[500px] drop-shadow-md pointer-events-none"
-        />
-
-        <ul
-          ref="dragList"
-          class="cassette-grid relative flex flex-wrap justify-center items-center w-full z-20"
-        >
-          <li
-            v-for="tape in tapes"
-            :key="tape"
-            class="basis-1/2 md:basis-1/3 text-center cursor-grab active:cursor-grabbing"
-          >
-            <CassetteTape :label="tape" :data-label="tape" />
-          </li>
-        </ul>
-      </div>
-    </div>
-  </DemoContainer>
 </template>
 
 <style scoped>
