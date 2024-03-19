@@ -1247,6 +1247,7 @@ function handleEnd(eventData) {
   resetState();
 }
 function end(_eventData, state2) {
+  document.removeEventListener("contextmenu", preventDefault);
   if ("longTouchTimeout" in state2 && state2.longTouchTimeout)
     clearTimeout(state2.longTouchTimeout);
   const config = parents.get(state2.initialParent.el)?.config;
@@ -1299,6 +1300,9 @@ function initTouch(data) {
   );
   return touchState;
 }
+function preventDefault(e) {
+  e.preventDefault();
+}
 function handleTouchedNode(data, touchState) {
   touchState.touchedNodeDisplay = touchState.touchedNode.style.display;
   const rect = data.targetData.node.el.getBoundingClientRect();
@@ -1313,6 +1317,7 @@ function handleTouchedNode(data, touchState) {
   document.body.append(touchState.touchedNode);
   copyNodeStyle(data.targetData.node.el, touchState.touchedNode);
   touchState.touchedNode.style.display = "none";
+  document.addEventListener("contextmenu", preventDefault);
 }
 function handleLongTouch(data, touchState) {
   const config = data.targetData.parent.data.config;
@@ -1334,9 +1339,6 @@ function handleLongTouch(data, touchState) {
         config.longTouchClass
       );
     data.e.preventDefault();
-    document.addEventListener("contextmenu", function(e) {
-      e.preventDefault();
-    });
   }, config.longTouchTimeout || 200);
 }
 function handleTouchmove(eventData) {
