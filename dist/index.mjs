@@ -1224,7 +1224,7 @@ function handleTouchedNode(data, touchState) {
   const rect = data.targetData.node.el.getBoundingClientRect();
   touchState.touchedNode.style.cssText = `
             width: ${rect.width}px;
-            position: absolute;
+            position: fixed;
             pointer-events: none;
             top: -9999px;
             z-index: 999999;
@@ -1280,13 +1280,13 @@ function touchmoveClasses(touchState, config) {
 }
 function moveTouchedNode(data, touchState) {
   touchState.touchedNode.style.display = touchState.touchedNodeDisplay || "";
-  const x = data.e.touches[0].clientX + window.scrollX;
-  const y = data.e.touches[0].clientY + window.scrollY;
+  const x = data.e.touches[0].clientX;
+  const y = data.e.touches[0].clientY;
   const windowHeight = window.innerHeight + window.scrollY;
-  if (y > windowHeight - 50) {
+  if (y + window.scrollY > windowHeight - 50) {
     window.scrollBy(0, 10);
-  } else if (y < window.scrollY + 50) {
-    window.scrollBy(0, -10);
+  } else if (y < 50) {
+    console.log("scrolling up", y, windowHeight, window.scrollY);
   }
   const touchStartLeft = touchState.touchStartLeft ?? 0;
   const touchStartTop = touchState.touchStartTop ?? 0;

@@ -668,7 +668,7 @@ export function handleTouchedNode<T>(
 
   touchState.touchedNode.style.cssText = `
             width: ${rect.width}px;
-            position: absolute;
+            position: fixed;
             pointer-events: none;
             top: -9999px;
             z-index: 999999;
@@ -751,17 +751,17 @@ function moveTouchedNode<T>(
 ) {
   touchState.touchedNode.style.display = touchState.touchedNodeDisplay || "";
 
-  const x = data.e.touches[0].clientX + window.scrollX;
+  const x = data.e.touches[0].clientX;
 
-  const y = data.e.touches[0].clientY + window.scrollY;
+  const y = data.e.touches[0].clientY;
 
   const windowHeight = window.innerHeight + window.scrollY;
 
   // TODO: Make this more dynamic.
-  if (y > windowHeight - 50) {
+  if (y + window.scrollY > windowHeight - 50) {
     window.scrollBy(0, 10);
-  } else if (y < window.scrollY + 50) {
-    window.scrollBy(0, -10);
+  } else if (y < 50) {
+    console.log("scrolling up", y, windowHeight, window.scrollY);
   }
 
   const touchStartLeft = touchState.touchStartLeft ?? 0;
