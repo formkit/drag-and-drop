@@ -211,6 +211,12 @@ export function dragAndDrop<T>({
 
   document.addEventListener("dragover", (e) => {
     e.preventDefault();
+
+    if (state && state.remapJustFinished) {
+      state.remapJustFinished = false;
+    } else if (state) {
+      state.lastTargetValue = undefined;
+    }
   });
 
   tearDown(parent);
@@ -911,6 +917,8 @@ function dragoverNode<T>(
 ) {
   eventData.e.preventDefault();
 
+  eventData.e.stopPropagation();
+
   eventData.targetData.parent.el === dragState.lastParent?.el
     ? sort(eventData, dragState)
     : transfer(eventData, dragState);
@@ -923,11 +931,11 @@ export function validateSort<T>(
   y: number
 ): boolean {
   if (state.remapJustFinished) {
+    state.remapJustFinished = false;
+
     state.lastTargetValue = data.targetData.node.data.value;
 
-    state.remapJustFinished = false;
-  } else if (state.draggedNode.el === data.targetData.node.el) {
-    state.lastTargetValue = state.draggedNode.data.value;
+    return false;
   }
 
   if (state.lastTargetValue === data.targetData.node.data.value) return false;

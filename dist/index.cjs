@@ -995,6 +995,11 @@ function dragAndDrop({
     return;
   document.addEventListener("dragover", (e) => {
     e.preventDefault();
+    if (state && state.remapJustFinished) {
+      state.remapJustFinished = false;
+    } else if (state) {
+      state.lastTargetValue = void 0;
+    }
   });
   tearDown(parent);
   const parentData = {
@@ -1485,14 +1490,14 @@ function validateTransfer(data, state2) {
 }
 function dragoverNode(eventData, dragState) {
   eventData.e.preventDefault();
+  eventData.e.stopPropagation();
   eventData.targetData.parent.el === dragState.lastParent?.el ? sort(eventData, dragState) : transfer(eventData, dragState);
 }
 function validateSort(data, state2, x, y) {
   if (state2.remapJustFinished) {
-    state2.lastTargetValue = data.targetData.node.data.value;
     state2.remapJustFinished = false;
-  } else if (state2.draggedNode.el === data.targetData.node.el) {
-    state2.lastTargetValue = state2.draggedNode.data.value;
+    state2.lastTargetValue = data.targetData.node.data.value;
+    return false;
   }
   if (state2.lastTargetValue === data.targetData.node.data.value)
     return false;

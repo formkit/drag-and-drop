@@ -1,79 +1,51 @@
-<script setup lang="ts">
-import { ref } from "vue";
-import { useDragAndDrop } from "../../src/vue/index";
+<script setup>
+import Test from "../components/Test.vue";
+import { ref, watch } from "vue";
 
-const items = ref([
-  { name: "Depeche Mode", hasClass: false, cols: 1 },
-  { name: "Duran Duran", hasClass: false, cols: 4 },
-  { name: "Pet Shop Boys", hasClass: false, cols: 1 },
-  { name: "Kraftwerk", hasClass: false, cols: 3 },
-  { name: "Tears for Fears", hasClass: false, cols: 2 },
-  { name: "Checkbox with", hasClass: true, cols: 1 },
-]);
-
-const [parent, tapes] = useDragAndDrop(items.value, {
-  dragHandle: ".drag-handle",
+const items = ref({
+  answers: [{ name: 1 }, { name: 0.6052854008960278 }, { name: 3 }],
 });
+
+function onUpdateAnswers(newAnswers) {
+  items.value = { answers: newAnswers };
+}
+
+function addAnswer() {
+  const newAnswers = [...items.value.answers, { name: Math.random() }];
+  items.value = { answers: newAnswers };
+}
 </script>
 
 <template>
-  <div class="row" ref="parent">
-    <div
-      :id="tape.name"
-      v-for="tape in tapes"
-      :key="tape.name"
-      class="item"
-      :class="`cols-${tape.cols}`"
+  <div>
+    <Test
+      v-slot="{ sortedAnswers }"
+      :answers="items.answers"
+      @update:answers="onUpdateAnswers"
+      class="container"
     >
-      <div class="drag-handle">::</div>
-      <span>
-        {{ tape.name }}
-      </span>
-    </div>
+      <div class="test" v-for="item in sortedAnswers" :key="item.name">
+        <div>drag me</div>
+        {{ item.name }}
+      </div>
+    </Test>
+    <button @click="addAnswer()">Add an item</button>
   </div>
-  <span> {{ tapes.map((x) => x.name) }} </span>
 </template>
 
 <style>
-.row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.first {
-  margin-bottom: 40px;
-}
-
-.cols-1 {
-  grid-column: span 1;
-}
-
-.cols-2 {
-  grid-column: span 2;
-}
-
-.cols-3 {
-  grid-column: span 3;
-}
-
-.cols-4 {
-  grid-column: span 4;
-}
-
-.item {
-  border: 1px solid gray;
-  border-radius: 5px;
+.container {
   display: flex;
-  align-items: center;
-  padding: 5px;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.drag-handle {
-  border: 1px solid gray;
-  border-radius: 5px;
-  overflow: hidden;
-  padding: 5px;
+.test {
+  display: flex;
+  flex-direction: column;
+  background: grey;
+  justify-content: center;
+  width: 20px;
+  word-break: break-word;
 }
 </style>
