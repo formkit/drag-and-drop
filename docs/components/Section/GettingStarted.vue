@@ -29,18 +29,28 @@
     <h3>useDragAndDrop</h3>
     <p>
       The <code>useDragAndDrop</code> hook is the most convenient way to add
-      Drag and Drop to your app. Call this function with your initial list of
-      items. It returns a tuple whose first value is a ref which must be
-      assigned to the parent DOM element of your list. The second value is the
-      list of items that should be used in your template to create the list
-      items.
+      Drag and Drop to your app. Call this function with an initial array of
+      values. It returns a tuple containing a a template ref and a reactive
+      array of values. The template ref should be assigned to the parent DOM
+      element of the items you wish to make draggable. The reactive array of
+      values should be used in your template to render the draggable elements.
     </p>
     <code class="block"
-      ><span class="def">const</span> [<span class="var">parent</span>,
-      <span class="var">list</span>] =
-      <span class="fn">useDragAndDrop</span>(<span class="var">initialList</span
-      >)</code
-    >
+      ><div class="comment">// React:</div>
+      <span class="def">const</span
+      ><span class="fn">
+        [<span class="var">parentRef</span>, <span class="var">values</span>,
+        <span class="var">setValues</span>] = useDragAndDrop</span
+      >(<br />
+      <span class="indent">['Item 1', 'Item2', 'Item3']</span><br />)
+      <div class="comment"><br />// Vue:</div>
+      <span class="def">const</span
+      ><span class="fn">
+        [<span class="var">parentRef</span>, <span class="var">values</span>] =
+        useDragAndDrop</span
+      >(<br />
+      <span class="indent">['Item 1', 'Item2', 'Item3']</span><br />)
+    </code>
     <h3>dragAndDrop</h3>
     <p>
       The <code>dragAndDrop</code> hook allows you to define your own ref and
@@ -53,8 +63,8 @@
       <span class="indent">parent: <span class="var">parentRef</span></span
       >,<br />
       <span class="indent"
-        >state: [<span class="var">list</span>,
-        <span class="var">setList</span>]</span
+        >state: [<span class="var">values</span>,
+        <span class="var">setValues</span>]</span
       ><br />})
       <div class="comment"><br />// Vue:</div>
       <span class="fn">dragAndDrop</span>({<br />
