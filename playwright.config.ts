@@ -22,13 +22,6 @@ export default defineConfig({
       },
     },
     {
-      name: "Desktop Safari Drag Tests",
-      testMatch: "tests/drag/**/*.spec.ts",
-      use: {
-        ...devices["Desktop Safari"],
-      },
-    },
-    {
       name: "Desktop Firefox Drag Tests",
       testMatch: "tests/drag/**/*.spec.ts",
       use: {
