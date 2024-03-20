@@ -170,6 +170,24 @@ export function dragValues<T>(state: DragState<T> | TouchState<T>): Array<T> {
 }
 
 /**
+ * Utility function to update parent config.
+ */
+export function updateConfig<T>(parent: HTMLElement, config: ParentConfig<T>) {
+  const parentData = parents.get(parent);
+
+  if (!parentData) return;
+
+  parents.set(parent, { ...parentData, config });
+
+  dragAndDrop({
+    parent,
+    getValues: parentData.getValues,
+    setValues: parentData.setValues,
+    config,
+  });
+}
+
+/**
  * Initializes the drag and drop functionality for a given parent.
  *
  * @param {DragAndDrop} dragAndDrop - The drag and drop configuration.

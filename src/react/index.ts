@@ -79,19 +79,10 @@ export function dragAndDrop<E extends HTMLElement, I>(
 export function useDragAndDrop<E extends HTMLElement, T = unknown>(
   list: T[],
   options: Partial<ParentConfig<T>> = {}
-): [
-  RefObject<E>,
-  T[],
-  Dispatch<SetStateAction<T[]>>,
-  (config: Partial<ParentConfig<T>>) => void
-] {
+): [RefObject<E>, T[], Dispatch<SetStateAction<T[]>>] {
   const parent: RefObject<E> = useRef<E>(null);
 
   const [values, setValues] = useState(list);
-
-  function setConfig(config: Partial<ParentConfig<T>> = {}) {
-    dragAndDrop({ parent, state: [values, setValues], ...config });
-  }
 
   useEffect(() => {
     dragAndDrop({ parent, state: [values, setValues], ...options });
@@ -103,5 +94,5 @@ export function useDragAndDrop<E extends HTMLElement, T = unknown>(
     };
   }, []);
 
-  return [parent, values, setValues, setConfig];
+  return [parent, values, setValues];
 }
