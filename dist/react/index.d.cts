@@ -525,6 +525,11 @@ declare function dragAndDrop<E extends HTMLElement, I>(data: ReactDragAndDropCon
  * @param options - The drag and drop configuration.
  * @returns
  */
-declare function useDragAndDrop<E extends HTMLElement, T = unknown>(list: T[], options?: Partial<ParentConfig<T>>): [RefObject<E>, T[], Dispatch<SetStateAction<T[]>>];
+declare function useDragAndDrop<E extends HTMLElement, T = unknown>(list: T[], options?: Partial<ParentConfig<T>>): [
+    RefObject<E>,
+    T[],
+    Dispatch<SetStateAction<T[]>>,
+    (config: Partial<ParentConfig<T>>) => void
+];
 
 export { type ReactDragAndDropConfig, type ReactElement, dragAndDrop, useDragAndDrop };

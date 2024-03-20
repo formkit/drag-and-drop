@@ -59,6 +59,15 @@
       be used to find the handle.
     </p>
     <CodeExample example="drag-handles" />
+    <h3 id="update-config">Updating config</h3>
+    <p>
+      The parent config can be updated at any time by using the
+      <code>updateConfig</code> method returned from
+      <code>useDragAndDrop</code>. Alternatively, the parent config can be
+      updated by importing <code>updateConfig</code> from
+      <code>@formkit/drag-and-drop</code>.
+    </p>
+    <CodeExample example="update-config" />
   </SectionWrapper>
 </template>
 

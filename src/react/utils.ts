@@ -26,6 +26,4 @@ export function handleReactElements<E>(
   const el = getEl(element);
 
   if (el) cb(el);
-
-  console.log("useEffect", el);
 }

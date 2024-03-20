@@ -172,12 +172,18 @@ export function dragValues<T>(state: DragState<T> | TouchState<T>): Array<T> {
 /**
  * Utility function to update parent config.
  */
-export function updateConfig<T>(parent: HTMLElement, config: ParentConfig<T>) {
+export function updateConfig<T>(
+  parent: HTMLElement,
+  config: Partial<ParentConfig<T>>
+) {
   const parentData = parents.get(parent);
 
   if (!parentData) return;
 
-  parents.set(parent, { ...parentData, config });
+  parents.set(parent, {
+    ...parentData,
+    config: { ...parentData.config, ...config },
+  });
 
   dragAndDrop({
     parent,

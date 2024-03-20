@@ -61,9 +61,12 @@ function dragAndDrop(data) {
 function useDragAndDrop(initialValues, options = {}) {
   const parent = ref();
   const values = ref(initialValues);
+  function updateConfig(config = {}) {
+    dragAndDrop({ parent, values, ...config });
+  }
   dragAndDrop({ parent, values, ...options });
   onUnmounted(() => parent.value && tearDown(parent.value));
-  return [parent, values];
+  return [parent, values, updateConfig];
 }
 function handleParent(config, values) {
   return (parent) => {

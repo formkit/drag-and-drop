@@ -82,9 +82,12 @@ function dragAndDrop(data) {
 function useDragAndDrop(initialValues, options = {}) {
   const parent = (0, import_vue2.ref)();
   const values = (0, import_vue2.ref)(initialValues);
+  function updateConfig(config = {}) {
+    dragAndDrop({ parent, values, ...config });
+  }
   dragAndDrop({ parent, values, ...options });
   (0, import_vue2.onUnmounted)(() => parent.value && (0, import__.tearDown)(parent.value));
-  return [parent, values];
+  return [parent, values, updateConfig];
 }
 function handleParent(config, values) {
   return (parent) => {

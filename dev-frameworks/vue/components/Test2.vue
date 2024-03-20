@@ -6,7 +6,7 @@ const props = defineProps<{
   testDescription: string;
 }>();
 
-const [parent, values, setConfig] = useDragAndDrop([
+const [parent, values, updateConfig] = useDragAndDrop([
   {
     id: "10_of_clubs",
     src: "/cards/10_of_clubs.png",
@@ -25,7 +25,7 @@ function addValue() {
 }
 
 function disable() {
-  setConfig({ disabled: true });
+  updateConfig({ disabled: true });
 }
 </script>
 

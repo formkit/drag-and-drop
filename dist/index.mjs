@@ -876,6 +876,21 @@ function setParentValues(parent, parentData, values) {
 function dragValues(state2) {
   return [...state2.draggedNodes.map((x) => x.data.value)];
 }
+function updateConfig(parent, config) {
+  const parentData = parents.get(parent);
+  if (!parentData)
+    return;
+  parents.set(parent, {
+    ...parentData,
+    config: { ...parentData.config, ...config }
+  });
+  dragAndDrop({
+    parent,
+    getValues: parentData.getValues,
+    setValues: parentData.setValues,
+    config
+  });
+}
 function dragAndDrop({
   parent,
   getValues,
@@ -1591,6 +1606,7 @@ export {
   tearDownNodeRemap,
   throttle,
   transfer,
+  updateConfig,
   validateSort,
   validateTransfer
 };

@@ -58,8 +58,6 @@ export function dragAndDrop<E extends HTMLElement, I>(
 ): void {
   if (!isBrowser) return;
 
-  console.log("drag and drop");
-
   if (!Array.isArray(data)) data = [data];
 
   data.forEach((dnd) => {

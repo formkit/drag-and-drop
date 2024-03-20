@@ -54,6 +54,9 @@ function dragAndDrop(data) {
 function useDragAndDrop(list, options = {}) {
   const parent = useRef(null);
   const [values, setValues2] = useState(list);
+  function updateConfig(config = {}) {
+    dragAndDrop({ parent, state: [values, setValues2], ...config });
+  }
   useEffect(() => {
     dragAndDrop({ parent, state: [values, setValues2], ...options });
   }, [values]);
@@ -63,7 +66,7 @@ function useDragAndDrop(list, options = {}) {
         tearDown(parent.current);
     };
   }, []);
-  return [parent, values, setValues2];
+  return [parent, values, setValues2, updateConfig];
 }
 export {
   dragAndDrop,

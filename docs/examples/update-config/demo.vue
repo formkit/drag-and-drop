@@ -1,24 +1,22 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { dragAndDrop } from "@formkit/drag-and-drop/vue";
+import { useDragAndDrop } from "../../../src/vue/index";
 
-const dragList = ref();
-const tapes = ref([
+const disabled = ref(false);
+
+const [parentRef, values, updateConfig] = useDragAndDrop([
   "Depeche Mode",
   "Duran Duran",
-  "Pet Shop Boys",
+  "Pet",
   "Kraftwerk",
   "Tears for Fears",
   "Spandau Ballet",
 ]);
-dragAndDrop({
-  parent: dragList,
-  values: tapes,
-  dropZoneClass: "saturate-0 opacity-20",
-  draggable: (el: HTMLElement) => {
-    return el.id !== "no-drag";
-  },
-});
+
+function toggleDisabled() {
+  disabled.value = !disabled.value;
+
+  updateConfig({ disabled: disabled.value });
+}
 </script>
 
 <template>
@@ -33,21 +31,22 @@ dragAndDrop({
           alt="FormKit Office Jams"
           class="contrast-120 brightness-[140%] absolute -top-4 -left-8 -rotate-12 w-full max-w-[500px] drop-shadow-md pointer-events-none"
         />
-
+        <button>Disable</button>
         <ul
-          ref="dragList"
+          ref="parentRef"
           class="cassette-grid relative flex flex-wrap justify-center items-center w-full z-20"
         >
           <li
-            v-for="tape in tapes"
+            v-for="tape in values"
             :key="tape"
             class="basis-1/2 md:basis-1/3 text-center cursor-grab active:cursor-grabbing"
-            :class="tape === 'ACDC LIVE' ? 'no-drag' : ''"
           >
             <CassetteTape :label="tape" :data-label="tape" />
           </li>
-          <li id="no-drag">I am NOT draggable</li>
         </ul>
+        <button id="no-drag" @click="toggleDisabled">
+          {{ disabled ? "Enable" : "Disable" }} drag and drop
+        </button>
       </div>
     </div>
   </DemoContainer>
@@ -81,14 +80,15 @@ dragAndDrop({
   filter: hue-rotate(40deg) saturate(300%) brightness(105%);
   transform: rotate(-3deg);
 }
-
 #no-drag {
   margin-top: 1rem;
   background: #fff;
   padding: 0.5em 1em;
   color: red;
   border-radius: 0.25rem;
-  cursor: grab;
   @apply shadow-md;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
 }
 </style>

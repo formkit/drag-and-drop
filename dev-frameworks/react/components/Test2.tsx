@@ -14,7 +14,7 @@ function Test2(props: { id: string; testDescription: string }) {
     },
   ];
 
-  const [parent, values, setValues, setConfig] = useDragAndDrop<
+  const [parent, values, setValues, updateConfig] = useDragAndDrop<
     HTMLUListElement,
     any
   >(playingCardAssets);
@@ -33,7 +33,7 @@ function Test2(props: { id: string; testDescription: string }) {
   }
 
   function disable() {
-    setConfig({ disabled: true });
+    updateConfig({ disabled: true });
   }
 
   return (

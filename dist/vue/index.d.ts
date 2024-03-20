@@ -528,6 +528,10 @@ declare function dragAndDrop<T>(data: VueDragAndDropData<T> | Array<VueDragAndDr
  * @param initialValues - The initial values of the parent element.
  * @returns The parent element and values for drag and drop.
  */
-declare function useDragAndDrop<T>(initialValues: T[], options?: Partial<ParentConfig$1<T>>): [Ref<HTMLElement | undefined>, Ref<T[]>];
+declare function useDragAndDrop<T>(initialValues: T[], options?: Partial<ParentConfig$1<T>>): [
+    Ref<HTMLElement | undefined>,
+    Ref<T[]>,
+    (config: Partial<VueParentConfig<T>>) => void
+];
 
 export { type VueDragAndDropData, type VueElement, type VueParentConfig, dragAndDrop, useDragAndDrop };
