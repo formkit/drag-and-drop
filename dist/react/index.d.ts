@@ -472,6 +472,10 @@ interface DragState<T> extends DragStateProps<T> {
      */
     lastValue: any;
     /**
+     * The last value the dragged node targeted.
+     */
+    lastTargetValue: any;
+    /**
      * The original z-index of the dragged node.
      */
     originalZIndex: string | undefined;
@@ -480,6 +484,10 @@ interface DragState<T> extends DragStateProps<T> {
      * has had a chance to update the data of the remapped nodes.
      */
     preventEnter: boolean;
+    /**
+     * Flag indicating that the remap just finished.
+     */
+    remapJustFinished: boolean;
     /**
      * The value of the node that was swapped with the dragged node.
      */

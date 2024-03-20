@@ -20,6 +20,7 @@ test.describe("Sorting", async () => {
       "Banana Apple Orange"
     );
     await dragDrop(page, {
+      origin: "#Banana",
       destination: "#Orange",
       dragStart: false,
       drop: true,
@@ -37,6 +38,7 @@ test.describe("Sorting", async () => {
       "Orange Banana Apple"
     );
     await dragDrop(page, {
+      origin: "#Banana",
       destination: "#Apple",
       dragStart: false,
       drop: true,

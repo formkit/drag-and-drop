@@ -76,6 +76,8 @@ export function setDragState<T>(
     affectedNodes: [],
     lastValue: undefined,
     activeNode: undefined,
+    lastTargetValue: undefined,
+    remapJustFinished: false,
     preventEnter: false,
     clonedDraggedEls: [],
     swappedNodeValue: false,
@@ -140,6 +142,8 @@ export function performSort<T>(
   ];
 
   newParentValues.splice(data.targetData.node.data.index, 0, ...draggedValues);
+
+  state.lastTargetValue = data.targetData.node.data.value;
 
   setParentValues(data.targetData.parent.el, data.targetData.parent.data, [
     ...newParentValues,
@@ -386,6 +390,7 @@ export function remapFinished() {
   if (state) {
     state.preventEnter = false;
     state.swappedNodeValue = undefined;
+    state.remapJustFinished = true;
   }
 }
 
@@ -503,8 +508,6 @@ export function dragstart<T>(data: NodeDragEventData<T>) {
 export function handleTouchOverNode<T>(e: TouchOverNodeEvent<T>) {
   if (!state) return;
 
-  if (state.draggedNode.el === e.detail.targetData.node.el) return;
-
   if (e.detail.targetData.parent.el === state.lastParent.el)
     sort(e.detail, state);
   else transfer(e.detail, state);
@@ -585,6 +588,8 @@ export function end<T>(
   _eventData: NodeEventData<T>,
   state: DragState<T> | TouchState<T>
 ) {
+  document.removeEventListener("contextmenu", preventDefault);
+
   if ("longTouchTimeout" in state && state.longTouchTimeout)
     clearTimeout(state.longTouchTimeout);
 
@@ -655,6 +660,10 @@ export function initTouch<T>(data: NodeTouchEventData<T>): TouchState<T> {
   return touchState;
 }
 
+function preventDefault(e: Event) {
+  e.preventDefault();
+}
+
 export function handleTouchedNode<T>(
   data: NodeTouchEventData<T>,
   touchState: TouchState<T>
@@ -665,7 +674,7 @@ export function handleTouchedNode<T>(
 
   touchState.touchedNode.style.cssText = `
             width: ${rect.width}px;
-            position: absolute;
+            position: fixed;
             pointer-events: none;
             top: -9999px;
             z-index: 999999;
@@ -677,6 +686,8 @@ export function handleTouchedNode<T>(
   copyNodeStyle(data.targetData.node.el, touchState.touchedNode as Node);
 
   touchState.touchedNode.style.display = "none";
+
+  document.addEventListener("contextmenu", preventDefault);
 }
 
 export function handleLongTouch<T>(
@@ -709,10 +720,6 @@ export function handleLongTouch<T>(
       );
 
     data.e.preventDefault();
-
-    document.addEventListener("contextmenu", function (e) {
-      e.preventDefault();
-    });
   }, config.longTouchTimeout || 200);
 }
 
@@ -748,16 +755,15 @@ function moveTouchedNode<T>(
 ) {
   touchState.touchedNode.style.display = touchState.touchedNodeDisplay || "";
 
-  const x = data.e.touches[0].clientX + window.scrollX;
+  const x = data.e.touches[0].clientX;
 
-  const y = data.e.touches[0].clientY + window.scrollY;
+  const y = data.e.touches[0].clientY;
 
   const windowHeight = window.innerHeight + window.scrollY;
 
-  // TODO: Make this more dynamic.
-  if (y > windowHeight - 50) {
+  if (y + window.scrollY > windowHeight - 50) {
     window.scrollBy(0, 10);
-  } else if (y < window.scrollY + 50) {
+  } else if (y < 50) {
     window.scrollBy(0, -10);
   }
 
@@ -792,15 +798,6 @@ function touchmove<T>(data: NodeTouchEventData<T>, touchState: TouchState<T>) {
   const elFromPoint = getElFromPoint(data);
 
   if (!elFromPoint) return;
-
-  if (
-    "node" in elFromPoint &&
-    elFromPoint.node.el === touchState.draggedNodes[0].el
-  ) {
-    touchState.lastValue = data.targetData.node.data.value;
-
-    return;
-  }
 
   const touchMoveEventData = {
     e: data.e,
@@ -890,13 +887,6 @@ function dragoverNode<T>(
 ) {
   eventData.e.preventDefault();
 
-  if (
-    dragState.draggedNodes
-      .map((x) => x.el)
-      .includes(eventData.targetData.node.el)
-  )
-    return;
-
   eventData.targetData.parent.el === dragState.lastParent?.el
     ? sort(eventData, dragState)
     : transfer(eventData, dragState);
@@ -908,8 +898,20 @@ export function validateSort<T>(
   x: number,
   y: number
 ): boolean {
+  if (state.remapJustFinished) {
+    state.lastTargetValue = data.targetData.node.data.value;
+
+    state.remapJustFinished = false;
+  } else if (state.draggedNode.el === data.targetData.node.el) {
+    state.lastTargetValue = state.draggedNode.data.value;
+  }
+
+  if (state.lastTargetValue === data.targetData.node.data.value) return false;
+
+  if (state.draggedNodes.map((x) => x.el).includes(data.targetData.node.el))
+    return false;
+
   if (
-    !state ||
     state.preventEnter ||
     state.swappedNodeValue === data.targetData.node.data.value ||
     data.targetData.parent.el !== state.lastParent?.el ||

@@ -72,6 +72,10 @@ export async function dragDrop(
         originElement.dispatchEvent(new DragEvent("dragstart", originPayload));
       }
 
+      if (originElement) {
+        originElement.dispatchEvent(new DragEvent("dragover", originPayload));
+      }
+
       if (destinationElement) {
         destinationElement.dispatchEvent(
           new DragEvent("dragover", destinationPayload)
@@ -147,7 +151,7 @@ export async function touchDrop(
 
       let touchStartObj;
 
-      if (touchStart && originElement) {
+      if (originElement) {
         touchStartObj = new Touch({
           identifier: 0,
           target: originElement,
@@ -164,6 +168,17 @@ export async function touchDrop(
       if (touchStart && originElement) {
         originElement.dispatchEvent(
           new TouchEvent("touchstart", {
+            touches: [touchStartObj],
+            changedTouches: [touchStartObj],
+            cancelable: true,
+            bubbles: true,
+          })
+        );
+      }
+
+      if (originElement) {
+        originElement.dispatchEvent(
+          new TouchEvent("touchmove", {
             touches: [touchStartObj],
             changedTouches: [touchStartObj],
             cancelable: true,

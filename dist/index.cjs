@@ -892,6 +892,8 @@ function setDragState(dragStateProps2) {
     affectedNodes: [],
     lastValue: void 0,
     activeNode: void 0,
+    lastTargetValue: void 0,
+    remapJustFinished: false,
     preventEnter: false,
     clonedDraggedEls: [],
     swappedNodeValue: false,
@@ -940,6 +942,7 @@ function performSort(state2, data) {
     ...targetParentValues.filter((x) => !draggedValues.includes(x))
   ];
   newParentValues.splice(data.targetData.node.data.index, 0, ...draggedValues);
+  state2.lastTargetValue = data.targetData.node.data.value;
   setParentValues(data.targetData.parent.el, data.targetData.parent.data, [
     ...newParentValues
   ]);
@@ -1103,6 +1106,7 @@ function remapFinished() {
   if (state) {
     state.preventEnter = false;
     state.swappedNodeValue = void 0;
+    state.remapJustFinished = true;
   }
 }
 function handleDragstart(data) {
@@ -1186,8 +1190,6 @@ function dragstart2(data) {
 function handleTouchOverNode(e) {
   if (!state)
     return;
-  if (state.draggedNode.el === e.detail.targetData.node.el)
-    return;
   if (e.detail.targetData.parent.el === state.lastParent.el)
     sort(e.detail, state);
   else
@@ -1245,6 +1247,7 @@ function handleEnd(eventData) {
   resetState();
 }
 function end(_eventData, state2) {
+  document.removeEventListener("contextmenu", preventDefault);
   if ("longTouchTimeout" in state2 && state2.longTouchTimeout)
     clearTimeout(state2.longTouchTimeout);
   const config = parents.get(state2.initialParent.el)?.config;
@@ -1297,12 +1300,15 @@ function initTouch(data) {
   );
   return touchState;
 }
+function preventDefault(e) {
+  e.preventDefault();
+}
 function handleTouchedNode(data, touchState) {
   touchState.touchedNodeDisplay = touchState.touchedNode.style.display;
   const rect = data.targetData.node.el.getBoundingClientRect();
   touchState.touchedNode.style.cssText = `
             width: ${rect.width}px;
-            position: absolute;
+            position: fixed;
             pointer-events: none;
             top: -9999px;
             z-index: 999999;
@@ -1311,6 +1317,7 @@ function handleTouchedNode(data, touchState) {
   document.body.append(touchState.touchedNode);
   copyNodeStyle(data.targetData.node.el, touchState.touchedNode);
   touchState.touchedNode.style.display = "none";
+  document.addEventListener("contextmenu", preventDefault);
 }
 function handleLongTouch(data, touchState) {
   const config = data.targetData.parent.data.config;
@@ -1332,9 +1339,6 @@ function handleLongTouch(data, touchState) {
         config.longTouchClass
       );
     data.e.preventDefault();
-    document.addEventListener("contextmenu", function(e) {
-      e.preventDefault();
-    });
   }, config.longTouchTimeout || 200);
 }
 function handleTouchmove(eventData) {
@@ -1358,12 +1362,12 @@ function touchmoveClasses(touchState, config) {
 }
 function moveTouchedNode(data, touchState) {
   touchState.touchedNode.style.display = touchState.touchedNodeDisplay || "";
-  const x = data.e.touches[0].clientX + window.scrollX;
-  const y = data.e.touches[0].clientY + window.scrollY;
+  const x = data.e.touches[0].clientX;
+  const y = data.e.touches[0].clientY;
   const windowHeight = window.innerHeight + window.scrollY;
-  if (y > windowHeight - 50) {
+  if (y + window.scrollY > windowHeight - 50) {
     window.scrollBy(0, 10);
-  } else if (y < window.scrollY + 50) {
+  } else if (y < 50) {
     window.scrollBy(0, -10);
   }
   const touchStartLeft = touchState.touchStartLeft ?? 0;
@@ -1387,10 +1391,6 @@ function touchmove(data, touchState) {
   const elFromPoint = getElFromPoint(data);
   if (!elFromPoint)
     return;
-  if ("node" in elFromPoint && elFromPoint.node.el === touchState.draggedNodes[0].el) {
-    touchState.lastValue = data.targetData.node.data.value;
-    return;
-  }
   const touchMoveEventData = {
     e: data.e,
     targetData: elFromPoint
@@ -1456,12 +1456,20 @@ function validateTransfer(data, state2) {
 }
 function dragoverNode(eventData, dragState) {
   eventData.e.preventDefault();
-  if (dragState.draggedNodes.map((x) => x.el).includes(eventData.targetData.node.el))
-    return;
   eventData.targetData.parent.el === dragState.lastParent?.el ? sort(eventData, dragState) : transfer(eventData, dragState);
 }
 function validateSort(data, state2, x, y) {
-  if (!state2 || state2.preventEnter || state2.swappedNodeValue === data.targetData.node.data.value || data.targetData.parent.el !== state2.lastParent?.el || data.targetData.parent.data.config.sortable === false)
+  if (state2.remapJustFinished) {
+    state2.lastTargetValue = data.targetData.node.data.value;
+    state2.remapJustFinished = false;
+  } else if (state2.draggedNode.el === data.targetData.node.el) {
+    state2.lastTargetValue = state2.draggedNode.data.value;
+  }
+  if (state2.lastTargetValue === data.targetData.node.data.value)
+    return false;
+  if (state2.draggedNodes.map((x2) => x2.el).includes(data.targetData.node.el))
+    return false;
+  if (state2.preventEnter || state2.swappedNodeValue === data.targetData.node.data.value || data.targetData.parent.el !== state2.lastParent?.el || data.targetData.parent.data.config.sortable === false)
     return false;
   const targetRect = data.targetData.node.el.getBoundingClientRect();
   const dragRect = state2.draggedNode.el.getBoundingClientRect();

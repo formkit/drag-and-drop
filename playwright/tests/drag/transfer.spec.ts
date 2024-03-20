@@ -27,6 +27,7 @@ test.describe("Transferring", async () => {
       destination: "#transfer_values_3",
       drop: true,
     });
+    await new Promise((r) => setTimeout(r, 1000));
     await expect(page.locator("#transfer_values_2")).toHaveText(
       "Cherry Grape Pineapple"
     );
