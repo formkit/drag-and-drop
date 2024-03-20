@@ -165,39 +165,47 @@ function getElFromPoint(eventData) {
     return;
   const newX = eventData.e.touches[0].clientX;
   const newY = eventData.e.touches[0].clientY;
-  const els = document.elementsFromPoint(newX, newY);
-  if (!nodes)
+  let target = document.elementFromPoint(newX, newY);
+  if (!isNode(target))
     return;
-  for (const node of els) {
-    if (isNode(node) && nodes.has(node)) {
-      const targetNode = node;
-      const targetNodeData = nodes.get(targetNode);
-      const targetParentData = parents.get(targetNode.parentNode);
-      if (!targetNodeData || !targetParentData)
-        return;
-      return {
-        node: {
-          el: targetNode,
-          data: targetNodeData
-        },
-        parent: {
-          el: targetNode.parentNode,
-          data: targetParentData
-        }
-      };
-    } else if (node instanceof HTMLElement) {
-      const parentData = parents.get(node);
-      if (parentData) {
-        return {
-          parent: {
-            el: node,
-            data: parentData
-          }
-        };
-      }
+  let isParent;
+  let invalidEl = true;
+  while (target && invalidEl) {
+    if (nodes.has(target) || parents.has(target)) {
+      invalidEl = false;
+      isParent = parents.has(target);
+      break;
     }
+    target = target.parentNode;
   }
-  return void 0;
+  if (!isParent) {
+    const targetNodeData = nodes.get(target);
+    if (!targetNodeData)
+      return;
+    const targetParentData = parents.get(target.parentNode);
+    if (!targetParentData)
+      return;
+    return {
+      node: {
+        el: target,
+        data: targetNodeData
+      },
+      parent: {
+        el: target.parentNode,
+        data: targetParentData
+      }
+    };
+  } else {
+    const parentData = parents.get(target);
+    if (!parentData)
+      return;
+    return {
+      parent: {
+        el: target,
+        data: parentData
+      }
+    };
+  }
 }
 function isNode(el) {
   return el instanceof HTMLElement && el.parentNode instanceof HTMLElement;
@@ -221,6 +229,7 @@ function copyNodeStyle(sourceNode, targetNode, omitKeys = false) {
     "top",
     "left",
     "x",
+    "pointer-events",
     "y",
     "transform-origin",
     "filter",
@@ -452,14 +461,18 @@ function stackNodes({
   y
 }) {
   const wrapper = document.createElement("div");
-  for (const el of state2.clonedDraggedEls)
+  for (const el of state2.clonedDraggedEls) {
+    if (el instanceof HTMLElement)
+      el.style.pointerEvents = "none";
     wrapper.append(el);
+  }
   const { width } = state2.draggedNode.el.getBoundingClientRect();
   wrapper.style.cssText = `
         display: flex;
         flex-direction: column;
         width: ${width}px;
-        position: absolute;
+        position: fixed;
+        pointer-events: none;
         z-index: 9999;
         left: -9999px
       `;

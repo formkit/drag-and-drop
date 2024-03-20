@@ -161,47 +161,57 @@ export function getElFromPoint<T>(
 
   const newY = eventData.e.touches[0].clientY;
 
-  // TODO: Should be using elementFromPoint here, but it's not working as
-  // I would expect, need to look into this.
-  const els = document.elementsFromPoint(newX, newY);
+  let target = document.elementFromPoint(newX, newY);
 
-  if (!nodes) return;
+  if (!isNode(target)) return;
 
-  for (const node of els) {
-    if (isNode(node) && nodes.has(node)) {
-      const targetNode = node;
+  let isParent;
 
-      const targetNodeData = nodes.get(targetNode);
+  let invalidEl = true;
 
-      const targetParentData = parents.get(targetNode.parentNode);
+  while (target && invalidEl) {
+    if (nodes.has(target as Node) || parents.has(target as HTMLElement)) {
+      invalidEl = false;
 
-      if (!targetNodeData || !targetParentData) return;
+      isParent = parents.has(target as HTMLElement);
 
-      return {
-        node: {
-          el: targetNode,
-          data: targetNodeData,
-        },
-        parent: {
-          el: targetNode.parentNode,
-          data: targetParentData as ParentData<T>,
-        },
-      };
-    } else if (node instanceof HTMLElement) {
-      const parentData = parents.get(node);
-
-      if (parentData) {
-        return {
-          parent: {
-            el: node,
-            data: parentData as ParentData<T>,
-          },
-        };
-      }
+      break;
     }
+
+    target = target.parentNode as Node;
   }
 
-  return undefined;
+  if (!isParent) {
+    const targetNodeData = nodes.get(target as Node);
+
+    if (!targetNodeData) return;
+
+    const targetParentData = parents.get(target.parentNode as Node);
+
+    if (!targetParentData) return;
+
+    return {
+      node: {
+        el: target as Node,
+        data: targetNodeData,
+      },
+      parent: {
+        el: target.parentNode as Node,
+        data: targetParentData as ParentData<T>,
+      },
+    };
+  } else {
+    const parentData = parents.get(target as HTMLElement);
+
+    if (!parentData) return;
+
+    return {
+      parent: {
+        el: target as HTMLElement,
+        data: parentData as ParentData<T>,
+      },
+    };
+  }
 }
 
 /**
@@ -252,6 +262,7 @@ export function copyNodeStyle(
     "top",
     "left",
     "x",
+    "pointer-events",
     "y",
     "transform-origin",
     "filter",

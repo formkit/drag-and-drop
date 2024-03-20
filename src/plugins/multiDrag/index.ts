@@ -336,7 +336,11 @@ export function stackNodes<T>({
 }) {
   const wrapper = document.createElement("div");
 
-  for (const el of state.clonedDraggedEls) wrapper.append(el);
+  for (const el of state.clonedDraggedEls) {
+    if (el instanceof HTMLElement) el.style.pointerEvents = "none";
+
+    wrapper.append(el);
+  }
 
   const { width } = state.draggedNode.el.getBoundingClientRect();
 
@@ -344,7 +348,8 @@ export function stackNodes<T>({
         display: flex;
         flex-direction: column;
         width: ${width}px;
-        position: absolute;
+        position: fixed;
+        pointer-events: none;
         z-index: 9999;
         left: -9999px
       `;
