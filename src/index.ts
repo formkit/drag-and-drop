@@ -233,6 +233,8 @@ export function dragAndDrop<T>({
       handleTouchmove,
       handleTouchOverNode,
       handleTouchOverParent,
+      handleDragenterNode,
+      handleDragleaveNode,
       performSort,
       performTransfer,
       root: document,
@@ -252,7 +254,15 @@ export function dragAndDrop<T>({
     abortControllers: {},
   };
 
-  setup(parent, parentData);
+  const nodesObserver = new MutationObserver(nodesMutated);
+
+  nodesObserver.observe(parent, { childList: true });
+
+  parents.set(parent, parentData as any);
+
+  config.plugins?.forEach((plugin) => {
+    plugin(parent)?.tearDown?.();
+  });
 
   config.plugins?.forEach((plugin) => {
     plugin(parent)?.tearDown?.();
@@ -261,6 +271,8 @@ export function dragAndDrop<T>({
   config.plugins?.forEach((plugin: DNDPlugin) => {
     plugin(parent)?.setup?.();
   });
+
+  setup(parent, parentData);
 
   remapNodes(parent, true);
 }
@@ -276,12 +288,6 @@ export function tearDown(parent: HTMLElement) {
 }
 
 function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
-  const nodesObserver = new MutationObserver(nodesMutated);
-
-  nodesObserver.observe(parent, { childList: true });
-
-  parents.set(parent, parentData as any);
-
   parentData.abortControllers.mainParent = addEvents(parent, {
     dragover: parentEventData(
       throttle(parentData.config.handleDragoverParent, 10)
@@ -551,6 +557,8 @@ export function setupNode<T>(data: SetupNodeData<T>) {
   data.nodeData.abortControllers.mainNode = addEvents(data.node, {
     dragstart: nodeEventData(config.handleDragstart),
     dragover: nodeEventData(config.handleDragoverNode),
+    dragenter: nodeEventData(config.handleDragenterNode),
+    dragleave: nodeEventData(config.handleDragleaveNode),
     dragend: nodeEventData(config.handleEnd),
     touchstart: nodeEventData(config.handleTouchstart),
     touchmove: nodeEventData(config.handleTouchmove),
@@ -560,8 +568,6 @@ export function setupNode<T>(data: SetupNodeData<T>) {
 
   config.reapplyDragClasses(data.node, data.parentData);
 
-  // TODO: setupNode should maybe accept argument saying whether or not to
-  // add events
   data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
     plugin(data.parent)?.setupNode?.(data);
   });
@@ -852,6 +858,8 @@ function touchmove<T>(data: NodeTouchEventData<T>, touchState: TouchState<T>) {
 export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
   if (!state) return;
 
+  console.log("getting hre?");
+
   dragoverNode(data, state);
 }
 
@@ -869,6 +877,8 @@ function handleScroll(parent: HTMLElement, e: DragEvent | TouchEvent) {
 
 export function handleDragoverParent<T>(eventData: ParentEventData<T>) {
   if (!state) return;
+
+  console.log("uhoh");
 
   if (eventData.e instanceof DragEvent)
     handleScroll(eventData.targetData.parent.el, eventData.e);
@@ -909,6 +919,20 @@ export function validateTransfer<T>(
   }
 
   return true;
+}
+
+function handleDragenterNode<T>(
+  data: NodeDragEventData<T>,
+  _state: DragState<T>
+) {
+  data.e.preventDefault();
+}
+
+function handleDragleaveNode<T>(
+  data: NodeDragEventData<T>,
+  _state: DragState<T>
+) {
+  data.e.preventDefault();
 }
 
 function dragoverNode<T>(
