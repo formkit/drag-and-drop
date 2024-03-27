@@ -1,10 +1,10 @@
 import type {
-  SetupNodeData,
   NodeDragEventData,
   ParentConfig,
   DragState,
   NodeTouchEventData,
   NodeRecord,
+  TouchState,
 } from "../../types";
 import {
   state,
@@ -37,9 +37,14 @@ export function swap<T>(swapConfig: Partial<SwapConfig<T>> = {}) {
         swapParentConfig.handleDragoverNode =
           swapConfig.handleDragoverNode || handleDragoverNode;
 
+        swapParentConfig.handleTouchOverNode =
+          swapConfig.handleTouchOverNode || handleTouchOverNode;
+
         swapParentConfig.handleEnd = swapConfig.handleEnd || handleEnd;
 
         swapParentConfig.handleDragoverParent = () => {};
+
+        swapParentConfig.handleTouchOverParent = () => {};
 
         parentData.config = swapParentConfig;
       },
@@ -53,17 +58,42 @@ function handleDragoverNode<T>(data: NodeDragEventData<T>) {
   dragoverNode(data, state);
 }
 
+function handleTouchOverNode<T>(data: NodeTouchEventData<T>) {
+  if (!state) return;
+
+  const dropZoneClass = data.targetData.parent.data.config.touchDropZoneClass;
+
+  removeClass(
+    swapState.draggedOverNodes.map((node) => node.el),
+    dropZoneClass
+  );
+
+  const enabledNodes = data.targetData.parent.data.enabledNodes;
+
+  if (!enabledNodes) return;
+
+  swapState.draggedOverNodes = enabledNodes.slice(
+    data.targetData.node.data.index,
+    data.targetData.node.data.index + state.draggedNodes.length
+  );
+
+  addClass(
+    swapState.draggedOverNodes.map((node) => node.el),
+    dropZoneClass,
+    true
+  );
+
+  state.lastTargetValue = data.targetData.node.data.value;
+
+  state.lastParent = data.targetData.parent;
+}
+
 function dragoverNode<T>(data: NodeDragEventData<T>, state: DragState<T>) {
   data.e.preventDefault();
 
   data.e.stopPropagation();
 
-  console.log("dragover node");
-
-  const dropZoneClass =
-    "touchedNode" in state
-      ? data.targetData.parent.data.config.touchDropZoneClass
-      : data.targetData.parent.data.config.dropZoneClass;
+  const dropZoneClass = data.targetData.parent.data.config.dropZoneClass;
 
   removeClass(
     swapState.draggedOverNodes.map((node) => node.el),

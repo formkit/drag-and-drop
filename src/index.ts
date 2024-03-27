@@ -48,6 +48,7 @@ export const parents: ParentsData<any> = new WeakMap<
   HTMLElement,
   ParentData<any>
 >();
+
 /**
  * The state of the drag and drop. Is undefined until either dragstart or
  * touchstart is called.
