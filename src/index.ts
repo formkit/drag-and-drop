@@ -800,13 +800,17 @@ function getScrollData<T>(
 
   const { x, y, width, height } = state.scrollParent.getBoundingClientRect();
 
-  const { x: xThresh, y: yThresh } =
-    state.lastParent.data.config.scrollBehavior;
+  const {
+    x: xThresh,
+    y: yThresh,
+    scrollOutside,
+  } = state.lastParent.data.config.scrollBehavior;
 
   return {
     state,
     xThresh,
     yThresh,
+    scrollOutside,
     scrollParent: state.scrollParent,
     x,
     y,
@@ -842,6 +846,7 @@ interface ScrollData<T> {
   xThresh: number;
   yThresh: number;
   scrollParent: HTMLElement;
+  scrollOutside?: boolean;
   x: number;
   y: number;
   width: number;
@@ -852,9 +857,12 @@ function shouldScrollRight<T>(
   state: TouchState<T> | DragState<T>,
   data: ScrollData<T>
 ): TouchState<T> | DragState<T> | void {
+  const diff = data.scrollParent.clientWidth + data.x - state.coordinates.x;
+
+  if (!data.scrollOutside && diff < 0) return;
+
   if (
-    state.scrollParent.clientWidth + data.x - state.coordinates.x <
-      (1 - data.xThresh) * data.scrollParent.clientWidth &&
+    diff < (1 - data.xThresh) * data.scrollParent.clientWidth &&
     !(
       data.scrollParent.scrollLeft + data.scrollParent.clientWidth >=
       data.scrollParent.scrollWidth
@@ -867,9 +875,12 @@ function shouldScrollLeft<T>(
   state: TouchState<T> | DragState<T>,
   data: ScrollData<T>
 ): TouchState<T> | DragState<T> | void {
+  const diff = data.scrollParent.clientWidth + data.x - state.coordinates.x;
+
+  if (!data.scrollOutside && diff > data.scrollParent.clientWidth) return;
+
   if (
-    state.scrollParent.clientWidth + data.x - state.coordinates.x >
-      data.xThresh * data.scrollParent.clientWidth &&
+    diff > data.xThresh * data.scrollParent.clientWidth &&
     data.scrollParent.scrollLeft !== 0
   )
     return state;
@@ -879,9 +890,12 @@ function shouldScrollUp<T>(
   state: TouchState<T> | DragState<T>,
   data: ScrollData<T>
 ): TouchState<T> | DragState<T> | void {
+  const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y;
+
+  if (!data.scrollOutside && diff > data.scrollParent.clientHeight) return;
+
   if (
-    state.scrollParent.clientHeight + data.y - state.coordinates.y >
-      data.yThresh * data.scrollParent.clientHeight &&
+    diff > data.yThresh * data.scrollParent.clientHeight &&
     data.scrollParent.scrollTop !== 0
   )
     return state;
@@ -891,9 +905,12 @@ function shouldScrollDown<T>(
   state: TouchState<T> | DragState<T>,
   data: ScrollData<T>
 ): TouchState<T> | DragState<T> | void {
+  const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y;
+
+  if (!data.scrollOutside && diff < 0) return;
+
   if (
-    state.scrollParent.clientHeight + data.y - state.coordinates.y <
-      (1 - data.yThresh) * data.scrollParent.clientHeight &&
+    diff < (1 - data.yThresh) * data.scrollParent.clientHeight &&
     !(
       data.scrollParent.scrollTop + data.scrollParent.clientHeight >=
       data.scrollParent.scrollHeight
