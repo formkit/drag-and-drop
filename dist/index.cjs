@@ -1217,10 +1217,8 @@ function validateDragHandle(data) {
   return false;
 }
 function touchstart2(data) {
-  if (!validateDragHandle(data)) {
-    data.e.preventDefault();
+  if (!validateDragHandle(data))
     return;
-  }
   const touchState = initTouch(data);
   handleTouchedNode(data, touchState);
   handleLongTouch(data, touchState);
