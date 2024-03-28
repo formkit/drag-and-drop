@@ -526,11 +526,7 @@ function validateDragHandle<T>(data: NodeEventData<T>): boolean {
 }
 
 function touchstart<T>(data: NodeTouchEventData<T>) {
-  if (!validateDragHandle(data)) {
-    data.e.preventDefault();
-
-    return;
-  }
+  if (!validateDragHandle(data)) return;
 
   const touchState = initTouch(data);
 

@@ -1,13 +1,18 @@
 <script setup>
 import { useDragAndDrop } from "../../src/vue/index";
-const [parent, tapes] = useDragAndDrop([
-  { name: "Depeche Mode", hasClass: false },
-  { name: "Duran Duran", hasClass: false },
-  { name: "Pet Shop Boys", hasClass: false },
-  { name: "Kraftwerk", hasClass: false },
-  { name: "Tears for Fears", hasClass: false },
-  { name: "Checkbox with .drag-handle class", hasClass: true },
-]);
+const [parent, tapes] = useDragAndDrop(
+  [
+    { name: "Depeche Mode", hasClass: false },
+    { name: "Duran Duran", hasClass: false },
+    { name: "Pet Shop Boys", hasClass: false },
+    { name: "Kraftwerk", hasClass: false },
+    { name: "Tears for Fears", hasClass: false },
+    { name: "Checkbox with .drag-handle class", hasClass: true },
+  ],
+  {
+    dragHandle: ".drag-handle",
+  }
+);
 </script>
 
 <template>
