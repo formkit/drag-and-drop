@@ -144,6 +144,13 @@ export interface ParentConfig<T> {
    */
   setupNode: SetupNode;
   /**
+   * The threshold for when a dragged element should begin scrolling its scrollable parent
+   */
+  scrollThreshold: {
+    x: number;
+    y: number;
+  };
+  /**
    * Flag for whether or not to allow sorting within a given parent.
    */
   sortable?: boolean;
@@ -471,6 +478,10 @@ export type EventHandlers = Record<string, (e: Event) => void>;
  * event has occurred.
  */
 export interface TouchState<T> extends DragState<T> {
+  coordinates: {
+    x: number;
+    y: number;
+  };
   /**
    * A flag to indicate whether the dragged (touched) node is moving.
    */
@@ -619,8 +630,13 @@ export interface DragStateProps<T> {
 }
 
 export interface TouchStateProps {
+  coordinates: {
+    x: number;
+    y: number;
+  };
   touchedNode: HTMLElement;
   touchStartLeft: number;
   touchStartTop: number;
   touchMoving: boolean;
+  scrollParent: HTMLElement | undefined;
 }

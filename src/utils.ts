@@ -110,23 +110,26 @@ export function removeClass(
  *
  * @internal
  */
-export function getScrollParent(
-  node: HTMLElement | null
-): HTMLElement | undefined {
-  if (node == null) return undefined;
+export function getScrollParent(childNode: HTMLElement): HTMLElement | null {
+  let parentNode = childNode.parentNode;
 
-  if (
-    node.scrollHeight > node.clientHeight ||
-    node.scrollWidth > node.clientWidth
+  while (
+    parentNode !== null &&
+    parentNode.nodeType === 1 &&
+    parentNode instanceof HTMLElement
   ) {
-    return node;
-  } else if (node.parentNode instanceof HTMLElement) {
-    return getScrollParent(node.parentNode);
+    const computedStyle = window.getComputedStyle(parentNode);
+    const overflow = computedStyle.getPropertyValue("overflow");
+
+    if (overflow === "scroll" || overflow === "auto") {
+      return parentNode;
+    }
+
+    parentNode = parentNode.parentNode;
   }
 
-  return undefined;
+  return null; // No parent with overflow scroll found
 }
-
 /**
  * Used for setting a single event listener on x number of events for a given
  * element.
