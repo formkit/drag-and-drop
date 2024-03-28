@@ -520,6 +520,9 @@ function animations(animationsConfig = {}) {
   };
 }
 function animate(node, animation, duration) {
+  if (!state)
+    return;
+  state.preventEnter = true;
   node.animate(animation, {
     duration
   });
@@ -527,6 +530,8 @@ function animate(node, animation, duration) {
     if (!state)
       return;
     state.swappedNodeValue = void 0;
+    state.remapJustFinished = true;
+    state.lastTargetValue = void 0;
     state.preventEnter = false;
   }, duration);
 }
