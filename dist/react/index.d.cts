@@ -112,6 +112,20 @@ interface ParentConfig<T> {
      */
     setupNode: SetupNode;
     /**
+     * The scroll behavior of the parent.
+     *
+     * If a parent of the dragged element is scrollable, the parent will scroll on its x and y axis.
+     *
+     * I.e. Setting x: 0.9 will begin scrolling the parent when the dragged element is 90% horizontally.
+     *
+     * Scroll Outside determines whether or not the parent will scroll when the dragged element is outside of the parent.
+     */
+    scrollBehavior: {
+        x: number;
+        y: number;
+        scrollOutside?: boolean;
+    };
+    /**
      * Flag for whether or not to allow sorting within a given parent.
      */
     sortable?: boolean;
@@ -381,14 +395,6 @@ interface TouchState<T> extends DragState<T> {
      */
     longTouchTimeout: ReturnType<typeof setTimeout> | undefined;
     /**
-     * The parent that is scrollable.
-     */
-    scrollParent: HTMLElement | undefined;
-    /**
-     * The overflow of the scroll parent.
-     */
-    scrollParentOverflow: string | undefined;
-    /**
      * A flag to indicate whether a long touch has occurred.
      */
     longTouch: boolean;
@@ -444,6 +450,13 @@ interface DragState<T> extends DragStateProps<T> {
      */
     clonedDraggedEls: Array<Element>;
     /**
+     * The coordinates of the dragged element itself.
+     */
+    coordinates: {
+        x: number;
+        y: number;
+    };
+    /**
      * The node that is being dragged.
      */
     draggedNode: NodeRecord<T>;
@@ -489,6 +502,10 @@ interface DragState<T> extends DragStateProps<T> {
      */
     remapJustFinished: boolean;
     /**
+     * The nearest parent that is scrollable.
+     */
+    scrollParent: HTMLElement;
+    /**
      * The value of the node that was swapped with the dragged node.
      */
     swappedNodeValue: any | undefined;
@@ -498,11 +515,16 @@ interface DragState<T> extends DragStateProps<T> {
     targetIndex: number;
 }
 interface DragStateProps<T> {
+    coordinates: {
+        x: number;
+        y: number;
+    };
     draggedNode: NodeRecord<T>;
     draggedNodes: Array<NodeRecord<T>>;
     initialIndex: number;
     initialParent: ParentRecord<T>;
     lastParent: ParentRecord<T>;
+    scrollParent: HTMLElement;
 }
 
 type ReactElement<E extends HTMLElement> = E | RefObject<E>;
