@@ -945,8 +945,6 @@ function moveTouchedNode<T>(
 }
 
 function touchmove<T>(data: NodeTouchEventData<T>, touchState: TouchState<T>) {
-  if (data.e.cancelable) data.e.preventDefault();
-
   const config = data.targetData.parent.data.config;
 
   if (config.longTouch && !touchState.longTouch) {
@@ -954,6 +952,8 @@ function touchmove<T>(data: NodeTouchEventData<T>, touchState: TouchState<T>) {
 
     return;
   }
+
+  if (data.e.cancelable) data.e.preventDefault();
 
   moveTouchedNode(data, touchState);
 
