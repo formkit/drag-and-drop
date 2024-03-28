@@ -14,18 +14,18 @@ const [parent, tapes] = useDragAndDrop([
 </script>
 
 <template>
-  <div
-    style="height: 100px; width: 200px; overflow: scroll; background-color: red"
-  >
+  <div style="height: 300px; width: 400px; overflow: scroll">
     <div>
-      <div ref="parent">
+      <div ref="parent" style="display: flex">
         <div
           v-for="tape in tapes"
           :key="tape.name"
           class="cassette"
-          style="height: 100px; width: 300px"
+          style="height: 1000px; width: 100px"
         >
-          <div><button class="drag-handle">::</button></div>
+          <div style="width: 400px">
+            <button class="drag-handle">::</button>
+          </div>
           <div>
             {{ tape.name }}
           </div>
@@ -34,3 +34,5 @@ const [parent, tapes] = useDragAndDrop([
     </div>
   </div>
 </template>
+
+<style></style>
