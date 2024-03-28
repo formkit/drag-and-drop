@@ -616,7 +616,7 @@ export interface DragState<T> extends DragStateProps<T> {
   /**
    * The nearest parent that is scrollable.
    */
-  scrollParent: HTMLElement | undefined;
+  scrollParent: HTMLElement;
   /**
    * The value of the node that was swapped with the dragged node.
    */
@@ -637,7 +637,7 @@ export interface DragStateProps<T> {
   initialIndex: number;
   initialParent: ParentRecord<T>;
   lastParent: ParentRecord<T>;
-  scrollParent: HTMLElement | undefined;
+  scrollParent: HTMLElement;
 }
 
 export interface TouchStateProps {
@@ -649,5 +649,5 @@ export interface TouchStateProps {
   touchStartLeft: number;
   touchStartTop: number;
   touchMoving: boolean;
-  scrollParent: HTMLElement | undefined;
+  scrollParent: HTMLElement;
 }

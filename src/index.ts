@@ -42,6 +42,15 @@ export { animations } from "./plugins/animations";
 export { selections } from "./plugins/multiDrag/plugins/selections";
 export * from "./utils";
 
+const scrollConfig: {
+  [key: string]: [number, number];
+} = {
+  up: [0, -1],
+  down: [0, 1],
+  left: [-1, 0],
+  right: [1, 0],
+};
+
 export const nodes: NodesData<any> = new WeakMap<Node, NodeData<any>>();
 
 export const parents: ParentsData<any> = new WeakMap<
@@ -784,112 +793,113 @@ function touchmoveClasses<T>(
     );
 }
 
-function shouldScrollRight<T>(): TouchState<T> | DragState<T> | void {
+function getScrollData<T>(
+  state?: DragState<T> | TouchState<T>
+): ScrollData<T> | void {
   if (!state || !state.scrollParent) return;
 
-  let rect = state.scrollParent.getBoundingClientRect();
+  const { x, y, width, height } = state.scrollParent.getBoundingClientRect();
 
-  const xThresh = state.lastParent.data.config.scrollBehavior.x;
+  const { x: xThresh, y: yThresh } =
+    state.lastParent.data.config.scrollBehavior;
 
-  if (!(state.coordinates.x > (rect.x + rect.width) * xThresh)) return;
-
-  const fullyScrolled =
-    state.scrollParent.scrollLeft + state.scrollParent.clientWidth >=
-    state.scrollParent.scrollWidth;
-
-  if (!fullyScrolled) return state;
+  return {
+    state,
+    xThresh,
+    yThresh,
+    scrollParent: state.scrollParent,
+    x,
+    y,
+    width,
+    height,
+  };
 }
 
-function shouldScrollLeft<T>(): TouchState<T> | DragState<T> | void {
-  if (!state || !state.scrollParent) return;
+function shouldScroll<T>(
+  direction: string
+): DragState<T> | TouchState<T> | void {
+  const data = getScrollData(state);
 
-  let rect = state.scrollParent.getBoundingClientRect();
+  if (!data) return;
 
-  const xThresh = state.lastParent.data.config.scrollBehavior.x;
+  switch (direction) {
+    case "down":
+      return shouldScrollDown(data.state, data);
 
-  if (!(state.coordinates.x < (rect.x + rect.width) * (1 - xThresh))) return;
+    case "up":
+      return shouldScrollUp(data.state, data);
 
-  const fullyScrolled = state.scrollParent.scrollLeft === 0;
+    case "right":
+      return shouldScrollRight(data.state, data);
 
-  if (!fullyScrolled) return state;
+    case "left":
+      return shouldScrollLeft(data.state, data);
+  }
 }
 
-function shouldScrollUp<T>(): TouchState<T> | DragState<T> | void {
-  if (!state || !state.scrollParent) return;
-
-  const rect = state.scrollParent.getBoundingClientRect();
-
-  const yThresh = state.lastParent.data.config.scrollBehavior.y;
-
-  if (!(state.coordinates.y < (rect.y + rect.height) * (1 - yThresh))) return;
-
-  const fullyScrolled = state.scrollParent.scrollTop === 0;
-
-  if (!fullyScrolled) return state;
+interface ScrollData<T> {
+  state: DragState<T> | TouchState<T>;
+  xThresh: number;
+  yThresh: number;
+  scrollParent: HTMLElement;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
-function shouldScrollDown<T>(): TouchState<T> | DragState<T> | void {
-  if (!state || !state.scrollParent) return;
-
-  const rect = state.scrollParent.getBoundingClientRect();
-
-  const yThresh = state.lastParent.data.config.scrollBehavior.y;
-
-  if (!(state.coordinates.y > (rect.y + rect.height) * yThresh)) return;
-
-  const fullyScrolled =
-    state.scrollParent.scrollTop + state.scrollParent.clientHeight >=
-    state.scrollParent.scrollHeight;
-
-  if (!fullyScrolled) return state;
+function shouldScrollRight<T>(
+  state: TouchState<T> | DragState<T>,
+  data: ScrollData<T>
+): TouchState<T> | DragState<T> | void {
+  if (
+    state.scrollParent.clientWidth + data.x - state.coordinates.x <
+      (1 - data.xThresh) * data.scrollParent.clientWidth &&
+    !(
+      data.scrollParent.scrollLeft + data.scrollParent.clientWidth >=
+      data.scrollParent.scrollWidth
+    )
+  )
+    return state;
 }
 
-function handleScrollDown() {
-  const touchState = shouldScrollDown();
-
-  if (!touchState || !touchState.scrollParent) return;
-
-  touchState.scrollParent.scrollBy(0, 3);
-
-  setTimeout(() => {
-    handleScrollDown();
-  }, 100);
+function shouldScrollLeft<T>(
+  state: TouchState<T> | DragState<T>,
+  data: ScrollData<T>
+): TouchState<T> | DragState<T> | void {
+  if (
+    state.scrollParent.clientWidth + data.x - state.coordinates.x >
+      data.xThresh * data.scrollParent.clientWidth &&
+    data.scrollParent.scrollLeft !== 0
+  )
+    return state;
 }
 
-function handleScrollUp() {
-  const touchState = shouldScrollUp();
-
-  if (!touchState || !touchState.scrollParent) return;
-
-  touchState.scrollParent.scrollBy(0, -3);
-
-  setTimeout(() => {
-    handleScrollUp();
-  }, 100);
+function shouldScrollUp<T>(
+  state: TouchState<T> | DragState<T>,
+  data: ScrollData<T>
+): TouchState<T> | DragState<T> | void {
+  if (
+    state.scrollParent.clientHeight + data.y - state.coordinates.y >
+      data.yThresh * data.scrollParent.clientHeight &&
+    data.scrollParent.scrollTop !== 0
+  )
+    return state;
 }
 
-function handleScrollRight() {
-  const touchState = shouldScrollRight();
-
-  if (!touchState || !touchState.scrollParent) return;
-
-  touchState.scrollParent.scrollBy(3, 0);
-
-  setTimeout(() => {
-    handleScrollRight();
-  }, 100);
-}
-
-function handleScrollLeft() {
-  const touchState = shouldScrollLeft();
-
-  if (!touchState || !touchState.scrollParent) return;
-
-  touchState.scrollParent.scrollBy(-3, 0);
-
-  setTimeout(() => {
-    handleScrollLeft();
-  }, 100);
+function shouldScrollDown<T>(
+  state: TouchState<T> | DragState<T>,
+  data: ScrollData<T>
+): TouchState<T> | DragState<T> | void {
+  if (
+    state.scrollParent.clientHeight + data.y - state.coordinates.y <
+      (1 - data.yThresh) * data.scrollParent.clientHeight &&
+    !(
+      data.scrollParent.scrollTop + data.scrollParent.clientHeight >=
+      data.scrollParent.scrollHeight
+    )
+  )
+    return state;
 }
 
 function moveTouchedNode<T>(
@@ -957,15 +967,26 @@ function touchmove<T>(data: NodeTouchEventData<T>, touchState: TouchState<T>) {
 }
 
 function handleScroll() {
-  if (shouldScrollDown()) {
-    handleScrollDown();
-  } else if (shouldScrollUp()) {
-    handleScrollUp();
-  } else if (shouldScrollRight()) {
-    handleScrollRight();
-  } else if (shouldScrollLeft()) {
-    handleScrollLeft();
+  for (const direction of Object.keys(scrollConfig)) {
+    const [x, y] = scrollConfig[direction];
+
+    performScroll(direction, x, y);
   }
+}
+
+function performScroll(direction: string, x: number, y: number) {
+  const state = shouldScroll(direction);
+
+  if (!state) return;
+
+  state.scrollParent.scrollBy(x, y);
+
+  setTimeout(
+    () => {
+      performScroll(direction, x, y);
+    },
+    "touchedNode" in state ? 10 : 100
+  );
 }
 
 export function handleDragoverNode<T>(data: NodeDragEventData<T>) {

@@ -14,7 +14,16 @@ const [parent, tapes] = useDragAndDrop([
 </script>
 
 <template>
-  <div style="height: 300px; width: 400px; overflow: scroll">
+  <div
+    style="
+      height: 300px;
+      width: 400px;
+      overflow: scroll;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+    "
+  >
     <div>
       <div ref="parent" style="display: flex">
         <div

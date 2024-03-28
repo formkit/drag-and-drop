@@ -110,9 +110,7 @@ export function removeClass(
  *
  * @internal
  */
-export function getScrollParent(
-  childNode: HTMLElement
-): HTMLElement | undefined {
+export function getScrollParent(childNode: HTMLElement): HTMLElement {
   let parentNode = childNode.parentNode;
 
   while (
@@ -128,6 +126,8 @@ export function getScrollParent(
 
     parentNode = parentNode.parentNode;
   }
+
+  return document.documentElement;
 }
 /**
  * Used for setting a single event listener on x number of events for a given
