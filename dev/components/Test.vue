@@ -3,6 +3,7 @@ import { useDragAndDrop } from "../../src/vue/index";
 import {
   handleEnd as dragAndDropEnd,
   handleDragstart as dragAndDropDragstart,
+  animations,
   type NodeDragEventData,
   type NodeTouchEventData,
   tearDown,

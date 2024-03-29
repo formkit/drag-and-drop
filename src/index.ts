@@ -42,6 +42,15 @@ export { animations } from "./plugins/animations";
 export { selections } from "./plugins/multiDrag/plugins/selections";
 export * from "./utils";
 
+const scrollConfig: {
+  [key: string]: [number, number];
+} = {
+  up: [0, -1],
+  down: [0, 1],
+  left: [-1, 0],
+  right: [1, 0],
+};
+
 export const nodes: NodesData<any> = new WeakMap<Node, NodeData<any>>();
 
 export const parents: ParentsData<any> = new WeakMap<
@@ -102,28 +111,35 @@ export function setTouchState<T>(
 }
 
 export function dragStateProps<T>(
-  targetData: NodeTargetData<T>
+  data: NodeDragEventData<T> | NodeTouchEventData<T>
 ): DragStateProps<T> {
+  const { x, y } = eventCoordinates(data.e);
+
   return {
+    coordinates: {
+      x,
+      y,
+    },
     draggedNode: {
-      el: targetData.node.el,
-      data: targetData.node.data,
+      el: data.targetData.node.el,
+      data: data.targetData.node.data,
     },
     draggedNodes: [
       {
-        el: targetData.node.el,
-        data: targetData.node.data,
+        el: data.targetData.node.el,
+        data: data.targetData.node.data,
       },
     ],
-    initialIndex: targetData.node.data.index,
+    initialIndex: data.targetData.node.data.index,
     initialParent: {
-      el: targetData.parent.el,
-      data: targetData.parent.data,
+      el: data.targetData.parent.el,
+      data: data.targetData.parent.data,
     },
     lastParent: {
-      el: targetData.parent.el,
-      data: targetData.parent.data,
+      el: data.targetData.parent.el,
+      data: data.targetData.parent.data,
     },
+    scrollParent: getScrollParent(data.targetData.node.el),
   };
 }
 
@@ -213,10 +229,18 @@ export function dragAndDrop<T>({
   document.addEventListener("dragover", (e) => {
     e.preventDefault();
 
-    if (state && state.remapJustFinished) {
+    if (state) {
       state.remapJustFinished = false;
-    } else if (state) {
+
       state.lastTargetValue = undefined;
+
+      const { x, y } = eventCoordinates(e);
+
+      state.coordinates.y = y;
+
+      state.coordinates.x = x;
+
+      handleScroll();
     }
   });
 
@@ -245,6 +269,10 @@ export function dragAndDrop<T>({
       tearDownNode,
       tearDownNodeRemap,
       remapFinished,
+      scrollBehavior: {
+        x: 0.8,
+        y: 0.8,
+      },
       threshold: {
         horizontal: 0,
         vertical: 0,
@@ -455,7 +483,7 @@ export function dragstartClasses(
 }
 
 export function initDrag<T>(eventData: NodeDragEventData<T>): DragState<T> {
-  const dragState = setDragState(dragStateProps(eventData.targetData));
+  const dragState = setDragState(dragStateProps(eventData));
 
   eventData.e.stopPropagation();
 
@@ -505,11 +533,7 @@ function validateDragHandle<T>(data: NodeEventData<T>): boolean {
 }
 
 function touchstart<T>(data: NodeTouchEventData<T>) {
-  if (!validateDragHandle(data)) {
-    data.e.preventDefault();
-
-    return;
-  }
+  if (!validateDragHandle(data)) return;
 
   const touchState = initTouch(data);
 
@@ -659,13 +683,7 @@ export function end<T>(
     );
   }
 
-  if ("touchedNode" in state) {
-    state.touchedNode?.remove();
-
-    if (state.scrollParent) {
-      state.scrollParent.style.overflow = state.scrollParentOverflow || "";
-    }
-  }
+  if ("touchedNode" in state) state.touchedNode?.remove();
 }
 
 export function handleTouchstart<T>(eventData: NodeEventData<T>) {
@@ -684,15 +702,17 @@ export function initTouch<T>(data: NodeTouchEventData<T>): TouchState<T> {
 
   const rect = data.targetData.node.el.getBoundingClientRect();
 
-  const touchState = setTouchState(
-    setDragState(dragStateProps(data.targetData)),
-    {
-      touchStartLeft: data.e.touches[0].clientX - rect.left,
-      touchStartTop: data.e.touches[0].clientY - rect.top,
-      touchedNode: clonedNode,
-      touchMoving: false,
-    }
-  );
+  const touchState = setTouchState(setDragState(dragStateProps(data)), {
+    coordinates: {
+      x: data.e.touches[0].clientX,
+      y: data.e.touches[0].clientY,
+    },
+    scrollParent: getScrollParent(data.targetData.node.el),
+    touchStartLeft: data.e.touches[0].clientX - rect.left,
+    touchStartTop: data.e.touches[0].clientY - rect.top,
+    touchedNode: clonedNode,
+    touchMoving: false,
+  });
 
   return touchState;
 }
@@ -740,16 +760,6 @@ export function handleLongTouch<T>(
 
     touchState.longTouch = true;
 
-    const parentScroll = getScrollParent(touchState.draggedNode.el);
-
-    if (parentScroll) {
-      touchState.scrollParent = parentScroll;
-
-      touchState.scrollParentOverflow = parentScroll.style.overflow;
-
-      parentScroll.style.overflow = "hidden";
-    }
-
     if (config.longTouchClass && data.e.cancelable)
       addClass(
         touchState.draggedNodes.map((x) => x.el),
@@ -786,23 +796,145 @@ function touchmoveClasses<T>(
     );
 }
 
+function getScrollData<T>(
+  state?: DragState<T> | TouchState<T>
+): ScrollData<T> | void {
+  if (!state || !state.scrollParent) return;
+
+  const { x, y, width, height } = state.scrollParent.getBoundingClientRect();
+
+  const {
+    x: xThresh,
+    y: yThresh,
+    scrollOutside,
+  } = state.lastParent.data.config.scrollBehavior;
+
+  return {
+    state,
+    xThresh,
+    yThresh,
+    scrollOutside,
+    scrollParent: state.scrollParent,
+    x,
+    y,
+    width,
+    height,
+  };
+}
+
+function shouldScroll<T>(
+  direction: string
+): DragState<T> | TouchState<T> | void {
+  const data = getScrollData(state);
+
+  if (!data) return;
+
+  switch (direction) {
+    case "down":
+      return shouldScrollDown(data.state, data);
+
+    case "up":
+      return shouldScrollUp(data.state, data);
+
+    case "right":
+      return shouldScrollRight(data.state, data);
+
+    case "left":
+      return shouldScrollLeft(data.state, data);
+  }
+}
+
+interface ScrollData<T> {
+  state: DragState<T> | TouchState<T>;
+  xThresh: number;
+  yThresh: number;
+  scrollParent: HTMLElement;
+  scrollOutside?: boolean;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+function shouldScrollRight<T>(
+  state: TouchState<T> | DragState<T>,
+  data: ScrollData<T>
+): TouchState<T> | DragState<T> | void {
+  const diff = data.scrollParent.clientWidth + data.x - state.coordinates.x;
+
+  if (!data.scrollOutside && diff < 0) return;
+
+  if (
+    diff < (1 - data.xThresh) * data.scrollParent.clientWidth &&
+    !(
+      data.scrollParent.scrollLeft + data.scrollParent.clientWidth >=
+      data.scrollParent.scrollWidth
+    )
+  )
+    return state;
+}
+
+function shouldScrollLeft<T>(
+  state: TouchState<T> | DragState<T>,
+  data: ScrollData<T>
+): TouchState<T> | DragState<T> | void {
+  const diff = data.scrollParent.clientWidth + data.x - state.coordinates.x;
+
+  if (!data.scrollOutside && diff > data.scrollParent.clientWidth) return;
+
+  if (
+    diff > data.xThresh * data.scrollParent.clientWidth &&
+    data.scrollParent.scrollLeft !== 0
+  )
+    return state;
+}
+
+function shouldScrollUp<T>(
+  state: TouchState<T> | DragState<T>,
+  data: ScrollData<T>
+): TouchState<T> | DragState<T> | void {
+  const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y;
+
+  if (!data.scrollOutside && diff > data.scrollParent.clientHeight) return;
+
+  if (
+    diff > data.yThresh * data.scrollParent.clientHeight &&
+    data.scrollParent.scrollTop !== 0
+  )
+    return state;
+}
+
+function shouldScrollDown<T>(
+  state: TouchState<T> | DragState<T>,
+  data: ScrollData<T>
+): TouchState<T> | DragState<T> | void {
+  const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y;
+
+  if (!data.scrollOutside && diff < 0) return;
+
+  if (
+    diff < (1 - data.yThresh) * data.scrollParent.clientHeight &&
+    !(
+      data.scrollParent.scrollTop + data.scrollParent.clientHeight >=
+      data.scrollParent.scrollHeight
+    )
+  )
+    return state;
+}
+
 function moveTouchedNode<T>(
   data: NodeTouchEventData<T>,
   touchState: TouchState<T>
 ) {
+  touchState.touchMoving = true;
+
   touchState.touchedNode.style.display = touchState.touchedNodeDisplay || "";
 
-  const x = data.e.touches[0].clientX;
+  const { x, y } = eventCoordinates(data.e);
 
-  const y = data.e.touches[0].clientY;
+  touchState.coordinates.y = y;
 
-  const windowHeight = window.innerHeight + window.scrollY;
-
-  if (y + window.scrollY > windowHeight - 50) {
-    window.scrollBy(0, 10);
-  } else if (y < 50) {
-    window.scrollBy(0, -10);
-  }
+  touchState.coordinates.x = x;
 
   const touchStartLeft = touchState.touchStartLeft ?? 0;
 
@@ -811,11 +943,11 @@ function moveTouchedNode<T>(
   touchState.touchedNode.style.left = `${x - touchStartLeft}px`;
 
   touchState.touchedNode.style.top = `${y - touchStartTop}px`;
+
+  touchmoveClasses(touchState, data.targetData.parent.data.config);
 }
 
 function touchmove<T>(data: NodeTouchEventData<T>, touchState: TouchState<T>) {
-  if (data.e.cancelable) data.e.preventDefault();
-
   const config = data.targetData.parent.data.config;
 
   if (config.longTouch && !touchState.longTouch) {
@@ -824,13 +956,11 @@ function touchmove<T>(data: NodeTouchEventData<T>, touchState: TouchState<T>) {
     return;
   }
 
-  if (touchState.touchMoving !== true) {
-    touchState.touchMoving = true;
-
-    touchmoveClasses(touchState, config);
-  }
+  if (data.e.cancelable) data.e.preventDefault();
 
   moveTouchedNode(data, touchState);
+
+  handleScroll();
 
   const elFromPoint = getElFromPoint(data);
 
@@ -856,35 +986,55 @@ function touchmove<T>(data: NodeTouchEventData<T>, touchState: TouchState<T>) {
   }
 }
 
+function handleScroll() {
+  for (const direction of Object.keys(scrollConfig)) {
+    const [x, y] = scrollConfig[direction];
+
+    performScroll(direction, x, y);
+  }
+}
+
+function performScroll(direction: string, x: number, y: number) {
+  const state = shouldScroll(direction);
+
+  if (!state) return;
+
+  state.scrollParent.scrollBy(x, y);
+
+  setTimeout(
+    () => {
+      performScroll(direction, x, y);
+    },
+    "touchedNode" in state ? 10 : 100
+  );
+}
+
 export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
   if (!state) return;
 
-  console.log("getting hre?");
+  const { x, y } = eventCoordinates(data.e);
+
+  state.coordinates.y = y;
+
+  state.coordinates.x = x;
+
+  handleScroll();
 
   dragoverNode(data, state);
 }
 
-function handleScroll(parent: HTMLElement, e: DragEvent | TouchEvent) {
-  const rect = parent.getBoundingClientRect();
-
-  const { x } = eventCoordinates(e);
-
-  if (x > rect.right * 0.85) {
-    parent.scrollBy(10, 0);
-  } else if (x < rect.left + rect.width * 0.15) {
-    parent.scrollBy(-10, 0);
-  }
-}
-
-export function handleDragoverParent<T>(eventData: ParentEventData<T>) {
+export function handleDragoverParent<T>(data: ParentEventData<T>) {
   if (!state) return;
 
-  console.log("uhoh");
+  const { x, y } = eventCoordinates(data.e as DragEvent);
 
-  if (eventData.e instanceof DragEvent)
-    handleScroll(eventData.targetData.parent.el, eventData.e);
+  state.coordinates.y = y;
 
-  transfer(eventData, state);
+  state.coordinates.x = x;
+
+  handleScroll();
+
+  transfer(data, state);
 }
 
 export function handleTouchOverParent<T>(e: TouchOverParentEvent<T>) {

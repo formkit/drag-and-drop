@@ -64,15 +64,16 @@ function removeClass(els, className) {
     }
   }
 }
-function getScrollParent(node) {
-  if (node == null)
-    return void 0;
-  if (node.scrollHeight > node.clientHeight || node.scrollWidth > node.clientWidth) {
-    return node;
-  } else if (node.parentNode instanceof HTMLElement) {
-    return getScrollParent(node.parentNode);
+function getScrollParent(childNode) {
+  let parentNode = childNode.parentNode;
+  while (parentNode !== null && parentNode.nodeType === 1 && parentNode instanceof HTMLElement) {
+    const computedStyle = window.getComputedStyle(parentNode);
+    const overflow = computedStyle.getPropertyValue("overflow");
+    if (overflow === "scroll" || overflow === "auto")
+      return parentNode;
+    parentNode = parentNode.parentNode;
   }
-  return void 0;
+  return document.documentElement;
 }
 function events(el, events2, fn, remove = false) {
   events2.forEach((event) => {
@@ -519,6 +520,9 @@ function animations(animationsConfig = {}) {
   };
 }
 function animate(node, animation, duration) {
+  if (!state)
+    return;
+  state.preventEnter = true;
   node.animate(animation, {
     duration
   });
@@ -526,6 +530,8 @@ function animate(node, animation, duration) {
     if (!state)
       return;
     state.swappedNodeValue = void 0;
+    state.remapJustFinished = true;
+    state.lastTargetValue = void 0;
     state.preventEnter = false;
   }, duration);
 }
@@ -810,6 +816,12 @@ function keydown(data) {
 }
 
 // src/index.ts
+var scrollConfig = {
+  up: [0, -1],
+  down: [0, 1],
+  left: [-1, 0],
+  right: [1, 0]
+};
 var nodes = /* @__PURE__ */ new WeakMap();
 var parents = /* @__PURE__ */ new WeakMap();
 var state = void 0;
@@ -842,27 +854,33 @@ function setTouchState(dragState, touchStateProps) {
   };
   return state;
 }
-function dragStateProps(targetData) {
+function dragStateProps(data) {
+  const { x, y } = eventCoordinates(data.e);
   return {
+    coordinates: {
+      x,
+      y
+    },
     draggedNode: {
-      el: targetData.node.el,
-      data: targetData.node.data
+      el: data.targetData.node.el,
+      data: data.targetData.node.data
     },
     draggedNodes: [
       {
-        el: targetData.node.el,
-        data: targetData.node.data
+        el: data.targetData.node.el,
+        data: data.targetData.node.data
       }
     ],
-    initialIndex: targetData.node.data.index,
+    initialIndex: data.targetData.node.data.index,
     initialParent: {
-      el: targetData.parent.el,
-      data: targetData.parent.data
+      el: data.targetData.parent.el,
+      data: data.targetData.parent.data
     },
     lastParent: {
-      el: targetData.parent.el,
-      data: targetData.parent.data
-    }
+      el: data.targetData.parent.el,
+      data: data.targetData.parent.data
+    },
+    scrollParent: getScrollParent(data.targetData.node.el)
   };
 }
 function performSort(state2, data) {
@@ -914,10 +932,13 @@ function dragAndDrop({
     return;
   document.addEventListener("dragover", (e) => {
     e.preventDefault();
-    if (state && state.remapJustFinished) {
+    if (state) {
       state.remapJustFinished = false;
-    } else if (state) {
       state.lastTargetValue = void 0;
+      const { x, y } = eventCoordinates(e);
+      state.coordinates.y = y;
+      state.coordinates.x = x;
+      handleScroll();
     }
   });
   tearDown(parent);
@@ -942,6 +963,10 @@ function dragAndDrop({
       tearDownNode,
       tearDownNodeRemap,
       remapFinished,
+      scrollBehavior: {
+        x: 0.8,
+        y: 0.8
+      },
       threshold: {
         horizontal: 0,
         vertical: 0
@@ -1078,7 +1103,7 @@ function dragstartClasses(el, draggingClass, dropZoneClass) {
   });
 }
 function initDrag(eventData) {
-  const dragState = setDragState(dragStateProps(eventData.targetData));
+  const dragState = setDragState(dragStateProps(eventData));
   eventData.e.stopPropagation();
   if (eventData.e.dataTransfer) {
     eventData.e.dataTransfer.dropEffect = "move";
@@ -1116,10 +1141,8 @@ function validateDragHandle(data) {
   return false;
 }
 function touchstart2(data) {
-  if (!validateDragHandle(data)) {
-    data.e.preventDefault();
+  if (!validateDragHandle(data))
     return;
-  }
   const touchState = initTouch(data);
   handleTouchedNode(data, touchState);
   handleLongTouch(data, touchState);
@@ -1223,12 +1246,8 @@ function end(_eventData, state2) {
       state2.initialParent.data?.config?.longTouchClass
     );
   }
-  if ("touchedNode" in state2) {
+  if ("touchedNode" in state2)
     state2.touchedNode?.remove();
-    if (state2.scrollParent) {
-      state2.scrollParent.style.overflow = state2.scrollParentOverflow || "";
-    }
-  }
 }
 function handleTouchstart(eventData) {
   if (!(eventData.e instanceof TouchEvent))
@@ -1242,15 +1261,17 @@ function initTouch(data) {
   data.e.stopPropagation();
   const clonedNode = data.targetData.node.el.cloneNode(true);
   const rect = data.targetData.node.el.getBoundingClientRect();
-  const touchState = setTouchState(
-    setDragState(dragStateProps(data.targetData)),
-    {
-      touchStartLeft: data.e.touches[0].clientX - rect.left,
-      touchStartTop: data.e.touches[0].clientY - rect.top,
-      touchedNode: clonedNode,
-      touchMoving: false
-    }
-  );
+  const touchState = setTouchState(setDragState(dragStateProps(data)), {
+    coordinates: {
+      x: data.e.touches[0].clientX,
+      y: data.e.touches[0].clientY
+    },
+    scrollParent: getScrollParent(data.targetData.node.el),
+    touchStartLeft: data.e.touches[0].clientX - rect.left,
+    touchStartTop: data.e.touches[0].clientY - rect.top,
+    touchedNode: clonedNode,
+    touchMoving: false
+  });
   return touchState;
 }
 function preventDefault(e) {
@@ -1280,12 +1301,6 @@ function handleLongTouch(data, touchState) {
     if (!touchState)
       return;
     touchState.longTouch = true;
-    const parentScroll = getScrollParent(touchState.draggedNode.el);
-    if (parentScroll) {
-      touchState.scrollParent = parentScroll;
-      touchState.scrollParentOverflow = parentScroll.style.overflow;
-      parentScroll.style.overflow = "hidden";
-    }
     if (config.longTouchClass && data.e.cancelable)
       addClass(
         touchState.draggedNodes.map((x) => x.el),
@@ -1313,34 +1328,92 @@ function touchmoveClasses(touchState, config) {
       config.touchDropZoneClass
     );
 }
-function moveTouchedNode(data, touchState) {
-  touchState.touchedNode.style.display = touchState.touchedNodeDisplay || "";
-  const x = data.e.touches[0].clientX;
-  const y = data.e.touches[0].clientY;
-  const windowHeight = window.innerHeight + window.scrollY;
-  if (y + window.scrollY > windowHeight - 50) {
-    window.scrollBy(0, 10);
-  } else if (y < 50) {
-    window.scrollBy(0, -10);
+function getScrollData(state2) {
+  if (!state2 || !state2.scrollParent)
+    return;
+  const { x, y, width, height } = state2.scrollParent.getBoundingClientRect();
+  const {
+    x: xThresh,
+    y: yThresh,
+    scrollOutside
+  } = state2.lastParent.data.config.scrollBehavior;
+  return {
+    state: state2,
+    xThresh,
+    yThresh,
+    scrollOutside,
+    scrollParent: state2.scrollParent,
+    x,
+    y,
+    width,
+    height
+  };
+}
+function shouldScroll(direction) {
+  const data = getScrollData(state);
+  if (!data)
+    return;
+  switch (direction) {
+    case "down":
+      return shouldScrollDown(data.state, data);
+    case "up":
+      return shouldScrollUp(data.state, data);
+    case "right":
+      return shouldScrollRight(data.state, data);
+    case "left":
+      return shouldScrollLeft(data.state, data);
   }
+}
+function shouldScrollRight(state2, data) {
+  const diff = data.scrollParent.clientWidth + data.x - state2.coordinates.x;
+  if (!data.scrollOutside && diff < 0)
+    return;
+  if (diff < (1 - data.xThresh) * data.scrollParent.clientWidth && !(data.scrollParent.scrollLeft + data.scrollParent.clientWidth >= data.scrollParent.scrollWidth))
+    return state2;
+}
+function shouldScrollLeft(state2, data) {
+  const diff = data.scrollParent.clientWidth + data.x - state2.coordinates.x;
+  if (!data.scrollOutside && diff > data.scrollParent.clientWidth)
+    return;
+  if (diff > data.xThresh * data.scrollParent.clientWidth && data.scrollParent.scrollLeft !== 0)
+    return state2;
+}
+function shouldScrollUp(state2, data) {
+  const diff = data.scrollParent.clientHeight + data.y - state2.coordinates.y;
+  if (!data.scrollOutside && diff > data.scrollParent.clientHeight)
+    return;
+  if (diff > data.yThresh * data.scrollParent.clientHeight && data.scrollParent.scrollTop !== 0)
+    return state2;
+}
+function shouldScrollDown(state2, data) {
+  const diff = data.scrollParent.clientHeight + data.y - state2.coordinates.y;
+  if (!data.scrollOutside && diff < 0)
+    return;
+  if (diff < (1 - data.yThresh) * data.scrollParent.clientHeight && !(data.scrollParent.scrollTop + data.scrollParent.clientHeight >= data.scrollParent.scrollHeight))
+    return state2;
+}
+function moveTouchedNode(data, touchState) {
+  touchState.touchMoving = true;
+  touchState.touchedNode.style.display = touchState.touchedNodeDisplay || "";
+  const { x, y } = eventCoordinates(data.e);
+  touchState.coordinates.y = y;
+  touchState.coordinates.x = x;
   const touchStartLeft = touchState.touchStartLeft ?? 0;
   const touchStartTop = touchState.touchStartTop ?? 0;
   touchState.touchedNode.style.left = `${x - touchStartLeft}px`;
   touchState.touchedNode.style.top = `${y - touchStartTop}px`;
+  touchmoveClasses(touchState, data.targetData.parent.data.config);
 }
 function touchmove(data, touchState) {
-  if (data.e.cancelable)
-    data.e.preventDefault();
   const config = data.targetData.parent.data.config;
   if (config.longTouch && !touchState.longTouch) {
     clearTimeout(touchState.longTouchTimeout);
     return;
   }
-  if (touchState.touchMoving !== true) {
-    touchState.touchMoving = true;
-    touchmoveClasses(touchState, config);
-  }
+  if (data.e.cancelable)
+    data.e.preventDefault();
   moveTouchedNode(data, touchState);
+  handleScroll();
   const elFromPoint = getElFromPoint(data);
   if (!elFromPoint)
     return;
@@ -1362,26 +1435,41 @@ function touchmove(data, touchState) {
     );
   }
 }
+function handleScroll() {
+  for (const direction of Object.keys(scrollConfig)) {
+    const [x, y] = scrollConfig[direction];
+    performScroll(direction, x, y);
+  }
+}
+function performScroll(direction, x, y) {
+  const state2 = shouldScroll(direction);
+  if (!state2)
+    return;
+  state2.scrollParent.scrollBy(x, y);
+  setTimeout(
+    () => {
+      performScroll(direction, x, y);
+    },
+    "touchedNode" in state2 ? 10 : 100
+  );
+}
 function handleDragoverNode(data) {
   if (!state)
     return;
+  const { x, y } = eventCoordinates(data.e);
+  state.coordinates.y = y;
+  state.coordinates.x = x;
+  handleScroll();
   dragoverNode(data, state);
 }
-function handleScroll(parent, e) {
-  const rect = parent.getBoundingClientRect();
-  const { x } = eventCoordinates(e);
-  if (x > rect.right * 0.85) {
-    parent.scrollBy(10, 0);
-  } else if (x < rect.left + rect.width * 0.15) {
-    parent.scrollBy(-10, 0);
-  }
-}
-function handleDragoverParent(eventData) {
+function handleDragoverParent(data) {
   if (!state)
     return;
-  if (eventData.e instanceof DragEvent)
-    handleScroll(eventData.targetData.parent.el, eventData.e);
-  transfer(eventData, state);
+  const { x, y } = eventCoordinates(data.e);
+  state.coordinates.y = y;
+  state.coordinates.x = x;
+  handleScroll();
+  transfer(data, state);
 }
 function handleTouchOverParent(e) {
   if (!state)

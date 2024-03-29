@@ -152,6 +152,10 @@ function animate(
   animation: Keyframe[] | PropertyIndexedKeyframes,
   duration: number
 ) {
+  if (!state) return;
+
+  state.preventEnter = true;
+
   node.animate(animation, {
     duration: duration,
   });
@@ -160,6 +164,10 @@ function animate(
     if (!state) return;
 
     state.swappedNodeValue = undefined;
+
+    state.remapJustFinished = true;
+
+    state.lastTargetValue = undefined;
 
     state.preventEnter = false;
   }, duration);

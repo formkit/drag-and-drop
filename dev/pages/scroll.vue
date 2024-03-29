@@ -1,35 +1,37 @@
-<script setup lang="ts">
+<script setup>
 import { useDragAndDrop } from "../../src/vue/index";
-
-const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"]);
+const [parent, tapes] = useDragAndDrop(
+  [
+    { name: "Depeche Mode", hasClass: false },
+    { name: "Duran Duran", hasClass: false },
+    { name: "Pet Shop Boys", hasClass: false },
+    { name: "Kraftwerk", hasClass: false },
+    { name: "Tears for Fears", hasClass: false },
+    { name: "Checkbox with .drag-handle class", hasClass: true },
+  ],
+  {
+    dragHandle: ".drag-handle",
+  }
+);
 </script>
 
 <template>
-  <h1 class="text-2xl my-4">Sorting</h1>
-  <div>
-    <ul ref="parent" class="list">
-      <li v-for="value in values" :id="value" :key="value" class="item">
-        {{ value }}
-      </li>
-    </ul>
-    <span id="sort_values">
-      {{ values.map((x) => x).join(" ") }}
-    </span>
+  <div style="height: 100px; overflow: scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Handle</th>
+          <th>Name</th>
+        </tr>
+      </thead>
+      <tbody ref="parent">
+        <tr v-for="tape in tapes" :key="tape" class="cassette">
+          <td><button class="drag-handle">::</button></td>
+          <td>
+            {{ tape.name }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
-
-<style>
-.list {
-  height: 200px;
-  overflow-y: scroll;
-  touch-action: none;
-  border: 2px solid #4f46e5;
-}
-
-.item {
-  height: 100px;
-  min-width: 300px;
-  border: 2px solid #4f46e5;
-  touch-action: none;
-}
-</style>

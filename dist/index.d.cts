@@ -131,6 +131,20 @@ interface ParentConfig<T> {
      */
     setupNode: SetupNode;
     /**
+     * The scroll behavior of the parent.
+     *
+     * If a parent of the dragged element is scrollable, the parent will scroll on its x and y axis.
+     *
+     * I.e. Setting x: 0.9 will begin scrolling the parent when the dragged element is 90% horizontally.
+     *
+     * Scroll Outside determines whether or not the parent will scroll when the dragged element is outside of the parent.
+     */
+    scrollBehavior: {
+        x: number;
+        y: number;
+        scrollOutside?: boolean;
+    };
+    /**
      * Flag for whether or not to allow sorting within a given parent.
      */
     sortable?: boolean;
@@ -451,14 +465,6 @@ interface TouchState<T> extends DragState<T> {
      */
     longTouchTimeout: ReturnType<typeof setTimeout> | undefined;
     /**
-     * The parent that is scrollable.
-     */
-    scrollParent: HTMLElement | undefined;
-    /**
-     * The overflow of the scroll parent.
-     */
-    scrollParentOverflow: string | undefined;
-    /**
      * A flag to indicate whether a long touch has occurred.
      */
     longTouch: boolean;
@@ -514,6 +520,13 @@ interface DragState<T> extends DragStateProps<T> {
      */
     clonedDraggedEls: Array<Element>;
     /**
+     * The coordinates of the dragged element itself.
+     */
+    coordinates: {
+        x: number;
+        y: number;
+    };
+    /**
      * The node that is being dragged.
      */
     draggedNode: NodeRecord<T>;
@@ -559,6 +572,10 @@ interface DragState<T> extends DragStateProps<T> {
      */
     remapJustFinished: boolean;
     /**
+     * The nearest parent that is scrollable.
+     */
+    scrollParent: HTMLElement;
+    /**
      * The value of the node that was swapped with the dragged node.
      */
     swappedNodeValue: any | undefined;
@@ -568,17 +585,27 @@ interface DragState<T> extends DragStateProps<T> {
     targetIndex: number;
 }
 interface DragStateProps<T> {
+    coordinates: {
+        x: number;
+        y: number;
+    };
     draggedNode: NodeRecord<T>;
     draggedNodes: Array<NodeRecord<T>>;
     initialIndex: number;
     initialParent: ParentRecord<T>;
     lastParent: ParentRecord<T>;
+    scrollParent: HTMLElement;
 }
 interface TouchStateProps {
+    coordinates: {
+        x: number;
+        y: number;
+    };
     touchedNode: HTMLElement;
     touchStartLeft: number;
     touchStartTop: number;
     touchMoving: boolean;
+    scrollParent: HTMLElement;
 }
 
 declare function throttle(callback: any, limit: number): (...args: any[]) => void;
@@ -597,7 +624,7 @@ declare function removeClass(els: Array<Node | HTMLElement | Element>, className
  *
  * @internal
  */
-declare function getScrollParent(node: HTMLElement | null): HTMLElement | undefined;
+declare function getScrollParent(childNode: HTMLElement): HTMLElement;
 /**
  * Used for setting a single event listener on x number of events for a given
  * element.
@@ -727,7 +754,7 @@ declare function resetState(): void;
  */
 declare function setDragState<T>(dragStateProps: DragStateProps<T>): DragState<T>;
 declare function setTouchState<T>(dragState: DragState<T>, touchStateProps: TouchStateProps): TouchState<T>;
-declare function dragStateProps<T>(targetData: NodeTargetData<T>): DragStateProps<T>;
+declare function dragStateProps<T>(data: NodeDragEventData<T> | NodeTouchEventData<T>): DragStateProps<T>;
 declare function performSort<T>(state: DragState<T> | TouchState<T>, data: NodeDragEventData<T> | NodeTouchEventData<T>): void;
 declare function parentValues<T>(parent: HTMLElement, parentData: ParentData<T>): Array<T>;
 declare function setParentValues<T>(parent: HTMLElement, parentData: ParentData<T>, values: Array<any>): void;
@@ -774,7 +801,7 @@ declare function handleTouchedNode<T>(data: NodeTouchEventData<T>, touchState: T
 declare function handleLongTouch<T>(data: NodeEventData<T>, touchState: TouchState<T>): void;
 declare function handleTouchmove<T>(eventData: NodeTouchEventData<T>): void;
 declare function handleDragoverNode<T>(data: NodeDragEventData<T>): void;
-declare function handleDragoverParent<T>(eventData: ParentEventData<T>): void;
+declare function handleDragoverParent<T>(data: ParentEventData<T>): void;
 declare function handleTouchOverParent<T>(e: TouchOverParentEvent<T>): void;
 declare function validateTransfer<T>(data: ParentEventData<T>, state: DragState<T> | TouchState<T>): boolean;
 declare function validateSort<T>(data: NodeDragEventData<T> | NodeTouchEventData<T>, state: DragState<T> | TouchState<T>, x: number, y: number): boolean;
