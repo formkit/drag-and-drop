@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { useDragAndDrop } from "../../../../src/vue/index";
+import { useDragAndDrop } from "../../../src/vue/index";
+import { animations } from "../../../src/index";
 
-const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"]);
+const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
+  plugins: [animations()],
+});
 </script>
 
 <template>
-  <h1>Vertical Sort</h1>
+  <h1>Vertical Sort Animations</h1>
   <div>
     <ul ref="parent" class="list">
       <li v-for="value in values" :id="value" :key="value" class="item">
@@ -40,3 +43,4 @@ h1 {
   border-radius: 5px;
 }
 </style>
+../../../src/vue/index../../../src/index

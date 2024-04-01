@@ -1,27 +1,21 @@
 <script setup lang="ts">
-import { useDragAndDrop } from "../../../../src/vue/index";
-import { animations } from "../../../../src/index";
+import { useDragAndDrop } from "../../../src/vue/index";
 
-const [parent, values] = useDragAndDrop(
-  [
-    {
-      label: "Apple",
-      value: "Apple",
-      class: "small",
-    },
-    {
-      label: "Banana",
-      value: "Banana",
-    },
-    {
-      label: "Orange",
-      value: "Orange",
-    },
-  ],
+const [parent, values] = useDragAndDrop([
   {
-    plugins: [animations()],
-  }
-);
+    label: "Apple",
+    value: "Apple",
+    class: "small",
+  },
+  {
+    label: "Banana",
+    value: "Banana",
+  },
+  {
+    label: "Orange",
+    value: "Orange",
+  },
+]);
 </script>
 
 <template>
@@ -62,6 +56,7 @@ h1 {
 .item,
 .item-small {
   padding: 10px;
+  margin: 5px;
   border: 1px solid #ccc;
   border-radius: 5px;
   height: 200px;
@@ -71,3 +66,4 @@ h1 {
   height: 50px;
 }
 </style>
+../../../src/vue/index

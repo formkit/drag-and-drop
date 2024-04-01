@@ -7,9 +7,9 @@ test.beforeAll(async ({ browser }) => {
   page = await browser.newPage();
 });
 
-test.describe.only("Sorting", async () => {
-  test("Vertical drag sort", async () => {
-    await page.goto("http://localhost:3001/sort/vertical");
+test.describe("Sorting", async () => {
+  test("Drag sort", async () => {
+    await page.goto("http://localhost:3001/sort");
     await dragDrop(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
@@ -43,8 +43,8 @@ test.describe.only("Sorting", async () => {
     );
   });
 
-  test("Uneven vertical drag sort", async () => {
-    await page.goto("http://localhost:3001/sort/vertical/uneven");
+  test("Uneven drag sort", async () => {
+    await page.goto("http://localhost:3001/sort/uneven");
     await dragDrop(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
@@ -78,8 +78,8 @@ test.describe.only("Sorting", async () => {
     );
   });
 
-  test("Vertical sort with animations", async () => {
-    await page.goto("http://localhost:3001/sort/vertical/animations");
+  test("Sort with animations", async () => {
+    await page.goto("http://localhost:3001/sort/animations");
     await dragDrop(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
@@ -113,8 +113,8 @@ test.describe.only("Sorting", async () => {
     );
   });
 
-  test("Vertical sort with uneven els and animations", async () => {
-    await page.goto("http://localhost:3001/sort/vertical/uneven-animations");
+  test("Sort with uneven els and animations", async () => {
+    await page.goto("http://localhost:3001/sort/uneven-animations");
     await dragDrop(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },

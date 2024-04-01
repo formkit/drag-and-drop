@@ -79,7 +79,114 @@ export async function dragDrop(page: Page, data: DragDropData): Promise<void> {
   }, data);
 }
 
-export async function touchDrop(
+/**
+ * Utility function used to simulate touch events.
+ *
+ * @param page
+ * @param param1
+ */
+export async function touchDrop(page: Page, data: DragDropData): Promise<void> {
+  // Shouldn't need to do this, but leaving it for now 🤷‍♂️
+  await new Promise((resolve) => setTimeout(resolve, 25));
+  return page.evaluate(async (data) => {
+    const originElement = document.getElementById(data.originEl.id);
+
+    const destinationElement = document.getElementById(data.destinationEl.id);
+
+    if (!originElement || !destinationElement) return;
+
+    const dataTransfer = new DataTransfer();
+
+    const getEventProps = (element: Element) => {
+      const rect = element.getBoundingClientRect();
+
+      const [x, y] = [rect.x + rect.width / 2, rect.y + rect.height / 2];
+
+      return {
+        bubbles: true,
+        cancelable: true,
+        clientX: x,
+        clientY: y,
+        dataTransfer,
+        screenX: x,
+        screenY: y,
+      };
+    };
+
+    let touchStartObj;
+
+    if (originElement) {
+      touchStartObj = new Touch({
+        identifier: 0,
+        target: originElement,
+        ...getEventProps(originElement),
+      });
+    }
+
+    if (!destinationElement) return;
+
+    const touchMoveObj = new Touch({
+      identifier: 0,
+      target: destinationElement,
+      ...getEventProps(destinationElement),
+    });
+
+    if (data.dragStart) {
+      originElement.dispatchEvent(
+        new TouchEvent("touchstart", {
+          touches: [touchStartObj],
+          changedTouches: [touchStartObj],
+          cancelable: true,
+          bubbles: true,
+        })
+      );
+    }
+
+    originElement.dispatchEvent(
+      new TouchEvent("touchmove", {
+        touches: [touchStartObj],
+        changedTouches: [touchStartObj],
+        cancelable: true,
+        bubbles: true,
+      })
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    destinationElement.dispatchEvent(
+      new TouchEvent("touchmove", {
+        touches: [touchMoveObj],
+        changedTouches: [touchMoveObj],
+        cancelable: true,
+        bubbles: true,
+      })
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    destinationElement.dispatchEvent(
+      new TouchEvent("touchmove", {
+        touches: [touchMoveObj],
+        changedTouches: [touchMoveObj],
+        cancelable: true,
+        bubbles: true,
+      })
+    );
+
+    if (data.drop) {
+      destinationElement.dispatchEvent(
+        new TouchEvent("touchend", {
+          touches: [touchMoveObj],
+          changedTouches: [touchMoveObj],
+          cancelable: true,
+          bubbles: true,
+        })
+      );
+    }
+  }, data);
+}
+
+export async function touchDropOld(
   page: Page,
   {
     origin,

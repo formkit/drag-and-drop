@@ -155,16 +155,4 @@ function animate(
   node.animate(animation, {
     duration: duration,
   });
-
-  setTimeout(() => {
-    if (!state) return;
-
-    // state.swappedNodeValue = undefined;
-
-    // state.remapJustFinished = true;
-
-    // state.lastTargetValue = undefined;
-
-    // state.preventEnter = false;
-  }, duration);
 }

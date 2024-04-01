@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useDragAndDrop } from "../../src/vue/index";
-import { swap } from "../../src/plugins/swap";
+import { useDragAndDrop } from "../../../src/vue/index";
+import { swap } from "../../../src/plugins/swap";
 
 const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   group: "transfer",
