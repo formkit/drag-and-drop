@@ -3,13 +3,14 @@ import { dragDrop } from "../../utils";
 
 let page: Page;
 
-test.beforeAll(async ({ browser }) => {
+test.beforeEach(async ({ browser }) => {
   page = await browser.newPage();
 });
 
 test.describe("Sorting", async () => {
   test("Drag sort", async () => {
     await page.goto("http://localhost:3001/sort");
+    await page.reload();
     await dragDrop(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
@@ -45,6 +46,7 @@ test.describe("Sorting", async () => {
 
   test("Uneven drag sort", async () => {
     await page.goto("http://localhost:3001/sort/uneven");
+    await page.reload();
     await dragDrop(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
@@ -80,6 +82,7 @@ test.describe("Sorting", async () => {
 
   test("Sort with animations", async () => {
     await page.goto("http://localhost:3001/sort/animations");
+    await page.reload();
     await dragDrop(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
@@ -115,6 +118,7 @@ test.describe("Sorting", async () => {
 
   test("Sort with uneven els and animations", async () => {
     await page.goto("http://localhost:3001/sort/uneven-animations");
+    await page.reload();
     await dragDrop(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
