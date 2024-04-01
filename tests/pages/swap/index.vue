@@ -1,14 +1,11 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../../src/vue/index";
-import { swap } from "../../../src/plugins/swap";
 
 const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   group: "transfer",
   draggable: (el) => {
     return el.tagName === "LI";
   },
-  plugins: [swap()],
-  dropZoneClass: "dropZone",
 });
 
 const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
@@ -16,8 +13,6 @@ const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
   draggable: (el) => {
     return el.tagName === "LI";
   },
-  plugins: [swap()],
-  dropZoneClass: "dropZone",
 });
 
 const [parent3, values3] = useDragAndDrop(
@@ -27,56 +22,39 @@ const [parent3, values3] = useDragAndDrop(
     draggable: (el) => {
       return el.tagName === "LI";
     },
-    plugins: [swap()],
-    dropZoneClass: "dropZone",
   }
 );
 </script>
 
 <template>
-  <h1 class="text-2xl my-4">Swap</h1>
-  <div class="flex justify-between">
+  <h1>Transfer</h1>
+  <div class="flex-wrap">
     <div>
-      <ul id="transfer_1" ref="parent1" class="p-5 bg-teal-400 h-96 w-50">
-        <li
-          v-for="value in values1"
-          :id="'transfer_1_' + value"
-          :key="value"
-          class="border-2 border-indigo-600 w-full text-center my-2"
-        >
+      <ul id="transfer_1" ref="parent1" class="list">
+        <li v-for="value in values1" :id="value" :key="value" class="item">
           {{ value }}
         </li>
-        <span id="transfer_values_1" class="text-xs">
+        <span id="values_1" class="text-xs">
           {{ values1.map((x) => x).join(" ") }}
         </span>
       </ul>
     </div>
     <div>
-      <ul id="transfer_2" ref="parent2" class="p-5 bg-teal-400 h-96 w-50">
-        <li
-          v-for="value in values2"
-          :id="'transfer_2_' + value"
-          :key="value"
-          class="border-2 border-indigo-600 w-full text-center my-2"
-        >
+      <ul id="2" ref="parent2" class="list">
+        <li v-for="value in values2" :id="value" :key="value" class="item">
           {{ value }}
         </li>
-        <span id="transfer_values_2" class="text-xs">
+        <span id="values_2" class="text-xs">
           {{ values2.map((x) => x).join(" ") }}
         </span>
       </ul>
     </div>
     <div>
-      <ul id="transfer_3" ref="parent3" class="p-5 bg-teal-400 h-96 w-50">
-        <li
-          v-for="value in values3"
-          :id="'transfer_3_' + value"
-          :key="value"
-          class="border-2 border-indigo-600 w-full text-center my-2"
-        >
+      <ul id="3" ref="parent3" class="list">
+        <li v-for="value in values3" :id="value" :key="value" class="item">
           {{ value }}
         </li>
-        <span id="transfer_values_3" class="text-xs">
+        <span id="values_3" class="text-xs">
           {{ values3.map((x) => x).join(" ") }}
         </span>
       </ul>
@@ -85,7 +63,31 @@ const [parent3, values3] = useDragAndDrop(
 </template>
 
 <style scoped>
-.dropZone {
-  background-color: #f9f9f9;
+.flex-wrap {
+  display: flex;
+}
+
+h1 {
+  margin-bottom: 1em;
+}
+
+.list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  margin-bottom: 2em;
+}
+
+.item {
+  padding: 10px;
+  margin: 5px;
+  border: 1px solid #ccc;
+  width: 200px;
+  border-radius: 5px;
+  height: 200px;
+}
+
+.item-small {
+  height: 50px;
 }
 </style>
