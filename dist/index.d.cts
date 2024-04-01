@@ -745,6 +745,12 @@ declare function selections<T>(selectionsConfig?: SelectionsConfig<T>): (parent:
     setupNode<T_1>(data: SetupNodeData<T_1>): void;
 } | undefined;
 
+interface SwapConfig<T> extends ParentConfig<T> {
+}
+declare function swap<T>(swapConfig?: Partial<SwapConfig<T>>): (parent: HTMLElement) => {
+    setup(): void;
+} | undefined;
+
 declare const nodes: NodesData<any>;
 declare const parents: ParentsData<any>;
 /**
@@ -836,4 +842,4 @@ declare function performTransfer<T>(state: DragState<T> | TouchState<T>, data: N
 declare function transfer<T>(data: NodeEventData<T> | ParentEventData<T>, state: DragState<T> | TouchState<T>): void;
 declare function parentEventData<T>(callback: any): (e: Event) => NodeEventData<T> | undefined;
 
-export { type DNDPlugin, type DNDPluginData, type DragAndDrop, type DragAndDropData, type DragState, type DragStateProps, type EventHandlers, type Node, type NodeData, type NodeDragEventData, type NodeEvent, type NodeEventData, type NodeFromPoint, type NodeRecord, type NodeTargetData, type NodeTouchEventData, type NodesData, type ParentConfig, type ParentData, type ParentDragEventData, type ParentEventData, type ParentFromPoint, type ParentObservers, type ParentRecord, type ParentTargetData, type ParentsData, type PluginData, type ScrollData, type SetupNode, type SetupNodeData, type TearDownNode, type TearDownNodeData, type TouchOverNodeEvent, type TouchOverParentEvent, type TouchState, type TouchStateProps, addClass, addEvents, animations, copyNodeStyle, dragAndDrop, dragStateProps, dragValues, dragstart, dragstartClasses, end, eventCoordinates, events, getElFromPoint, getScrollParent, handleDragoverNode, handleDragoverParent, handleDragstart, handleEnd, handleLongTouch, handleTouchOverNode, handleTouchOverParent, handleTouchedNode, handleTouchmove, handleTouchstart, initDrag, initTouch, isBrowser, isNode, multiDrag, nodeEventData, nodes, parentEventData, parentValues, parents, performSort, performTransfer, remapFinished, remapNodes, removeClass, resetState, selections, setDragState, setParentValues, setTouchState, setupNode, setupNodeRemap, sort, state, tearDown, tearDownNode, tearDownNodeRemap, throttle, transfer, updateConfig, validateSort, validateTransfer };
+export { type DNDPlugin, type DNDPluginData, type DragAndDrop, type DragAndDropData, type DragState, type DragStateProps, type EventHandlers, type Node, type NodeData, type NodeDragEventData, type NodeEvent, type NodeEventData, type NodeFromPoint, type NodeRecord, type NodeTargetData, type NodeTouchEventData, type NodesData, type ParentConfig, type ParentData, type ParentDragEventData, type ParentEventData, type ParentFromPoint, type ParentObservers, type ParentRecord, type ParentTargetData, type ParentsData, type PluginData, type ScrollData, type SetupNode, type SetupNodeData, type TearDownNode, type TearDownNodeData, type TouchOverNodeEvent, type TouchOverParentEvent, type TouchState, type TouchStateProps, addClass, addEvents, animations, copyNodeStyle, dragAndDrop, dragStateProps, dragValues, dragstart, dragstartClasses, end, eventCoordinates, events, getElFromPoint, getScrollParent, handleDragoverNode, handleDragoverParent, handleDragstart, handleEnd, handleLongTouch, handleTouchOverNode, handleTouchOverParent, handleTouchedNode, handleTouchmove, handleTouchstart, initDrag, initTouch, isBrowser, isNode, multiDrag, nodeEventData, nodes, parentEventData, parentValues, parents, performSort, performTransfer, remapFinished, remapNodes, removeClass, resetState, selections, setDragState, setParentValues, setTouchState, setupNode, setupNodeRemap, sort, state, swap, tearDown, tearDownNode, tearDownNodeRemap, throttle, transfer, updateConfig, validateSort, validateTransfer };

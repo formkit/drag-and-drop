@@ -4,7 +4,7 @@ import type {
   DragState,
   NodeTouchEventData,
   NodeRecord,
-  TouchState,
+  TouchOverNodeEvent,
 } from "../../types";
 import {
   state,
@@ -58,23 +58,24 @@ function handleDragoverNode<T>(data: NodeDragEventData<T>) {
   dragoverNode(data, state);
 }
 
-function handleTouchOverNode<T>(data: NodeTouchEventData<T>) {
+function handleTouchOverNode<T>(data: TouchOverNodeEvent<T>) {
   if (!state) return;
 
-  const dropZoneClass = data.targetData.parent.data.config.touchDropZoneClass;
+  const dropZoneClass =
+    data.detail.targetData.parent.data.config.touchDropZoneClass;
 
   removeClass(
     swapState.draggedOverNodes.map((node) => node.el),
     dropZoneClass
   );
 
-  const enabledNodes = data.targetData.parent.data.enabledNodes;
+  const enabledNodes = data.detail.targetData.parent.data.enabledNodes;
 
   if (!enabledNodes) return;
 
   swapState.draggedOverNodes = enabledNodes.slice(
-    data.targetData.node.data.index,
-    data.targetData.node.data.index + state.draggedNodes.length
+    data.detail.targetData.node.data.index,
+    data.detail.targetData.node.data.index + state.draggedNodes.length
   );
 
   addClass(
@@ -83,9 +84,9 @@ function handleTouchOverNode<T>(data: NodeTouchEventData<T>) {
     true
   );
 
-  state.lastTargetValue = data.targetData.node.data.value;
+  state.lastTargetValue = data.detail.targetData.node.data.value;
 
-  state.lastParent = data.targetData.parent;
+  state.lastParent = data.detail.targetData.parent;
 }
 
 function dragoverNode<T>(data: NodeDragEventData<T>, state: DragState<T>) {
