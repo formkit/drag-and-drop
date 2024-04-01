@@ -1,22 +1,17 @@
 <template>
   <div>
     <h1>FormKit Drag and Drop Tests</h1>
-    <!-- <ul>
-      <li>
-        <nuxt-link to="/sort">Sort</nuxt-link>
-      </li>
-    </ul> -->
     <div class="test-suite-wrapper">
       <div>
         <h2>Sort</h2>
-        <ul>
-          <li>
-            <nuxt-link to="/sort/vertical">Vertical</nuxt-link>
-          </li>
-          <li>
-            <nuxt-link to="/sort/horizontal">Horizontal</nuxt-link>
-          </li>
-        </ul>
+        <div>
+          <h4>Vertical</h4>
+          <ul>
+            <li>
+              <nuxt-link to="/sort/vertical">Vertical</nuxt-link>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>

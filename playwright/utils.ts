@@ -52,13 +52,26 @@ export async function dragDrop(page: Page, data: DragDropData): Promise<void> {
       );
     }
 
+    // Dragover the origin element
     originElement.dispatchEvent(
       new DragEvent("dragover", getEventProps(originElement))
     );
 
+    const destinationEventProps = getEventProps(destinationElement);
+
+    // Dragover the destination target
     destinationElement.dispatchEvent(
-      new DragEvent("dragover", getEventProps(destinationElement))
+      new DragEvent("dragover", destinationEventProps)
     );
+
+    // Emulate a real drag over event where dragover will fire on the same
+    // destination coordinates when the drag and drop operation is completed
+    // (sort or transfer).
+    setTimeout(() => {
+      destinationElement.dispatchEvent(
+        new DragEvent("dragover", destinationEventProps)
+      );
+    }, 100);
 
     if (data.drop) {
       destinationElement.dispatchEvent(
