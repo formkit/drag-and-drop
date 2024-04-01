@@ -651,3 +651,15 @@ export interface TouchStateProps {
   touchMoving: boolean;
   scrollParent: HTMLElement;
 }
+
+export interface ScrollData<T> {
+  state: DragState<T> | TouchState<T>;
+  xThresh: number;
+  yThresh: number;
+  scrollParent: HTMLElement;
+  scrollOutside?: boolean;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}

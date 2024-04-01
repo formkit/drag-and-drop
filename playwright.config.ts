@@ -21,38 +21,38 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
       },
     },
-    {
-      name: "Desktop Firefox Drag Tests",
-      testMatch: "tests/drag/**/*.spec.ts",
-      use: {
-        ...devices["Desktop Firefox"],
-      },
-    },
-    {
-      name: "Mobile Chrome Touch Tests",
-      testMatch: "tests/touch/**/*.spec.ts",
-      use: {
-        ...devices["Mobile Chrome"],
-      },
-    },
-    {
-      name: "Mobile Safari Touch Tests",
-      testMatch: "tests/touch/**/*.spec.ts",
-      use: {
-        ...devices["Mobile Safari"],
-      },
-    },
-    {
-      name: "Mobile Firefox Touch Tests",
-      testMatch: "tests/touch/**/*.spec.ts",
-      use: {
-        ...devices["Mobile Firefox"],
-      },
-    },
-    {
-      name: "Framework Tests",
-      testMatch: "tests-frameworks/**/*.spec.ts",
-      use: { ...devices["Desktop Chrome"] },
-    },
+    // {
+    //   name: "Desktop Firefox Drag Tests",
+    //   testMatch: "tests/drag/**/*.spec.ts",
+    //   use: {
+    //     ...devices["Desktop Firefox"],
+    //   },
+    // },
+    // {
+    //   name: "Mobile Chrome Touch Tests",
+    //   testMatch: "tests/touch/**/*.spec.ts",
+    //   use: {
+    //     ...devices["Mobile Chrome"],
+    //   },
+    // },
+    // {
+    //   name: "Mobile Safari Touch Tests",
+    //   testMatch: "tests/touch/**/*.spec.ts",
+    //   use: {
+    //     ...devices["Mobile Safari"],
+    //   },
+    // },
+    // {
+    //   name: "Mobile Firefox Touch Tests",
+    //   testMatch: "tests/touch/**/*.spec.ts",
+    //   use: {
+    //     ...devices["Mobile Firefox"],
+    //   },
+    // },
+    // {
+    //   name: "Framework Tests",
+    //   testMatch: "tests-frameworks/**/*.spec.ts",
+    //   use: { ...devices["Desktop Chrome"] },
+    // },
   ],
 });

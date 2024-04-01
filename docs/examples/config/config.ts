@@ -133,6 +133,20 @@ export interface ParentConfig<T> {
    */
   setupNode: SetupNode;
   /**
+   * Configuration for scrolling behavior.
+   *
+   * If a parent of the dragged element is scrollable, the parent will scroll on its x and y axis.
+   *
+   * I.e. Setting x: 0.9 will begin scrolling the parent when the dragged element is 90% of the way dragged to the left or the right of the scrollable container.
+   *
+   * Scroll Outside determines whether or not the parent will scroll when the dragged element is outside of the parent.
+   */
+  scrollBehavior: {
+    x: number;
+    y: number;
+    scrollOutside?: boolean;
+  };
+  /**
    * Flag for whether or not to allow sorting within a given parent.
    */
   sortable?: boolean;

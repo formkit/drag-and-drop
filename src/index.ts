@@ -22,6 +22,7 @@ import type {
   NodeDragEventData,
   NodeTouchEventData,
   NodeRecord,
+  ScrollData,
 } from "./types";
 import {
   isBrowser,
@@ -543,6 +544,7 @@ function touchstart<T>(data: NodeTouchEventData<T>) {
 }
 
 export function dragstart<T>(data: NodeDragEventData<T>) {
+  console.log("DRAGSTART");
   if (!validateDragHandle(data)) {
     data.e.preventDefault();
 
@@ -844,18 +846,6 @@ function shouldScroll<T>(
   }
 }
 
-interface ScrollData<T> {
-  state: DragState<T> | TouchState<T>;
-  xThresh: number;
-  yThresh: number;
-  scrollParent: HTMLElement;
-  scrollOutside?: boolean;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 function shouldScrollRight<T>(
   state: TouchState<T> | DragState<T>,
   data: ScrollData<T>
@@ -1010,6 +1000,7 @@ function performScroll(direction: string, x: number, y: number) {
 }
 
 export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
+  console.log("DRAGOVER NODE");
   if (!state) return;
 
   const { x, y } = eventCoordinates(data.e);

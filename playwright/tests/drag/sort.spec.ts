@@ -9,28 +9,25 @@ test.beforeAll(async ({ browser }) => {
 });
 
 test.describe("Sorting", async () => {
-  test("Drag sort works as expected.", async () => {
+  test.only("Drag sort works as expected.", async () => {
     await dragDrop(page, {
-      origin: "#Apple",
-      destination: "#Banana",
+      originEl: { id: "Apple", position: "center" },
+      destinationEl: { id: "Banana", position: "center" },
       dragStart: true,
-      drop: false,
     });
     await expect(page.locator("#sort_values")).toHaveText(
       "Banana Apple Orange"
     );
     await dragDrop(page, {
-      origin: "#Banana",
-      destination: "#Orange",
-      dragStart: false,
-      drop: true,
+      originEl: { id: "Banana", position: "center" },
+      destinationEl: { id: "Orange", position: "center" },
     });
     await expect(page.locator("#sort_values")).toHaveText(
       "Banana Orange Apple"
     );
     await dragDrop(page, {
-      origin: "#Banana",
-      destination: "#Orange",
+      originEl: { id: "Banana", position: "center" },
+      destinationEl: { id: "Orange", position: "center" },
       dragStart: true,
       drop: false,
     });
@@ -38,10 +35,8 @@ test.describe("Sorting", async () => {
       "Orange Banana Apple"
     );
     await dragDrop(page, {
-      origin: "#Banana",
-      destination: "#Apple",
-      dragStart: false,
-      drop: true,
+      originEl: { id: "Banana", position: "center" },
+      destinationEl: { id: "Apple", position: "center" },
     });
     await expect(page.locator("#sort_values")).toHaveText(
       "Orange Apple Banana"

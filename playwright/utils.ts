@@ -1,101 +1,70 @@
 import type { Page } from "@playwright/test";
-export async function dragDrop(
-  page: Page,
-  {
-    origin,
-    destination,
-    dragStart,
-    drop,
-    dragleave,
-  }: {
-    origin?: string;
-    destination?: string;
-    dragStart?: boolean;
-    drop?: boolean;
-    dragleave?: boolean;
-  }
-): Promise<void> {
-  let originElement = origin && (await page.waitForSelector(origin));
 
-  if (!originElement) originElement = undefined;
+interface El {
+  id: string;
+  position: string;
+}
 
-  let destinationElement =
-    destination && (await page.waitForSelector(destination));
+interface DragDropData {
+  originEl: El;
+  destinationEl: El;
+  dragStart?: boolean;
+  drop?: boolean;
+}
 
-  if (!destinationElement) destinationElement = undefined;
+/**
+ * Utility function used to simulate drag and drop events.
+ *
+ * @param page
+ * @param param1
+ */
+export async function dragDrop(page: Page, data: DragDropData): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  return page.evaluate(async (data) => {
+    const originElement = document.getElementById(data.originEl.id);
 
-  return page.evaluate(
-    async ({
-      originElement,
-      destinationElement,
-      dragStart,
-      drop,
-    }: {
-      originElement?: Element | undefined;
-      destinationElement?: Element | undefined;
-      dragStart?: boolean;
-      drop?: boolean;
-      dragleave?: boolean;
-    }) => {
-      const dataTransfer = new DataTransfer();
+    const destinationElement = document.getElementById(data.destinationEl.id);
 
-      const getPayload = (element: Element) => {
-        const rect = element.getBoundingClientRect();
+    if (!originElement || !destinationElement) return;
 
-        const [x, y] = [rect.x + rect.width / 2, rect.y + rect.height / 2];
+    const dataTransfer = new DataTransfer();
 
-        return {
-          bubbles: true,
-          cancelable: true,
-          clientX: x,
-          clientY: y,
-          dataTransfer,
-          screenX: x,
-          screenY: y,
-        };
+    const getEventProps = (element: Element) => {
+      const rect = element.getBoundingClientRect();
+
+      const [x, y] = [rect.x + rect.width / 2, rect.y + rect.height / 2];
+
+      return {
+        bubbles: true,
+        cancelable: true,
+        clientX: x,
+        clientY: y,
+        dataTransfer,
+        screenX: x,
+        screenY: y,
       };
+    };
 
-      let originPayload;
+    if (data.dragStart) {
+      originElement.dispatchEvent(
+        new DragEvent("dragstart", getEventProps(originElement))
+      );
+    }
 
-      let destinationPayload;
+    originElement.dispatchEvent(
+      new DragEvent("dragover", getEventProps(originElement))
+    );
 
-      if (originElement) originPayload = getPayload(originElement);
+    destinationElement.dispatchEvent(
+      new DragEvent("dragover", getEventProps(destinationElement))
+    );
 
-      if (destinationElement)
-        destinationPayload = getPayload(destinationElement);
-
-      if (dragStart && originElement) {
-        originElement.dispatchEvent(
-          new DragEvent("pointerdown", originPayload)
-        );
-
-        originElement.dispatchEvent(new DragEvent("dragstart", originPayload));
-      }
-
-      if (originElement) {
-        originElement.dispatchEvent(new DragEvent("dragover", originPayload));
-      }
-
-      if (destinationElement) {
-        destinationElement.dispatchEvent(
-          new DragEvent("dragover", destinationPayload)
-        );
-      }
-
-      if (drop) {
-        if (destinationElement) {
-          destinationElement.dispatchEvent(
-            new DragEvent("dragover", destinationPayload)
-          );
-          destinationElement.dispatchEvent(
-            new DragEvent("drop", destinationPayload)
-          );
-        }
-      }
-    },
-
-    { originElement, destinationElement, dragStart, drop, dragleave }
-  );
+    if (data.drop) {
+      destinationElement.dispatchEvent(
+        new DragEvent("drop", getEventProps(destinationElement))
+      );
+    }
+  }, data);
 }
 
 export async function touchDrop(
@@ -158,6 +127,8 @@ export async function touchDrop(
           ...getPayload(originElement),
         });
       }
+
+      if (!destinationElement) return;
 
       const touchMoveObj = new Touch({
         identifier: 0,
