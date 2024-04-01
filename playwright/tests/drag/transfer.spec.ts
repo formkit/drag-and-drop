@@ -9,8 +9,8 @@ test.beforeAll(async ({ browser }) => {
 });
 
 test.describe("Transferring", async () => {
-  await new Promise((r) => setTimeout(r, 1000));
   test("Drag transferring works as expected.", async () => {
+    await new Promise((r) => setTimeout(r, 1000));
     await dragDrop(page, {
       originEl: {
         id: "Apple",

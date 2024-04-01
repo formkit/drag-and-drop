@@ -1,1 +1,0 @@
-export { default } from "file:///Users/sashamilenkovic/Sites/dnd/node_modules/.pnpm/@nuxt+vite-builder@3.11.1_@types+node@18.19.28_eslint@8.57.0_typescript@5.4.3_vue@3.4.21/node_modules/@nuxt/vite-builder/dist/runtime/vite-node.mjs"

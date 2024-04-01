@@ -41,6 +41,7 @@ export * from "./types";
 export { multiDrag } from "./plugins/multiDrag";
 export { animations } from "./plugins/animations";
 export { selections } from "./plugins/multiDrag/plugins/selections";
+export { swap } from "./plugins/swap";
 export * from "./utils";
 
 const scrollConfig: {
@@ -587,9 +588,6 @@ export function setupNode<T>(data: SetupNodeData<T>) {
   data.nodeData.abortControllers.mainNode = addEvents(data.node, {
     dragstart: nodeEventData(config.handleDragstart),
     dragover: nodeEventData(config.handleDragoverNode),
-    // dragover: nodeEventData(
-    //   throttle(data.parentData.config.handleDragoverNode, 1000)
-    // ),
     dragenter: nodeEventData(config.handleDragenterNode),
     dragleave: nodeEventData(config.handleDragleaveNode),
     dragend: nodeEventData(config.handleEnd),

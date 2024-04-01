@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../../src/vue/index";
+import { swap } from "../../../src/index";
 
 const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   group: "transfer",
   draggable: (el) => {
     return el.tagName === "LI";
   },
+  dropZoneClass: "dropZone",
+  touchDropZoneClass: "dropZone",
+  plugins: [swap()],
 });
 
 const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
@@ -13,17 +17,10 @@ const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
   draggable: (el) => {
     return el.tagName === "LI";
   },
+  dropZoneClass: "dropZone",
+  touchDropZoneClass: "dropZone",
+  plugins: [swap()],
 });
-
-const [parent3, values3] = useDragAndDrop(
-  ["Strawberry", "Watermelon", "Kiwi"],
-  {
-    group: "transfer",
-    draggable: (el) => {
-      return el.tagName === "LI";
-    },
-  }
-);
 </script>
 
 <template>
@@ -79,5 +76,9 @@ h1 {
 
 .item-small {
   height: 50px;
+}
+
+.dropZone {
+  background-color: teal;
 }
 </style>
