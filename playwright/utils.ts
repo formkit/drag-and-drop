@@ -19,6 +19,7 @@ interface DragDropData {
  * @param param1
  */
 export async function dragDrop(page: Page, data: DragDropData): Promise<void> {
+  // Shouldn't need to do this, but leaving it for now 🤷‍♂️
   await new Promise((resolve) => setTimeout(resolve, 100));
   return page.evaluate(async (data) => {
     const originElement = document.getElementById(data.originEl.id);

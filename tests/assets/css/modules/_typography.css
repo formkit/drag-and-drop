@@ -1,0 +1,45 @@
+body {
+  font-family: var(--sans);
+  color: var(--black);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-smooth: always;
+}
+
+h1 {
+  font-family: var(--sans);
+  font-size: 2.5em;
+  font-weight: 500;
+  line-height: 1;
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  h1 {
+    font-size: 3em;
+  }
+}
+
+h2 {
+  font-family: var(--sans);
+  font-size: 1.75em;
+  font-weight: 500;
+  line-height: 1.2;
+  margin: 0 0 1rem 0;
+}
+
+@media (min-width: 768px) {
+  h2 {
+    font-size: 2.25em;
+    line-height: 1;
+  }
+}
+
+p {
+  line-height: 1.4;
+  margin: 1.5em 0;
+}
+
+li {
+  line-height: 1.4;
+}

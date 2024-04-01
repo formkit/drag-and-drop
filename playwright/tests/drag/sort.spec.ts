@@ -5,11 +5,11 @@ let page: Page;
 
 test.beforeAll(async ({ browser }) => {
   page = await browser.newPage();
-  await page.goto("http://localhost:3001/sort");
+  await page.goto("http://localhost:3001/sort/vertical");
 });
 
 test.describe("Sorting", async () => {
-  test.only("Drag sort works as expected.", async () => {
+  test.only("Vertical drag sort works as expected.", async () => {
     await dragDrop(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
@@ -21,6 +21,7 @@ test.describe("Sorting", async () => {
     await dragDrop(page, {
       originEl: { id: "Banana", position: "center" },
       destinationEl: { id: "Orange", position: "center" },
+      drop: true,
     });
     await expect(page.locator("#sort_values")).toHaveText(
       "Banana Orange Apple"
@@ -29,7 +30,6 @@ test.describe("Sorting", async () => {
       originEl: { id: "Banana", position: "center" },
       destinationEl: { id: "Orange", position: "center" },
       dragStart: true,
-      drop: false,
     });
     await expect(page.locator("#sort_values")).toHaveText(
       "Orange Banana Apple"

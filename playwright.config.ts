@@ -12,7 +12,6 @@ export default defineConfig({
     baseURL: "http://127.0.0.1:5173",
     trace: "on-first-retry",
   },
-
   projects: [
     {
       name: "Desktop Chrome Drag Tests",

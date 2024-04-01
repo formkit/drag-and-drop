@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "dev": "cd dev && pnpm run dev",
-    "dev-frameworks": "cd dev-frameworks && pnpm run dev",
+    "tests-frameworks": "cd tests-frameworks && pnpm run dev",
     "docs": "cd docs && pnpm run dev",
     "build": "jiti build.ts",
     "release": "npx bumpp --no-tag --no-push --no-commit && pnpm run build && cd dist && npx publint && pnpm publish --no-git-checks",
