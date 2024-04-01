@@ -20,7 +20,7 @@ interface DragDropData {
  */
 export async function dragDrop(page: Page, data: DragDropData): Promise<void> {
   // Shouldn't need to do this, but leaving it for now 🤷‍♂️
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 25));
   return page.evaluate(async (data) => {
     const originElement = document.getElementById(data.originEl.id);
 
@@ -67,11 +67,9 @@ export async function dragDrop(page: Page, data: DragDropData): Promise<void> {
     // Emulate a real drag over event where dragover will fire on the same
     // destination coordinates when the drag and drop operation is completed
     // (sort or transfer).
-    setTimeout(() => {
-      destinationElement.dispatchEvent(
-        new DragEvent("dragover", destinationEventProps)
-      );
-    }, 100);
+    destinationElement.dispatchEvent(
+      new DragEvent("dragover", destinationEventProps)
+    );
 
     if (data.drop) {
       destinationElement.dispatchEvent(

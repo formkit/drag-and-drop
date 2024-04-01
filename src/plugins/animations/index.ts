@@ -38,7 +38,7 @@ const slideRight = [
   },
 ];
 
-export function animations(animationsConfig: AnimationsConfig = {}) {
+export function animations(animationsConfig: Partial<AnimationsConfig> = {}) {
   return (parent: HTMLElement) => {
     const parentData = parents.get(parent);
 
@@ -46,8 +46,6 @@ export function animations(animationsConfig: AnimationsConfig = {}) {
 
     return {
       setup() {
-        parentData.config.remapFinished = () => {};
-
         if (document.head.querySelector("[data-drag-and-drop]")) return;
       },
 
@@ -154,8 +152,6 @@ function animate(
 ) {
   if (!state) return;
 
-  state.preventEnter = true;
-
   node.animate(animation, {
     duration: duration,
   });
@@ -163,12 +159,12 @@ function animate(
   setTimeout(() => {
     if (!state) return;
 
-    state.swappedNodeValue = undefined;
+    // state.swappedNodeValue = undefined;
 
-    state.remapJustFinished = true;
+    // state.remapJustFinished = true;
 
-    state.lastTargetValue = undefined;
+    // state.lastTargetValue = undefined;
 
-    state.preventEnter = false;
+    // state.preventEnter = false;
   }, duration);
 }

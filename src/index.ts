@@ -91,7 +91,6 @@ export function setDragState<T>(
     remapJustFinished: false,
     preventEnter: false,
     clonedDraggedEls: [],
-    swappedNodeValue: false,
     originalZIndex: undefined,
     ...dragStateProps,
   } as DragState<T>;
@@ -229,6 +228,10 @@ export function dragAndDrop<T>({
 
   document.addEventListener("dragover", (e) => {
     e.preventDefault();
+
+    // Temp fix sincie I am throttling dragover node
+    if (nodes.has(e.target as Node) || parents.has(e.target as HTMLElement))
+      return;
 
     if (state) {
       state.remapJustFinished = false;
@@ -380,7 +383,6 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     }
   }
 
-  // TODO: maybe get rid of this?
   if (
     enabledNodes.length !== parentData.getValues(parent).length &&
     !config.disabled
@@ -398,7 +400,9 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
 
   for (let x = 0; x < enabledNodes.length; x++) {
     const node = enabledNodes[x];
+
     const prevNodeData = nodes.get(node);
+
     const nodeData = Object.assign(
       prevNodeData ?? {
         privateClasses: [],
@@ -440,9 +444,7 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
       nodeData,
     };
 
-    if (force || !prevNodeData) {
-      config.setupNode(setupNodeData);
-    }
+    if (force || !prevNodeData) config.setupNode(setupNodeData);
 
     setupNodeRemap(setupNodeData);
   }
@@ -455,8 +457,10 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
 export function remapFinished() {
   if (state) {
     state.preventEnter = false;
-    state.swappedNodeValue = undefined;
+
     state.remapJustFinished = true;
+
+    state.affectedNodes = [];
   }
 }
 
@@ -544,7 +548,6 @@ function touchstart<T>(data: NodeTouchEventData<T>) {
 }
 
 export function dragstart<T>(data: NodeDragEventData<T>) {
-  console.log("DRAGSTART");
   if (!validateDragHandle(data)) {
     data.e.preventDefault();
 
@@ -584,6 +587,9 @@ export function setupNode<T>(data: SetupNodeData<T>) {
   data.nodeData.abortControllers.mainNode = addEvents(data.node, {
     dragstart: nodeEventData(config.handleDragstart),
     dragover: nodeEventData(config.handleDragoverNode),
+    // dragover: nodeEventData(
+    //   throttle(data.parentData.config.handleDragoverNode, 1000)
+    // ),
     dragenter: nodeEventData(config.handleDragenterNode),
     dragleave: nodeEventData(config.handleDragleaveNode),
     dragend: nodeEventData(config.handleEnd),
@@ -1000,7 +1006,6 @@ function performScroll(direction: string, x: number, y: number) {
 }
 
 export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
-  console.log("DRAGOVER NODE");
   if (!state) return;
 
   const { x, y } = eventCoordinates(data.e);
@@ -1096,22 +1101,36 @@ export function validateSort<T>(
   x: number,
   y: number
 ): boolean {
+  if (
+    state.affectedNodes
+      .map((x) => x.data.value)
+      .includes(data.targetData.node.data.value)
+  ) {
+    return false;
+  }
+
   if (state.remapJustFinished) {
     state.remapJustFinished = false;
 
-    state.lastTargetValue = data.targetData.node.data.value;
+    if (
+      data.targetData.node.data.value === state.lastTargetValue ||
+      state.draggedNodes.map((x) => x.el).includes(data.targetData.node.el)
+    ) {
+      state.lastTargetValue = data.targetData.node.data.value;
+    }
 
     return false;
   }
 
-  if (state.lastTargetValue === data.targetData.node.data.value) return false;
-
-  if (state.draggedNodes.map((x) => x.el).includes(data.targetData.node.el))
+  if (state.draggedNodes.map((x) => x.el).includes(data.targetData.node.el)) {
+    state.lastTargetValue = undefined;
     return false;
+  }
+
+  if (data.targetData.node.data.value === state.lastTargetValue) return false;
 
   if (
     state.preventEnter ||
-    state.swappedNodeValue === data.targetData.node.data.value ||
     data.targetData.parent.el !== state.lastParent?.el ||
     data.targetData.parent.data.config.sortable === false
   )
@@ -1126,23 +1145,6 @@ export function validateSort<T>(
   const xDiff = targetRect.x - dragRect.x;
 
   let incomingDirection: "above" | "below" | "left" | "right";
-
-  const range =
-    state.draggedNode.data.index > data.targetData.node.data.index
-      ? [data.targetData.node.data.index, state.draggedNode.data.index]
-      : [state.draggedNode.data.index, data.targetData.node.data.index];
-
-  state.targetIndex = data.targetData.node.data.index;
-
-  state.affectedNodes = data.targetData.parent.data.enabledNodes.filter(
-    (node) => {
-      return (
-        range[0] <= node.data.index &&
-        node.data.index <= range[1] &&
-        node.el !== state.draggedNode.el
-      );
-    }
-  );
 
   if (Math.abs(yDiff) > Math.abs(xDiff)) {
     incomingDirection = yDiff > 0 ? "above" : "below";
@@ -1200,9 +1202,24 @@ export function sort<T>(
 
   if (!validateSort(data, state, x, y)) return;
 
-  state.swappedNodeValue = data.targetData.node.data.value;
-
   state.preventEnter = true;
+
+  const range =
+    state.draggedNode.data.index > data.targetData.node.data.index
+      ? [data.targetData.node.data.index, state.draggedNode.data.index]
+      : [state.draggedNode.data.index, data.targetData.node.data.index];
+
+  state.targetIndex = data.targetData.node.data.index;
+
+  state.affectedNodes = data.targetData.parent.data.enabledNodes.filter(
+    (node) => {
+      return (
+        range[0] <= node.data.index &&
+        node.data.index <= range[1] &&
+        node.el !== state.draggedNode.el
+      );
+    }
+  );
 
   data.targetData.parent.data.config.performSort(state, data);
 }

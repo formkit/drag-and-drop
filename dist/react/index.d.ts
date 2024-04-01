@@ -506,10 +506,6 @@ interface DragState<T> extends DragStateProps<T> {
      */
     scrollParent: HTMLElement;
     /**
-     * The value of the node that was swapped with the dragged node.
-     */
-    swappedNodeValue: any | undefined;
-    /**
      * The index of the node that the dragged node is moving into.
      */
     targetIndex: number;
