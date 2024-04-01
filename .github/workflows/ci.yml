@@ -18,13 +18,13 @@ jobs:
       - name: Build Dev Frameworks
         run: cd tests-frameworks && pnpm install && cd ..
       - name: Build Dev
-        run: cd dev && pnpm install && cd ..
+        run: cd tests && pnpm install && cd ..
       - name: Install Playwright
         run: pnpm exec playwright install --with-deps
       - name: Spin up tests-frameworks
         run: pnpm tests-frameworks &
-      - name: Spin up dev
-        run: pnpm dev &
+      - name: Spin up tests
+        run: pnpm tests &
       - name: Run Playwright tests
         run: npx playwright test
       - uses: actions/upload-artifact@v3
