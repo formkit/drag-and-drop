@@ -10,7 +10,7 @@ test.beforeEach(async ({ browser }) => {
 test.describe("Sorting", async () => {
   test("Drag sort", async () => {
     await page.goto("http://localhost:3001/sort");
-    await page.reload();
+    await new Promise((r) => setTimeout(r, 1000));
     await dragDrop(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
@@ -46,7 +46,7 @@ test.describe("Sorting", async () => {
 
   test("Uneven drag sort", async () => {
     await page.goto("http://localhost:3001/sort/uneven");
-    await page.reload();
+    await new Promise((r) => setTimeout(r, 1000));
     await dragDrop(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
@@ -82,7 +82,7 @@ test.describe("Sorting", async () => {
 
   test("Sort with animations", async () => {
     await page.goto("http://localhost:3001/sort/animations");
-    await page.reload();
+    await new Promise((r) => setTimeout(r, 1000));
     await dragDrop(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
@@ -118,7 +118,7 @@ test.describe("Sorting", async () => {
 
   test("Sort with uneven els and animations", async () => {
     await page.goto("http://localhost:3001/sort/uneven-animations");
-    await page.reload();
+    await new Promise((r) => setTimeout(r, 1000));
     await dragDrop(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
