@@ -509,6 +509,10 @@ interface DragState<T> extends DragStateProps<T> {
      * The index of the node that the dragged node is moving into.
      */
     targetIndex: number;
+    /**
+     * Flag indicating that the dragged node was transferred
+     */
+    transferred: boolean;
 }
 interface DragStateProps<T> {
     coordinates: {

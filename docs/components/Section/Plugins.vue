@@ -14,6 +14,12 @@
       first-party <code>animations</code> plugin.
     </p>
     <CodeExample example="animations" />
+    <h3 id="swap">Swap</h3>
+    <p>
+      If you would prefer to only update values (sort) when the drag is
+      released, you can use the <code>swap</code> plugin.
+    </p>
+    <CodeExample example="swap" />
     <h3 id="multi-drag">Multi Drag</h3>
     <p>
       The multi-drag plugin allows you to select multiple items and drag them

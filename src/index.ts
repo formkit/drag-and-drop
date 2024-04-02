@@ -93,6 +93,7 @@ export function setDragState<T>(
     preventEnter: false,
     clonedDraggedEls: [],
     originalZIndex: undefined,
+    transferred: false,
     ...dragStateProps,
   } as DragState<T>;
 
@@ -807,6 +808,15 @@ function getScrollData<T>(
 ): ScrollData<T> | void {
   if (!state || !state.scrollParent) return;
 
+  // If the scrollParent is the document and it isn't a touch event, then
+  // we can just let the browser handle the scrolling.
+  if (
+    state.scrollParent === document.documentElement &&
+    !("touchedNode" in state)
+  ) {
+    return;
+  }
+
   const { x, y, width, height } = state.scrollParent.getBoundingClientRect();
 
   const {
@@ -1336,6 +1346,8 @@ export function transfer<T>(
   data.targetData.parent.data.config.performTransfer(state, data);
 
   state.lastParent = data.targetData.parent;
+
+  state.transferred = true;
 }
 
 export function parentEventData<T>(

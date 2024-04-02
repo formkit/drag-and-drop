@@ -822,10 +822,6 @@ function swap(swapConfig = {}) {
         swapParentConfig.handleDragoverNode = swapConfig.handleDragoverNode || handleDragoverNode;
         swapParentConfig.handleTouchOverNode = swapConfig.handleTouchOverNode || handleTouchOverNode;
         swapParentConfig.handleEnd = swapConfig.handleEnd || handleEnd2;
-        swapParentConfig.handleDragoverParent = () => {
-        };
-        swapParentConfig.handleTouchOverParent = () => {
-        };
         parentData.config = swapParentConfig;
       }
     };
@@ -885,46 +881,48 @@ function dragoverNode(data, state2) {
 function handleEnd2(data) {
   if (!state)
     return;
-  const draggedParentValues = parentValues(
-    state.initialParent.el,
-    state.initialParent.data
-  );
-  let targetParentValues = parentValues(
-    state.lastParent.el,
-    state.lastParent.data
-  );
-  const draggedValues = state.draggedNodes.map((node) => node.data.value);
-  const draggedOverNodeValues = swapState.draggedOverNodes.map(
-    (node) => node.data.value
-  );
-  const draggedIndex = state.draggedNodes[0].data.index;
-  const draggedOverIndex = swapState.draggedOverNodes[0].data.index;
-  targetParentValues.splice(
-    draggedOverIndex,
-    draggedValues.length,
-    ...draggedValues
-  );
-  if (state.initialParent.el === state.lastParent.el) {
+  if (!state.transferred) {
+    const draggedParentValues = parentValues(
+      state.initialParent.el,
+      state.initialParent.data
+    );
+    let targetParentValues = parentValues(
+      state.lastParent.el,
+      state.lastParent.data
+    );
+    const draggedValues = state.draggedNodes.map((node) => node.data.value);
+    const draggedOverNodeValues = swapState.draggedOverNodes.map(
+      (node) => node.data.value
+    );
+    const draggedIndex = state.draggedNodes[0].data.index;
+    const draggedOverIndex = swapState.draggedOverNodes[0].data.index;
     targetParentValues.splice(
-      draggedIndex,
+      draggedOverIndex,
       draggedValues.length,
-      ...draggedOverNodeValues
+      ...draggedValues
     );
-    setParentValues(state.initialParent.el, state.initialParent.data, [
-      ...targetParentValues
-    ]);
-  } else {
-    draggedParentValues.splice(
-      draggedIndex,
-      draggedValues.length,
-      ...draggedOverNodeValues
-    );
-    setParentValues(state.lastParent.el, state.lastParent.data, [
-      ...targetParentValues
-    ]);
-    setParentValues(state.initialParent.el, state.initialParent.data, [
-      ...draggedParentValues
-    ]);
+    if (state.initialParent.el === state.lastParent.el) {
+      targetParentValues.splice(
+        draggedIndex,
+        draggedValues.length,
+        ...draggedOverNodeValues
+      );
+      setParentValues(state.initialParent.el, state.initialParent.data, [
+        ...targetParentValues
+      ]);
+    } else {
+      draggedParentValues.splice(
+        draggedIndex,
+        draggedValues.length,
+        ...draggedOverNodeValues
+      );
+      setParentValues(state.lastParent.el, state.lastParent.data, [
+        ...targetParentValues
+      ]);
+      setParentValues(state.initialParent.el, state.initialParent.data, [
+        ...draggedParentValues
+      ]);
+    }
   }
   const dropZoneClass = "touchedNode" in state ? data.targetData.parent.data.config.touchDropZoneClass : data.targetData.parent.data.config.dropZoneClass;
   removeClass(
@@ -961,6 +959,7 @@ function setDragState(dragStateProps2) {
     preventEnter: false,
     clonedDraggedEls: [],
     originalZIndex: void 0,
+    transferred: false,
     ...dragStateProps2
   };
   return state;
@@ -1457,6 +1456,9 @@ function touchmoveClasses(touchState, config) {
 function getScrollData(state2) {
   if (!state2 || !state2.scrollParent)
     return;
+  if (state2.scrollParent === document.documentElement && !("touchedNode" in state2)) {
+    return;
+  }
   const { x, y, width, height } = state2.scrollParent.getBoundingClientRect();
   const {
     x: xThresh,
@@ -1773,6 +1775,7 @@ function transfer(data, state2) {
     return;
   data.targetData.parent.data.config.performTransfer(state2, data);
   state2.lastParent = data.targetData.parent;
+  state2.transferred = true;
 }
 function parentEventData(callback) {
   function parentTargetData(parent) {
