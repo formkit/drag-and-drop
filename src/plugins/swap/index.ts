@@ -5,6 +5,8 @@ import type {
   NodeTouchEventData,
   NodeRecord,
   TouchOverNodeEvent,
+  ParentEventData,
+  TouchOverParentEvent,
 } from "../../types";
 import {
   state,
@@ -34,11 +36,17 @@ export function swap<T>(swapConfig: Partial<SwapConfig<T>> = {}) {
 
     return {
       setup() {
+        swapParentConfig.handleDragoverParent =
+          swapConfig.handleDragoverParent || handleDragoverParent;
+
         swapParentConfig.handleDragoverNode =
           swapConfig.handleDragoverNode || handleDragoverNode;
 
         swapParentConfig.handleTouchOverNode =
           swapConfig.handleTouchOverNode || handleTouchOverNode;
+
+        swapParentConfig.handleTouchOverParent =
+          swapConfig.handleTouchOverParent || handleTouchOverParent;
 
         swapParentConfig.handleEnd = swapConfig.handleEnd || handleEnd;
 
@@ -54,8 +62,14 @@ function handleDragoverNode<T>(data: NodeDragEventData<T>) {
   dragoverNode(data, state);
 }
 
+export function handleDragoverParent<T>(_data: ParentEventData<T>) {}
+
+export function handleTouchOverParent<T>(_data: TouchOverParentEvent<T>) {}
+
 function handleTouchOverNode<T>(data: TouchOverNodeEvent<T>) {
   if (!state) return;
+
+  if (data.detail.targetData.parent.el !== state.lastParent.el) return;
 
   const dropZoneClass =
     data.detail.targetData.parent.data.config.touchDropZoneClass;
@@ -66,8 +80,6 @@ function handleTouchOverNode<T>(data: TouchOverNodeEvent<T>) {
   );
 
   const enabledNodes = data.detail.targetData.parent.data.enabledNodes;
-
-  if (!enabledNodes) return;
 
   swapState.draggedOverNodes = enabledNodes.slice(
     data.detail.targetData.node.data.index,
@@ -89,6 +101,10 @@ function dragoverNode<T>(data: NodeDragEventData<T>, state: DragState<T>) {
   data.e.preventDefault();
 
   data.e.stopPropagation();
+
+  if (data.targetData.parent.el !== state.lastParent.el) return;
+
+  console.log("getting here");
 
   const dropZoneClass = data.targetData.parent.data.config.dropZoneClass;
 

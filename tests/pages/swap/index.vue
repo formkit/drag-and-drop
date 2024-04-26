@@ -9,6 +9,7 @@ const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   },
   plugins: [swap()],
   dropZoneClass: "yellow",
+  draggingClass: "teal",
 });
 
 const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
@@ -18,6 +19,7 @@ const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
   },
   plugins: [swap()],
   dropZoneClass: "yellow",
+  draggingClass: "teal",
 });
 
 const [parent3, values3] = useDragAndDrop(
@@ -29,6 +31,7 @@ const [parent3, values3] = useDragAndDrop(
     },
     plugins: [swap()],
     dropZoneClass: "yellow",
+    draggingClass: "teal",
   }
 );
 </script>
@@ -83,7 +86,6 @@ h1 {
   padding: 0;
   margin: 0;
   margin-bottom: 2em;
-  background-color: red;
   height: 6000px;
 }
 
@@ -102,5 +104,9 @@ h1 {
 
 .yellow {
   background-color: yellow;
+}
+
+.teal {
+  background-color: teal;
 }
 </style>
