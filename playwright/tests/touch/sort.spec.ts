@@ -8,7 +8,7 @@ test.beforeAll(async ({ browser }) => {
 });
 
 test.describe("Sorting", async () => {
-  test("Drag sort", async () => {
+  test("Touch sort", async () => {
     await page.goto("http://localhost:3001/sort");
     await new Promise((r) => setTimeout(r, 1000));
     await touchDrop(page, {
@@ -44,7 +44,7 @@ test.describe("Sorting", async () => {
     );
   });
 
-  test("Uneven drag sort", async () => {
+  test("Uneven touch sort", async () => {
     await page.goto("http://localhost:3001/sort/uneven");
     await new Promise((r) => setTimeout(r, 1000));
     await touchDrop(page, {

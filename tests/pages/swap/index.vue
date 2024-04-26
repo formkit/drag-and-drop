@@ -9,31 +9,10 @@ const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   },
   plugins: [swap()],
   dropZoneClass: "yellow",
+  touchDropZoneClass: "yellow",
   draggingClass: "teal",
+  touchDraggingClass: "teal",
 });
-
-const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
-  group: "transfer",
-  draggable: (el) => {
-    return el.tagName === "LI";
-  },
-  plugins: [swap()],
-  dropZoneClass: "yellow",
-  draggingClass: "teal",
-});
-
-const [parent3, values3] = useDragAndDrop(
-  ["Strawberry", "Watermelon", "Kiwi"],
-  {
-    group: "transfer",
-    draggable: (el) => {
-      return el.tagName === "LI";
-    },
-    plugins: [swap()],
-    dropZoneClass: "yellow",
-    draggingClass: "teal",
-  }
-);
 </script>
 
 <template>
@@ -46,26 +25,6 @@ const [parent3, values3] = useDragAndDrop(
         </li>
         <span id="values_1" class="text-xs">
           {{ values1.map((x) => x).join(" ") }}
-        </span>
-      </ul>
-    </div>
-    <div>
-      <ul id="2" ref="parent2" class="list">
-        <li v-for="value in values2" :id="value" :key="value" class="item">
-          {{ value }}
-        </li>
-        <span id="values_2" class="text-xs">
-          {{ values2.map((x) => x).join(" ") }}
-        </span>
-      </ul>
-    </div>
-    <div>
-      <ul id="3" ref="parent3" class="list">
-        <li v-for="value in values3" :id="value" :key="value" class="item">
-          {{ value }}
-        </li>
-        <span id="values_3" class="text-xs">
-          {{ values3.map((x) => x).join(" ") }}
         </span>
       </ul>
     </div>
@@ -107,6 +66,6 @@ h1 {
 }
 
 .teal {
-  background-color: teal;
+  background-color: teal !important;
 }
 </style>

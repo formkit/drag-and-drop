@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../../src/vue/index";
 
-const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"]);
+const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
+  touchDraggingClass: "teal",
+  touchDropZoneClass: "yellow",
+});
 </script>
 
 <template>
@@ -39,5 +42,12 @@ h1 {
   border: 1px solid #ccc;
   border-radius: 5px;
 }
+
+.teal {
+  background-color: teal !important;
+}
+
+.yellow {
+  background-color: yellow !important;
+}
 </style>
-../../../src/vue/index
