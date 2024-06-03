@@ -866,7 +866,6 @@ function dragoverNode(data, state2) {
   data.e.stopPropagation();
   if (data.targetData.parent.el !== state2.lastParent.el)
     return;
-  console.log("getting here");
   const dropZoneClass = data.targetData.parent.data.config.dropZoneClass;
   removeClass(
     swapState.draggedOverNodes.map((node) => node.el),
