@@ -15,6 +15,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  transfer: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const [todoList, todos] = useDragAndDrop(
@@ -80,7 +84,7 @@ if (props.dragHandles) {
             </li>
           </ul>
         </div>
-        <div class="kanban-column">
+        <div v-if="transfer" class="kanban-column">
           <h2 class="kanban-title">Complete</h2>
 
           <ul ref="doneList" class="kanban-list">

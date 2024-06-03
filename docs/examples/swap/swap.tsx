@@ -3,26 +3,30 @@ import { useDragAndDrop } from "@formkit/drag-and-drop/react";
 import { swap } from "@formkit/drag-and-drop";
 
 export function myComponent() {
-  const [parent, tapes] = useDragAndDrop<HTMLUListElement, string>(
-    [
-      "Depeche Mode",
-      "Duran Duran",
-      "Pet Shop Boys",
-      "Kraftwerk",
-      "Tears for Fears",
-      "Spandau Ballet",
-    ],
-    {
-      plugins: [swap()],
-    }
+  const todoItems = [
+    "Schedule perm",
+    "Rewind VHS tapes",
+    "Make change for the arcade",
+    "Get disposable camera developed",
+    "Learn C++",
+    "Return Nintendo Power Glove",
+  ];
+  const doneItems = ["Pickup new mix-tape from Beth"];
+
+  const [todoList, todos] = useDragAndDrop<HTMLUListElement, string>(
+    todoItems,
+    { group: "todoList", plugins: [swap()] }
   );
+
   return (
-    <ul ref={parent}>
-      {tapes.map((tape) => (
-        <li className="cassette" data-label={tape} key={tape}>
-          {tape}
-        </li>
-      ))}
-    </ul>
+    <div className="kanban-board">
+      <ul ref={todoList}>
+        {todos.map((todo) => (
+          <li className="kanban-item" key={todo}>
+            {todo}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
