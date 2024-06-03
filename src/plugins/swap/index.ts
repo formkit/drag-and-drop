@@ -104,8 +104,6 @@ function dragoverNode<T>(data: NodeDragEventData<T>, state: DragState<T>) {
 
   if (data.targetData.parent.el !== state.lastParent.el) return;
 
-  console.log("getting here");
-
   const dropZoneClass = data.targetData.parent.data.config.dropZoneClass;
 
   removeClass(

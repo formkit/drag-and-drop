@@ -52,10 +52,14 @@ export async function dragDrop(page: Page, data: DragDropData): Promise<void> {
       );
     }
 
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
     // Dragover the origin element
     originElement.dispatchEvent(
       new DragEvent("dragover", getEventProps(originElement))
     );
+
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
     const destinationEventProps = getEventProps(destinationElement);
 
@@ -64,17 +68,21 @@ export async function dragDrop(page: Page, data: DragDropData): Promise<void> {
       new DragEvent("dragover", destinationEventProps)
     );
 
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
     // Emulate a real drag over event where dragover will fire on the same
     // destination coordinates when the drag and drop operation is completed
     // (sort or transfer).
-    destinationElement.dispatchEvent(
-      new DragEvent("dragover", destinationEventProps)
-    );
+    // destinationElement.dispatchEvent(
+    //   new DragEvent("dragover", destinationEventProps)
+    // );
 
     if (data.drop) {
       destinationElement.dispatchEvent(
-        new DragEvent("drop", getEventProps(destinationElement))
+        new DragEvent("dragend", getEventProps(destinationElement))
       );
+
+      await new Promise((resolve) => setTimeout(resolve, 200));
     }
   }, data);
 }

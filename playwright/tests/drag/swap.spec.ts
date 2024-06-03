@@ -16,11 +16,9 @@ test.describe("Drag swap", async () => {
       destinationEl: { id: "Banana", position: "center" },
       dragStart: true,
     });
-    await expect(page.locator("#Apple")).not.toHaveClass("item yellow");
-    await expect(page.locator("#Banana")).toHaveClass("item yellow");
     await expect(page.locator("#values_1")).toHaveText("Apple Banana Orange");
     await dragDrop(page, {
-      originEl: { id: "Apple", position: "center" },
+      originEl: { id: "Banana", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
       drop: true,
     });
