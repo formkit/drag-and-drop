@@ -231,7 +231,6 @@ export function dragAndDrop<T>({
   document.addEventListener("dragover", (e) => {
     e.preventDefault();
 
-    // Temp fix sincie I am throttling dragover node
     if (nodes.has(e.target as Node) || parents.has(e.target as HTMLElement))
       return;
 
