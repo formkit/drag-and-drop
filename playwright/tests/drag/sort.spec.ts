@@ -3,45 +3,149 @@ import { dragDrop } from "../../utils";
 
 let page: Page;
 
-test.beforeAll(async ({ browser }) => {
+test.beforeEach(async ({ browser }) => {
   page = await browser.newPage();
-  await page.goto("http://localhost:3001/sort");
 });
 
 test.describe("Sorting", async () => {
-  test("Drag sort works as expected.", async () => {
+  test("Drag sort", async () => {
+    await page.goto("http://localhost:3001/sort");
+    await new Promise((r) => setTimeout(r, 1000));
     await dragDrop(page, {
-      origin: "#Apple",
-      destination: "#Banana",
+      originEl: { id: "Apple", position: "center" },
+      destinationEl: { id: "Banana", position: "center" },
       dragStart: true,
-      drop: false,
     });
     await expect(page.locator("#sort_values")).toHaveText(
       "Banana Apple Orange"
     );
     await dragDrop(page, {
-      origin: "#Banana",
-      destination: "#Orange",
-      dragStart: false,
+      originEl: { id: "Banana", position: "center" },
+      destinationEl: { id: "Orange", position: "center" },
       drop: true,
     });
     await expect(page.locator("#sort_values")).toHaveText(
       "Banana Orange Apple"
     );
     await dragDrop(page, {
-      origin: "#Banana",
-      destination: "#Orange",
+      originEl: { id: "Banana", position: "center" },
+      destinationEl: { id: "Orange", position: "center" },
       dragStart: true,
-      drop: false,
     });
     await expect(page.locator("#sort_values")).toHaveText(
       "Orange Banana Apple"
     );
     await dragDrop(page, {
-      origin: "#Banana",
-      destination: "#Apple",
-      dragStart: false,
+      originEl: { id: "Banana", position: "center" },
+      destinationEl: { id: "Apple", position: "center" },
+    });
+    await expect(page.locator("#sort_values")).toHaveText(
+      "Orange Apple Banana"
+    );
+  });
+
+  test("Uneven drag sort", async () => {
+    await page.goto("http://localhost:3001/sort/uneven");
+    await new Promise((r) => setTimeout(r, 1000));
+    await dragDrop(page, {
+      originEl: { id: "Apple", position: "center" },
+      destinationEl: { id: "Banana", position: "center" },
+      dragStart: true,
+    });
+    await expect(page.locator("#sort_values")).toHaveText(
+      "Banana Apple Orange"
+    );
+    await dragDrop(page, {
+      originEl: { id: "Banana", position: "center" },
+      destinationEl: { id: "Orange", position: "center" },
       drop: true,
+    });
+    await expect(page.locator("#sort_values")).toHaveText(
+      "Banana Orange Apple"
+    );
+    await dragDrop(page, {
+      originEl: { id: "Banana", position: "center" },
+      destinationEl: { id: "Orange", position: "center" },
+      dragStart: true,
+    });
+    await expect(page.locator("#sort_values")).toHaveText(
+      "Orange Banana Apple"
+    );
+    await dragDrop(page, {
+      originEl: { id: "Banana", position: "center" },
+      destinationEl: { id: "Apple", position: "center" },
+    });
+    await expect(page.locator("#sort_values")).toHaveText(
+      "Orange Apple Banana"
+    );
+  });
+
+  test("Sort with animations", async () => {
+    await page.goto("http://localhost:3001/sort/animations");
+    await new Promise((r) => setTimeout(r, 1000));
+    await dragDrop(page, {
+      originEl: { id: "Apple", position: "center" },
+      destinationEl: { id: "Banana", position: "center" },
+      dragStart: true,
+    });
+    await expect(page.locator("#sort_values")).toHaveText(
+      "Banana Apple Orange"
+    );
+    await dragDrop(page, {
+      originEl: { id: "Banana", position: "center" },
+      destinationEl: { id: "Orange", position: "center" },
+      drop: true,
+    });
+    await expect(page.locator("#sort_values")).toHaveText(
+      "Banana Orange Apple"
+    );
+    await dragDrop(page, {
+      originEl: { id: "Banana", position: "center" },
+      destinationEl: { id: "Orange", position: "center" },
+      dragStart: true,
+    });
+    await expect(page.locator("#sort_values")).toHaveText(
+      "Orange Banana Apple"
+    );
+    await dragDrop(page, {
+      originEl: { id: "Banana", position: "center" },
+      destinationEl: { id: "Apple", position: "center" },
+    });
+    await expect(page.locator("#sort_values")).toHaveText(
+      "Orange Apple Banana"
+    );
+  });
+
+  test("Sort with uneven els and animations", async () => {
+    await page.goto("http://localhost:3001/sort/uneven-animations");
+    await new Promise((r) => setTimeout(r, 1000));
+    await dragDrop(page, {
+      originEl: { id: "Apple", position: "center" },
+      destinationEl: { id: "Banana", position: "center" },
+      dragStart: true,
+    });
+    await expect(page.locator("#sort_values")).toHaveText(
+      "Banana Apple Orange"
+    );
+    await dragDrop(page, {
+      originEl: { id: "Banana", position: "center" },
+      destinationEl: { id: "Orange", position: "center" },
+      drop: true,
+    });
+    await expect(page.locator("#sort_values")).toHaveText(
+      "Banana Orange Apple"
+    );
+    await dragDrop(page, {
+      originEl: { id: "Banana", position: "center" },
+      destinationEl: { id: "Orange", position: "center" },
+      dragStart: true,
+    });
+    await expect(page.locator("#sort_values")).toHaveText(
+      "Orange Banana Apple"
+    );
+    await dragDrop(page, {
+      originEl: { id: "Banana", position: "center" },
+      destinationEl: { id: "Apple", position: "center" },
     });
     await expect(page.locator("#sort_values")).toHaveText(
       "Orange Apple Banana"

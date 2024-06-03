@@ -1,0 +1,45 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  -webkit-text-size-adjust: 100%;
+  background-color: var(--light-main);
+  color: var(--dark-main);
+}
+
+* {
+  box-sizing: border-box;
+
+  *::before,
+  *::after {
+    box-sizing: inherit;
+  }
+}
+
+.main-layout {
+  margin: 3em 0;
+  position: relative;
+  z-index: 0;
+}
+
+.container {
+  margin: 0 1em;
+}
+
+@media (min-width: 660px) {
+  .container {
+    margin: 0 10%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    margin: 0 15%;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    margin: 0 20%;
+  }
+}

@@ -10,52 +10,65 @@ test.beforeAll(async ({ browser }) => {
 
 test.describe("Transferring", async () => {
   test("Drag transferring works as expected.", async () => {
+    await new Promise((r) => setTimeout(r, 1000));
     await dragDrop(page, {
-      origin: "#transfer_1_Apple",
-      destination: "#transfer_values_2",
+      originEl: {
+        id: "Apple",
+        position: "center",
+      },
+      destinationEl: { id: "values_2", position: "center" },
       dragStart: true,
       drop: false,
     });
-    await expect(page.locator("#transfer_values_1")).toHaveText(
-      "Banana Orange"
-    );
-    await expect(page.locator("#transfer_values_2")).toHaveText(
+    await expect(page.locator("#values_1")).toHaveText("Banana Orange");
+    await expect(page.locator("#values_2")).toHaveText(
       "Cherry Grape Pineapple Apple"
     );
     await dragDrop(page, {
-      origin: "#transfer_2_Apple",
-      destination: "#transfer_values_3",
+      originEl: {
+        id: "Apple",
+        position: "center",
+      },
+      destinationEl: { id: "values_3", position: "center" },
       drop: true,
     });
-    await new Promise((r) => setTimeout(r, 1000));
-    await expect(page.locator("#transfer_values_2")).toHaveText(
+    await expect(page.locator("#values_2")).toHaveText(
       "Cherry Grape Pineapple"
     );
-    await expect(page.locator("#transfer_values_3")).toHaveText(
+    await expect(page.locator("#values_3")).toHaveText(
       "Strawberry Watermelon Kiwi Apple"
     );
     await dragDrop(page, {
-      origin: "#transfer_3_Strawberry",
-      destination: "#transfer_values_2",
+      originEl: {
+        id: "Strawberry",
+        position: "center",
+      },
+      destinationEl: {
+        id: "values_2",
+        position: "center",
+      },
+
       dragStart: true,
       drop: false,
     });
-    await expect(page.locator("#transfer_values_2")).toHaveText(
+    await expect(page.locator("#values_2")).toHaveText(
       "Cherry Grape Pineapple Strawberry"
     );
-    await expect(page.locator("#transfer_values_3")).toHaveText(
-      "Watermelon Kiwi Apple"
-    );
+    await expect(page.locator("#values_3")).toHaveText("Watermelon Kiwi Apple");
     await dragDrop(page, {
-      origin: "#transfer_2_Strawberry",
-      destination: "#transfer_values_1",
-      dragStart: true,
-      drop: true,
+      originEl: {
+        id: "Strawberry",
+        position: "center",
+      },
+      destinationEl: {
+        id: "values_1",
+        position: "center",
+      },
     });
-    await expect(page.locator("#transfer_values_1")).toHaveText(
+    await expect(page.locator("#values_1")).toHaveText(
       "Banana Orange Strawberry"
     );
-    await expect(page.locator("#transfer_values_2")).toHaveText(
+    await expect(page.locator("#values_2")).toHaveText(
       "Cherry Grape Pineapple"
     );
   });
