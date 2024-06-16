@@ -86,9 +86,4 @@ const __dirname = dirname(__filename);
     await readFile(resolve(__dirname, `./LICENSE`), "utf8"),
     "utf8"
   );
-  await mkdir(resolve(__dirname, `./dist/docs/public`), { recursive: true });
-  await copyFile(
-    resolve(__dirname, `./docs/public/drag-drop.gif`),
-    resolve(__dirname, `./dist/docs/public/drag-drop.gif`)
-  );
 })();

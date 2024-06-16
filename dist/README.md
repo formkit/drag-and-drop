@@ -1,4 +1,4 @@
-<img src="docs/public/drag-drop.gif" alt="FormKit Drag & Drop" width="250" height="250">
+<img src="https://s3.amazonaws.com/cdn.formk.it/web-assets/drag-and-drop.gif" alt="FormKit Drag & Drop" width="250" height="250">
 
 [![Tests](https://github.com/formkit/drag-and-drop/actions/workflows/ci.yml/badge.svg)](https://github.com/formkit/drag-and-drop/actions/workflows/ci.yml)![GitHub Sponsors](https://img.shields.io/github/sponsors/formkit)
 ![NPM Version](https://img.shields.io/npm/v/%40formkit%2Ftempo)
