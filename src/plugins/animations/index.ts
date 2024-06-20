@@ -2,43 +2,42 @@ import type { SetupNodeData, Node } from "../../types";
 import type { AnimationsConfig } from "./types";
 import { state, parents } from "../../index";
 
-const slideUp = [
-  {
-    transform: "translateY(100%)",
-  },
-  {
-    transform: "translateY(0)",
-  },
-];
-
-const slideDown = [
-  {
-    transform: "translateY(-100%)",
-  },
-  {
-    transform: "translateY(0)",
-  },
-];
-
-const slideLeft = [
-  {
-    transform: "translateX(100%)",
-  },
-  {
-    transform: "translateX(0)",
-  },
-];
-
-const slideRight = [
-  {
-    transform: "translateX(-100%)",
-  },
-  {
-    transform: "translateX(0)",
-  },
-];
-
 export function animations(animationsConfig: Partial<AnimationsConfig> = {}) {
+  const slideUp = [
+    {
+      transform: `translateY(${animationsConfig.yScale || 50}%)`,
+    },
+    {
+      transform: `translateY(${animationsConfig.yScale || 0}%)`,
+    },
+  ];
+
+  const slideDown = [
+    {
+      transform: `translateY(-${animationsConfig.yScale || 50}%)`,
+    },
+    {
+      transform: `translateY(${animationsConfig.yScale || 0}%)`,
+    },
+  ];
+
+  const slideLeft = [
+    {
+      transform: `translateX(${animationsConfig.xScale || 50}%)`,
+    },
+    {
+      transform: `translateX(${animationsConfig.xScale || 0}%)`,
+    },
+  ];
+
+  const slideRight = [
+    {
+      transform: `translateX(-${animationsConfig.xScale || 50}%)`,
+    },
+    {
+      transform: `translateX(${animationsConfig.xScale || 0}%)`,
+    },
+  ];
   return (parent: HTMLElement) => {
     const parentData = parents.get(parent);
 
