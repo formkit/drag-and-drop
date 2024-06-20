@@ -728,6 +728,8 @@ declare function multiDrag<T>(multiDragConfig?: Partial<MultiDragConfig<T>>): (p
 interface AnimationsConfig {
     duration?: number;
     remapFinished?: () => void;
+    yScale?: number;
+    xScale?: number;
 }
 
 declare function animations(animationsConfig?: Partial<AnimationsConfig>): (parent: HTMLElement) => {

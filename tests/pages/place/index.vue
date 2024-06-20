@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../../src/vue/index";
-import { animations } from "../../../src/index";
+import { place, animations } from "../../../src/index";
 
 const [parent, values] = useDragAndDrop(
   ["Apple", "Banana", "Orange", "Strawberry", "Pineapple", "Grapes"],
   {
-    plugins: [animations()],
-    dropZoneClass: "dropZone",
+    plugins: [place(), animations()],
+    dropZoneClass: "hover",
   }
 );
 </script>
 
 <template>
-  <h2>Wrapped</h2>
+  <h2>Place Plugin</h2>
   <div>
     <ul ref="parent" class="list">
       <li v-for="value in values" :id="value" :key="value" class="item">
@@ -29,9 +29,27 @@ const [parent, values] = useDragAndDrop(
 </template>
 
 <style scoped>
-.dropZone {
-  background-color: aqua !important;
+.item {
+  padding: 10px;
+  border: 1px solid #ccc;
+  margin: 5px 0;
+  list-style-type: none;
 }
+
+.item.hover {
+  position: relative;
+}
+
+.item.hover::before {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: green;
+}
+
 .list {
   list-style-type: none;
   width: 1400px;
@@ -39,7 +57,7 @@ const [parent, values] = useDragAndDrop(
   margin: 0;
   margin-bottom: 2em;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
 }
 
 .item {
@@ -55,10 +73,6 @@ const [parent, values] = useDragAndDrop(
   height: 50px;
 }
 
-.item:nth-child(odd) {
-  width: 100px;
-}
-
 h1 {
   font-size: 1.5em;
   margin-bottom: 2em;
@@ -71,6 +85,7 @@ h2 {
 
 p {
   margin-bottom: 2em;
+  /* font-size: 0.9em; */
 }
 
 .divider {

@@ -490,39 +490,39 @@ function stackNodes({
 }
 
 // src/plugins/animations/index.ts
-var slideUp = [
-  {
-    transform: "translateY(100%)"
-  },
-  {
-    transform: "translateY(0)"
-  }
-];
-var slideDown = [
-  {
-    transform: "translateY(-100%)"
-  },
-  {
-    transform: "translateY(0)"
-  }
-];
-var slideLeft = [
-  {
-    transform: "translateX(100%)"
-  },
-  {
-    transform: "translateX(0)"
-  }
-];
-var slideRight = [
-  {
-    transform: "translateX(-100%)"
-  },
-  {
-    transform: "translateX(0)"
-  }
-];
 function animations(animationsConfig = {}) {
+  const slideUp = [
+    {
+      transform: `translateY(${animationsConfig.yScale || 50}%)`
+    },
+    {
+      transform: `translateY(${animationsConfig.yScale || 0}%)`
+    }
+  ];
+  const slideDown = [
+    {
+      transform: `translateY(-${animationsConfig.yScale || 50}%)`
+    },
+    {
+      transform: `translateY(${animationsConfig.yScale || 0}%)`
+    }
+  ];
+  const slideLeft = [
+    {
+      transform: `translateX(${animationsConfig.xScale || 50}%)`
+    },
+    {
+      transform: `translateX(${animationsConfig.xScale || 0}%)`
+    }
+  ];
+  const slideRight = [
+    {
+      transform: `translateX(-${animationsConfig.xScale || 50}%)`
+    },
+    {
+      transform: `translateX(${animationsConfig.xScale || 0}%)`
+    }
+  ];
   return (parent) => {
     const parentData = parents.get(parent);
     if (!parentData)

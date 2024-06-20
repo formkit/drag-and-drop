@@ -42,6 +42,7 @@ export { multiDrag } from "./plugins/multiDrag";
 export { animations } from "./plugins/animations";
 export { selections } from "./plugins/multiDrag/plugins/selections";
 export { swap } from "./plugins/swap";
+export { place } from "./plugins/place";
 export * from "./utils";
 
 const scrollConfig: {
