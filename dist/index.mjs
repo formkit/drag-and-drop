@@ -520,9 +520,15 @@ function animations(animationsConfig = {}) {
 function animate(node, animation, duration) {
   if (!state)
     return;
+  state.preventEnter = true;
   node.animate(animation, {
     duration
   });
+  setTimeout(() => {
+    if (!state)
+      return;
+    state.preventEnter = false;
+  }, duration);
 }
 
 // src/plugins/multiDrag/plugins/selections/index.ts
@@ -1213,7 +1219,6 @@ function remapNodes(parent, force) {
 }
 function remapFinished() {
   if (state) {
-    state.preventEnter = false;
     state.remapJustFinished = true;
     state.affectedNodes = [];
   }
@@ -1706,7 +1711,6 @@ function sort(data, state2) {
   const { x, y } = eventCoordinates(data.e);
   if (!validateSort(data, state2, x, y))
     return;
-  state2.preventEnter = true;
   const range = state2.draggedNode.data.index > data.targetData.node.data.index ? [data.targetData.node.data.index, state2.draggedNode.data.index] : [state2.draggedNode.data.index, data.targetData.node.data.index];
   state2.targetIndex = data.targetData.node.data.index;
   state2.affectedNodes = data.targetData.parent.data.enabledNodes.filter(

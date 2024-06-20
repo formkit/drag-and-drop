@@ -457,8 +457,6 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
 
 export function remapFinished() {
   if (state) {
-    state.preventEnter = false;
-
     state.remapJustFinished = true;
 
     state.affectedNodes = [];
@@ -1208,8 +1206,6 @@ export function sort<T>(
   const { x, y } = eventCoordinates(data.e);
 
   if (!validateSort(data, state, x, y)) return;
-
-  state.preventEnter = true;
 
   const range =
     state.draggedNode.data.index > data.targetData.node.data.index

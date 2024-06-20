@@ -152,7 +152,15 @@ function animate(
 ) {
   if (!state) return;
 
+  state.preventEnter = true;
+
   node.animate(animation, {
     duration: duration,
   });
+
+  setTimeout(() => {
+    if (!state) return;
+
+    state.preventEnter = false;
+  }, duration);
 }
