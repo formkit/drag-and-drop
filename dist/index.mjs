@@ -946,6 +946,111 @@ function handleEnd2(data) {
   handleEnd(data);
 }
 
+// src/plugins/place/index.ts
+var placeState = {
+  draggedOverNodes: Array()
+};
+function place(placeConfig = {}) {
+  return (parent) => {
+    const parentData = parents.get(parent);
+    if (!parentData)
+      return;
+    const placeParentConfig = {
+      ...parentData.config,
+      placeConfig
+    };
+    return {
+      setup() {
+        placeParentConfig.handleDragoverNode = placeConfig.handleDragoverNode || handleDragoverNode2;
+        placeParentConfig.handleTouchOverNode = placeConfig.handleTouchOverNode || handleTouchOverNode2;
+        placeParentConfig.handleTouchOverParent = placeConfig.handleTouchOverParent || handleTouchOverParent2;
+        placeParentConfig.handleEnd = placeConfig.handleEnd || handleEnd3;
+        parentData.config = placeParentConfig;
+      }
+    };
+  };
+}
+function handleDragoverNode2(data) {
+  if (!state)
+    return;
+  dragoverNode2(data, state);
+}
+function handleTouchOverParent2(_data) {
+}
+function handleTouchOverNode2(data) {
+  if (!state)
+    return;
+  if (data.detail.targetData.parent.el !== state.lastParent.el)
+    return;
+  const dropZoneClass = data.detail.targetData.parent.data.config.touchDropZoneClass;
+  removeClass(
+    placeState.draggedOverNodes.map((node) => node.el),
+    dropZoneClass
+  );
+  const enabledNodes = data.detail.targetData.parent.data.enabledNodes;
+  placeState.draggedOverNodes = enabledNodes.slice(
+    data.detail.targetData.node.data.index,
+    data.detail.targetData.node.data.index + state.draggedNodes.length
+  );
+  addClass(
+    placeState.draggedOverNodes.map((node) => node.el),
+    dropZoneClass,
+    true
+  );
+  state.lastTargetValue = data.detail.targetData.node.data.value;
+  state.lastParent = data.detail.targetData.parent;
+}
+function dragoverNode2(data, state2) {
+  data.e.preventDefault();
+  data.e.stopPropagation();
+  if (data.targetData.parent.el !== state2.lastParent.el)
+    return;
+  const dropZoneClass = data.targetData.parent.data.config.dropZoneClass;
+  removeClass(
+    placeState.draggedOverNodes.map((node) => node.el),
+    dropZoneClass
+  );
+  const enabledNodes = data.targetData.parent.data.enabledNodes;
+  if (!enabledNodes)
+    return;
+  placeState.draggedOverNodes = enabledNodes.slice(
+    data.targetData.node.data.index,
+    data.targetData.node.data.index + state2.draggedNodes.length
+  );
+  addClass(
+    placeState.draggedOverNodes.map((node) => node.el),
+    dropZoneClass,
+    true
+  );
+  state2.lastTargetValue = data.targetData.node.data.value;
+  state2.lastParent = data.targetData.parent;
+}
+function handleEnd3(data) {
+  if (!state)
+    return;
+  if (state.transferred || state.lastParent.el !== state.initialParent.el)
+    return;
+  const draggedParentValues = parentValues(
+    state.initialParent.el,
+    state.initialParent.data
+  );
+  const draggedValues = state.draggedNodes.map((node) => node.data.value);
+  const newParentValues = [
+    ...draggedParentValues.filter((x) => !draggedValues.includes(x))
+  ];
+  const index = placeState.draggedOverNodes[0].data.index;
+  newParentValues.splice(index, 0, ...draggedValues);
+  setParentValues(data.targetData.parent.el, data.targetData.parent.data, [
+    ...newParentValues
+  ]);
+  const dropZoneClass = "touchedNode" in state ? data.targetData.parent.data.config.touchDropZoneClass : data.targetData.parent.data.config.dropZoneClass;
+  removeClass(
+    placeState.draggedOverNodes.map((node) => node.el),
+    dropZoneClass
+  );
+  handleEnd(data);
+}
+
 // src/index.ts
 var scrollConfig = {
   up: [0, -1],
@@ -1080,13 +1185,13 @@ function dragAndDrop({
     setValues,
     config: {
       handleDragstart,
-      handleDragoverNode: handleDragoverNode2,
+      handleDragoverNode: handleDragoverNode3,
       handleDragoverParent: handleDragoverParent2,
       handleEnd,
       handleTouchstart,
       handleTouchmove,
-      handleTouchOverNode: handleTouchOverNode2,
-      handleTouchOverParent: handleTouchOverParent2,
+      handleTouchOverNode: handleTouchOverNode3,
+      handleTouchOverParent: handleTouchOverParent3,
       handleDragenterNode,
       handleDragleaveNode,
       performSort,
@@ -1299,7 +1404,7 @@ function dragstart2(data) {
     config.dropZoneClass
   );
 }
-function handleTouchOverNode2(e) {
+function handleTouchOverNode3(e) {
   if (!state)
     return;
   if (e.detail.targetData.parent.el === state.lastParent.el)
@@ -1594,14 +1699,14 @@ function performScroll(direction, x, y) {
     "touchedNode" in state2 ? 10 : 100
   );
 }
-function handleDragoverNode2(data) {
+function handleDragoverNode3(data) {
   if (!state)
     return;
   const { x, y } = eventCoordinates(data.e);
   state.coordinates.y = y;
   state.coordinates.x = x;
   handleScroll();
-  dragoverNode2(data, state);
+  dragoverNode3(data, state);
 }
 function handleDragoverParent2(data) {
   if (!state)
@@ -1612,7 +1717,7 @@ function handleDragoverParent2(data) {
   handleScroll();
   transfer(data, state);
 }
-function handleTouchOverParent2(e) {
+function handleTouchOverParent3(e) {
   if (!state)
     return;
   transfer(e.detail, state);
@@ -1642,7 +1747,7 @@ function handleDragenterNode(data, _state) {
 function handleDragleaveNode(data, _state) {
   data.e.preventDefault();
 }
-function dragoverNode2(eventData, dragState) {
+function dragoverNode3(eventData, dragState) {
   eventData.e.preventDefault();
   eventData.e.stopPropagation();
   eventData.targetData.parent.el === dragState.lastParent?.el ? sort(eventData, dragState) : transfer(eventData, dragState);
@@ -1826,13 +1931,13 @@ export {
   events,
   getElFromPoint,
   getScrollParent,
-  handleDragoverNode2 as handleDragoverNode,
+  handleDragoverNode3 as handleDragoverNode,
   handleDragoverParent2 as handleDragoverParent,
   handleDragstart,
   handleEnd,
   handleLongTouch,
-  handleTouchOverNode2 as handleTouchOverNode,
-  handleTouchOverParent2 as handleTouchOverParent,
+  handleTouchOverNode3 as handleTouchOverNode,
+  handleTouchOverParent3 as handleTouchOverParent,
   handleTouchedNode,
   handleTouchmove,
   handleTouchstart,
@@ -1848,6 +1953,7 @@ export {
   parents,
   performSort,
   performTransfer,
+  place,
   remapFinished,
   remapNodes,
   removeClass,
