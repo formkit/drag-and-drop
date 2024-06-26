@@ -30,7 +30,7 @@
     <p>
       The <code>useDragAndDrop</code> hook is the most convenient way to add
       Drag and Drop to your app. Call this function with an initial array of
-      values. It returns a tuple containing a a template ref and a reactive
+      values. It returns a tuple containing a template ref and a reactive
       array of values. The template ref should be assigned to the parent DOM
       element of the items you wish to make draggable. The reactive array of
       values should be used in your template to render the draggable elements.
