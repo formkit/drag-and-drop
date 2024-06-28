@@ -29,6 +29,7 @@ export const insertionState = {
 
 interface InsertionConfig<T> extends ParentConfig<T> {}
 
+// WIP: This is a work in progress and not yet fully functional
 export function insertion<T>(
   insertionConfig: Partial<InsertionConfig<T>> = {}
 ) {
