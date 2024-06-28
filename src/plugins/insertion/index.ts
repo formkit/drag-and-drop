@@ -192,7 +192,6 @@ function defineRanges<T>(enabledNodes: Array<NodeRecord<T>>) {
     node.data.range = {};
 
     if (index !== enabledNodes.length - 1) {
-      console.log(getLayoutDirection(node, enabledNodes[index + 1]));
       const vertical =
         getLayoutDirection(node, enabledNodes[index + 1]) === "column";
       node.data.range.ascending = vertical
@@ -443,6 +442,8 @@ function handleEnd<T>(data: NodeDragEventData<T> | NodeTouchEventData<T>) {
 
   let index = insertionState.draggedOverNodes[0].data.index;
 
+  console.log("original index", index);
+
   if (
     insertionState.targetIndex > state.draggedNodes[0].data.index &&
     !insertionState.ascending
@@ -452,8 +453,10 @@ function handleEnd<T>(data: NodeDragEventData<T> | NodeTouchEventData<T>) {
     insertionState.targetIndex < state.draggedNodes[0].data.index &&
     insertionState.ascending
   ) {
-    index--;
+    index++;
   }
+
+  console.log("new indedx", index);
 
   newParentValues.splice(index, 0, ...draggedValues);
 

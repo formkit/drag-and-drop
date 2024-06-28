@@ -19,7 +19,15 @@ const [parent, values] = useDragAndDrop(
   <h2>Insertion Plugin</h2>
   <div>
     <ul ref="parent" class="list">
-      <div v-for="value in values" :id="value" :key="value" class="item">
+      <div
+        v-for="value in values"
+        :id="value"
+        :key="value"
+        :class="{
+          item: true,
+          large: value === 'Apple' || value === 'Grape',
+        }"
+      >
         <div>
           {{ value }}
         </div>
@@ -64,11 +72,7 @@ const [parent, values] = useDragAndDrop(
   margin-bottom: 2em;
 }
 
-.item:nth-child(1) {
-  width: 600px;
-}
-
-.item:nth-child(6) {
+.large {
   width: 600px;
 }
 
