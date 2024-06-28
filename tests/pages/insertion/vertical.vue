@@ -7,6 +7,7 @@ const [parent, values] = useDragAndDrop(
   {
     plugins: [insertion()],
     dropZoneClass: "hover",
+    draggingClass: "hide",
   }
 );
 
@@ -33,6 +34,9 @@ const [parent, values] = useDragAndDrop(
 </template>
 
 <style scoped>
+.hide {
+  display: none;
+}
 .list {
   list-style-type: none;
   width: 1400px;

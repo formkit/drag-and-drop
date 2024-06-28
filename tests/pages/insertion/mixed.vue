@@ -3,10 +3,11 @@ import { useDragAndDrop } from "../../../src/vue/index";
 import { insertion } from "../../../src/index";
 
 const [parent, values] = useDragAndDrop(
-  ["Apple", "Banana", "Strawberry", "Pineapple", "Watermelon", "Grape"],
+  ["Banana", "Strawberry", "Pineapple", "Apple", "Grape"],
   {
     plugins: [insertion()],
     dropZoneClass: "hover",
+    dragPlaceholderClass: "placeholder",
   }
 );
 
@@ -25,7 +26,7 @@ const [parent, values] = useDragAndDrop(
         :key="value"
         :class="{
           item: true,
-          large: value === 'Apple' || value === 'Grape',
+          large: value === 'Apple',
         }"
       >
         <div>
@@ -43,6 +44,9 @@ const [parent, values] = useDragAndDrop(
 </template>
 
 <style scoped>
+.placeholder {
+  opacity: 0.1 !important;
+}
 .vertical {
   display: flex;
   flex-direction: column;

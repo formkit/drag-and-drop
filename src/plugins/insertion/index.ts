@@ -1,13 +1,9 @@
 import type {
   NodeDragEventData,
   ParentConfig,
-  DragState,
   NodeTouchEventData,
   NodeRecord,
-  TouchOverNodeEvent,
   ParentEventData,
-  TouchOverParentEvent,
-  ParentRecord,
   ParentData,
   Node,
   NodeData,
@@ -19,13 +15,11 @@ import {
   handleEnd as originalHandleEnd,
   parentValues,
   setParentValues,
-  nodeEventData,
   handleScroll,
   nodes,
-  setupNodeRemap,
-  remapFinished,
+  dragstart,
 } from "../../index";
-import { eventCoordinates, removeClass, addClass, throttle } from "../../utils";
+import { eventCoordinates, removeClass } from "../../utils";
 
 export const insertionState = {
   draggedOverNodes: Array<NodeRecord<any>>(),
@@ -48,6 +42,9 @@ export function insertion<T>(
 
     return {
       setup() {
+        insertionParentConfig.handleDragstart =
+          insertionConfig.handleDragstart || handleDragstart;
+
         insertionParentConfig.handleDragoverNode =
           insertionConfig.handleDragoverNode || handleDragoverNode;
 
@@ -89,14 +86,31 @@ export function insertion<T>(
 
       remapFinished() {
         defineRanges(parentData.enabledNodes);
-        console.log("enabled nodes", parentData.enabledNodes);
       },
     };
   };
 }
 
+function handleDragstart<T>(data: NodeDragEventData<T>) {
+  if (!(data.e instanceof DragEvent)) return;
+
+  dragstart({
+    e: data.e,
+    targetData: data.targetData,
+  });
+
+  setTimeout(() => {
+    for (const node of data.targetData.parent.data.enabledNodes) {
+      setPosition(node.data, node.el);
+    }
+    defineRanges(data.targetData.parent.data.enabledNodes);
+  });
+}
+
 function ascendingVertical<T>(node: NodeRecord<T>, nextNode?: NodeRecord<T>) {
   const center = node.data.top + node.data.height / 2;
+
+  console.log("next noide center", node.el.id, nextNode);
 
   if (!nextNode) {
     return {
@@ -115,7 +129,11 @@ function ascendingVertical<T>(node: NodeRecord<T>, nextNode?: NodeRecord<T>) {
   };
 }
 
-function ascendingHorizontal<T>(node: NodeRecord<T>, nextNode?: NodeRecord<T>) {
+function ascendingHorizontal<T>(
+  node: NodeRecord<T>,
+  nextNode?: NodeRecord<T>,
+  lastInRow = false
+) {
   const center = node.data.left + node.data.width / 2;
 
   if (!nextNode) {
@@ -126,13 +144,21 @@ function ascendingHorizontal<T>(node: NodeRecord<T>, nextNode?: NodeRecord<T>) {
     };
   }
 
-  const nextNodeCenter = nextNode.data.left + nextNode.data.width / 2;
+  if (lastInRow) {
+    return {
+      x: [center, center + node.data.width],
+      y: [node.data.top, node.data.bottom],
+      vertical: false,
+    };
+  } else {
+    const nextNodeCenter = nextNode.data.left + nextNode.data.width / 2;
 
-  return {
-    x: [center, center + Math.abs(center - nextNodeCenter) / 2],
-    y: [node.data.top, node.data.bottom],
-    vertical: false,
-  };
+    return {
+      x: [center, center + Math.abs(center - nextNodeCenter) / 2],
+      y: [node.data.top, node.data.bottom],
+      vertical: false,
+    };
+  }
 }
 
 function descendingVertical<T>(node: NodeRecord<T>, prevNode?: NodeRecord<T>) {
@@ -180,45 +206,151 @@ function descendingHorizontal<T>(
   };
 }
 
-function getLayoutDirection<T>(el1: NodeRecord<T>, el2: NodeRecord<T>) {
-  const isAboveOrBelow =
-    el1.data.top > el2.data.bottom || el1.data.bottom < el2.data.top;
+function getLayoutDirection<T>(
+  node: NodeRecord<T>,
+  nodePrevious?: NodeRecord<T>,
+  nodeAfter?: NodeRecord<T>
+): ["row" | "column"] {
+  let aboveOrBelowPrevious;
+  if (nodePrevious) {
+    aboveOrBelowPrevious =
+      node.data.top > nodePrevious.data.bottom ||
+      node.data.bottom < nodePrevious.data.top;
+  }
 
-  return isAboveOrBelow ? "column" : "row";
+  let aboveOrBelowAfter;
+
+  if (nodeAfter) {
+    aboveOrBelowAfter =
+      node.data.top > nodeAfter.data.bottom ||
+      node.data.bottom < nodeAfter.data.top;
+  }
+
+  if (aboveOrBelowAfter && !aboveOrBelowPrevious) {
+    return "row";
+  }
+
+  if (aboveOrBelowPrevious && !aboveOrBelowAfter) {
+    return ["column"];
+  }
+  return "row";
+  // if (el1.el.id === 'Watermelon' && el2.el.id === 'Grape') {
+
+  // }
+  // const isAboveOrBelow =
+  //   el1.data.top > el2.data.bottom || el1.data.bottom < el2.data.top;
+
+  // return isAboveOrBelow ? "column" : "row";
 }
 
 function defineRanges<T>(enabledNodes: Array<NodeRecord<T>>) {
   enabledNodes.forEach((node, index) => {
     node.data.range = {};
 
+    let aboveOrBelowPrevious = false;
+
+    let aboveOrBelowAfter = false;
+
+    let nextNode = enabledNodes[index + 1];
+
+    if (enabledNodes[index - 1]) {
+      aboveOrBelowPrevious =
+        node.data.top > enabledNodes[index - 1].data.bottom ||
+        node.data.bottom < enabledNodes[index - 1].data.top;
+    }
+
+    if (enabledNodes[index + 1]) {
+      aboveOrBelowAfter =
+        node.data.top > enabledNodes[index + 1].data.bottom ||
+        node.data.bottom < enabledNodes[index + 1].data.top;
+    }
+
+    if (aboveOrBelowAfter && !aboveOrBelowPrevious) {
+      node.data.range.ascending = ascendingHorizontal(
+        node,
+        enabledNodes[index + 1],
+        true
+      );
+      node.data.range.descending = descendingHorizontal(
+        node,
+        enabledNodes[index - 1]
+      );
+    } else if (!aboveOrBelowPrevious && !aboveOrBelowAfter) {
+      node.data.range.ascending = ascendingHorizontal(
+        node,
+        enabledNodes[index + 1]
+      );
+      node.data.range.descending = descendingHorizontal(
+        node,
+        enabledNodes[index - 1]
+      );
+    } else if (aboveOrBelowPrevious && !nextNode) {
+      node.data.range.ascending = ascendingHorizontal(node);
+    } else if (aboveOrBelowPrevious && !aboveOrBelowAfter) {
+      node.data.range.ascending = ascendingVertical(node);
+    } else if (aboveOrBelowAfter && aboveOrBelowPrevious) {
+      node.data.range.ascending = ascendingVertical(
+        node,
+        enabledNodes[index + 1]
+      );
+    }
+
+    // if (index !== 0) {
+    //   const aboveOrBelowPrevious =
+    //     node.data.top > enabledNodes[index - 1].data.bottom ||
+    //     node.data.bottom < enabledNodes[index - 1].data.top;
+
+    //   const aboveOrBelowAfter =
+
+    //   console.log("above or below previous", aboveOrBelowPrevious);
+
+    // }
+
+    return;
+
     if (index !== enabledNodes.length - 1) {
-      const vertical =
-        getLayoutDirection(node, enabledNodes[index + 1]) === "column";
-      node.data.range.ascending = vertical
-        ? ascendingVertical(node, enabledNodes[index + 1])
-        : ascendingHorizontal(node, enabledNodes[index + 1]);
+      console.log("getting here", node.el.id, enabledNodes[index + 1].el.id);
+      // const vertical =
+      // getLayoutDirection(
+      //   node,
+      //   enabledNodes[index - 1],
+      //   enabledNodes[index + 1]
+      // ) === "column";
+      // node.data.range.ascending = vertical
+      //   ? ascendingVertical(node, enabledNodes[index - 1])
+      //   : ascendingHorizontal(node, enabledNodes[index + 1]);
     } else {
-      const vertical =
-        getLayoutDirection(node, enabledNodes[index - 1]) === "column";
-      node.data.range.ascending = vertical
-        ? ascendingVertical(node)
-        : ascendingHorizontal(node);
+      // const vertical =
+      // getLayoutDirection(
+      //   node,
+      //   enabledNodes[index - 1],
+      //   enabledNodes[index + 1]
+      // ) === "column";
+      // node.data.range.ascending = vertical
+      //   ? ascendingVertical(node)
+      //   : ascendingHorizontal(node);
     }
 
     if (index === 0) {
-      const vertical =
-        getLayoutDirection(node, enabledNodes[index + 1]) === "column";
-
-      node.data.range.descending = vertical
-        ? descendingVertical(node)
-        : descendingHorizontal(node);
+      // const vertical =
+      // getLayoutDirection(
+      //   node,
+      //   enabledNodes[index - 1],
+      //   enabledNodes[index + 1]
+      // ) === "column";
+      // node.data.range.descending = vertical
+      //   ? descendingVertical(node)
+      //   : descendingHorizontal(node);
     } else {
-      const vertical =
-        getLayoutDirection(node, enabledNodes[index - 1]) === "column";
-
-      node.data.range.descending = vertical
-        ? descendingVertical(node, enabledNodes[index - 1])
-        : descendingHorizontal(node, enabledNodes[index - 1]);
+      // const vertical =
+      // getLayoutDirection(
+      //   node,
+      //   enabledNodes[index - 1],
+      //   enabledNodes[index + 1]
+      // ) === "column";
+      // node.data.range.descending = vertical
+      //   ? descendingVertical(node, enabledNodes[index - 1])
+      //   : descendingHorizontal(node, enabledNodes[index - 1]);
     }
   });
 }
@@ -273,8 +405,6 @@ export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
   if (!state) return;
 
   if (data.targetData.parent.el !== state.lastParent.el) return;
-
-  data.e.stopPropagation();
 
   data.e.preventDefault();
 
@@ -374,9 +504,13 @@ function positionInsertionPoint<T>(
   ascending: boolean,
   node: NodeRecord<T>
 ) {
+  if (!state) return;
+
   const div = document.getElementById("insertion-point");
 
   if (!div) return;
+
+  if (node.el === state.draggedNodes[0].el) return;
 
   if (position.vertical) {
     const topPosition =
@@ -442,8 +576,6 @@ function handleEnd<T>(data: NodeDragEventData<T> | NodeTouchEventData<T>) {
 
   let index = insertionState.draggedOverNodes[0].data.index;
 
-  console.log("original index", index);
-
   if (
     insertionState.targetIndex > state.draggedNodes[0].data.index &&
     !insertionState.ascending
@@ -455,8 +587,6 @@ function handleEnd<T>(data: NodeDragEventData<T> | NodeTouchEventData<T>) {
   ) {
     index++;
   }
-
-  console.log("new indedx", index);
 
   newParentValues.splice(index, 0, ...draggedValues);
 
@@ -479,6 +609,14 @@ function handleEnd<T>(data: NodeDragEventData<T> | NodeTouchEventData<T>) {
   if (!div) return;
 
   div.style.display = "none";
+
+  const dragPlaceholderClass =
+    data.targetData.parent.data.config.dragPlaceholderClass;
+
+  removeClass(
+    state.draggedNodes.map((node) => node.el),
+    dragPlaceholderClass
+  );
 
   originalHandleEnd(data);
 }

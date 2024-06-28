@@ -7,6 +7,7 @@ const [parent, values] = useDragAndDrop(
   {
     plugins: [insertion()],
     dropZoneClass: "hover",
+    draggingClass: "opacity",
   }
 );
 

@@ -482,12 +482,15 @@ export function handleDragstart<T>(data: NodeEventData<T>) {
 export function dragstartClasses(
   el: HTMLElement | Node | Element,
   draggingClass: string | undefined,
-  dropZoneClass: string | undefined
+  dropZoneClass: string | undefined,
+  dragPlaceholderClass: string | undefined
 ) {
   addClass([el], draggingClass);
 
   setTimeout(() => {
     removeClass([el], draggingClass);
+
+    addClass([el], dragPlaceholderClass);
 
     addClass([el], dropZoneClass);
   });
@@ -573,7 +576,8 @@ export function dragstart<T>(data: NodeDragEventData<T>) {
   dragstartClasses(
     dragState.draggedNode.el,
     config.draggingClass,
-    config.dropZoneClass
+    config.dropZoneClass,
+    config.dragPlaceholderClass
   );
 }
 
