@@ -43,6 +43,7 @@ export { animations } from "./plugins/animations";
 export { selections } from "./plugins/multiDrag/plugins/selections";
 export { swap } from "./plugins/swap";
 export { place } from "./plugins/place";
+export { insertion } from "./plugins/insertion";
 export * from "./utils";
 
 const scrollConfig: {
@@ -454,6 +455,10 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
   parents.set(parent, { ...parentData, enabledNodes: enabledNodeRecords });
 
   config.remapFinished(parentData);
+
+  parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
+    plugin(parent)?.remapFinished?.();
+  });
 }
 
 export function remapFinished() {
@@ -476,12 +481,15 @@ export function handleDragstart<T>(data: NodeEventData<T>) {
 export function dragstartClasses(
   el: HTMLElement | Node | Element,
   draggingClass: string | undefined,
-  dropZoneClass: string | undefined
+  dropZoneClass: string | undefined,
+  dragPlaceholderClass: string | undefined
 ) {
   addClass([el], draggingClass);
 
   setTimeout(() => {
     removeClass([el], draggingClass);
+
+    addClass([el], dragPlaceholderClass);
 
     addClass([el], dropZoneClass);
   });
@@ -507,7 +515,7 @@ export function initDrag<T>(eventData: NodeDragEventData<T>): DragState<T> {
   return dragState;
 }
 
-function validateDragHandle<T>(data: NodeEventData<T>): boolean {
+export function validateDragHandle<T>(data: NodeEventData<T>): boolean {
   if (!(data.e instanceof DragEvent) && !(data.e instanceof TouchEvent))
     return false;
 
@@ -567,7 +575,8 @@ export function dragstart<T>(data: NodeDragEventData<T>) {
   dragstartClasses(
     dragState.draggedNode.el,
     config.draggingClass,
-    config.dropZoneClass
+    config.dropZoneClass,
+    config.dragPlaceholderClass
   );
 }
 
@@ -988,7 +997,7 @@ function touchmove<T>(data: NodeTouchEventData<T>, touchState: TouchState<T>) {
   }
 }
 
-function handleScroll() {
+export function handleScroll() {
   for (const direction of Object.keys(scrollConfig)) {
     const [x, y] = scrollConfig[direction];
 
