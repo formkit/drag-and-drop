@@ -204,6 +204,8 @@ export interface ParentData<T> {
    * The abort controllers for the parent.
    */
   abortControllers: Record<string, AbortController>;
+
+  [key: string]: any;
 }
 
 /**
@@ -227,6 +229,8 @@ export interface NodeData<T> {
    * The abort controllers for the node.
    */
   abortControllers: Record<string, AbortController>;
+
+  [key: string]: any;
 }
 
 /**
@@ -414,6 +418,10 @@ export interface DNDPluginData {
    * Called when the parent is dragged over.
    */
   tearDownNodeRemap?: TearDownNode;
+  /**
+   * Called when all nodes have finished remapping for a given parent
+   */
+  remapFinished?: RemapFinished;
 }
 
 /**
@@ -433,6 +441,8 @@ export interface DragAndDropData {
 export type SetupNode = <T>(data: SetupNodeData<T>) => void;
 
 export type TearDownNode = <T>(data: TearDownNodeData<T>) => void;
+
+export type RemapFinished = <T>(data: ParentData<T>) => void;
 
 /**
  * The payload of when the setupNode function is called in a given plugin.
