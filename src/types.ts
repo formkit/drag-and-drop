@@ -421,7 +421,7 @@ export interface DNDPluginData {
   /**
    * Called when all nodes have finished remapping for a given parent
    */
-  remapFinished?: RemapFinished;
+  remapFinished?: () => void;
 }
 
 /**

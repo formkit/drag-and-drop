@@ -462,7 +462,6 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
 }
 
 export function remapFinished() {
-  console.log("REMAP FINISHED");
   if (state) {
     state.remapJustFinished = true;
 

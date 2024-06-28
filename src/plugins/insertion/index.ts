@@ -23,6 +23,8 @@ import { eventCoordinates, removeClass } from "../../utils";
 
 export const insertionState = {
   draggedOverNodes: Array<NodeRecord<any>>(),
+  targetIndex: 0,
+  ascending: false,
 };
 
 interface InsertionConfig<T> extends ParentConfig<T> {}
@@ -110,8 +112,6 @@ function handleDragstart<T>(data: NodeDragEventData<T>) {
 function ascendingVertical<T>(node: NodeRecord<T>, nextNode?: NodeRecord<T>) {
   const center = node.data.top + node.data.height / 2;
 
-  console.log("next noide center", node.el.id, nextNode);
-
   if (!nextNode) {
     return {
       y: [center, center + node.data.height],
@@ -161,26 +161,26 @@ function ascendingHorizontal<T>(
   }
 }
 
-function descendingVertical<T>(node: NodeRecord<T>, prevNode?: NodeRecord<T>) {
-  const center = node.data.top + node.data.height / 2;
+// function descendingVertical<T>(node: NodeRecord<T>, prevNode?: NodeRecord<T>) {
+//   const center = node.data.top + node.data.height / 2;
 
-  if (!prevNode) {
-    return {
-      y: [center - node.data.height, center],
-      x: [node.data.left, node.data.right],
-      vertical: true,
-    };
-  }
+//   if (!prevNode) {
+//     return {
+//       y: [center - node.data.height, center],
+//       x: [node.data.left, node.data.right],
+//       vertical: true,
+//     };
+//   }
 
-  return {
-    y: [
-      prevNode.data.bottom + Math.abs(prevNode.data.bottom - node.data.top) / 2,
-      center,
-    ],
-    x: [node.data.left, node.data.right],
-    vertical: true,
-  };
-}
+//   return {
+//     y: [
+//       prevNode.data.bottom + Math.abs(prevNode.data.bottom - node.data.top) / 2,
+//       center,
+//     ],
+//     x: [node.data.left, node.data.right],
+//     vertical: true,
+//   };
+// }
 
 function descendingHorizontal<T>(
   node: NodeRecord<T>,
@@ -204,43 +204,6 @@ function descendingHorizontal<T>(
     y: [node.data.top, node.data.bottom],
     vertical: false,
   };
-}
-
-function getLayoutDirection<T>(
-  node: NodeRecord<T>,
-  nodePrevious?: NodeRecord<T>,
-  nodeAfter?: NodeRecord<T>
-): ["row" | "column"] {
-  let aboveOrBelowPrevious;
-  if (nodePrevious) {
-    aboveOrBelowPrevious =
-      node.data.top > nodePrevious.data.bottom ||
-      node.data.bottom < nodePrevious.data.top;
-  }
-
-  let aboveOrBelowAfter;
-
-  if (nodeAfter) {
-    aboveOrBelowAfter =
-      node.data.top > nodeAfter.data.bottom ||
-      node.data.bottom < nodeAfter.data.top;
-  }
-
-  if (aboveOrBelowAfter && !aboveOrBelowPrevious) {
-    return "row";
-  }
-
-  if (aboveOrBelowPrevious && !aboveOrBelowAfter) {
-    return ["column"];
-  }
-  return "row";
-  // if (el1.el.id === 'Watermelon' && el2.el.id === 'Grape') {
-
-  // }
-  // const isAboveOrBelow =
-  //   el1.data.top > el2.data.bottom || el1.data.bottom < el2.data.top;
-
-  // return isAboveOrBelow ? "column" : "row";
 }
 
 function defineRanges<T>(enabledNodes: Array<NodeRecord<T>>) {
@@ -293,64 +256,6 @@ function defineRanges<T>(enabledNodes: Array<NodeRecord<T>>) {
         node,
         enabledNodes[index + 1]
       );
-    }
-
-    // if (index !== 0) {
-    //   const aboveOrBelowPrevious =
-    //     node.data.top > enabledNodes[index - 1].data.bottom ||
-    //     node.data.bottom < enabledNodes[index - 1].data.top;
-
-    //   const aboveOrBelowAfter =
-
-    //   console.log("above or below previous", aboveOrBelowPrevious);
-
-    // }
-
-    return;
-
-    if (index !== enabledNodes.length - 1) {
-      console.log("getting here", node.el.id, enabledNodes[index + 1].el.id);
-      // const vertical =
-      // getLayoutDirection(
-      //   node,
-      //   enabledNodes[index - 1],
-      //   enabledNodes[index + 1]
-      // ) === "column";
-      // node.data.range.ascending = vertical
-      //   ? ascendingVertical(node, enabledNodes[index - 1])
-      //   : ascendingHorizontal(node, enabledNodes[index + 1]);
-    } else {
-      // const vertical =
-      // getLayoutDirection(
-      //   node,
-      //   enabledNodes[index - 1],
-      //   enabledNodes[index + 1]
-      // ) === "column";
-      // node.data.range.ascending = vertical
-      //   ? ascendingVertical(node)
-      //   : ascendingHorizontal(node);
-    }
-
-    if (index === 0) {
-      // const vertical =
-      // getLayoutDirection(
-      //   node,
-      //   enabledNodes[index - 1],
-      //   enabledNodes[index + 1]
-      // ) === "column";
-      // node.data.range.descending = vertical
-      //   ? descendingVertical(node)
-      //   : descendingHorizontal(node);
-    } else {
-      // const vertical =
-      // getLayoutDirection(
-      //   node,
-      //   enabledNodes[index - 1],
-      //   enabledNodes[index + 1]
-      // ) === "column";
-      // node.data.range.descending = vertical
-      //   ? descendingVertical(node, enabledNodes[index - 1])
-      //   : descendingHorizontal(node, enabledNodes[index - 1]);
     }
   });
 }
