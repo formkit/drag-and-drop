@@ -25,7 +25,7 @@ import {
   setupNodeRemap,
   remapFinished,
 } from "../../index";
-import { eventCoordinates, addEvents, throttle } from "../../utils";
+import { eventCoordinates, removeClass, addClass, throttle } from "../../utils";
 
 export const insertionState = {
   draggedOverNodes: Array<NodeRecord<any>>(),
@@ -54,6 +54,9 @@ export function insertion<T>(
         insertionParentConfig.handleDragoverParent =
           insertionConfig.handleDragoverParent || handleDragoverParent;
 
+        insertionParentConfig.handleEnd =
+          insertionConfig.handleEnd || handleEnd;
+
         parentData.config = insertionParentConfig;
 
         const observer = parentResizeObserver();
@@ -66,11 +69,9 @@ export function insertion<T>(
 
         div.id = "insertion-point";
 
-        div.style.height = "10px";
-
         div.style.position = "absolute";
 
-        div.style.backgroundColor = "red";
+        div.style.backgroundColor = "green";
 
         div.style.display = "none";
 
@@ -88,25 +89,20 @@ export function insertion<T>(
 
       remapFinished() {
         defineRanges(parentData.enabledNodes);
-        // setTimeout(() => {
-        //   defineRanges(data.enabledNodes);
-        // }, 2000);
+        console.log("enabled nodes", parentData.enabledNodes);
       },
     };
   };
 }
 
-function getAscendingRange<T>(
-  node: NodeRecord<T>,
-  nextNode?: NodeRecord<T>,
-  isVertical?: boolean
-) {
+function ascendingVertical<T>(node: NodeRecord<T>, nextNode?: NodeRecord<T>) {
   const center = node.data.top + node.data.height / 2;
 
   if (!nextNode) {
     return {
       y: [center, center + node.data.height],
       x: [node.data.left, node.data.right],
+      vertical: true,
     };
   }
 
@@ -115,20 +111,38 @@ function getAscendingRange<T>(
   return {
     y: [center, center + Math.abs(center - nextNodeCenter) / 2],
     x: [node.data.left, node.data.right],
+    vertical: true,
   };
 }
 
-function getDescendingRange<T>(
-  node: NodeRecord<T>,
-  prevNode?: NodeRecord<T>,
-  isVertical?: boolean
-) {
+function ascendingHorizontal<T>(node: NodeRecord<T>, nextNode?: NodeRecord<T>) {
+  const center = node.data.left + node.data.width / 2;
+
+  if (!nextNode) {
+    return {
+      x: [center, center + node.data.width],
+      y: [node.data.top, node.data.bottom],
+      vertical: false,
+    };
+  }
+
+  const nextNodeCenter = nextNode.data.left + nextNode.data.width / 2;
+
+  return {
+    x: [center, center + Math.abs(center - nextNodeCenter) / 2],
+    y: [node.data.top, node.data.bottom],
+    vertical: false,
+  };
+}
+
+function descendingVertical<T>(node: NodeRecord<T>, prevNode?: NodeRecord<T>) {
   const center = node.data.top + node.data.height / 2;
 
   if (!prevNode) {
     return {
       y: [center - node.data.height, center],
       x: [node.data.left, node.data.right],
+      vertical: true,
     };
   }
 
@@ -138,42 +152,88 @@ function getDescendingRange<T>(
       center,
     ],
     x: [node.data.left, node.data.right],
+    vertical: true,
   };
+}
+
+function descendingHorizontal<T>(
+  node: NodeRecord<T>,
+  prevNode?: NodeRecord<T>
+) {
+  const center = node.data.left + node.data.width / 2;
+
+  if (!prevNode) {
+    return {
+      x: [center - node.data.width, center],
+      y: [node.data.top, node.data.bottom],
+      vertical: false,
+    };
+  }
+
+  return {
+    x: [
+      prevNode.data.right + Math.abs(prevNode.data.right - node.data.left) / 2,
+      center,
+    ],
+    y: [node.data.top, node.data.bottom],
+    vertical: false,
+  };
+}
+
+function getLayoutDirection<T>(el1: NodeRecord<T>, el2: NodeRecord<T>) {
+  const isAboveOrBelow =
+    el1.data.top > el2.data.bottom || el1.data.bottom < el2.data.top;
+
+  return isAboveOrBelow ? "column" : "row";
 }
 
 function defineRanges<T>(enabledNodes: Array<NodeRecord<T>>) {
   enabledNodes.forEach((node, index) => {
     node.data.range = {};
+
     if (index !== enabledNodes.length - 1) {
-      node.data.range.ascending = getAscendingRange(
-        node,
-        enabledNodes[index + 1],
-        node.data.top < enabledNodes[index + 1].data.bottom
-      );
+      console.log(getLayoutDirection(node, enabledNodes[index + 1]));
+      const vertical =
+        getLayoutDirection(node, enabledNodes[index + 1]) === "column";
+      node.data.range.ascending = vertical
+        ? ascendingVertical(node, enabledNodes[index + 1])
+        : ascendingHorizontal(node, enabledNodes[index + 1]);
     } else {
-      node.data.range.ascending = getAscendingRange(node, undefined);
+      const vertical =
+        getLayoutDirection(node, enabledNodes[index - 1]) === "column";
+      node.data.range.ascending = vertical
+        ? ascendingVertical(node)
+        : ascendingHorizontal(node);
     }
+
     if (index === 0) {
-      node.data.range.descending = getDescendingRange(node, undefined);
+      const vertical =
+        getLayoutDirection(node, enabledNodes[index + 1]) === "column";
+
+      node.data.range.descending = vertical
+        ? descendingVertical(node)
+        : descendingHorizontal(node);
     } else {
-      node.data.range.descending = getDescendingRange(
-        node,
-        enabledNodes[index - 1],
-        node.data.top > enabledNodes[index - 1].data.bottom
-      );
+      const vertical =
+        getLayoutDirection(node, enabledNodes[index - 1]) === "column";
+
+      node.data.range.descending = vertical
+        ? descendingVertical(node, enabledNodes[index - 1])
+        : descendingHorizontal(node, enabledNodes[index - 1]);
     }
   });
-  console.log(enabledNodes);
 }
 
 function setPosition<T>(data: NodeData<T> | ParentData<T>, el: HTMLElement) {
-  const { top, bottom, left, right, height } = el.getBoundingClientRect();
+  const { top, bottom, left, right, height, width } =
+    el.getBoundingClientRect();
 
   data.top = top;
   data.bottom = bottom;
   data.left = left;
   data.right = right;
   data.height = height;
+  data.width = width;
 }
 
 function nodeResizeObserver() {
@@ -213,12 +273,12 @@ function parentResizeObserver() {
 export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
   if (!state) return;
 
+  if (data.targetData.parent.el !== state.lastParent.el) return;
+
   data.e.stopPropagation();
 
   data.e.preventDefault();
 
-  return;
-
   const { x, y } = eventCoordinates(data.e as DragEvent);
 
   state.coordinates.y = y;
@@ -227,36 +287,24 @@ export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
 
   handleScroll();
 
-  const closestChild = findClosest(
-    state.coordinates.x,
-    state.coordinates.y,
-    [data.targetData.node],
-    true
+  const foundRange = findClosest([data.targetData.node]);
+
+  if (!foundRange) return;
+
+  const position = foundRange[0].data.range[foundRange[1]];
+
+  positionInsertionPoint(
+    position,
+    foundRange[1] === "ascending",
+    foundRange[0]
   );
 
-  console.log("in node", closestChild);
+  data.e.stopPropagation();
 
-  // const closestChild = findClosest(
-  //   state.coordinates.x,
-  //   state.coordinates.y,
-  //   data.targetData.parent.data.enabledNodes
-  // );
+  data.e.preventDefault();
 }
 
-export function handleDragoverParent<T>(data: ParentEventData<T>) {
-  console.log("dragover parent");
-  if (!state) return;
-
-  const { x, y } = eventCoordinates(data.e as DragEvent);
-
-  state.coordinates.y = y;
-
-  state.coordinates.x = x;
-
-  handleScroll();
-
-  const enabledNodes = data.targetData.parent.data.enabledNodes;
-
+function findClosest<T>(enabledNodes: NodeRecord<T>[]) {
   let foundRange: [NodeRecord<T>, string] | null = null;
 
   for (let x = 0; x < enabledNodes.length; x++) {
@@ -271,7 +319,7 @@ export function handleDragoverParent<T>(data: ParentEventData<T>) {
       ) {
         foundRange = [enabledNodes[x], "ascending"];
 
-        break;
+        return foundRange;
       }
     }
 
@@ -284,166 +332,150 @@ export function handleDragoverParent<T>(data: ParentEventData<T>) {
       ) {
         foundRange = [enabledNodes[x], "descending"];
 
-        break;
+        return foundRange;
       }
     }
   }
+}
+
+export function handleDragoverParent<T>(data: ParentEventData<T>) {
+  if (!state) return;
+
+  if (data.targetData.parent.el !== state.lastParent.el) return;
+
+  const { x, y } = eventCoordinates(data.e as DragEvent);
+
+  state.coordinates.y = y;
+
+  state.coordinates.x = x;
+
+  handleScroll();
+
+  const enabledNodes = data.targetData.parent.data.enabledNodes;
+
+  const foundRange = findClosest(enabledNodes);
 
   if (!foundRange) return;
 
-  console.log("found range", foundRange[0].data.range);
+  const position = foundRange[0].data.range[foundRange[1]];
+
+  positionInsertionPoint(
+    position,
+    foundRange[1] === "ascending",
+    foundRange[0]
+  );
+
+  data.e.stopPropagation();
+
+  data.e.preventDefault();
+}
+
+function positionInsertionPoint<T>(
+  position: { x: number[]; y: number[]; vertical: boolean },
+  ascending: boolean,
+  node: NodeRecord<T>
+) {
+  const div = document.getElementById("insertion-point");
+
+  if (!div) return;
+
+  if (position.vertical) {
+    const topPosition =
+      position.y[ascending ? 1 : 0] - div.getBoundingClientRect().height / 2;
+
+    div.style.top = `${topPosition}px`;
+
+    const leftCoordinate = position.x[0];
+
+    const rightCoordinate = position.x[1];
+
+    div.style.left = `${leftCoordinate}px`;
+
+    div.style.right = `${rightCoordinate}px`;
+
+    div.style.height = "10px";
+
+    div.style.width = rightCoordinate - leftCoordinate + "px";
+  } else {
+    const leftPosition =
+      position.x[ascending ? 1 : 0] - div.getBoundingClientRect().width / 2;
+
+    div.style.left = `${leftPosition}px`;
+
+    const topCoordinate = position.y[0];
+
+    const bottomCoordinate = position.y[1];
+
+    div.style.top = `${topCoordinate}px`;
+
+    div.style.bottom = `${bottomCoordinate}px`;
+
+    div.style.width = "10px";
+
+    div.style.height = bottomCoordinate - topCoordinate + "px";
+  }
+
+  insertionState.draggedOverNodes = [node];
+
+  insertionState.targetIndex = node.data.index;
+
+  insertionState.ascending = ascending;
+
+  div.style.display = "block";
+}
+
+function handleEnd<T>(data: NodeDragEventData<T> | NodeTouchEventData<T>) {
+  if (!state) return;
+
+  if (state.transferred || state.lastParent.el !== state.initialParent.el)
+    return;
+
+  const draggedParentValues = parentValues(
+    state.initialParent.el,
+    state.initialParent.data
+  );
+
+  const draggedValues = state.draggedNodes.map((node) => node.data.value);
+
+  const newParentValues = [
+    ...draggedParentValues.filter((x) => !draggedValues.includes(x)),
+  ];
+
+  let index = insertionState.draggedOverNodes[0].data.index;
+
+  if (
+    insertionState.targetIndex > state.draggedNodes[0].data.index &&
+    !insertionState.ascending
+  ) {
+    index--;
+  } else if (
+    insertionState.targetIndex < state.draggedNodes[0].data.index &&
+    insertionState.ascending
+  ) {
+    index--;
+  }
+
+  newParentValues.splice(index, 0, ...draggedValues);
+
+  setParentValues(data.targetData.parent.el, data.targetData.parent.data, [
+    ...newParentValues,
+  ]);
+
+  const dropZoneClass =
+    "touchedNode" in state
+      ? data.targetData.parent.data.config.touchDropZoneClass
+      : data.targetData.parent.data.config.dropZoneClass;
+
+  removeClass(
+    insertionState.draggedOverNodes.map((node) => node.el),
+    dropZoneClass
+  );
 
   const div = document.getElementById("insertion-point");
 
   if (!div) return;
 
-  div.style.display = "block";
+  div.style.display = "none";
 
-  const position = foundRange[0].data.range[foundRange[1]];
-
-  console.log("position[0]", position.y[0]);
-  console.log("position[1]", position.y[1]);
-
-  const topPosition =
-    position.y[foundRange[1] === "ascending" ? 1 : 0] -
-    div.getBoundingClientRect().height / 2;
-
-  console.log("top position", topPosition);
-
-  div.style.top = `${topPosition}px`;
-
-  const leftCoordinate = position.x[0];
-
-  const rightCoordinate = position.x[1];
-
-  div.style.left = `${leftCoordinate}px`;
-
-  div.style.right = `${rightCoordinate}px`;
-
-  // console.log("parent closest", closestChild);
-
-  // if (!closestChild) return;
-
-  data.e.stopPropagation();
-
-  data.e.preventDefault();
-
-  // transfer(data, state);
+  originalHandleEnd(data);
 }
-
-// function findClosest(cursorX: number, cursorY: number, nodes: NodeRecord<T>[]) {
-//   let closestNode = null;
-//   let minDistance = 100;
-//   let closestDistance = Infinity;
-
-//   nodes.forEach((node) => {
-//     const yDistances = [
-//       { side: "top", distance: Math.abs(cursorY - node.data.top) },
-//       { side: "bottom", distance: Math.abs(cursorY - node.data.bottom) },
-//     ];
-
-//     const xDistances = [
-//       { side: "left", distance: Math.abs(cursorX - node.data.left) },
-//       { side: "right", distance: Math.abs(cursorX - node.data.right) },
-//     ];
-
-//     const closestY = yDistances.reduce((prev, current) =>
-//       prev.distance < current.distance ? prev : current
-//     );
-
-//     const closestX = xDistances.reduce((prev, current) =>
-//       prev.distance < current.distance ? prev : current
-//     );
-
-//     const closestSide =
-//       closestY.distance < closestX.distance ? closestY : closestX;
-
-//     if (
-//       (closestSide.distance < closestDistance &&
-//         ["left", "right"].includes(closestSide.side) &&
-//         closestY.distance < minDistance) ||
-//       (["top", "bottom"].includes(closestSide.side) &&
-//         closestX.distance < minDistance)
-//     ) {
-//       console.log("getting here");
-//       closestDistance = closestSide.distance;
-//       closestNode = { ...node, closestSide: closestSide.side };
-//     }
-//   });
-
-//   return closestNode;
-// }
-
-/**
- * Returns the node
- *
- * @param parent
- * @returns Node | HTMLElement | null
- */
-function placeIndicator<T>(
-  cursorX: number,
-  cursorY: number,
-  nodes: NodeRecord<T>[]
-) {
-  const closestNode = findClosestNode(cursorX, cursorY, nodes);
-
-  if (!closestNode) return;
-
-  console.log(closestNode.el.id);
-}
-
-// function findClosestNode<T>(
-//   cursorX: number,
-//   cursorY: number,
-//   nodes: NodeRecord<T>[]
-// ) {
-//   let closestNode = null;
-//   let closestDistanceY = Infinity;
-//   let closestDistanceX = Infinity;
-
-//   nodes.forEach((node, index) => {
-//     const yDistances = [
-//       { side: "top", distance: Math.abs(cursorY - node.data.top) },
-//       { side: "bottom", distance: Math.abs(cursorY - node.data.bottom) },
-//     ];
-
-//     const xDistances = [
-//       { side: "left", distance: Math.abs(cursorX - node.data.left) },
-//       { side: "right", distance: Math.abs(cursorX - node.data.right) },
-//     ];
-
-//     const closestY = yDistances.reduce((prev, current) =>
-//       prev.distance < current.distance ? prev : current
-//     );
-
-//     const closestX = xDistances.reduce((prev, current) =>
-//       prev.distance < current.distance ? prev : current
-//     );
-
-//     const closestSide =
-//       closestY.distance < closestX.distance ? closestY : closestX;
-
-//     // console.log("closest side", closestSide, closestY, closestX);
-
-//     if (
-//       (["left", "right"].includes(closestSide.side) &&
-//         closestSide.distance <= closestDistanceX &&
-//         closestY.distance <= closestDistanceY) ||
-//       (["top", "bottom"].includes(closestSide.side) &&
-//         closestSide.distance <= closestDistanceY &&
-//         closestX.distance <= closestDistanceX)
-//     ) {
-//       closestDistanceY = closestY.distance;
-//       closestDistanceX = closestX.distance;
-//       closestNode = {
-//         ...node,
-//         index,
-//         closestSide: closestSide,
-//         closestY: closestY,
-//         closestX: closestX,
-//       };
-//     }
-//   });
-
-//   return closestNode;
-// }

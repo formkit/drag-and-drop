@@ -3,7 +3,7 @@ import { useDragAndDrop } from "../../../src/vue/index";
 import { insertion } from "../../../src/index";
 
 const [parent, values] = useDragAndDrop(
-  ["Apple", "Banana", "Starwberry", "Pineapple"],
+  ["Apple", "Banana", "Strawberry", "Pineapple", "Watermelon", "Grape"],
   {
     plugins: [insertion()],
     dropZoneClass: "hover",
@@ -19,9 +19,11 @@ const [parent, values] = useDragAndDrop(
   <h2>Insertion Plugin</h2>
   <div>
     <ul ref="parent" class="list">
-      <li v-for="value in values" :id="value" :key="value" class="item">
-        {{ value }}
-      </li>
+      <div v-for="value in values" :id="value" :key="value" class="item">
+        <div>
+          {{ value }}
+        </div>
+      </div>
     </ul>
     <div class="values">
       Values:
@@ -33,12 +35,17 @@ const [parent, values] = useDragAndDrop(
 </template>
 
 <style scoped>
+.vertical {
+  display: flex;
+  flex-direction: column;
+}
 .list {
   list-style-type: none;
-  width: 1400px;
+  width: 600px;
   padding: 0;
   margin: 0;
   display: flex;
+  flex-wrap: wrap;
   margin-bottom: 2em;
 }
 
@@ -54,6 +61,15 @@ const [parent, values] = useDragAndDrop(
   width: 100px;
   margin: 0 1em;
   height: 50px;
+  margin-bottom: 2em;
+}
+
+.item:nth-child(1) {
+  width: 600px;
+}
+
+.item:nth-child(6) {
+  width: 600px;
 }
 
 h1 {
