@@ -677,7 +677,6 @@ declare function eventCoordinates(data: DragEvent | TouchEvent): {
 };
 
 interface MultiDragConfig<T> {
-    [key: string]: any;
     /**
      * Class added when a node is being dragged.
      */
@@ -702,15 +701,16 @@ interface MultiDragConfig<T> {
     /**
      * Function that is called when dragend event occurrs event occurs.
      */
-    handleEnd: (data: NodeDragEventData<T> | NodeTouchEventData<T>) => void;
+    multiHandleEnd: (data: NodeDragEventData<T> | NodeTouchEventData<T>) => void;
     /**
      * Function that is called when dragstart occurs.
      */
-    handleDragstart: (data: NodeDragEventData<T>) => void;
+    multiHandleDragstart: (data: NodeDragEventData<T>) => void;
     /**
      * Function that is called when dragstart event occurs.
      */
-    handleTouchstart: (data: NodeTouchEventData<T>) => void;
+    multiHandleTouchstart: (data: NodeTouchEventData<T>) => void;
+    multiReapplyDragClasses: (data: NodeDragEventData<T> | NodeTouchEventData<T>) => void;
     /**
      * An array of functions to use for a given parent.
      */
