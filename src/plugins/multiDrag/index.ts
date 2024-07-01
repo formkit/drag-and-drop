@@ -173,7 +173,7 @@ function multiHandleDragstart<T>(data: NodeEventData<T>) {
   });
 }
 
-function dragstart<T>(data: NodeDragEventData<T>) {
+export function dragstart<T>(data: NodeDragEventData<T>) {
   const dragState = initDrag(data);
 
   multiDragState.isTouch = false;

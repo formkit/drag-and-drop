@@ -5,7 +5,6 @@ import type {
 } from "@formkit/drag-and-drop";
 
 export interface MultiDragConfig<T> {
-  [key: string]: any;
   /**
    * Class added when a node is being dragged.
    */
@@ -30,15 +29,18 @@ export interface MultiDragConfig<T> {
   /**
    * Function that is called when dragend event occurrs event occurs.
    */
-  handleDragend: NodeDragEventData<T> | NodeTouchEventData<T>;
+  multiHandleEnd: (data: NodeDragEventData<T> | NodeTouchEventData<T>) => void;
   /**
    * Function that is called when dragstart occurs.
    */
-  handleDragstart: NodeDragEventData<T>;
+  multiHandleDragstart: (data: NodeDragEventData<T>) => void;
   /**
    * Function that is called when dragstart event occurs.
    */
-  handleTouchstart: NodeTouchEventData<T>;
+  multiHandleTouchstart: (data: NodeTouchEventData<T>) => void;
+  multiReapplyDragClasses: (
+    data: NodeDragEventData<T> | NodeTouchEventData<T>
+  ) => void;
   /**
    * An array of functions to use for a given parent.
    */
