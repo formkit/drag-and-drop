@@ -135,6 +135,9 @@ importers:
 
   tests:
     dependencies:
+      '@formkit/drag-and-drop':
+        specifier: workspace:^
+        version: link:../dist
       nuxt:
         specifier: ^3.11.1
         version: 3.11.1(@types/node@18.19.28)(@unocss/reset@0.58.9)(eslint@8.57.0)(floating-vue@5.2.2)(typescript@5.4.3)(unocss@0.58.9)(vite@5.2.7)

@@ -38,7 +38,7 @@ import {
 } from "./utils";
 export { isBrowser };
 export * from "./types";
-export { multiDrag } from "./plugins/multiDrag";
+export * from "./plugins/multiDrag";
 export { animations } from "./plugins/animations";
 export { selections } from "./plugins/multiDrag/plugins/selections";
 export { swap } from "./plugins/swap";

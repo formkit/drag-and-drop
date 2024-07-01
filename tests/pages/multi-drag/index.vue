@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { useDragAndDrop } from "../../../src/vue/index";
-import { multiDrag, selections } from "../../../src/index";
-import { multiDragState, dragstart } from "../../../src/plugins/multiDrag";
+import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
+import {
+  multiDrag,
+  selections,
+  multiDragState,
+  multiHandleDragstart,
+} from "@formkit/drag-and-drop";
 
 const [parent, values] = useDragAndDrop(
   ["Apple", "Banana", "Orange", "Strawberry", "Pineapple", "Grapes"],
@@ -14,7 +18,7 @@ const [parent, values] = useDragAndDrop(
             (x) => x
           );
           multiDragState.selectedNodes.push(...otherEls);
-          dragstart(data);
+          multiHandleDragstart(data);
         },
       }),
     ],

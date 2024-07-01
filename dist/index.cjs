@@ -27,7 +27,7 @@ __export(src_exports, {
   dragAndDrop: () => dragAndDrop,
   dragStateProps: () => dragStateProps,
   dragValues: () => dragValues,
-  dragstart: () => dragstart2,
+  dragstart: () => dragstart,
   dragstartClasses: () => dragstartClasses,
   end: () => end,
   eventCoordinates: () => eventCoordinates,
@@ -39,6 +39,7 @@ __export(src_exports, {
   handleDragstart: () => handleDragstart,
   handleEnd: () => handleEnd,
   handleLongTouch: () => handleLongTouch,
+  handleSelections: () => handleSelections,
   handleTouchOverNode: () => handleTouchOverNode3,
   handleTouchOverParent: () => handleTouchOverParent3,
   handleTouchedNode: () => handleTouchedNode,
@@ -49,6 +50,13 @@ __export(src_exports, {
   isBrowser: () => isBrowser,
   isNode: () => isNode,
   multiDrag: () => multiDrag,
+  multiDragState: () => multiDragState,
+  multiDragstart: () => multiDragstart,
+  multiHandleDragstart: () => multiHandleDragstart,
+  multiHandleEnd: () => multiHandleEnd,
+  multiHandleTouchstart: () => multiHandleTouchstart,
+  multiReapplyDragClasses: () => multiReapplyDragClasses,
+  multiTouchstart: () => multiTouchstart,
   nodeEventData: () => nodeEventData,
   nodes: () => nodes,
   parentEventData: () => parentEventData,
@@ -62,12 +70,14 @@ __export(src_exports, {
   removeClass: () => removeClass,
   resetState: () => resetState,
   selections: () => selections,
+  selectionsEnd: () => selectionsEnd,
   setDragState: () => setDragState,
   setParentValues: () => setParentValues,
   setTouchState: () => setTouchState,
   setupNode: () => setupNode,
   setupNodeRemap: () => setupNodeRemap,
   sort: () => sort,
+  stackNodes: () => stackNodes,
   state: () => state,
   swap: () => swap,
   tearDown: () => tearDown,
@@ -350,12 +360,12 @@ function selectionsEnd(data, state2) {
 function multiHandleDragstart(data) {
   if (!(data.e instanceof DragEvent))
     return;
-  dragstart({
+  multiDragstart({
     e: data.e,
     targetData: data.targetData
   });
 }
-function dragstart(data) {
+function multiDragstart(data) {
   const dragState = initDrag(data);
   multiDragState.isTouch = false;
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
@@ -393,12 +403,12 @@ function dragstart(data) {
 function multiHandleTouchstart(data) {
   if (!(data.e instanceof TouchEvent))
     return;
-  touchstart({
+  multiTouchstart({
     e: data.e,
     targetData: data.targetData
   });
 }
-function touchstart(data) {
+function multiTouchstart(data) {
   const touchState = initTouch(data);
   multiDragState.isTouch = true;
   multiDragState.activeNode = data.targetData.node;
@@ -1414,7 +1424,7 @@ function remapFinished() {
 function handleDragstart(data) {
   if (!(data.e instanceof DragEvent))
     return;
-  dragstart2({
+  dragstart({
     e: data.e,
     targetData: data.targetData
   });
@@ -1464,14 +1474,14 @@ function validateDragHandle(data) {
   }
   return false;
 }
-function touchstart2(data) {
+function touchstart(data) {
   if (!validateDragHandle(data))
     return;
   const touchState = initTouch(data);
   handleTouchedNode(data, touchState);
   handleLongTouch(data, touchState);
 }
-function dragstart2(data) {
+function dragstart(data) {
   if (!validateDragHandle(data)) {
     data.e.preventDefault();
     return;
@@ -1578,7 +1588,7 @@ function end(_eventData, state2) {
 function handleTouchstart(eventData) {
   if (!(eventData.e instanceof TouchEvent))
     return;
-  touchstart2({
+  touchstart({
     e: eventData.e,
     targetData: eventData.targetData
   });
@@ -2020,6 +2030,7 @@ function parentEventData(callback) {
   handleDragstart,
   handleEnd,
   handleLongTouch,
+  handleSelections,
   handleTouchOverNode,
   handleTouchOverParent,
   handleTouchedNode,
@@ -2030,6 +2041,13 @@ function parentEventData(callback) {
   isBrowser,
   isNode,
   multiDrag,
+  multiDragState,
+  multiDragstart,
+  multiHandleDragstart,
+  multiHandleEnd,
+  multiHandleTouchstart,
+  multiReapplyDragClasses,
+  multiTouchstart,
   nodeEventData,
   nodes,
   parentEventData,
@@ -2043,12 +2061,14 @@ function parentEventData(callback) {
   removeClass,
   resetState,
   selections,
+  selectionsEnd,
   setDragState,
   setParentValues,
   setTouchState,
   setupNode,
   setupNodeRemap,
   sort,
+  stackNodes,
   state,
   swap,
   tearDown,

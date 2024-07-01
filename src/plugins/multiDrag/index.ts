@@ -103,7 +103,10 @@ export function multiDrag<T>(
   };
 }
 
-function multiReapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
+export function multiReapplyDragClasses<T>(
+  node: Node,
+  parentData: ParentData<T>
+) {
   if (!state) return;
 
   const dropZoneClass =
@@ -118,7 +121,7 @@ function multiReapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
   addClass([node], dropZoneClass, true);
 }
 
-function multiHandleEnd<T>(data: NodeEventData<T>) {
+export function multiHandleEnd<T>(data: NodeEventData<T>) {
   if (!state) return;
 
   const isTouch = state && "touchedNode" in state;
@@ -132,7 +135,7 @@ function multiHandleEnd<T>(data: NodeEventData<T>) {
   resetState();
 }
 
-function selectionsEnd<T>(
+export function selectionsEnd<T>(
   data: NodeEventData<T>,
   state: DragState<T> | TouchState<T>
 ) {
@@ -164,16 +167,16 @@ function selectionsEnd<T>(
   );
 }
 
-function multiHandleDragstart<T>(data: NodeEventData<T>) {
+export function multiHandleDragstart<T>(data: NodeEventData<T>) {
   if (!(data.e instanceof DragEvent)) return;
 
-  dragstart({
+  multiDragstart({
     e: data.e,
     targetData: data.targetData,
   });
 }
 
-export function dragstart<T>(data: NodeDragEventData<T>) {
+export function multiDragstart<T>(data: NodeDragEventData<T>) {
   const dragState = initDrag(data);
 
   multiDragState.isTouch = false;
@@ -227,16 +230,16 @@ export function dragstart<T>(data: NodeDragEventData<T>) {
   }
 }
 
-function multiHandleTouchstart<T>(data: NodeEventData<T>) {
+export function multiHandleTouchstart<T>(data: NodeEventData<T>) {
   if (!(data.e instanceof TouchEvent)) return;
 
-  touchstart({
+  multiTouchstart({
     e: data.e,
     targetData: data.targetData,
   });
 }
 
-function touchstart<T>(data: NodeTouchEventData<T>) {
+export function multiTouchstart<T>(data: NodeTouchEventData<T>) {
   const touchState = initTouch(data);
 
   multiDragState.isTouch = true;

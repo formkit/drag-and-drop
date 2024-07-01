@@ -267,12 +267,12 @@ function selectionsEnd(data, state2) {
 function multiHandleDragstart(data) {
   if (!(data.e instanceof DragEvent))
     return;
-  dragstart({
+  multiDragstart({
     e: data.e,
     targetData: data.targetData
   });
 }
-function dragstart(data) {
+function multiDragstart(data) {
   const dragState = initDrag(data);
   multiDragState.isTouch = false;
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
@@ -310,12 +310,12 @@ function dragstart(data) {
 function multiHandleTouchstart(data) {
   if (!(data.e instanceof TouchEvent))
     return;
-  touchstart({
+  multiTouchstart({
     e: data.e,
     targetData: data.targetData
   });
 }
-function touchstart(data) {
+function multiTouchstart(data) {
   const touchState = initTouch(data);
   multiDragState.isTouch = true;
   multiDragState.activeNode = data.targetData.node;
@@ -1331,7 +1331,7 @@ function remapFinished() {
 function handleDragstart(data) {
   if (!(data.e instanceof DragEvent))
     return;
-  dragstart2({
+  dragstart({
     e: data.e,
     targetData: data.targetData
   });
@@ -1381,14 +1381,14 @@ function validateDragHandle(data) {
   }
   return false;
 }
-function touchstart2(data) {
+function touchstart(data) {
   if (!validateDragHandle(data))
     return;
   const touchState = initTouch(data);
   handleTouchedNode(data, touchState);
   handleLongTouch(data, touchState);
 }
-function dragstart2(data) {
+function dragstart(data) {
   if (!validateDragHandle(data)) {
     data.e.preventDefault();
     return;
@@ -1495,7 +1495,7 @@ function end(_eventData, state2) {
 function handleTouchstart(eventData) {
   if (!(eventData.e instanceof TouchEvent))
     return;
-  touchstart2({
+  touchstart({
     e: eventData.e,
     targetData: eventData.targetData
   });
@@ -1924,7 +1924,7 @@ export {
   dragAndDrop,
   dragStateProps,
   dragValues,
-  dragstart2 as dragstart,
+  dragstart,
   dragstartClasses,
   end,
   eventCoordinates,
@@ -1936,6 +1936,7 @@ export {
   handleDragstart,
   handleEnd,
   handleLongTouch,
+  handleSelections,
   handleTouchOverNode3 as handleTouchOverNode,
   handleTouchOverParent3 as handleTouchOverParent,
   handleTouchedNode,
@@ -1946,6 +1947,13 @@ export {
   isBrowser,
   isNode,
   multiDrag,
+  multiDragState,
+  multiDragstart,
+  multiHandleDragstart,
+  multiHandleEnd,
+  multiHandleTouchstart,
+  multiReapplyDragClasses,
+  multiTouchstart,
   nodeEventData,
   nodes,
   parentEventData,
@@ -1959,12 +1967,14 @@ export {
   removeClass,
   resetState,
   selections,
+  selectionsEnd,
   setDragState,
   setParentValues,
   setTouchState,
   setupNode,
   setupNodeRemap,
   sort,
+  stackNodes,
   state,
   swap,
   tearDown,
