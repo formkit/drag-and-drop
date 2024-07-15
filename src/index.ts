@@ -10,7 +10,7 @@ import type {
   NodeRecord,
   NodesData,
   NodeTargetData,
-  NodeTouchEventData,
+  NodePointerEventData,
   ParentConfig,
   ParentData,
   ParentEventData,
@@ -286,6 +286,8 @@ export function dragAndDrop<T>({
       handleTouchmove,
       handleTouchOverNode,
       handleTouchOverParent,
+      handlePointerdown,
+      handlePointermove,
       handleDragenterNode,
       handleDragleaveNode,
       performSort,
@@ -491,6 +493,10 @@ export function remapFinished() {
 }
 
 export function handleDragstart<T>(data: NodeEventData<T>) {
+  console.log("handle dragstart");
+  data.e.preventDefault();
+  return;
+
   if (!(data.e instanceof DragEvent)) return;
 
   dragstart({
@@ -576,6 +582,44 @@ function touchstart<T>(data: NodeTouchEventData<T>) {
   handleLongTouch(data, touchState);
 }
 
+function pointerdown<T>(data: NodePointerEventData<T>) {
+  if (!validateDragHandle(data)) return;
+
+  const dragState = initSyntheticDrag(data);
+
+  // const dragState = initDrag(data);
+
+  handleSyntheticDraggedNode(data, dragState);
+
+  handleLongPress(data, dragState);
+}
+
+export function handleSyntheticDraggedNode<T>(
+  data: NodePointerEventData<T>,
+  touchState: TouchState<T>
+) {
+  touchState.touchedNodeDisplay = touchState.touchedNode.style.display;
+
+  const rect = data.targetData.node.el.getBoundingClientRect();
+
+  touchState.touchedNode.style.cssText = `
+            width: ${rect.width}px;
+            position: fixed;
+            pointer-events: none;
+            top: -9999px;
+            z-index: 999999;
+            display: none;
+          `;
+
+  document.body.append(touchState.touchedNode);
+
+  copyNodeStyle(data.targetData.node.el, touchState.touchedNode as Node);
+
+  touchState.touchedNode.style.display = "none";
+
+  document.addEventListener("contextmenu", preventDefault);
+}
+
 export function dragstart<T>(data: NodeDragEventData<T>) {
   if (!validateDragHandle(data)) {
     data.e.preventDefault();
@@ -624,6 +668,8 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     touchmove: nodeEventData(config.handleTouchmove),
     touchend: nodeEventData(config.handleEnd),
     touchOverNode: config.handleTouchOverNode,
+    pointerdown: nodeEventData(config.handlePointerdown),
+    pointermove: nodeEventData(config.handlePointermove),
   });
 
   config.reapplyDragClasses(data.node, data.parentData);
@@ -722,9 +768,32 @@ export function end<T>(
 }
 
 export function handleTouchstart<T>(eventData: NodeEventData<T>) {
+  console.log("handle touchstart");
+  return;
   if (!(eventData.e instanceof TouchEvent)) return;
 
   touchstart({
+    e: eventData.e,
+    targetData: eventData.targetData,
+  });
+}
+
+export function handlePointerdown<T>(eventData: NodeEventData<T>) {
+  console.log("handle pointerdown");
+  if (!(eventData.e instanceof PointerEvent)) return;
+
+  pointerdown({
+    e: eventData.e,
+    targetData: eventData.targetData,
+  });
+}
+
+export function handlePointermove<T>(eventData: NodeEventData<T>) {
+  console.log("handle pointermove");
+  return;
+  if (!(eventData.e instanceof PointerEvent)) return;
+
+  pointermove({
     e: eventData.e,
     targetData: eventData.targetData,
   });
@@ -750,6 +819,14 @@ export function initTouch<T>(data: NodeTouchEventData<T>): TouchState<T> {
   });
 
   return touchState;
+}
+
+function initSyntheticDrag<T>(data: NodePointerEventData<T>) {
+  data.e.stopPropagation();
+
+  const dragState = setDragState(dragStateProps(data));
+
+  return dragState;
 }
 
 function preventDefault(e: Event) {
@@ -805,7 +882,31 @@ export function handleLongTouch<T>(
   }, config.longTouchTimeout || 200);
 }
 
+export function handleLongPress<T>(
+  data: NodePointerEventData<T>,
+  dragState: DragState<T>
+) {
+  const config = data.targetData.parent.data.config;
+
+  if (!config.longPress) return;
+
+  dragState.longPressTimeout = setTimeout(() => {
+    if (!dragState) return;
+
+    dragState.longPress = true;
+
+    if (config.longPressClass && data.e.cancelable)
+      addClass(
+        dragState.draggedNodes.map((x) => x.el),
+        config.longPressClass
+      );
+
+    data.e.preventDefault();
+  }, config.longPressTimeout || 200);
+}
+
 export function handleTouchmove<T>(eventData: NodeTouchEventData<T>) {
+  console.log("handle touch move");
   if (!state || !("touchedNode" in state)) return;
 
   touchmove(eventData, state);

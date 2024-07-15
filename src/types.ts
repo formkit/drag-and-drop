@@ -70,7 +70,7 @@ export interface ParentConfig<T> {
   /**
    * Function that is called when dragend or touchend event occurs.
    */
-  handleEnd: (data: NodeDragEventData<T> | NodeTouchEventData<T>) => void;
+  handleEnd: (data: NodeDragEventData<T> | NodePointerEventData<T>) => void;
   /**
    * Function that is called when dragstart event occurs.
    */
@@ -78,7 +78,7 @@ export interface ParentConfig<T> {
   /**
    * Function that is called when touchstart event occurs.
    */
-  handleTouchstart: (data: NodeTouchEventData<T>) => void;
+  handleTouchstart: (data: NodePointerEventData<T>) => void;
   /**
    * Function that is called when a dragover event is triggered on the parent.
    */
@@ -90,7 +90,7 @@ export interface ParentConfig<T> {
   /**
    * Function that is called when a touchmove event is triggered on a node.
    */
-  handleTouchmove: (data: NodeTouchEventData<T>) => void;
+  handleTouchmove: (data: NodePointerEventData<T>) => void;
   /**
    * Function that is called when a node that is being moved by touchmove event
    * is over a given node (similar to dragover).
@@ -130,7 +130,7 @@ export interface ParentConfig<T> {
    */
   performSort: (
     state: DragState<T> | TouchState<T>,
-    data: NodeDragEventData<T> | NodeTouchEventData<T>
+    data: NodeDragEventData<T> | NodePointerEventData<T>
   ) => void;
   /**
    * Function that is called when a transfer operation is to be performed.
@@ -262,13 +262,13 @@ export interface NodeDragEventData<T> extends NodeEventData<T> {
   e: DragEvent;
 }
 /**
- * The data passed to the node event listener when the event is a touch event.
+ * The data passed to the node event listener when the event is a pointer event (not a native drag event).
  */
-export interface NodeTouchEventData<T> extends NodeEventData<T> {
+export interface NodePointerEventData<T> extends NodeEventData<T> {
   /**
    * The event that was triggered.
    */
-  e: TouchEvent;
+  e: PointerEvent;
   /**
    * The data of the target node.
    */
@@ -623,6 +623,9 @@ export interface DragState<T> extends DragStateProps<T> {
    */
   lastTargetValue: any;
   /**
+   * Long
+   */
+  /**
    * The original z-index of the dragged node.
    */
   originalZIndex: string | undefined;
@@ -654,18 +657,6 @@ export interface DragStateProps<T> {
   initialIndex: number;
   initialParent: ParentRecord<T>;
   lastParent: ParentRecord<T>;
-  scrollParent: HTMLElement;
-}
-
-export interface TouchStateProps {
-  coordinates: {
-    x: number;
-    y: number;
-  };
-  touchedNode: HTMLElement;
-  touchStartLeft: number;
-  touchStartTop: number;
-  touchMoving: boolean;
   scrollParent: HTMLElement;
 }
 
