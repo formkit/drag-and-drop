@@ -104,15 +104,15 @@ export interface ParentConfig<T> {
   /**
    * A flag to indicate whether long touch is enabled.
    */
-  longTouch?: boolean;
+  longPress?: boolean;
   /**
    * The class to add to a node when a long touch action is performed.
    */
-  longTouchClass?: string;
+  longPressClass?: string;
   /**
    * The time in milliseconds to wait before a long touch is performed.
    */
-  longTouchTimeout?: number;
+  longPressTimeout?: number;
   /**
    * The name of the parent (used for accepts function for increased specificity).
    */
@@ -580,6 +580,10 @@ export interface DragState<T> extends DragStateProps<T> {
    */
   clonedDraggedEls: Array<Element>;
   /**
+   * Element
+   */
+  clonedDraggedNode: Node;
+  /**
    * The coordinates of the dragged element itself.
    */
   coordinates: {
@@ -587,9 +591,17 @@ export interface DragState<T> extends DragStateProps<T> {
     y: number;
   };
   /**
+   * A flag to indicate whether the dragged node is moving.
+   */
+  dragMoving: boolean;
+  /**
    * The node that is being dragged.
    */
   draggedNode: NodeRecord<T>;
+  /**
+   * The display of the touched node.
+   */
+  draggedNodeDisplay: string | undefined;
   /**
    * The nodes that are being dragged.
    */
@@ -623,8 +635,13 @@ export interface DragState<T> extends DragStateProps<T> {
    */
   lastTargetValue: any;
   /**
-   * Long
+   * longPress - A flag to indicate whether a long press has occurred.
    */
+  longPress: boolean;
+  /**
+   * Long press timeout
+   */
+  longPressTimeout: number;
   /**
    * The original z-index of the dragged node.
    */
@@ -638,6 +655,14 @@ export interface DragState<T> extends DragStateProps<T> {
    */
   scrollParent: HTMLElement;
   /**
+   * The top position of pointerdown.
+   */
+  startTop: number;
+  /**
+   * The left position of the pointerdown.
+   */
+  startLeft: number;
+  /**
    * The index of the node that the dragged node is moving into.
    */
   targetIndex: number;
@@ -648,6 +673,7 @@ export interface DragState<T> extends DragStateProps<T> {
 }
 
 export interface DragStateProps<T> {
+  clonedDraggedNode: Node;
   coordinates: {
     x: number;
     y: number;
@@ -658,6 +684,8 @@ export interface DragStateProps<T> {
   initialParent: ParentRecord<T>;
   lastParent: ParentRecord<T>;
   scrollParent: HTMLElement;
+  startTop: number;
+  startLeft: number;
 }
 
 export interface ScrollData<T> {

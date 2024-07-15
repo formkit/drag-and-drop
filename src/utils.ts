@@ -44,7 +44,7 @@ export function addClass(
 
   if (!classNames.length) return;
 
-  if (classNames.includes("longTouch")) return;
+  if (classNames.includes("longPress")) return;
 
   for (const node of els) {
     if (!isNode(node) || !nodes.has(node)) {
@@ -157,11 +157,11 @@ export function events(
 export function getElFromPoint<T>(
   eventData: NodeEventData<T>
 ): NodeFromPoint<T> | ParentFromPoint<T> | undefined {
-  if (!(eventData.e instanceof TouchEvent)) return;
+  if (!(eventData.e instanceof PointerEvent)) return;
 
-  const newX = eventData.e.touches[0].clientX;
+  const newX = eventData.e.clientX;
 
-  const newY = eventData.e.touches[0].clientY;
+  const newY = eventData.e.clientY;
 
   let target = document.elementFromPoint(newX, newY);
 
@@ -292,8 +292,6 @@ export function copyNodeStyle(
   }
 }
 
-export function eventCoordinates(data: DragEvent | TouchEvent) {
-  return data instanceof DragEvent
-    ? { x: data.clientX, y: data.clientY }
-    : { x: data.touches[0].clientX, y: data.touches[0].clientY };
+export function eventCoordinates(data: DragEvent | PointerEvent) {
+  return { x: data.clientX, y: data.clientY };
 }
