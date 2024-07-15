@@ -70,7 +70,7 @@
       <span class="fn">dragAndDrop</span>({<br />
       <span class="indent">parent: <span class="var">parentRef</span></span
       >,<br />
-      <span class="indent">value: <span class="var">valueRef</span></span
+      <span class="indent">values: <span class="var">valueRef</span></span
       ><br />})
     </code>
   </SectionWrapper>
