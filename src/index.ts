@@ -1,49 +1,50 @@
 import type {
-  DragAndDrop,
-  Node,
   DNDPlugin,
-  NodeEventData,
-  TouchOverNodeEvent,
-  ParentsData,
-  NodesData,
+  DragAndDrop,
   DragState,
-  TouchState,
   DragStateProps,
-  TouchStateProps,
+  Node,
   NodeData,
+  NodeDragEventData,
+  NodeEventData,
+  NodeRecord,
+  NodesData,
+  NodeTargetData,
+  NodeTouchEventData,
+  ParentConfig,
   ParentData,
+  ParentEventData,
+  ParentsData,
+  ParentTargetData,
+  ScrollData,
   SetupNodeData,
   TearDownNodeData,
-  NodeTargetData,
-  ParentConfig,
-  ParentTargetData,
-  ParentEventData,
+  TouchOverNodeEvent,
   TouchOverParentEvent,
-  NodeDragEventData,
-  NodeTouchEventData,
-  NodeRecord,
-  ScrollData,
+  TouchState,
+  TouchStateProps,
 } from "./types";
 import {
-  isBrowser,
   addClass,
-  removeClass,
-  getElFromPoint,
-  isNode,
-  getScrollParent,
   addEvents,
   copyNodeStyle,
   eventCoordinates,
+  getElFromPoint,
+  getScrollParent,
+  isBrowser,
+  isNode,
+  removeClass,
   throttle,
 } from "./utils";
-export { isBrowser };
-export * from "./types";
-export * from "./plugins/multiDrag";
 export { animations } from "./plugins/animations";
+export { insertion } from "./plugins/insertion";
+export { multiDrag } from "./plugins/multiDrag";
 export { selections } from "./plugins/multiDrag/plugins/selections";
-export { swap } from "./plugins/swap";
 export { place } from "./plugins/place";
+export { swap } from "./plugins/swap";
+export * from "./types";
 export * from "./utils";
+export { isBrowser };
 
 const scrollConfig: {
   [key: string]: [number, number];
@@ -91,7 +92,6 @@ export function setDragState<T>(
     activeNode: undefined,
     lastTargetValue: undefined,
     remapJustFinished: false,
-    preventEnter: false,
     clonedDraggedEls: [],
     originalZIndex: undefined,
     transferred: false,
@@ -157,6 +157,10 @@ export function performSort<T>(
     data.targetData.parent.data
   );
 
+  const originalIndex = state.draggedNode.data.index;
+
+  const enabledNodes = [...data.targetData.parent.data.enabledNodes];
+
   const newParentValues = [
     ...targetParentValues.filter((x) => !draggedValues.includes(x)),
   ];
@@ -168,6 +172,24 @@ export function performSort<T>(
   setParentValues(data.targetData.parent.el, data.targetData.parent.data, [
     ...newParentValues,
   ]);
+
+  if (data.targetData.parent.data.config.onSort) {
+    const sortEventData = {
+      parent: {
+        el: data.targetData.parent.el,
+        data: data.targetData.parent.data,
+      },
+      previousValues: [...targetParentValues],
+      previousNodes: [...enabledNodes],
+      nodes: [...data.targetData.parent.data.enabledNodes],
+      values: [...newParentValues],
+      draggedNode: state.draggedNode,
+      previousPosition: originalIndex,
+      position: data.targetData.node.data.index,
+    };
+
+    data.targetData.parent.data.config.onSort(sortEventData);
+  }
 }
 
 export function parentValues<T>(
@@ -454,6 +476,10 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
   parents.set(parent, { ...parentData, enabledNodes: enabledNodeRecords });
 
   config.remapFinished(parentData);
+
+  parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
+    plugin(parent)?.remapFinished?.();
+  });
 }
 
 export function remapFinished() {
@@ -476,12 +502,15 @@ export function handleDragstart<T>(data: NodeEventData<T>) {
 export function dragstartClasses(
   el: HTMLElement | Node | Element,
   draggingClass: string | undefined,
-  dropZoneClass: string | undefined
+  dropZoneClass: string | undefined,
+  dragPlaceholderClass: string | undefined
 ) {
   addClass([el], draggingClass);
 
   setTimeout(() => {
     removeClass([el], draggingClass);
+
+    addClass([el], dragPlaceholderClass);
 
     addClass([el], dropZoneClass);
   });
@@ -507,7 +536,7 @@ export function initDrag<T>(eventData: NodeDragEventData<T>): DragState<T> {
   return dragState;
 }
 
-function validateDragHandle<T>(data: NodeEventData<T>): boolean {
+export function validateDragHandle<T>(data: NodeEventData<T>): boolean {
   if (!(data.e instanceof DragEvent) && !(data.e instanceof TouchEvent))
     return false;
 
@@ -567,7 +596,8 @@ export function dragstart<T>(data: NodeDragEventData<T>) {
   dragstartClasses(
     dragState.draggedNode.el,
     config.draggingClass,
-    config.dropZoneClass
+    config.dropZoneClass,
+    config.dragPlaceholderClass
   );
 }
 
@@ -988,7 +1018,7 @@ function touchmove<T>(data: NodeTouchEventData<T>, touchState: TouchState<T>) {
   }
 }
 
-function handleScroll() {
+export function handleScroll() {
   for (const direction of Object.keys(scrollConfig)) {
     const [x, y] = scrollConfig[direction];
 
@@ -1136,7 +1166,6 @@ export function validateSort<T>(
   if (data.targetData.node.data.value === state.lastTargetValue) return false;
 
   if (
-    state.preventEnter ||
     data.targetData.parent.el !== state.lastParent?.el ||
     data.targetData.parent.data.config.sortable === false
   )
@@ -1320,6 +1349,50 @@ export function performTransfer<T>(
     data.targetData.parent.data,
     targetParentValues
   );
+
+  if (data.targetData.parent.data.config.onTransfer) {
+    const transferEventData = {
+      sourceParent: state.lastParent,
+      targetParent: data.targetData.parent,
+      previousSourceValues: [...lastParentValues],
+      sourceValues: [...state.lastParent.data.getValues(state.lastParent.el)],
+      previousTargetValues: [...targetParentValues],
+      targetValues: [
+        ...data.targetData.parent.data.getValues(data.targetData.parent.el),
+      ],
+      previousSourceNodes: [...state.lastParent.data.enabledNodes],
+      sourceNodes: [...state.lastParent.data.enabledNodes],
+      previousTargetNodes: [...data.targetData.parent.data.enabledNodes],
+      targetNodes: [...data.targetData.parent.data.enabledNodes],
+      draggedNode: state.draggedNode,
+      sourcePreviousPosition: state.initialIndex,
+      targetPosition: targetIndex,
+    };
+
+    data.targetData.parent.data.config.onTransfer(transferEventData);
+  }
+
+  if (state.lastParent.data.config.onTransfer) {
+    const transferEventData = {
+      sourceParent: state.lastParent,
+      targetParent: data.targetData.parent,
+      previousSourceValues: [...lastParentValues],
+      sourceValues: [...state.lastParent.data.getValues(state.lastParent.el)],
+      previousTargetValues: [...targetParentValues],
+      targetValues: [
+        ...data.targetData.parent.data.getValues(data.targetData.parent.el),
+      ],
+      previousSourceNodes: [...state.lastParent.data.enabledNodes],
+      sourceNodes: [...state.lastParent.data.enabledNodes],
+      previousTargetNodes: [...data.targetData.parent.data.enabledNodes],
+      targetNodes: [...data.targetData.parent.data.enabledNodes],
+      draggedNode: state.draggedNode,
+      sourcePreviousPosition: state.initialIndex,
+      targetPosition: targetIndex,
+    };
+
+    state.lastParent.data.config.onTransfer(transferEventData);
+  }
 }
 
 /**

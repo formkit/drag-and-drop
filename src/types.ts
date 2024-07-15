@@ -118,6 +118,14 @@ export interface ParentConfig<T> {
    */
   name?: string;
   /**
+   * Callback function for when a sort operation is performed.
+   */
+  onSort?: SortEvent;
+  /**
+   * Callback function for when a transfer operation is performed.
+   */
+  onTransfer?: TransferEvent;
+  /**
    * Function that is called when a sort operation is to be performed.
    */
   performSort: (
@@ -204,6 +212,8 @@ export interface ParentData<T> {
    * The abort controllers for the parent.
    */
   abortControllers: Record<string, AbortController>;
+
+  [key: string]: any;
 }
 
 /**
@@ -227,6 +237,8 @@ export interface NodeData<T> {
    * The abort controllers for the node.
    */
   abortControllers: Record<string, AbortController>;
+
+  [key: string]: any;
 }
 
 /**
@@ -414,6 +426,10 @@ export interface DNDPluginData {
    * Called when the parent is dragged over.
    */
   tearDownNodeRemap?: TearDownNode;
+  /**
+   * Called when all nodes have finished remapping for a given parent
+   */
+  remapFinished?: () => void;
 }
 
 /**
@@ -433,6 +449,8 @@ export interface DragAndDropData {
 export type SetupNode = <T>(data: SetupNodeData<T>) => void;
 
 export type TearDownNode = <T>(data: TearDownNodeData<T>) => void;
+
+export type RemapFinished = <T>(data: ParentData<T>) => void;
 
 /**
  * The payload of when the setupNode function is called in a given plugin.
@@ -577,6 +595,10 @@ export interface DragState<T> extends DragStateProps<T> {
    */
   draggedNodes: Array<NodeRecord<T>>;
   /**
+   * Values to be inserted during sort and transfer operations.
+   */
+  dynamicValues: Array<T>;
+  /**
    * The direction that the dragged node is moving into a dragover node.
    */
   incomingDirection: "above" | "below" | "left" | "right" | undefined;
@@ -604,11 +626,6 @@ export interface DragState<T> extends DragStateProps<T> {
    * The original z-index of the dragged node.
    */
   originalZIndex: string | undefined;
-  /**
-   * A flag to prevent a sort operation from firing until the mutation observer
-   * has had a chance to update the data of the remapped nodes.
-   */
-  preventEnter: boolean;
   /**
    * Flag indicating that the remap just finished.
    */
@@ -662,4 +679,35 @@ export interface ScrollData<T> {
   y: number;
   width: number;
   height: number;
+}
+
+type SortEvent = <T>(data: SortEventData<T>) => void;
+
+type TransferEvent = <T>(data: TransferEventData<T>) => void;
+
+export interface SortEventData<T> {
+  parent: ParentRecord<T>;
+  previousValues: Array<T>;
+  values: Array<T>;
+  previousNodes: Array<NodeRecord<T>>;
+  nodes: Array<NodeRecord<T>>;
+  draggedNode: NodeRecord<T>;
+  previousPosition: number;
+  position: number;
+}
+
+export interface TransferEventData<T> {
+  sourceParent: ParentRecord<T>;
+  targetParent: ParentRecord<T>;
+  previousSourceValues: Array<T>;
+  sourceValues: Array<T>;
+  previousTargetValues: Array<T>;
+  targetValues: Array<T>;
+  previousSourceNodes: Array<NodeRecord<T>>;
+  sourceNodes: Array<NodeRecord<T>>;
+  previousTargetNodes: Array<NodeRecord<T>>;
+  targetNodes: Array<NodeRecord<T>>;
+  draggedNode: NodeRecord<T>;
+  sourcePreviousPosition: number;
+  targetPosition: number;
 }

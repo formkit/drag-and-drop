@@ -1,13 +1,13 @@
 import type {
+  EventHandlers,
   Node,
   NodeEventData,
   NodeFromPoint,
-  ParentFromPoint,
-  EventHandlers,
   ParentData,
+  ParentFromPoint,
 } from "./types";
 
-import { parents, nodes } from "./index";
+import { nodes, parents } from "./index";
 
 export function throttle(callback: any, limit: number) {
   var wait = false;
