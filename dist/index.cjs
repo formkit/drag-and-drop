@@ -1981,6 +1981,7 @@ function performTransfer(state2, data) {
   );
 }
 function transfer(data, state2) {
+  data.e.preventDefault();
   if (!validateTransfer(data, state2))
     return;
   data.targetData.parent.data.config.performTransfer(state2, data);

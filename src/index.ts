@@ -1337,6 +1337,8 @@ export function transfer<T>(
   data: NodeEventData<T> | ParentEventData<T>,
   state: DragState<T> | TouchState<T>
 ): void {
+  data.e.preventDefault();
+
   if (!validateTransfer(data, state)) return;
 
   data.targetData.parent.data.config.performTransfer(state, data);
