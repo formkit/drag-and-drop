@@ -9,6 +9,10 @@ import type {
 
 import { nodes, parents } from "./index";
 
+export function noDefault(e: Event) {
+  e.preventDefault();
+}
+
 export function throttle(callback: any, limit: number) {
   var wait = false;
   return function (...args: any[]) {

@@ -88,14 +88,15 @@ export interface ParentConfig<T> {
    */
   handleDragoverNode: (data: NodeDragEventData<T>) => void;
   /**
-   * Function that is called when a touchmove event is triggered on a node.
+   * Function that is called when either a pointermove or touchmove event is fired
+   * where now the "dragged" node is being moved programatically.
    */
   handleTouchmove: (data: NodePointerEventData<T>) => void;
   /**
    * Function that is called when a node that is being moved by touchmove event
    * is over a given node (similar to dragover).
    */
-  handleTouchOverNode: (data: TouchOverNodeEvent<T>) => void;
+  handlePointeroverNode: (data: PointeroverNodeEvent<T>) => void;
   /**
    * Function that is called when a node that is being moved by touchmove event
    * is over the parent (similar to dragover).
@@ -365,9 +366,9 @@ export interface Node extends HTMLElement {
  * The payload of the custom event dispatched when a node is "touched" over a
  * node.
  */
-export interface TouchOverNodeEvent<T> extends Event {
+export interface PointeroverNodeEvent<T> extends Event {
   detail: {
-    e: TouchEvent;
+    e: PointerEvent;
     targetData: NodeTargetData<T>;
   };
 }
@@ -378,7 +379,7 @@ export interface TouchOverNodeEvent<T> extends Event {
  */
 export interface TouchOverParentEvent<T> extends Event {
   detail: {
-    e: TouchEvent;
+    e: PointerEvent;
     targetData: ParentTargetData<T>;
   };
 }
@@ -497,41 +498,6 @@ export interface TearDownNodeData<T> {
 }
 
 export type EventHandlers = Record<string, (e: Event) => void>;
-
-/**
- * The state of the current drag. TouchState is only created when a touch start
- * event has occurred.
- */
-export interface TouchState<T> extends DragState<T> {
-  /**
-   * A flag to indicate whether the dragged (touched) node is moving.
-   */
-  touchMoving: boolean;
-  /**
-   * The left position of the touch start.
-   */
-  touchStartLeft: number;
-  /**
-   * The top position of the touch start.
-   */
-  touchStartTop: number;
-  /**
-   * The node that was most recently touched.
-   */
-  touchedNode: HTMLElement;
-  /**
-   * The timeout for a long touch.
-   */
-  longTouchTimeout: ReturnType<typeof setTimeout> | undefined;
-  /**
-   * A flag to indicate whether a long touch has occurred.
-   */
-  longTouch: boolean;
-  /**
-   * The display of the touched node.
-   */
-  touchedNodeDisplay: string | undefined;
-}
 
 /**
  * The state of the current drag. State is only created when a drag start

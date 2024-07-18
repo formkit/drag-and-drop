@@ -23,7 +23,6 @@ import {
   initDrag,
   initTouch,
   dragstartClasses,
-  handleTouchedNode,
   end,
   state,
   resetState,
@@ -240,7 +239,8 @@ export function multiHandleTouchstart<T>(data: NodeEventData<T>) {
 }
 
 export function multiTouchstart<T>(data: NodeTouchEventData<T>) {
-  const touchState = initTouch(data);
+  return;
+  // const touchState = initTouch(data);
 
   multiDragState.isTouch = true;
 
@@ -279,7 +279,7 @@ export function multiTouchstart<T>(data: NodeTouchEventData<T>) {
       )
     );
   } else {
-    handleTouchedNode(data, touchState);
+    // handleTouchedNode(data, touchState);
   }
 
   handleLongTouch(data, touchState);

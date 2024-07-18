@@ -10,7 +10,6 @@ import type {
   NodeRecord,
   NodesData,
   NodeTargetData,
-  NodePointerEventData,
   ParentConfig,
   ParentData,
   ParentEventData,
@@ -19,9 +18,10 @@ import type {
   ScrollData,
   SetupNodeData,
   TearDownNodeData,
-  TouchOverNodeEvent,
+  PointeroverNodeEvent,
   TouchOverParentEvent,
   TouchState,
+  NodePointerEventData,
 } from "./types";
 import {
   addClass,
@@ -32,6 +32,7 @@ import {
   getScrollParent,
   isBrowser,
   isNode,
+  noDefault,
   removeClass,
   throttle,
 } from "./utils";
@@ -45,9 +46,7 @@ export * from "./types";
 export * from "./utils";
 export { isBrowser };
 
-function supportsPointerEvents() {
-  return "PointerEvent" in window;
-}
+let isNative = false;
 
 const scrollConfig: {
   [key: string]: [number, number];
@@ -104,20 +103,8 @@ export function setDragState<T>(
   return state;
 }
 
-export function setTouchState<T>(
-  dragState: DragState<T>,
-  touchStateProps: TouchStateProps
-): TouchState<T> {
-  state = {
-    ...dragState,
-    ...touchStateProps,
-  };
-
-  return state as TouchState<T>;
-}
-
 export function dragStateProps<T>(
-  data: NodeDragEventData<T>
+  data: NodeDragEventData<T> | NodePointerEventData<T>
 ): DragStateProps<T> {
   const { x, y } = eventCoordinates(data.e);
 
@@ -259,66 +246,6 @@ export function dragAndDrop<T>({
 }: DragAndDrop<T>): void {
   if (!isBrowser) return;
 
-  // document.addEventListener("dragover", (e) => {
-  //   e.preventDefault();
-
-  //   if (nodes.has(e.target as Node) || parents.has(e.target as HTMLElement))
-  //     return;
-
-  //   if (state) {
-  //     state.remapJustFinished = false;
-
-  //     state.lastTargetValue = undefined;
-
-  //     const { x, y } = eventCoordinates(e);
-
-  //     state.coordinates.y = y;
-
-  //     state.coordinates.x = x;
-
-  //     handleScroll();
-  //   }
-  // });
-
-  // document.body.style.touchAction = "none";
-
-  // document.body.addEventListener("pointermove", (e) => {
-  //   console.log("pointer move");
-  //   // if (nodes.has(e.target as Node) || parents.has(e.target as HTMLElement))
-  //   //   return;
-  //   if (state) {
-  //     moveNode({ e, targetData: state }, state);
-  //   }
-  // });
-
-  // function handleMove(e: PointerEvent | TouchEvent) {
-  //   let div;
-  //   if (e instanceof PointerEvent) {
-  //     // div = document.createElement("div");
-  //     // div.innerHTML = "Pointer";
-  //     // document.body.append(div);
-  //     e.cancelable && e.preventDefault();
-  //     e.preventDefault();
-  //     document.body.setPointerCapture(e.pointerId);
-  //   }
-  // }
-
-  function handleCancel(e: PointerEvent | TouchEvent) {
-    console.log("pointere cancel", e);
-  }
-
-  // function handleTouchCancel(e: PointerEvent | TouchEvent) {
-  //   console.log("touch cancel", e);
-  // }
-
-  // document.body.addEventListener("pointermove", handleMove);
-  document.body.addEventListener("pointercancel", handleCancel);
-  // document.body.addEventListener("touchmove", handleMove);
-  // document.body.addEventListener("touchcancel", handleTouchCancel);
-  if (supportsPointerEvents()) {
-  } else {
-  }
-
   tearDown(parent);
 
   const parentData: ParentData<T> = {
@@ -330,8 +257,7 @@ export function dragAndDrop<T>({
       handleDragoverParent,
       handleEnd,
       handleTouchstart,
-      handleTouchmove,
-      handleTouchOverNode,
+      handlePointeroverNode,
       handleTouchOverParent,
       handlePointerdown,
       handlePointermove,
@@ -398,8 +324,75 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
     dragover: parentEventData(
       throttle(parentData.config.handleDragoverParent, 10)
     ),
-    // touchOverParent: parentData.config.handleTouchOverParent,
+    handlePointeroverParent: parentData.config.handlepointeroverParent,
   });
+}
+
+export function setupNode<T>(data: SetupNodeData<T>) {
+  const config = data.parentData.config;
+
+  data.node.draggable = true;
+
+  data.nodeData.abortControllers.mainNode = addEvents(data.node, {
+    dragstart: nodeEventData(config.handleDragstart),
+    dragover: nodeEventData(config.handleDragoverNode),
+    dragenter: nodeEventData(config.handleDragenterNode),
+    dragleave: nodeEventData(config.handleDragleaveNode),
+    dragend: nodeEventData(config.handleEnd),
+    touchstart: noDefault,
+    pointerdown: nodeEventData(config.handlePointerdown),
+    pointermove: nodeEventData(config.handlePointermove),
+    pointerup: nodeEventData(config.handleEnd),
+    handlePointeroverNode: config.handlePointeroverNode,
+    mousedown: () => {
+      isNative = true;
+    },
+  });
+
+  config.reapplyDragClasses(data.node, data.parentData);
+
+  data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
+    plugin(data.parent)?.setupNode?.(data);
+  });
+}
+
+export function setupNodeRemap<T>(data: SetupNodeData<T>) {
+  nodes.set(data.node, data.nodeData);
+
+  data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
+    plugin(data.parent)?.setupNodeRemap?.(data);
+  });
+}
+
+function reapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
+  if (!state) return;
+
+  const dropZoneClass =
+    "touchedNode" in state
+      ? parentData.config.touchDropZoneClass
+      : parentData.config.dropZoneClass;
+
+  if (state.draggedNode.el !== node) return;
+
+  addClass([node], dropZoneClass, true);
+}
+
+export function tearDownNodeRemap<T>(data: TearDownNodeData<T>) {
+  data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
+    plugin(data.parent)?.tearDownNodeRemap?.(data);
+  });
+}
+
+export function tearDownNode<T>(data: TearDownNodeData<T>) {
+  data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
+    plugin(data.parent)?.tearDownNode?.(data);
+  });
+
+  data.node.draggable = false;
+
+  if (data.nodeData?.abortControllers?.mainNode) {
+    data.nodeData?.abortControllers?.mainNode.abort();
+  }
 }
 
 /**
@@ -540,9 +533,6 @@ export function remapFinished() {
 }
 
 export function handleDragstart<T>(data: NodeEventData<T>) {
-  // data.e.preventDefault();
-  return;
-
   if (!(data.e instanceof DragEvent)) return;
 
   dragstart({
@@ -618,18 +608,6 @@ export function validateDragHandle<T>(data: NodeEventData<T>): boolean {
   return false;
 }
 
-function touchstart<T>(data: NodeTouchEventData<T>) {
-  console.log("touchstart");
-  data.e.preventDefault();
-  // if (!validateDragHandle(data)) return;
-
-  // const touchState = initTouch(data);
-
-  // handleTouchedNode(data, touchState);
-
-  // handleLongTouch(data, touchState);
-}
-
 function pointerdown<T>(data: NodePointerEventData<T>) {
   if (!validateDragHandle(data)) return;
 
@@ -637,11 +615,7 @@ function pointerdown<T>(data: NodePointerEventData<T>) {
 
   handleSyntheticDraggedNode(data, dragState);
 
-  // document.body.style.touchAction = "none";
-
-  console.log("pointerdown");
-
-  // handleLongPress(data, dragState);
+  handleLongPress(data, dragState);
 }
 
 export function handleSyntheticDraggedNode<T>(
@@ -656,19 +630,20 @@ export function handleSyntheticDraggedNode<T>(
             width: ${rect.width}px;
             position: fixed;
             top: -9999px;
+            pointer-events: none;
             z-index: 999999;
             display: none;
           `;
 
   document.body.append(dragState.clonedDraggedNode);
 
-  // copyNodeStyle(data.targetData.node.el, dragState.clonedDraggedNode);
+  copyNodeStyle(data.targetData.node.el, dragState.clonedDraggedNode);
 
-  // dragState.clonedDraggedNode.style.display = "none";
+  dragState.clonedDraggedNode.style.display = "none";
 
   dragState.draggedNode.el.setPointerCapture(data.e.pointerId);
 
-  document.addEventListener("contextmenu", preventDefault);
+  document.addEventListener("contextmenu", noDefault);
 }
 
 export function dragstart<T>(data: NodeDragEventData<T>) {
@@ -696,77 +671,12 @@ export function dragstart<T>(data: NodeDragEventData<T>) {
   );
 }
 
-export function handleTouchOverNode<T>(e: TouchOverNodeEvent<T>) {
+export function handlePointeroverNode<T>(e: PointeroverNodeEvent<T>) {
   if (!state) return;
 
   if (e.detail.targetData.parent.el === state.lastParent.el)
     sort(e.detail, state);
   else transfer(e.detail, state);
-}
-
-export function setupNode<T>(data: SetupNodeData<T>) {
-  const config = data.parentData.config;
-
-  data.node.draggable = true;
-
-  data.nodeData.abortControllers.mainNode = addEvents(data.node, {
-    dragstart: nodeEventData(config.handleDragstart),
-    dragover: nodeEventData(config.handleDragoverNode),
-    dragenter: nodeEventData(config.handleDragenterNode),
-    dragleave: nodeEventData(config.handleDragleaveNode),
-    dragend: nodeEventData(config.handleEnd),
-    touchstart: nodeEventData(config.handleTouchstart),
-    // touchmove: nodeEventData(config.handleTouchmove),
-    touchend: nodeEventData(config.handleEnd),
-    touchOverNode: config.handleTouchOverNode,
-    pointerdown: nodeEventData(config.handlePointerdown),
-    pointermove: nodeEventData(config.handlePointermove),
-  });
-
-  config.reapplyDragClasses(data.node, data.parentData);
-
-  data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
-    plugin(data.parent)?.setupNode?.(data);
-  });
-}
-
-export function setupNodeRemap<T>(data: SetupNodeData<T>) {
-  nodes.set(data.node, data.nodeData);
-
-  data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
-    plugin(data.parent)?.setupNodeRemap?.(data);
-  });
-}
-
-function reapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
-  if (!state) return;
-
-  const dropZoneClass =
-    "touchedNode" in state
-      ? parentData.config.touchDropZoneClass
-      : parentData.config.dropZoneClass;
-
-  if (state.draggedNode.el !== node) return;
-
-  addClass([node], dropZoneClass, true);
-}
-
-export function tearDownNodeRemap<T>(data: TearDownNodeData<T>) {
-  data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
-    plugin(data.parent)?.tearDownNodeRemap?.(data);
-  });
-}
-
-export function tearDownNode<T>(data: TearDownNodeData<T>) {
-  data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
-    plugin(data.parent)?.tearDownNode?.(data);
-  });
-
-  data.node.draggable = false;
-
-  if (data.nodeData?.abortControllers?.mainNode) {
-    data.nodeData?.abortControllers?.mainNode.abort();
-  }
 }
 
 export function handleEnd<T>(eventData: NodeEventData<T>) {
@@ -781,16 +691,16 @@ export function end<T>(
   _eventData: NodeEventData<T>,
   state: DragState<T> | TouchState<T>
 ) {
-  document.removeEventListener("contextmenu", preventDefault);
+  document.removeEventListener("contextmenu", noDefault);
 
   if ("longTouchTimeout" in state && state.longTouchTimeout)
     clearTimeout(state.longTouchTimeout);
 
   const config = parents.get(state.initialParent.el)?.config;
 
-  const isTouch = "touchedNode" in state;
+  const isSynth = "clonedDraggedNode" in state;
 
-  const dropZoneClass = isTouch
+  const dropZoneClass = isSynth
     ? config?.touchDropZoneClass
     : config?.dropZoneClass;
 
@@ -815,26 +725,24 @@ export function end<T>(
     );
   }
 
-  if ("touchedNode" in state) state.touchedNode?.remove();
+  if ("clonedDraggedNode" in state) state.clonedDraggedNode.remove();
 }
 
 export function handleTouchstart<T>(eventData: NodeEventData<T>) {
-  console.log("handle touchstart");
   eventData.e.preventDefault();
-  if (!(eventData.e instanceof TouchEvent)) return;
+}
 
-  touchstart({
-    e: eventData.e,
-    targetData: eventData.targetData,
-  });
+function isDragAndDropSupported() {
+  const testElement = document.createElement("div");
+  return "draggable" in testElement;
+}
+
+function isTouchDevice() {
+  return "ontouchstart" in window || navigator.maxTouchPoints > 0;
 }
 
 export function handlePointerdown<T>(eventData: NodePointerEventData<T>) {
-  if (!(eventData.e instanceof PointerEvent)) return;
-
   eventData.e.stopPropagation();
-
-  eventData.e.preventDefault();
 
   pointerdown({
     e: eventData.e,
@@ -843,32 +751,9 @@ export function handlePointerdown<T>(eventData: NodePointerEventData<T>) {
 }
 
 export function handlePointermove<T>(eventData: NodePointerEventData<T>) {
-  console.log("handle pointermove");
-  if (!(eventData.e instanceof PointerEvent)) return;
+  if (!state || isNative) return;
 
-  pointermove(eventData, state);
-}
-
-export function initTouch<T>(data: NodeTouchEventData<T>): TouchState<T> {
-  data.e.stopPropagation();
-
-  const clonedNode = data.targetData.node.el.cloneNode(true) as HTMLElement;
-
-  const rect = data.targetData.node.el.getBoundingClientRect();
-
-  const touchState = setTouchState(setDragState(dragStateProps(data)), {
-    coordinates: {
-      x: data.e.touches[0].clientX,
-      y: data.e.touches[0].clientY,
-    },
-    scrollParent: getScrollParent(data.targetData.node.el),
-    touchStartLeft: data.e.touches[0].clientX - rect.left,
-    touchStartTop: data.e.touches[0].clientY - rect.top,
-    touchedNode: clonedNode,
-    touchMoving: false,
-  });
-
-  return touchState;
+  syntheticMove(eventData, state);
 }
 
 function initSyntheticDrag<T>(data: NodePointerEventData<T>) {
@@ -877,36 +762,6 @@ function initSyntheticDrag<T>(data: NodePointerEventData<T>) {
   const syntheticDragState = setDragState(dragStateProps(data));
 
   return syntheticDragState;
-}
-
-function preventDefault(e: Event) {
-  e.preventDefault();
-}
-
-export function handleTouchedNode<T>(
-  data: NodeTouchEventData<T>,
-  touchState: TouchState<T>
-) {
-  touchState.touchedNodeDisplay = touchState.touchedNode.style.display;
-
-  const rect = data.targetData.node.el.getBoundingClientRect();
-
-  touchState.touchedNode.style.cssText = `
-            width: ${rect.width}px;
-            position: fixed;
-            pointer-events: none;
-            top: -9999px;
-            z-index: 999999;
-            display: none;
-          `;
-
-  document.body.append(touchState.touchedNode);
-
-  copyNodeStyle(data.targetData.node.el, touchState.touchedNode as Node);
-
-  touchState.touchedNode.style.display = "none";
-
-  document.addEventListener("contextmenu", preventDefault);
 }
 
 export function handleLongTouch<T>(
@@ -938,12 +793,9 @@ export function handleLongPress<T>(
 ) {
   const config = data.targetData.parent.data.config;
 
-  console.log("getting ove rheredklfdjsklf;a dsjfkl;jdslkfd");
-
   if (!config.longPress) return;
 
   dragState.longPressTimeout = setTimeout(() => {
-    console.log("getting here");
     if (!dragState) return;
 
     dragState.longPress = true;
@@ -956,14 +808,6 @@ export function handleLongPress<T>(
 
     data.e.preventDefault();
   }, config.longPressTimeout || 200);
-}
-
-export function handleTouchmove<T>(eventData: NodeTouchEventData<T>) {
-  console.log("handle touch move");
-  return;
-  if (!state || !("touchedNode" in state)) return;
-
-  touchmove(eventData, state);
 }
 
 function pointermoveClasses<T>(
@@ -1027,8 +871,6 @@ function shouldScroll<T>(
   const data = getScrollData(state);
 
   if (!data) return;
-
-  console.log("direction", data);
 
   switch (direction) {
     case "down":
@@ -1198,11 +1040,12 @@ function moveNode<T>(data: NodePointerEventData<T>, dragState: DragState<T>) {
 //   }
 // }
 
-function pointermove<T>(
+function syntheticMove<T>(
   data: NodePointerEventData<T>,
   dragState: DragState<T>
 ) {
   dragState.draggedNode.el.setPointerCapture(data.e.pointerId);
+
   const config = data.targetData.parent.data.config;
 
   if (config.longPress && !dragState.longPress) {
@@ -1228,13 +1071,13 @@ function pointermove<T>(
 
   if ("node" in elFromPoint) {
     elFromPoint.node.el.dispatchEvent(
-      new CustomEvent("pointerOverNode", {
+      new CustomEvent("handlePointeroverNode", {
         detail: pointerMoveEventData,
       })
     );
   } else {
     elFromPoint.parent.el.dispatchEvent(
-      new CustomEvent("pointerOverParent", {
+      new CustomEvent("handlePointeroverParent", {
         detail: pointerMoveEventData,
       })
     );
