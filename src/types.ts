@@ -36,7 +36,7 @@ export interface ParentConfig<T> {
     targetParentData: ParentRecord<T>,
     initialParentData: ParentRecord<T>,
     lastParentData: ParentRecord<T>,
-    state: DragState<T> | TouchState<T>
+    state: DragState<T>
   ) => boolean;
   /**
    * A flag to disable dragability of all nodes in the parent.
@@ -91,7 +91,7 @@ export interface ParentConfig<T> {
    * Function that is called when either a pointermove or touchmove event is fired
    * where now the "dragged" node is being moved programatically.
    */
-  handleTouchmove: (data: NodePointerEventData<T>) => void;
+  handlePointermove: (data: NodePointerEventData<T>) => void;
   /**
    * Function that is called when a node that is being moved by touchmove event
    * is over a given node (similar to dragover).
@@ -130,14 +130,14 @@ export interface ParentConfig<T> {
    * Function that is called when a sort operation is to be performed.
    */
   performSort: (
-    state: DragState<T> | TouchState<T>,
+    state: DragState<T>,
     data: NodeDragEventData<T> | NodePointerEventData<T>
   ) => void;
   /**
    * Function that is called when a transfer operation is to be performed.
    */
   performTransfer: (
-    state: DragState<T> | TouchState<T>,
+    state: DragState<T>,
     data: NodeEventData<T> | ParentEventData<T>
   ) => void;
   /**
@@ -655,7 +655,7 @@ export interface DragStateProps<T> {
 }
 
 export interface ScrollData<T> {
-  state: DragState<T> | TouchState<T>;
+  state: DragState<T>;
   xThresh: number;
   yThresh: number;
   scrollParent: HTMLElement;
