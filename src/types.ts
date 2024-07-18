@@ -101,7 +101,7 @@ export interface ParentConfig<T> {
    * Function that is called when a node that is being moved by touchmove event
    * is over the parent (similar to dragover).
    */
-  handleTouchOverParent: (e: TouchOverParentEvent<T>) => void;
+  handlePointeroverParent: (e: PointeroverParentEvent<T>) => void;
   /**
    * A flag to indicate whether long touch is enabled.
    */
@@ -377,7 +377,7 @@ export interface PointeroverNodeEvent<T> extends Event {
  * The payload of the custom event dispatched when a node is "touched" over a
  * parent.
  */
-export interface TouchOverParentEvent<T> extends Event {
+export interface PointeroverParentEvent<T> extends Event {
   detail: {
     e: PointerEvent;
     targetData: ParentTargetData<T>;

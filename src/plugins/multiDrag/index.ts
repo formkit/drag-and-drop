@@ -19,7 +19,7 @@ import type {
 
 import {
   parents,
-  handleLongTouch,
+  handleLongPress,
   initDrag,
   initTouch,
   dragstartClasses,
@@ -282,7 +282,7 @@ export function multiTouchstart<T>(data: NodeTouchEventData<T>) {
     // handleTouchedNode(data, touchState);
   }
 
-  handleLongTouch(data, touchState);
+  handleLongPress(data, touchState);
 }
 
 export function handleSelections<T>(
