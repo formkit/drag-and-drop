@@ -428,6 +428,8 @@ function nodesMutated(mutationList: MutationRecord[]) {
 export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
   const parentData = parents.get(parent);
 
+  console.log("parentData values", parentData.getValues(parent));
+
   if (!parentData) return;
 
   const enabledNodes: Array<Node> = [];
@@ -441,7 +443,7 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
 
     const nodeData = nodes.get(node);
 
-    // Only tear down the node if someone has explicitly called dragAndDrop.
+    // Only tear down the node if we have explicitly called dragAndDrop
     if (force || !nodeData) {
       config.tearDownNode({ node, parent, nodeData, parentData });
     }

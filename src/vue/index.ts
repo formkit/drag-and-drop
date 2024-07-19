@@ -5,10 +5,20 @@ import {
   dragAndDrop as initParent,
   isBrowser,
   tearDown,
+  parents,
+  insertion,
 } from "../index";
+import {
+  onUnmounted,
+  ref,
+  provide,
+  defineComponent,
+  h,
+  PropType,
+  onMounted,
+  inject,
+} from "vue";
 import { handleVueElements } from "./utils";
-import { onUnmounted, ref } from "vue";
-
 export * from "./types";
 
 /**
@@ -117,10 +127,14 @@ function handleParent<T>(
   return (parent: HTMLElement) => {
     parentValues.set(parent, values);
 
+    let setter = config.nestedConfig?.nestedSetValues
+      ? config.nestedConfig.nestedSetValues
+      : setValues;
+
     initParent({
       parent,
       getValues,
-      setValues,
+      setValues: setter,
       config: {
         ...config,
         dropZones: [],
@@ -128,3 +142,215 @@ function handleParent<T>(
     });
   };
 }
+
+/**
+ * Responsible for providing the parent element itself.
+ */
+export const NestedGroup = /* #__PURE__ */ defineComponent(
+  (props, { slots }) => {
+    const parentRef = ref();
+
+    provide("nestedGroup", parentRef);
+
+    return () =>
+      slots.default
+        ? h(
+            props.tag,
+            {
+              ref: parentRef,
+            },
+            slots
+          )
+        : null;
+  },
+  {
+    props: {
+      tag: {
+        type: String as PropType<string>,
+        default: "div",
+      },
+    },
+  }
+);
+
+// export function useNestedDragAndDrop(
+//   group: HTMLElement,
+//   parent: HTMLElement,
+//   values: Array<any>
+// ) {
+//   dragAndDrop({
+//     parent: group,
+//     values: ref(values),
+//   });
+// }
+
+function nestedSetValues(newValues: Array<any>, parent: HTMLElement) {
+  const previousValues = parentValues.get(parent);
+
+  const parentData = parents.get(parent);
+
+  if (!parentData) {
+    console.warn("No parent data found");
+
+    return;
+  }
+
+  const ancestorValues = parentValues.get(parentData.config.nestedConfig.group);
+
+  // const flattenedValues = parentData.values.flat();
+
+  console.log("ancestor values", ancestorValues);
+
+  if (!ancestorValues) {
+    console.warn("No ancestor values found");
+
+    return;
+  }
+
+  const coordinates: Array<Array<number>> = [];
+
+  console.log("previous values", previousValues.value);
+
+  setValueAtCoordinatesUsingFindIndex(
+    ancestorValues.value,
+    previousValues.value,
+    newValues,
+    parent
+  );
+
+  previousValues.value = newValues;
+  console.log("previousValues", previousValues);
+
+  parentValues.set(parent, previousValues);
+
+  console.log("new values", newValues);
+}
+
+function findArrayCoordinates(
+  obj: any,
+  targetArray: Array<any>,
+  path: Array<any> = []
+) {
+  let result: Array<any> = [];
+
+  if (obj === targetArray) result.push(path);
+
+  if (Array.isArray(obj)) {
+    const index = obj.findIndex((el) => el === targetArray);
+    if (index !== -1) {
+      result.push([...path, index]);
+    } else {
+      for (let i = 0; i < obj.length; i++) {
+        result = result.concat(
+          findArrayCoordinates(obj[i], targetArray, [...path, i])
+        );
+      }
+    }
+  } else if (typeof obj === "object" && obj !== null) {
+    for (const key in obj) {
+      result = result.concat(
+        findArrayCoordinates(obj[key], targetArray, [...path, key])
+      );
+    }
+  }
+
+  return result;
+}
+
+function setValueAtCoordinatesUsingFindIndex(
+  obj,
+  targetArray,
+  newArray,
+  parent
+) {
+  const coordinates = findArrayCoordinates(obj, targetArray);
+  console.log("coordinates", coordinates);
+
+  coordinates.forEach((coords) => {
+    let current = obj;
+    for (let i = 0; i < coords.length - 1; i++) {
+      const index = coords[i];
+      current = current[index];
+      console.log("current", current);
+    }
+    const lastIndex = coords[coords.length - 1];
+    current[lastIndex] = newArray;
+    targetArray = newArray;
+
+    console.log("other current", current);
+    console.log("targetArray", targetArray);
+  });
+}
+
+/**
+ * Responsible for taking the provided values and initializing the drag and drop with
+ * a modified setValues function.
+ */
+export const NestedList = /* #__PURE__ */ defineComponent(
+  (props, { slots }) => {
+    const parentRef = ref();
+
+    const parentValues = ref(props.values);
+
+    onMounted(() => {
+      const groupEl = inject("nestedGroup");
+
+      if (!groupEl || !groupEl.value) {
+        console.warn("Group not found");
+
+        return;
+      }
+
+      // useNestedDragAndDrop(groupEl, parentRef.value, props.values);
+      console.log("parent values", parentValues);
+      dragAndDrop({
+        parent: parentRef,
+        values: parentValues,
+        group: "nested",
+        nestedConfig: {
+          group: groupEl.value,
+          nestedSetValues,
+        },
+        plugins: [insertion()],
+      });
+    });
+
+    // const parent = inject("nestedParent");
+
+    // console.log("parent", parent);
+
+    // const parentValues = inject("parentValues");
+
+    // dragAndDrop({
+    //   parent: parentRef,
+    //   values: parentValues,
+    // });
+
+    return () =>
+      slots.default
+        ? h(
+            props.tag,
+            {
+              ref: parentRef,
+            },
+            slots
+          )
+        : null;
+  },
+  {
+    props: {
+      values: {
+        type: Array as PropType<Array<any>>,
+        default: () => [],
+      },
+      tag: {
+        type: String as PropType<string>,
+        default: "div",
+      },
+      config: {
+        type: Object as PropType<VueDragAndDropData<unknown>>,
+        default: () => ({}),
+      },
+    },
+  }
+);
