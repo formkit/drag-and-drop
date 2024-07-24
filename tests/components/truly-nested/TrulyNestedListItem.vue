@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { dragAndDrop } from "../../src/vue";
+import { dragAndDrop } from "../../../src/vue";
+import { insertion } from "../../../src";
 
 const props = defineProps({
   item: Object,
@@ -12,7 +13,8 @@ dragAndDrop({
   parent: listItemRef,
   values: props.item.items,
   treeGroup: "nested",
-  group: "submitem",
+  group: "nested",
+  plugins: [insertion()],
 });
 </script>
 

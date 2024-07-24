@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { dragAndDrop } from "../../../src/vue/index";
+import { insertion, parents } from "../../../src/index";
 
 const lists = ref([
   {
@@ -77,13 +78,29 @@ dragAndDrop({
   values: lists,
   treeGroup: "nested",
   treeAncestor: true,
+  group: "nested",
+  plugins: [insertion()],
+});
+
+watch(lists, () => {
+  console.log("show me this changing", lists.value);
+});
+
+onMounted(() => {
+  setTimeout(() => {
+    console.log("show me this", parents);
+  }, 4000);
 });
 </script>
 
 <template>
-  <h2>Tree data Example</h2>
+  <h2>Truly Nested Tree data Example</h2>
   <div ref="parent">
-    <List v-for="list in lists" :key="list.id" :list="list" />
+    <TrulyNestedList
+      v-for="list in lists"
+      :key="list.id + list.name"
+      :list="list"
+    />
   </div>
   <!-- <NestedGroup name="nested-items" ref="parent">
     <List v-for="list in lists" :key="list.id" :list="list" />

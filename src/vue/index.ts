@@ -38,6 +38,7 @@ function getValues(parent: HTMLElement): Array<any> {
   const values = parentValues.get(parent);
 
   if (!values) {
+    console.log("parent", parent);
     console.warn("No values found for parent element");
 
     return [];
