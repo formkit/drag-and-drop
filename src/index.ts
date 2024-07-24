@@ -60,8 +60,10 @@ export const nodes: NodesData<any> = new WeakMap<Node, NodeData<any>>();
 
 export const parents: ParentsData<any> = new WeakMap<
   HTMLElement,
-  ParentData<any>
+  ParentData<unknown>
 >();
+
+export const treeAncestors: Record<string, HTMLElement> = {};
 
 /**
  * The state of the drag and drop. Is undefined until either dragstart or
@@ -195,6 +197,18 @@ export function parentValues<T>(
   parent: HTMLElement,
   parentData: ParentData<T>
 ): Array<T> {
+  const treeGroup = parentData.config.treeGroup;
+
+  if (treeGroup) {
+    const ancestorEl = treeAncestors[treeGroup];
+
+    const ancestorData = parents.get(ancestorEl);
+
+    if (!ancestorData) return [];
+
+    return [...ancestorData.getValues(parent)];
+  }
+
   return [...parentData.getValues(parent)];
 }
 
@@ -203,6 +217,20 @@ export function setParentValues<T>(
   parentData: ParentData<T>,
   values: Array<any>
 ): void {
+  const treeGroup = parentData.config.treeGroup;
+
+  if (treeGroup) {
+    const ancestorEl = treeAncestors[treeGroup];
+
+    const ancestorData = parents.get(ancestorEl);
+
+    if (!ancestorData) return;
+
+    ancestorData.setValues(values, parent, ancestorEl);
+
+    return;
+  }
+
   parentData.setValues(values, parent);
 }
 
@@ -294,7 +322,12 @@ export function dragAndDrop<T>({
 
   nodesObserver.observe(parent, { childList: true });
 
-  parents.set(parent, parentData as any);
+  parents.set(parent, parentData);
+
+  console.log(config);
+
+  if (config.treeAncestor && config.treeGroup)
+    treeAncestors[config.treeGroup] = parent;
 
   config.plugins?.forEach((plugin) => {
     plugin(parent)?.tearDown?.();
@@ -426,9 +459,8 @@ function nodesMutated(mutationList: MutationRecord[]) {
  * @internal
  */
 export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
+  console.log("remap nodes", parent);
   const parentData = parents.get(parent);
-
-  console.log("parentData values", parentData.getValues(parent));
 
   if (!parentData) return;
 
@@ -454,6 +486,8 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
       enabledNodes.push(node);
     }
   }
+
+  console.log("new values after remap", parentData.getValues(parent));
 
   if (
     enabledNodes.length !== parentData.getValues(parent).length &&
@@ -528,6 +562,8 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
   parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
     plugin(parent)?.remapFinished?.();
   });
+
+  console.log("nodes remapped", parentData);
 }
 
 export function remapFinished() {
@@ -580,6 +616,8 @@ export function initDrag<T>(eventData: NodeDragEventData<T>): DragState<T> {
       eventData.e.offsetY
     );
   }
+
+  dragState.clonedDraggedNode = undefined;
 
   return dragState;
 }
@@ -701,7 +739,7 @@ export function end<T>(_eventData: NodeEventData<T>, state: DragState<T>) {
 
   const config = parents.get(state.initialParent.el)?.config;
 
-  const isSynth = "clonedDraggedNode" in state;
+  const isSynth = "clonedDraggedNode" in state && state.clonedDraggedNode;
 
   const dropZoneClass = isSynth
     ? config?.touchDropZoneClass
@@ -728,7 +766,7 @@ export function end<T>(_eventData: NodeEventData<T>, state: DragState<T>) {
     );
   }
 
-  if ("clonedDraggedNode" in state) state.clonedDraggedNode.remove();
+  if (isSynth) state.clonedDraggedNode.remove();
 }
 
 export function handleTouchstart<T>(eventData: NodeEventData<T>) {

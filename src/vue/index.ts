@@ -24,7 +24,8 @@ export * from "./types";
 /**
  * Global store for parent els to values.
  */
-const parentValues: WeakMap<HTMLElement, Ref<Array<any>>> = new WeakMap();
+const parentValues: WeakMap<HTMLElement, Ref<Array<any>> | Array<any>> =
+  new WeakMap();
 
 /**
  * Returns the values of the parent element.
@@ -42,7 +43,86 @@ function getValues(parent: HTMLElement): Array<any> {
     return [];
   }
 
-  return values.value;
+  return "value" in values ? values.value : values;
+}
+
+// function nestedSetValues(newValues: Array<any>, parent: HTMLElement) {
+//   const previousValues = parentValues.get(parent);
+
+//   if (!previousValues) {
+//     console.warn("No previous values found");
+
+//     return;
+//   }
+
+//   const parentData = parents.get(parent);
+
+//   if (!parentData) {
+//     console.warn("No parent data found");
+
+//     return;
+//   }
+
+//   console.log("getting here");
+
+//   const ancestorValues = parentValues.get(parentData.config.nestedConfig.group);
+
+//   if (!ancestorValues) {
+//     console.warn("No ancestor values found");
+
+//     return;
+//   }
+
+//   setValueAtCoordinatesUsingFindIndex(
+//     ancestorValues.value,
+//     previousValues.value,
+//     newValues,
+//     parent
+//   );
+
+//   previousValues.value = newValues;
+
+//   parentValues.set(parent, previousValues);
+// }
+
+function setAncestorValues(
+  newChildValues: Array<any>,
+  parent: HTMLElement,
+  ancestorEl: HTMLElement
+) {
+  console.log("new child values", newChildValues);
+  const currentParentValues = parentValues.get(parent);
+
+  const ancestorValues = parentValues.get(ancestorEl);
+
+  if (!ancestorValues || !("value" in ancestorValues)) {
+    console.warn("No ancestor values found");
+
+    return;
+  }
+
+  const parentData = parents.get(parent);
+
+  if (!parentData) {
+    console.warn("No parent data found");
+
+    return;
+  }
+
+  const updatedValue = setValueAtCoordinatesUsingFindIndex(
+    ancestorValues.value,
+    currentParentValues,
+    newChildValues,
+    parent
+  );
+
+  if (!updatedValue) {
+    console.warn("No updated value found");
+
+    return;
+  }
+
+  parentValues.set(parent, updatedValue);
 }
 
 /**
@@ -57,9 +137,12 @@ function getValues(parent: HTMLElement): Array<any> {
 function setValues(newValues: Array<any>, parent: HTMLElement): void {
   const currentValues = parentValues.get(parent);
 
-  if (currentValues) currentValues.value = newValues;
+  if (currentValues && "value" in currentValues) {
+    currentValues.value = newValues;
+  } else if (currentValues) {
+    parentValues.set(parent, newValues);
+  }
 }
-
 /**
  * Entry point for Vue drag and drop.
  *
@@ -86,6 +169,7 @@ export function dragAndDrop<T>(
  * a ref of the values to use in your template.
  *
  * @param initialValues - The initial values of the parent element.
+ *
  * @returns The parent element and values for drag and drop.
  */
 export function useDragAndDrop<T>(
@@ -122,14 +206,12 @@ export function useDragAndDrop<T>(
  */
 function handleParent<T>(
   config: Partial<VueParentConfig<T>>,
-  values: Ref<Array<any>>
+  values: Ref<Array<T>> | Array<T>
 ) {
   return (parent: HTMLElement) => {
     parentValues.set(parent, values);
 
-    let setter = config.nestedConfig?.nestedSetValues
-      ? config.nestedConfig.nestedSetValues
-      : setValues;
+    const setter = config.treeGroup ? setAncestorValues : setValues;
 
     initParent({
       parent,
@@ -173,59 +255,6 @@ export const NestedGroup = /* #__PURE__ */ defineComponent(
   }
 );
 
-// export function useNestedDragAndDrop(
-//   group: HTMLElement,
-//   parent: HTMLElement,
-//   values: Array<any>
-// ) {
-//   dragAndDrop({
-//     parent: group,
-//     values: ref(values),
-//   });
-// }
-
-function nestedSetValues(newValues: Array<any>, parent: HTMLElement) {
-  const previousValues = parentValues.get(parent);
-
-  const parentData = parents.get(parent);
-
-  if (!parentData) {
-    console.warn("No parent data found");
-
-    return;
-  }
-
-  const ancestorValues = parentValues.get(parentData.config.nestedConfig.group);
-
-  // const flattenedValues = parentData.values.flat();
-
-  console.log("ancestor values", ancestorValues);
-
-  if (!ancestorValues) {
-    console.warn("No ancestor values found");
-
-    return;
-  }
-
-  const coordinates: Array<Array<number>> = [];
-
-  console.log("previous values", previousValues.value);
-
-  setValueAtCoordinatesUsingFindIndex(
-    ancestorValues.value,
-    previousValues.value,
-    newValues,
-    parent
-  );
-
-  previousValues.value = newValues;
-  console.log("previousValues", previousValues);
-
-  parentValues.set(parent, previousValues);
-
-  console.log("new values", newValues);
-}
-
 function findArrayCoordinates(
   obj: any,
   targetArray: Array<any>,
@@ -264,22 +293,26 @@ function setValueAtCoordinatesUsingFindIndex(
   parent
 ) {
   const coordinates = findArrayCoordinates(obj, targetArray);
-  console.log("coordinates", coordinates);
+
+  let newValues;
 
   coordinates.forEach((coords) => {
     let current = obj;
     for (let i = 0; i < coords.length - 1; i++) {
       const index = coords[i];
       current = current[index];
-      console.log("current", current);
     }
     const lastIndex = coords[coords.length - 1];
-    current[lastIndex] = newArray;
-    targetArray = newArray;
 
-    console.log("other current", current);
-    console.log("targetArray", targetArray);
+    current[lastIndex] = newArray;
+
+    // We want to access getter of object we are setting to set the new values
+    // of the nested parent element (should be a part of the original structure of
+    // ancestor values).
+    newValues = current[lastIndex];
   });
+
+  return newValues;
 }
 
 /**
@@ -295,36 +328,17 @@ export const NestedList = /* #__PURE__ */ defineComponent(
     onMounted(() => {
       const groupEl = inject("nestedGroup");
 
-      if (!groupEl || !groupEl.value) {
-        console.warn("Group not found");
-
-        return;
-      }
-
       // useNestedDragAndDrop(groupEl, parentRef.value, props.values);
-      console.log("parent values", parentValues);
       dragAndDrop({
         parent: parentRef,
         values: parentValues,
         group: "nested",
         nestedConfig: {
           group: groupEl.value,
-          nestedSetValues,
         },
         plugins: [insertion()],
       });
     });
-
-    // const parent = inject("nestedParent");
-
-    // console.log("parent", parent);
-
-    // const parentValues = inject("parentValues");
-
-    // dragAndDrop({
-    //   parent: parentRef,
-    //   values: parentValues,
-    // });
 
     return () =>
       slots.default

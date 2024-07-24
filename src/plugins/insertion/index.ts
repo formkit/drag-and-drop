@@ -531,6 +531,14 @@ export function handleEnd<T>(
 ) {
   if (!state) return;
 
+  console.log("handleEnd", data);
+
+  const nestedConfig = data.targetData.parent.data.config.nestedConfig;
+
+  console.log("nested config", nestedConfig);
+
+  data.e.preventDefault();
+
   const draggedParentValues = parentValues(
     state.initialParent.el,
     state.initialParent.data
@@ -593,20 +601,27 @@ export function handleEnd<T>(
       state.lastParent.el,
       state.lastParent.data
     );
+    const draggedParentValues = parentValues(
+      state.initialParent.el,
+      state.initialParent.data
+    );
 
+    console.log("target parent values", targetParentValues);
+    console.log("dragged parent values", draggedParentValues);
     // For the time being, we will not be remoing the value of the original dragged parent.
     let index = insertionState.draggedOverNodes[0].data.index;
-
     if (insertionState.ascending) index++;
-
-    const insertValues = state.dynamicValues
+    const insertValues = state.dynamicValues.length
       ? state.dynamicValues
       : draggedValues;
-
     targetParentValues.splice(index, 0, ...insertValues);
-
     setParentValues(state.lastParent.el, state.lastParent.data, [
       ...targetParentValues,
+    ]);
+
+    draggedParentValues.splice(state.initialIndex, draggedValues.length);
+    setParentValues(state.initialParent.el, state.initialParent.data, [
+      ...draggedParentValues,
     ]);
 
     const transferEventData = {
@@ -626,10 +641,8 @@ export function handleEnd<T>(
       sourcePreviousPosition: state.initialIndex,
       targetPosition: index,
     };
-
     if (data.targetData.parent.data.config.onTransfer)
       data.targetData.parent.data.config.onTransfer(transferEventData);
-
     if (state.lastParent.data.config.onTransfer)
       state.lastParent.data.config.onTransfer(transferEventData);
   }

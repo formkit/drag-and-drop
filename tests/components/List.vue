@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { NestedList } from "../../src/vue";
+import { dragAndDrop } from "../../src/vue";
 
 // import { useNestedDragAndDrop } from "../../src/vue/index";
 
@@ -8,15 +8,30 @@ const props = defineProps({
   list: Object,
 });
 
-// console.log(props.list.items);
+const parent = ref();
+
+// const listItemComputed = computed(() => {
+//   console.log("listItemComputed", props.list.items);
+//   return props.list.items;
+// });
+
+dragAndDrop({
+  parent,
+  values: props.list.items,
+  treeGroup: "nested",
+});
 </script>
 
 <template>
-  <div class="list">
-    <h2>{{ list.name }}</h2>
-    <NestedList :values="props.list.items">
-      <ListItem v-for="item in list.items" :key="item" :list-item="item" />
-    </NestedList>
+  <div class="list" v-if="list">
+    <h3>
+      {{ list.name }}
+    </h3>
+    <div ref="parent">
+      <div v-for="item in list.items" :key="item.id">
+        {{ item.name }}
+      </div>
+    </div>
   </div>
 </template>
 
