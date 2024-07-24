@@ -10,11 +10,6 @@ const props = defineProps({
 
 const parent = ref();
 
-// const listItemComputed = computed(() => {
-//   console.log("listItemComputed", props.list.items);
-//   return props.list.items;
-// });
-
 dragAndDrop({
   parent,
   values: props.list.items,

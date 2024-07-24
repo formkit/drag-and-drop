@@ -85,45 +85,45 @@ function getValues(parent: HTMLElement): Array<any> {
 //   parentValues.set(parent, previousValues);
 // }
 
-function setAncestorValues(
-  newChildValues: Array<any>,
-  parent: HTMLElement,
-  ancestorEl: HTMLElement
-) {
-  console.log("new child values", newChildValues);
-  const currentParentValues = parentValues.get(parent);
+// function setAncestorValues(
+//   newChildValues: Array<any>,
+//   parent: HTMLElement,
+//   ancestorEl: HTMLElement
+// ) {
+//   console.log("new child values", newChildValues);
+//   const currentParentValues = parentValues.get(parent);
 
-  const ancestorValues = parentValues.get(ancestorEl);
+//   const ancestorValues = parentValues.get(ancestorEl);
 
-  if (!ancestorValues || !("value" in ancestorValues)) {
-    console.warn("No ancestor values found");
+//   if (!ancestorValues || !("value" in ancestorValues)) {
+//     console.warn("No ancestor values found");
 
-    return;
-  }
+//     return;
+//   }
 
-  const parentData = parents.get(parent);
+//   const parentData = parents.get(parent);
 
-  if (!parentData) {
-    console.warn("No parent data found");
+//   if (!parentData) {
+//     console.warn("No parent data found");
 
-    return;
-  }
+//     return;
+//   }
 
-  const updatedValue = setValueAtCoordinatesUsingFindIndex(
-    ancestorValues.value,
-    currentParentValues,
-    newChildValues,
-    parent
-  );
+//   const updatedValue = setValueAtCoordinatesUsingFindIndex(
+//     ancestorValues.value,
+//     currentParentValues,
+//     newChildValues,
+//     parent
+//   );
 
-  if (!updatedValue) {
-    console.warn("No updated value found");
+//   if (!updatedValue) {
+//     console.warn("No updated value found");
 
-    return;
-  }
+//     return;
+//   }
 
-  parentValues.set(parent, updatedValue);
-}
+//   parentValues.set(parent, updatedValue);
+// }
 
 /**
  * Sets the values of the parent element.
@@ -211,12 +211,10 @@ function handleParent<T>(
   return (parent: HTMLElement) => {
     parentValues.set(parent, values);
 
-    const setter = config.treeGroup ? setAncestorValues : setValues;
-
     initParent({
       parent,
       getValues,
-      setValues: setter,
+      setValues,
       config: {
         ...config,
         dropZones: [],
@@ -254,66 +252,6 @@ export const NestedGroup = /* #__PURE__ */ defineComponent(
     },
   }
 );
-
-function findArrayCoordinates(
-  obj: any,
-  targetArray: Array<any>,
-  path: Array<any> = []
-) {
-  let result: Array<any> = [];
-
-  if (obj === targetArray) result.push(path);
-
-  if (Array.isArray(obj)) {
-    const index = obj.findIndex((el) => el === targetArray);
-    if (index !== -1) {
-      result.push([...path, index]);
-    } else {
-      for (let i = 0; i < obj.length; i++) {
-        result = result.concat(
-          findArrayCoordinates(obj[i], targetArray, [...path, i])
-        );
-      }
-    }
-  } else if (typeof obj === "object" && obj !== null) {
-    for (const key in obj) {
-      result = result.concat(
-        findArrayCoordinates(obj[key], targetArray, [...path, key])
-      );
-    }
-  }
-
-  return result;
-}
-
-function setValueAtCoordinatesUsingFindIndex(
-  obj,
-  targetArray,
-  newArray,
-  parent
-) {
-  const coordinates = findArrayCoordinates(obj, targetArray);
-
-  let newValues;
-
-  coordinates.forEach((coords) => {
-    let current = obj;
-    for (let i = 0; i < coords.length - 1; i++) {
-      const index = coords[i];
-      current = current[index];
-    }
-    const lastIndex = coords[coords.length - 1];
-
-    current[lastIndex] = newArray;
-
-    // We want to access getter of object we are setting to set the new values
-    // of the nested parent element (should be a part of the original structure of
-    // ancestor values).
-    newValues = current[lastIndex];
-  });
-
-  return newValues;
-}
 
 /**
  * Responsible for taking the provided values and initializing the drag and drop with

@@ -197,19 +197,79 @@ export function parentValues<T>(
   parent: HTMLElement,
   parentData: ParentData<T>
 ): Array<T> {
-  const treeGroup = parentData.config.treeGroup;
+  // const treeGroup = parentData.config.treeGroup;
 
-  if (treeGroup) {
-    const ancestorEl = treeAncestors[treeGroup];
+  // if (treeGroup) {
+  //   const ancestorEl = treeAncestors[treeGroup];
 
-    const ancestorData = parents.get(ancestorEl);
+  //   const ancestorData = parents.get(ancestorEl);
 
-    if (!ancestorData) return [];
+  //   if (!ancestorData) return [];
 
-    return [...ancestorData.getValues(parent)];
-  }
+  //   return [...ancestorData.getValues(parent)];
+  // }
 
   return [...parentData.getValues(parent)];
+}
+
+function findArrayCoordinates(
+  obj: any,
+  targetArray: Array<any>,
+  path: Array<any> = []
+) {
+  let result: Array<any> = [];
+
+  if (obj === targetArray) result.push(path);
+
+  if (Array.isArray(obj)) {
+    const index = obj.findIndex((el) => el === targetArray);
+    if (index !== -1) {
+      result.push([...path, index]);
+    } else {
+      for (let i = 0; i < obj.length; i++) {
+        result = result.concat(
+          findArrayCoordinates(obj[i], targetArray, [...path, i])
+        );
+      }
+    }
+  } else if (typeof obj === "object" && obj !== null) {
+    for (const key in obj) {
+      result = result.concat(
+        findArrayCoordinates(obj[key], targetArray, [...path, key])
+      );
+    }
+  }
+
+  return result;
+}
+
+function setValueAtCoordinatesUsingFindIndex(
+  obj,
+  targetArray,
+  newArray,
+  parent
+) {
+  const coordinates = findArrayCoordinates(obj, targetArray);
+
+  let newValues;
+
+  coordinates.forEach((coords) => {
+    let current = obj;
+    for (let i = 0; i < coords.length - 1; i++) {
+      const index = coords[i];
+      current = current[index];
+    }
+    const lastIndex = coords[coords.length - 1];
+
+    current[lastIndex] = newArray;
+
+    // We want to access getter of object we are setting to set the new values
+    // of the nested parent element (should be a part of the original structure of
+    // ancestor values).
+    newValues = current[lastIndex];
+  });
+
+  return newValues;
 }
 
 export function setParentValues<T>(
@@ -226,7 +286,24 @@ export function setParentValues<T>(
 
     if (!ancestorData) return;
 
-    ancestorData.setValues(values, parent, ancestorEl);
+    const ancestorValues = ancestorData.getValues(ancestorEl);
+
+    const initialParentValues = parentData.getValues(parent);
+
+    const updatedValues = setValueAtCoordinatesUsingFindIndex(
+      ancestorValues,
+      initialParentValues,
+      values,
+      parent
+    );
+
+    if (!updatedValues) {
+      console.warn("No updated value found");
+
+      return;
+    }
+
+    parentData.setValues(updatedValues, parent);
 
     return;
   }
@@ -323,8 +400,6 @@ export function dragAndDrop<T>({
   nodesObserver.observe(parent, { childList: true });
 
   parents.set(parent, parentData);
-
-  console.log(config);
 
   if (config.treeAncestor && config.treeGroup)
     treeAncestors[config.treeGroup] = parent;
@@ -459,7 +534,6 @@ function nodesMutated(mutationList: MutationRecord[]) {
  * @internal
  */
 export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
-  console.log("remap nodes", parent);
   const parentData = parents.get(parent);
 
   if (!parentData) return;
@@ -486,8 +560,6 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
       enabledNodes.push(node);
     }
   }
-
-  console.log("new values after remap", parentData.getValues(parent));
 
   if (
     enabledNodes.length !== parentData.getValues(parent).length &&
@@ -562,8 +634,6 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
   parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
     plugin(parent)?.remapFinished?.();
   });
-
-  console.log("nodes remapped", parentData);
 }
 
 export function remapFinished() {
