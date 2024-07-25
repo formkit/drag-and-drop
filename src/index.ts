@@ -270,17 +270,11 @@ export function setParentValues<T>(
   if (treeGroup) {
     const ancestorEl = treeAncestors[treeGroup];
 
-    console.log("ancestor el", ancestorEl);
-
-    console.log("current parent", parent);
-
     const ancestorData = parents.get(ancestorEl);
 
     if (!ancestorData) return;
 
     const ancestorValues = ancestorData.getValues(ancestorEl);
-
-    console.log("set ancestor values", ancestorValues);
 
     const initialParentValues = parentData.getValues(parent);
 
@@ -290,8 +284,6 @@ export function setParentValues<T>(
       values,
       parent
     );
-
-    console.log("updated values", updatedValues);
 
     if (!updatedValues) {
       console.warn("No updated value found");
@@ -529,7 +521,6 @@ function nodesMutated(mutationList: MutationRecord[]) {
  * @internal
  */
 export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
-  console.log("parent remapped", parent);
   const parentData = parents.get(parent);
 
   if (!parentData) return;
@@ -561,9 +552,6 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     enabledNodes.length !== parentData.getValues(parent).length &&
     !config.disabled
   ) {
-    console.log("parent", parent);
-    console.log("values", parentData.getValues(parent));
-    console.log("enabled nodes", enabledNodes);
     console.warn(
       "The number of enabled nodes does not match the number of values."
     );
@@ -1158,6 +1146,13 @@ export function validateTransfer<T>(
   if (data.targetData.parent.el === state.lastParent.el) return false;
 
   const targetConfig = data.targetData.parent.data.config;
+
+  if (
+    targetConfig.treeGroup &&
+    state.draggedNode.el.contains(data.targetData.parent.el)
+  ) {
+    return false;
+  }
 
   if (targetConfig.dropZone === false) return false;
 

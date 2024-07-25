@@ -38,7 +38,6 @@ function getValues(parent: HTMLElement): Array<any> {
   const values = parentValues.get(parent);
 
   if (!values) {
-    console.log("parent", parent);
     console.warn("No values found for parent element");
 
     return [];
@@ -46,85 +45,6 @@ function getValues(parent: HTMLElement): Array<any> {
 
   return "value" in values ? values.value : values;
 }
-
-// function nestedSetValues(newValues: Array<any>, parent: HTMLElement) {
-//   const previousValues = parentValues.get(parent);
-
-//   if (!previousValues) {
-//     console.warn("No previous values found");
-
-//     return;
-//   }
-
-//   const parentData = parents.get(parent);
-
-//   if (!parentData) {
-//     console.warn("No parent data found");
-
-//     return;
-//   }
-
-//   console.log("getting here");
-
-//   const ancestorValues = parentValues.get(parentData.config.nestedConfig.group);
-
-//   if (!ancestorValues) {
-//     console.warn("No ancestor values found");
-
-//     return;
-//   }
-
-//   setValueAtCoordinatesUsingFindIndex(
-//     ancestorValues.value,
-//     previousValues.value,
-//     newValues,
-//     parent
-//   );
-
-//   previousValues.value = newValues;
-
-//   parentValues.set(parent, previousValues);
-// }
-
-// function setAncestorValues(
-//   newChildValues: Array<any>,
-//   parent: HTMLElement,
-//   ancestorEl: HTMLElement
-// ) {
-//   console.log("new child values", newChildValues);
-//   const currentParentValues = parentValues.get(parent);
-
-//   const ancestorValues = parentValues.get(ancestorEl);
-
-//   if (!ancestorValues || !("value" in ancestorValues)) {
-//     console.warn("No ancestor values found");
-
-//     return;
-//   }
-
-//   const parentData = parents.get(parent);
-
-//   if (!parentData) {
-//     console.warn("No parent data found");
-
-//     return;
-//   }
-
-//   const updatedValue = setValueAtCoordinatesUsingFindIndex(
-//     ancestorValues.value,
-//     currentParentValues,
-//     newChildValues,
-//     parent
-//   );
-
-//   if (!updatedValue) {
-//     console.warn("No updated value found");
-
-//     return;
-//   }
-
-//   parentValues.set(parent, updatedValue);
-// }
 
 /**
  * Sets the values of the parent element.

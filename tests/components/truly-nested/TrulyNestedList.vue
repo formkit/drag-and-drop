@@ -13,7 +13,7 @@ const parent = ref();
 
 dragAndDrop({
   parent,
-  values: props.list.items,
+  values: props.list.items || [],
   treeGroup: "nested",
   group: "nested",
   plugins: [insertion()],
@@ -28,6 +28,7 @@ dragAndDrop({
     <div ref="parent">
       <TrulyNestedListItem
         v-for="item in list.items"
+        :id="item.name"
         :key="item.id + item.name"
         :item="item"
       />

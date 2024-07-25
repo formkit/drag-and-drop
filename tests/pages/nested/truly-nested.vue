@@ -82,10 +82,6 @@ dragAndDrop({
   plugins: [insertion()],
 });
 
-watch(lists, () => {
-  console.log("show me this changing", lists.value);
-});
-
 onMounted(() => {
   setTimeout(() => {
     console.log("show me this", parents);
@@ -98,6 +94,7 @@ onMounted(() => {
   <div ref="parent">
     <TrulyNestedList
       v-for="list in lists"
+      :id="list.name"
       :key="list.id + list.name"
       :list="list"
     />

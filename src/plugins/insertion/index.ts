@@ -531,11 +531,7 @@ export function handleEnd<T>(
 ) {
   if (!state) return;
 
-  console.log("handleEnd", data);
-
   const nestedConfig = data.targetData.parent.data.config.nestedConfig;
-
-  console.log("nested config", nestedConfig);
 
   data.e.preventDefault();
 
