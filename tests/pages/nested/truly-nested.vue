@@ -79,19 +79,23 @@ dragAndDrop({
   treeGroup: "nested",
   treeAncestor: true,
   group: "nested",
-  plugins: [insertion()],
+  plugins: [
+    insertion({
+      boundary: "#main-parent",
+    }),
+  ],
 });
 
 onMounted(() => {
   setTimeout(() => {
-    console.log("show me this", parents);
+    // console.log("show me this", parents);
   }, 4000);
 });
 </script>
 
 <template>
   <h2>Truly Nested Tree data Example</h2>
-  <div ref="parent">
+  <div ref="parent" id="main-parent">
     <TrulyNestedList
       v-for="list in lists"
       :id="list.name"

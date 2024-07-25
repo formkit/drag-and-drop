@@ -276,6 +276,17 @@ export interface NodePointerEventData<T> extends NodeEventData<T> {
   targetData: NodeTargetData<T>;
 }
 
+export interface ParentPointerEventData<T> extends ParentEventData<T> {
+  /**
+   * The event that was triggered.
+   */
+  e: PointerEvent;
+  /**
+   * The data of the target node.
+   */
+  targetData: ParentTargetData<T>;
+}
+
 /**
  * The data passed to the parent event listener.
  *

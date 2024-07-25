@@ -7,15 +7,16 @@ import {
   setParentValues,
   state,
   validateTransfer,
+  parentEventData,
+  addEvents,
 } from "../../index";
 import type {
   DragState,
   NodeDragEventData,
+  ParentPointerEventData,
   NodeRecord,
-  NodeTouchEventData,
   ParentConfig,
   ParentEventData,
-  TouchState,
 } from "../../types";
 import { eventCoordinates, removeClass } from "../../utils";
 
@@ -42,6 +43,11 @@ export function insertion<T>(
     } as InsertionConfig<T>;
 
     return {
+      teardown() {
+        if (parentData.abortControllers.root) {
+          parentData.abortControllers.root.abort();
+        }
+      },
       setup() {
         insertionParentConfig.handleDragstart =
           insertionConfig.handleDragstart || handleDragstart;
@@ -54,6 +60,9 @@ export function insertion<T>(
 
         insertionParentConfig.handleEnd =
           insertionConfig.handleEnd || handleEnd;
+
+        // insertionParentConfig.handlepointerleave =
+        //   insertionConfig.handlepointerleave || handlepointerleave;
 
         parentData.config = insertionParentConfig;
 
@@ -74,6 +83,14 @@ export function insertion<T>(
         window.addEventListener("scroll", defineRanges.bind(null, parent));
 
         window.addEventListener("resize", defineRanges.bind(null, parent));
+
+        const boundary = document.getElementById("main-parent");
+
+        // const rootAbortControllers = addEvents(boundary, {
+        //   pointerleave: handlePointerleave.bind(null, parentData.config),
+        // });
+
+        boundary?.addEventListener("dragleave", handlePointerleave);
       },
 
       remapFinished() {
@@ -81,6 +98,19 @@ export function insertion<T>(
       },
     };
   };
+}
+
+export function handlePointerleave(e: DragEvent) {
+  // console.log("handle pointerleave", data.targetData.parent.el);
+  if (!(e.currentTarget instanceof HTMLElement)) return;
+
+  if (e.currentTarget.contains(e.target as Node)) return;
+
+  const insertionPoint = document.getElementById("insertion-point");
+
+  if (!insertionPoint) return;
+
+  insertionPoint.style.display = "none";
 }
 
 export function handleDragstart<T>(data: NodeDragEventData<T>) {
@@ -602,8 +632,6 @@ export function handleEnd<T>(
       state.initialParent.data
     );
 
-    console.log("target parent values", targetParentValues);
-    console.log("dragged parent values", draggedParentValues);
     // For the time being, we will not be remoing the value of the original dragged parent.
     let index = insertionState.draggedOverNodes[0].data.index;
     if (insertionState.ascending) index++;
