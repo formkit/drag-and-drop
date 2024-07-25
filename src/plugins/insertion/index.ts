@@ -17,6 +17,7 @@ import type {
   NodeRecord,
   ParentConfig,
   ParentEventData,
+  NodePointerEventData,
 } from "../../types";
 import { eventCoordinates, removeClass } from "../../utils";
 
@@ -61,9 +62,6 @@ export function insertion<T>(
         insertionParentConfig.handleEnd =
           insertionConfig.handleEnd || handleEnd;
 
-        // insertionParentConfig.handlepointerleave =
-        //   insertionConfig.handlepointerleave || handlepointerleave;
-
         parentData.config = insertionParentConfig;
 
         if (parentData.config.sortable === false) return;
@@ -85,10 +83,6 @@ export function insertion<T>(
         window.addEventListener("resize", defineRanges.bind(null, parent));
 
         const boundary = document.getElementById("main-parent");
-
-        // const rootAbortControllers = addEvents(boundary, {
-        //   pointerleave: handlePointerleave.bind(null, parentData.config),
-        // });
 
         boundary?.addEventListener("dragleave", handlePointerleave);
       },
@@ -136,16 +130,19 @@ function ascendingVertical(
 
   if (!nextNodeCoords) {
     return {
-      y: [center, center + nodeCoords.height / 2],
+      y: [center, center + nodeCoords.height / 2 + 10],
       x: [nodeCoords.left, nodeCoords.right],
       vertical: true,
     };
   }
 
   const nextNodeCenter = nextNodeCoords.top + nextNodeCoords.height / 2;
-
+  // center + Math.abs(center - nextNodeCenter) / 2
   return {
-    y: [center, center + Math.abs(center - nextNodeCenter) / 2],
+    y: [
+      center,
+      nodeCoords.bottom + Math.abs(nodeCoords.bottom - nextNodeCoords.top) / 2,
+    ],
     x: [nodeCoords.left, nodeCoords.right],
     vertical: true,
   };
@@ -159,7 +156,7 @@ function descendingVertical(
 
   if (!prevNodeCoords) {
     return {
-      y: [center - nodeCoords.height / 2, center],
+      y: [center - nodeCoords.height / 2 - 10, center],
       x: [nodeCoords.left, nodeCoords.right],
       vertical: true,
     };
@@ -309,7 +306,11 @@ function defineRanges(parent: HTMLElement) {
       (!prevNodeCoords && aboveOrBelowAfter);
 
     if (fullishWidth) {
-      node.data.range.ascending = ascendingVertical(nodeCoords, nextNodeCoords);
+      node.data.range.ascending = ascendingVertical(
+        nodeCoords,
+        nextNodeCoords,
+        node
+      );
       node.data.range.descending = descendingVertical(
         nodeCoords,
         prevNodeCoords
@@ -349,19 +350,15 @@ function defineRanges(parent: HTMLElement) {
 export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
   if (!state) return;
 
-  if (data.targetData.node.el === state.draggedNodes[0].el) {
+  if (data.targetData.node.el === state.draggedNodes[0].el)
     removeInsertionPoint();
-  }
 
   data.targetData.parent.el === state.lastParent?.el
     ? sort(data, state)
     : transfer(data, state);
 }
 
-export function sort<T>(
-  data: NodeDragEventData<T>,
-  state: DragState<T> | TouchState<T>
-) {
+export function sort<T>(data: NodeDragEventData<T>, state: DragState<T>) {
   if (data.targetData.parent.data.config.sortable === false) return;
 
   const { x, y } = eventCoordinates(data.e as DragEvent);
@@ -397,10 +394,7 @@ export function sort<T>(
   data.e.preventDefault();
 }
 
-function transfer<T>(
-  data: NodeDragEventData<T>,
-  state: DragState<T> | TouchState<T>
-) {
+function transfer<T>(data: NodeDragEventData<T>, state: DragState<T>) {
   if (!validateTransfer(data, state)) return;
 
   const { x, y } = eventCoordinates(data.e as DragEvent);
@@ -518,6 +512,8 @@ function positionInsertionPoint<T>(
     const topPosition =
       position.y[ascending ? 1 : 0] - div.getBoundingClientRect().height / 2;
 
+    console.log("topPosition", topPosition);
+
     div.style.top = `${topPosition}px`;
 
     const leftCoordinate = position.x[0];
@@ -557,11 +553,10 @@ function positionInsertionPoint<T>(
 }
 
 export function handleEnd<T>(
-  data: NodeDragEventData<T> | NodeTouchEventData<T>
+  data: NodeDragEventData<T> | NodePointerEventData<T>
 ) {
+  return;
   if (!state) return;
-
-  const nestedConfig = data.targetData.parent.data.config.nestedConfig;
 
   data.e.preventDefault();
 

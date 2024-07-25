@@ -7,33 +7,33 @@ const lists = ref([
     id: 1,
     name: "Groceries",
     items: [
-      {
-        id: 1,
-        name: "Fruits",
-        items: [
-          { id: 1, name: "Apples" },
-          { id: 2, name: "Bananas" },
-          { id: 3, name: "Cherries" },
-        ],
-      },
-      {
-        id: 2,
-        name: "Vegetables",
-        items: [
-          { id: 1, name: "Carrots" },
-          { id: 2, name: "Broccoli" },
-          { id: 3, name: "Spinach" },
-        ],
-      },
-      {
-        id: 3,
-        name: "Dairy",
-        items: [
-          { id: 1, name: "Milk" },
-          { id: 2, name: "Cheese" },
-          { id: 3, name: "Yogurt" },
-        ],
-      },
+      // {
+      //   id: 1,
+      //   name: "Fruits",
+      //   items: [
+      //     { id: 1, name: "Apples" },
+      //     { id: 2, name: "Bananas" },
+      //     { id: 3, name: "Cherries" },
+      //   ],
+      // },
+      // {
+      //   id: 2,
+      //   name: "Vegetables",
+      //   items: [
+      //     { id: 1, name: "Carrots" },
+      //     { id: 2, name: "Broccoli" },
+      //     { id: 3, name: "Spinach" },
+      //   ],
+      // },
+      // {
+      //   id: 3,
+      //   name: "Dairy",
+      //   items: [
+      //     { id: 1, name: "Milk" },
+      //     { id: 2, name: "Cheese" },
+      //     { id: 3, name: "Yogurt" },
+      //   ],
+      // },
     ],
   },
   {
@@ -108,4 +108,13 @@ onMounted(() => {
   </NestedGroup> -->
 </template>
 
-<style scoped></style>
+<style scoped>
+/* .truly-nested-list {
+  margin: 20px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  min-height: 200px;
+} */
+</style>

@@ -21,11 +21,11 @@ dragAndDrop({
 </script>
 
 <template>
-  <div class="list" v-if="list">
+  <div class="list" v-if="list" :id="list.name + '_list'">
     <h3>
       {{ list.name }}
     </h3>
-    <div ref="parent">
+    <div ref="parent" class="list">
       <TrulyNestedListItem
         v-for="item in list.items"
         :id="item.name"
