@@ -444,6 +444,16 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     pointermove: nodeEventData(config.handlePointermove),
     pointerup: nodeEventData(config.handleEnd),
     handlePointeroverNode: config.handlePointeroverNode,
+    hasNestedChildren: (e: CustomEvent) => {
+      console.log(e.detail);
+      const node = nodes.get(e.target as Node);
+
+      if (!node) return;
+
+      node.hasNestedChildren = e.detail.hasNestedChildren;
+
+      node.nestedParent = e.detail.parent;
+    },
     mousedown: () => {
       isNative = true;
     },
@@ -557,6 +567,28 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     );
 
     return;
+  }
+
+  if (parentData.config.treeGroup && !parentData.config.treeAncestor) {
+    let nextAncestorEl = parent.parentElement;
+    while (nextAncestorEl) {
+      if (!nodes.has(nextAncestorEl as Node)) {
+        nextAncestorEl = nextAncestorEl.parentElement;
+
+        continue;
+      }
+
+      nextAncestorEl.dispatchEvent(
+        new CustomEvent("hasNestedChildren", {
+          detail: {
+            hasNestedChildren: !!enabledNodes.length,
+            parent: { data: parentData, el: parent },
+          },
+        })
+      );
+
+      nextAncestorEl = null;
+    }
   }
 
   const values = parentData.getValues(parent);

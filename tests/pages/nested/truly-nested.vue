@@ -117,4 +117,8 @@ onMounted(() => {
   background-color: #f9f9f9;
   min-height: 200px;
 } */
+
+.touchedNode {
+  opacity: 0.5;
+}
 </style>

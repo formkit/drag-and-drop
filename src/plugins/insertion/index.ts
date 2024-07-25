@@ -95,7 +95,6 @@ export function insertion<T>(
 }
 
 export function handlePointerleave(e: DragEvent) {
-  // console.log("handle pointerleave", data.targetData.parent.el);
   if (!(e.currentTarget instanceof HTMLElement)) return;
 
   if (e.currentTarget.contains(e.target as Node)) return;
@@ -377,17 +376,32 @@ export function sort<T>(data: NodeDragEventData<T>, state: DragState<T>) {
 
   handleScroll();
 
-  const foundRange = findClosest([data.targetData.node]);
+  const hasNestedParent = data.targetData.node.data.nestedParent;
 
-  if (!foundRange) return;
+  if (!hasNestedParent) {
+    const foundRange = findClosest([data.targetData.node]);
 
-  const position = foundRange[0].data.range[foundRange[1]];
+    if (!foundRange) return;
 
-  positionInsertionPoint(
-    position,
-    foundRange[1] === "ascending",
-    foundRange[0]
-  );
+    const position = foundRange[0].data.range[foundRange[1]];
+
+    positionInsertionPoint(
+      position,
+      foundRange[1] === "ascending",
+      foundRange[0]
+    );
+  } else {
+    removeInsertionPoint();
+    data.targetData.node.el.classList.add("touchedNode");
+    // console.log(data.targetData.node);
+    // console.log(data.targetData.node.data.nestedParent);
+    console.log("last parent", state.lastParent);
+    console.log("node data", data.targetData.node);
+    // return;
+    state.lastParent = data.targetData.node.data.nestedParent;
+    console.log("last parent set", state.lastParent);
+    insertionState.draggedOverNodes = [data.targetData.node];
+  }
 
   data.e.stopPropagation();
 
@@ -407,25 +421,29 @@ function transfer<T>(data: NodeDragEventData<T>, state: DragState<T>) {
 
   const enabledNodes = data.targetData.parent.data.enabledNodes;
 
-  const foundRange = findClosest(enabledNodes);
+  const hasNestedChildren = data.targetData.node.data.hasNestedChildren;
 
-  if (!foundRange) return;
+  if (hasNestedChildren) {
+    const foundRange = findClosest(enabledNodes);
 
-  const position = foundRange[0].data.range[foundRange[1]];
+    if (!foundRange) return;
 
-  positionInsertionPoint(
-    position,
-    foundRange[1] === "ascending",
-    foundRange[0]
-  );
+    const position = foundRange[0].data.range[foundRange[1]];
 
-  data.e.stopPropagation();
+    positionInsertionPoint(
+      position,
+      foundRange[1] === "ascending",
+      foundRange[0]
+    );
 
-  data.e.preventDefault();
+    data.e.stopPropagation();
 
-  state.lastParent = data.targetData.parent;
+    data.e.preventDefault();
 
-  state.transferred = true;
+    state.lastParent = data.targetData.parent;
+
+    state.transferred = true;
+  }
 }
 
 function findClosest<T>(enabledNodes: NodeRecord<T>[]) {
@@ -512,8 +530,6 @@ function positionInsertionPoint<T>(
     const topPosition =
       position.y[ascending ? 1 : 0] - div.getBoundingClientRect().height / 2;
 
-    console.log("topPosition", topPosition);
-
     div.style.top = `${topPosition}px`;
 
     const leftCoordinate = position.x[0];
@@ -555,7 +571,6 @@ function positionInsertionPoint<T>(
 export function handleEnd<T>(
   data: NodeDragEventData<T> | NodePointerEventData<T>
 ) {
-  return;
   if (!state) return;
 
   data.e.preventDefault();
@@ -628,12 +643,15 @@ export function handleEnd<T>(
     );
 
     // For the time being, we will not be remoing the value of the original dragged parent.
-    let index = insertionState.draggedOverNodes[0].data.index;
+    let index = insertionState.draggedOverNodes[0].data.index || 0;
+    console.log("index", index);
     if (insertionState.ascending) index++;
     const insertValues = state.dynamicValues.length
       ? state.dynamicValues
       : draggedValues;
     targetParentValues.splice(index, 0, ...insertValues);
+    console.log("targetParentValues", targetParentValues);
+    console.log("draggedValues", draggedValues);
     setParentValues(state.lastParent.el, state.lastParent.data, [
       ...targetParentValues,
     ]);

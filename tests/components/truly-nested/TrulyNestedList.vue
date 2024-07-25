@@ -21,7 +21,7 @@ dragAndDrop({
 </script>
 
 <template>
-  <div class="list" v-if="list" :id="list.name + '_list'">
+  <div class="list" :id="list.name + '_list'">
     <h3>
       {{ list.name }}
     </h3>
