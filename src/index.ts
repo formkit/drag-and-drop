@@ -33,7 +33,6 @@ import {
   isNode,
   noDefault,
   removeClass,
-  throttle,
 } from "./utils";
 export { animations } from "./plugins/animations";
 export { insertion } from "./plugins/insertion";
@@ -232,10 +231,9 @@ function findArrayCoordinates(
 }
 
 function setValueAtCoordinatesUsingFindIndex(
-  obj,
-  targetArray,
-  newArray,
-  parent
+  obj: Array<any>,
+  targetArray: Array<any>,
+  newArray: Array<any>
 ) {
   const coordinates = findArrayCoordinates(obj, targetArray);
 
@@ -281,8 +279,7 @@ export function setParentValues<T>(
     const updatedValues = setValueAtCoordinatesUsingFindIndex(
       ancestorValues,
       initialParentValues,
-      values,
-      parent
+      values
     );
 
     if (!updatedValues) {
@@ -360,6 +357,7 @@ export function dragAndDrop<T>({
       handlePointermove,
       handleDragenterNode,
       handleDragleaveNode,
+      handleParentDrop,
       performSort,
       performTransfer,
       root: document,
@@ -409,6 +407,8 @@ export function dragAndDrop<T>({
   remapNodes(parent, true);
 }
 
+export function handleParentDrop<T>(data: NodeDragEventData<T>) {}
+
 export function tearDown(parent: HTMLElement) {
   const parentData = parents.get(parent);
 
@@ -421,10 +421,16 @@ export function tearDown(parent: HTMLElement) {
 
 function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
   parentData.abortControllers.mainParent = addEvents(parent, {
-    dragover: parentEventData(
-      throttle(parentData.config.handleDragoverParent, 10)
-    ),
+    dragover: parentEventData(parentData.config.handleDragoverParent),
     handlePointeroverParent: parentData.config.handlepointeroverParent,
+    drop: parentEventData(parentData.config.handleParentDrop),
+    hasNestedParent: (e: CustomEvent) => {
+      const parent = parents.get(e.target as HTMLElement);
+
+      if (!parent) return;
+
+      parent.nestedParent = e.detail.parent;
+    },
   });
 }
 
@@ -444,16 +450,6 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     pointermove: nodeEventData(config.handlePointermove),
     pointerup: nodeEventData(config.handleEnd),
     handlePointeroverNode: config.handlePointeroverNode,
-    hasNestedChildren: (e: CustomEvent) => {
-      console.log(e.detail);
-      const node = nodes.get(e.target as Node);
-
-      if (!node) return;
-
-      node.hasNestedChildren = e.detail.hasNestedChildren;
-
-      node.nestedParent = e.detail.parent;
-    },
     mousedown: () => {
       isNative = true;
     },
@@ -571,24 +567,29 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
 
   if (parentData.config.treeGroup && !parentData.config.treeAncestor) {
     let nextAncestorEl = parent.parentElement;
+    let eventDispatched = false;
+
     while (nextAncestorEl) {
-      if (!nodes.has(nextAncestorEl as Node)) {
+      if (!parents.has(nextAncestorEl as HTMLElement)) {
         nextAncestorEl = nextAncestorEl.parentElement;
 
         continue;
       }
 
       nextAncestorEl.dispatchEvent(
-        new CustomEvent("hasNestedChildren", {
+        new CustomEvent("hasNestedParent", {
           detail: {
-            hasNestedChildren: !!enabledNodes.length,
             parent: { data: parentData, el: parent },
           },
         })
       );
 
+      eventDispatched = true;
+
       nextAncestorEl = null;
     }
+
+    if (!eventDispatched) console.warn("No ancestor found for tree group");
   }
 
   const values = parentData.getValues(parent);
@@ -741,7 +742,7 @@ export function validateDragHandle<T>(data: NodeEventData<T>): boolean {
   return false;
 }
 
-function pointerdown<T>(data: NodePointerEventData<T>) {
+export function pointerdown<T>(data: NodePointerEventData<T>) {
   if (!validateDragHandle(data)) return;
 
   const dragState = initSyntheticDrag(data);
@@ -758,6 +759,8 @@ export function handleSyntheticDraggedNode<T>(
   dragState.draggedNodeDisplay = dragState.draggedNode.el.style.display;
 
   const rect = data.targetData.node.el.getBoundingClientRect();
+
+  if (!dragState.clonedDraggedNode) return;
 
   dragState.clonedDraggedNode.style.cssText = `
             width: ${rect.width}px;
@@ -855,7 +858,7 @@ export function end<T>(_eventData: NodeEventData<T>, state: DragState<T>) {
     );
   }
 
-  if (isSynth) state.clonedDraggedNode.remove();
+  if (isSynth && state.clonedDraggedNode) state.clonedDraggedNode.remove();
 }
 
 export function handleTouchstart<T>(eventData: NodeEventData<T>) {
@@ -918,7 +921,7 @@ function pointermoveClasses<T>(
       config?.longTouchClass
     );
 
-  if (config.touchDraggingClass)
+  if (config.touchDraggingClass && dragState.clonedDraggedNode)
     addClass([dragState.clonedDraggedNode], config.touchDraggingClass);
 
   if (config.touchDropZoneClass)
@@ -1047,6 +1050,8 @@ function shouldScrollDown<T>(
 }
 
 function moveNode<T>(data: NodePointerEventData<T>, dragState: DragState<T>) {
+  if (!dragState.clonedDraggedNode) return;
+
   dragState.dragMoving = true;
 
   dragState.clonedDraggedNode.style.display =

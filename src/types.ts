@@ -559,7 +559,7 @@ export interface DragState<T> extends DragStateProps<T> {
   /**
    * Element
    */
-  clonedDraggedNode: Node;
+  clonedDraggedNode: Node | undefined;
   /**
    * The coordinates of the dragged element itself.
    */
@@ -618,7 +618,7 @@ export interface DragState<T> extends DragStateProps<T> {
   /**
    * Long press timeout
    */
-  longPressTimeout: number;
+  longPressTimeout: any;
   /**
    * The original z-index of the dragged node.
    */
