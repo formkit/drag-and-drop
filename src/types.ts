@@ -680,6 +680,7 @@ export interface DragStateProps<T> {
   initialIndex: number;
   initialParent: ParentRecord<T>;
   lastParent: ParentRecord<T>;
+  preventEnter: boolean;
   scrollParent: HTMLElement;
   startTop: number;
   startLeft: number;

@@ -89,6 +89,7 @@ export function setDragState<T>(
     incomingDirection: undefined,
     enterCount: 0,
     targetIndex: 0,
+    pointerEnter: false,
     affectedNodes: [],
     dragMoving: false,
     longPress: false,
