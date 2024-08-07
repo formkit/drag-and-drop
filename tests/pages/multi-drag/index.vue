@@ -13,13 +13,6 @@ const [parent, values] = useDragAndDrop(
     plugins: [
       multiDrag({
         plugins: [selections()],
-        multiHandleDragstart: (data) => {
-          const otherEls = data.targetData.parent.data.enabledNodes.map(
-            (x) => x
-          );
-          multiDragState.selectedNodes.push(...otherEls);
-          multiHandleDragstart(data);
-        },
       }),
     ],
   }
