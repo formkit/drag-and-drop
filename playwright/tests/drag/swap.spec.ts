@@ -1,5 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
-import { dragDrop } from "../../utils";
+import { drag } from "../../utils";
 
 let page: Page;
 
@@ -11,13 +11,13 @@ test.describe("Drag swap", async () => {
   test("Drag swap", async () => {
     await page.goto("http://localhost:3001/swap");
     await new Promise((r) => setTimeout(r, 1000));
-    await dragDrop(page, {
+    await drag(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
       dragStart: true,
     });
     await expect(page.locator("#values_1")).toHaveText("Apple Banana Orange");
-    await dragDrop(page, {
+    await drag(page, {
       originEl: { id: "Banana", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
       drop: true,

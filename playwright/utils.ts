@@ -18,7 +18,7 @@ interface DragDropData {
  * @param page
  * @param param1
  */
-export async function dragDrop(page: Page, data: DragDropData): Promise<void> {
+export async function drag(page: Page, data: DragDropData): Promise<void> {
   // Shouldn't need to do this, but leaving it for now 🤷‍♂️
   await new Promise((resolve) => setTimeout(resolve, 25));
   return page.evaluate(async (data) => {
@@ -93,7 +93,10 @@ export async function dragDrop(page: Page, data: DragDropData): Promise<void> {
  * @param page
  * @param param1
  */
-export async function touchDrop(page: Page, data: DragDropData): Promise<void> {
+export async function syntheticDrag(
+  page: Page,
+  data: DragDropData
+): Promise<void> {
   // Shouldn't need to do this, but leaving it for now 🤷‍♂️
   await new Promise((resolve) => setTimeout(resolve, 25));
   return page.evaluate(async (data) => {
@@ -121,39 +124,38 @@ export async function touchDrop(page: Page, data: DragDropData): Promise<void> {
       };
     };
 
-    let touchStartObj;
+    let pointerStartObj;
 
     if (originElement) {
-      touchStartObj = new Touch({
-        identifier: 0,
-        target: originElement,
+      pointerStartObj = new PointerEvent("pointerdown", {
+        pointerId: 1,
         ...getEventProps(originElement),
       });
     }
 
     if (!destinationElement) return;
 
-    const touchMoveObj = new Touch({
-      identifier: 0,
-      target: destinationElement,
+    const pointerMoveObj = new PointerEvent("pointermove", {
+      pointerId: 1,
       ...getEventProps(destinationElement),
     });
 
     if (data.dragStart) {
       originElement.dispatchEvent(
-        new TouchEvent("touchstart", {
-          touches: [touchStartObj],
-          changedTouches: [touchStartObj],
+        new PointerEvent("pointerdown", {
+          pointerId: 1,
+          clientX: pointerStartObj.clientX,
+          clientY: pointerStartObj.clientY,
           cancelable: true,
           bubbles: true,
         })
       );
     }
 
+    console.log("bing bang boom");
     originElement.dispatchEvent(
-      new TouchEvent("touchmove", {
-        touches: [touchStartObj],
-        changedTouches: [touchStartObj],
+      new PointerEvent("pointermove", {
+        pointerId: 1,
         cancelable: true,
         bubbles: true,
       })
@@ -162,9 +164,10 @@ export async function touchDrop(page: Page, data: DragDropData): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     destinationElement.dispatchEvent(
-      new TouchEvent("touchmove", {
-        touches: [touchMoveObj],
-        changedTouches: [touchMoveObj],
+      new PointerEvent("pointermove", {
+        pointerId: 1,
+        clientX: pointerMoveObj.clientX,
+        clientY: pointerMoveObj.clientY,
         cancelable: true,
         bubbles: true,
       })
@@ -173,9 +176,10 @@ export async function touchDrop(page: Page, data: DragDropData): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     destinationElement.dispatchEvent(
-      new TouchEvent("touchmove", {
-        touches: [touchMoveObj],
-        changedTouches: [touchMoveObj],
+      new PointerEvent("pointermove", {
+        pointerId: 1,
+        clientX: pointerMoveObj.clientX,
+        clientY: pointerMoveObj.clientY,
         cancelable: true,
         bubbles: true,
       })
@@ -183,133 +187,14 @@ export async function touchDrop(page: Page, data: DragDropData): Promise<void> {
 
     if (data.drop) {
       destinationElement.dispatchEvent(
-        new TouchEvent("touchend", {
-          touches: [touchMoveObj],
-          changedTouches: [touchMoveObj],
+        new PointerEvent("pointerup", {
+          pointerId: 1,
+          clientX: pointerMoveObj.clientX,
+          clientY: pointerMoveObj.clientY,
           cancelable: true,
           bubbles: true,
         })
       );
     }
   }, data);
-}
-
-export async function touchDropOld(
-  page: Page,
-  {
-    origin,
-    destination,
-    touchStart,
-    drop,
-  }: {
-    origin?: string;
-    destination?: string;
-    touchStart?: boolean;
-    drop?: boolean;
-  }
-): Promise<void> {
-  let originElement = origin && (await page.waitForSelector(origin));
-
-  if (!originElement) originElement = undefined;
-
-  let destinationElement =
-    destination && (await page.waitForSelector(destination));
-
-  if (!destinationElement) destinationElement = undefined;
-
-  return page.evaluate(
-    async ({
-      originElement,
-      destinationElement,
-      touchStart,
-      drop,
-    }: {
-      originElement?: Element | undefined;
-      destinationElement?: Element | undefined;
-      touchStart?: boolean;
-      drop?: boolean;
-      dragleave?: boolean;
-    }) => {
-      const getPayload = (element: Element) => {
-        const rect = element.getBoundingClientRect();
-
-        const [x, y] = [rect.x + rect.width / 2, rect.y + rect.height / 2];
-
-        return {
-          bubbles: true,
-          cancelable: true,
-          clientX: x,
-          clientY: y,
-          screenX: x,
-          screenY: y,
-        };
-      };
-
-      let touchStartObj;
-
-      if (originElement) {
-        touchStartObj = new Touch({
-          identifier: 0,
-          target: originElement,
-          ...getPayload(originElement),
-        });
-      }
-
-      if (!destinationElement) return;
-
-      const touchMoveObj = new Touch({
-        identifier: 0,
-        target: destinationElement,
-        ...getPayload(destinationElement),
-      });
-
-      if (touchStart && originElement) {
-        originElement.dispatchEvent(
-          new TouchEvent("touchstart", {
-            touches: [touchStartObj],
-            changedTouches: [touchStartObj],
-            cancelable: true,
-            bubbles: true,
-          })
-        );
-      }
-
-      if (originElement) {
-        originElement.dispatchEvent(
-          new TouchEvent("touchmove", {
-            touches: [touchStartObj],
-            changedTouches: [touchStartObj],
-            cancelable: true,
-            bubbles: true,
-          })
-        );
-      }
-
-      if (destinationElement) {
-        destinationElement.dispatchEvent(
-          new TouchEvent("touchmove", {
-            touches: [touchMoveObj],
-            changedTouches: [touchMoveObj],
-            cancelable: true,
-            bubbles: true,
-          })
-        );
-      }
-
-      if (drop) {
-        if (destinationElement) {
-          destinationElement.dispatchEvent(
-            new TouchEvent("touchend", {
-              touches: [touchMoveObj],
-              changedTouches: [touchMoveObj],
-              cancelable: true,
-              bubbles: true,
-            })
-          );
-        }
-      }
-    },
-
-    { originElement, destinationElement, touchStart, drop }
-  );
 }
