@@ -21,9 +21,9 @@ import type {
   PointeroverNodeEvent,
   PointeroverParentEvent,
   NodePointerEventData,
-} from "./types";
+} from './types'
 import {
-  addClass,
+  addNodeClass,
   addEvents,
   copyNodeStyle,
   eventCoordinates,
@@ -33,45 +33,45 @@ import {
   isNode,
   noDefault,
   removeClass,
-} from "./utils";
-export { animations } from "./plugins/animations";
-export { insertion } from "./plugins/insertion";
-export { multiDrag } from "./plugins/multiDrag";
-export { selections } from "./plugins/multiDrag/plugins/selections";
-export { place } from "./plugins/place";
-export { swap } from "./plugins/swap";
-export * from "./types";
-export * from "./utils";
-export { isBrowser };
+} from './utils'
+export { animations } from './plugins/animations'
+export { insertion } from './plugins/insertion'
+export { multiDrag } from './plugins/multiDrag'
+export { selections } from './plugins/multiDrag/plugins/selections'
+export { place } from './plugins/place'
+export { swap } from './plugins/swap'
+export * from './types'
+export * from './utils'
+export { isBrowser }
 
-let isNative = false;
+let isNative = false
 
 const scrollConfig: {
-  [key: string]: [number, number];
+  [key: string]: [number, number]
 } = {
   up: [0, -1],
   down: [0, 1],
   left: [-1, 0],
   right: [1, 0],
-};
+}
 
-export const nodes: NodesData<any> = new WeakMap<Node, NodeData<any>>();
+export const nodes: NodesData<any> = new WeakMap<Node, NodeData<any>>()
 
 export const parents: ParentsData<any> = new WeakMap<
   HTMLElement,
   ParentData<unknown>
->();
+>()
 
-export const treeAncestors: Record<string, HTMLElement> = {};
+export const treeAncestors: Record<string, HTMLElement> = {}
 
 /**
  * The state of the drag and drop. Is undefined until either dragstart or
  * touchstart is called.
  */
-export let state: DragState<any> | undefined;
+export let state: DragState<any> | undefined
 
 export function resetState() {
-  state = undefined;
+  state = undefined
 }
 
 /**
@@ -103,17 +103,17 @@ export function setDragState<T>(
     originalZIndex: undefined,
     transferred: false,
     ...dragStateProps,
-  } as DragState<T>;
+  } as DragState<T>
 
-  return state;
+  return state
 }
 
 export function dragStateProps<T>(
   data: NodeDragEventData<T> | NodePointerEventData<T>
 ): DragStateProps<T> {
-  const { x, y } = eventCoordinates(data.e);
+  const { x, y } = eventCoordinates(data.e)
 
-  const rect = data.targetData.node.el.getBoundingClientRect();
+  const rect = data.targetData.node.el.getBoundingClientRect()
 
   return {
     clonedDraggedNode: data.targetData.node.el.cloneNode(true) as Node,
@@ -143,35 +143,35 @@ export function dragStateProps<T>(
     scrollParent: getScrollParent(data.targetData.node.el),
     startLeft: x - rect.left,
     startTop: y - rect.top,
-  };
+  }
 }
 
 export function performSort<T>(
   state: DragState<T>,
   data: NodeDragEventData<T> | NodePointerEventData<T>
 ) {
-  const draggedValues = dragValues(state);
+  const draggedValues = dragValues(state)
 
   const targetParentValues = parentValues(
     data.targetData.parent.el,
     data.targetData.parent.data
-  );
+  )
 
-  const originalIndex = state.draggedNode.data.index;
+  const originalIndex = state.draggedNode.data.index
 
-  const enabledNodes = [...data.targetData.parent.data.enabledNodes];
+  const enabledNodes = [...data.targetData.parent.data.enabledNodes]
 
   const newParentValues = [
     ...targetParentValues.filter((x) => !draggedValues.includes(x)),
-  ];
+  ]
 
-  newParentValues.splice(data.targetData.node.data.index, 0, ...draggedValues);
+  newParentValues.splice(data.targetData.node.data.index, 0, ...draggedValues)
 
-  state.lastTargetValue = data.targetData.node.data.value;
+  state.lastTargetValue = data.targetData.node.data.value
 
   setParentValues(data.targetData.parent.el, data.targetData.parent.data, [
     ...newParentValues,
-  ]);
+  ])
 
   if (data.targetData.parent.data.config.onSort) {
     const sortEventData = {
@@ -186,9 +186,9 @@ export function performSort<T>(
       draggedNode: state.draggedNode,
       previousPosition: originalIndex,
       position: data.targetData.node.data.index,
-    };
+    }
 
-    data.targetData.parent.data.config.onSort(sortEventData);
+    data.targetData.parent.data.config.onSort(sortEventData)
   }
 }
 
@@ -196,7 +196,7 @@ export function parentValues<T>(
   parent: HTMLElement,
   parentData: ParentData<T>
 ): Array<T> {
-  return [...parentData.getValues(parent)];
+  return [...parentData.getValues(parent)]
 }
 
 function findArrayCoordinates(
@@ -204,30 +204,30 @@ function findArrayCoordinates(
   targetArray: Array<any>,
   path: Array<any> = []
 ) {
-  let result: Array<any> = [];
+  let result: Array<any> = []
 
-  if (obj === targetArray) result.push(path);
+  if (obj === targetArray) result.push(path)
 
   if (Array.isArray(obj)) {
-    const index = obj.findIndex((el) => el === targetArray);
+    const index = obj.findIndex((el) => el === targetArray)
     if (index !== -1) {
-      result.push([...path, index]);
+      result.push([...path, index])
     } else {
       for (let i = 0; i < obj.length; i++) {
         result = result.concat(
           findArrayCoordinates(obj[i], targetArray, [...path, i])
-        );
+        )
       }
     }
-  } else if (typeof obj === "object" && obj !== null) {
+  } else if (typeof obj === 'object' && obj !== null) {
     for (const key in obj) {
       result = result.concat(
         findArrayCoordinates(obj[key], targetArray, [...path, key])
-      );
+      )
     }
   }
 
-  return result;
+  return result
 }
 
 function setValueAtCoordinatesUsingFindIndex(
@@ -235,27 +235,27 @@ function setValueAtCoordinatesUsingFindIndex(
   targetArray: Array<any>,
   newArray: Array<any>
 ) {
-  const coordinates = findArrayCoordinates(obj, targetArray);
+  const coordinates = findArrayCoordinates(obj, targetArray)
 
-  let newValues;
+  let newValues
 
   coordinates.forEach((coords) => {
-    let current = obj;
+    let current = obj
     for (let i = 0; i < coords.length - 1; i++) {
-      const index = coords[i];
-      current = current[index];
+      const index = coords[i]
+      current = current[index]
     }
-    const lastIndex = coords[coords.length - 1];
+    const lastIndex = coords[coords.length - 1]
 
-    current[lastIndex] = newArray;
+    current[lastIndex] = newArray
 
     // We want to access getter of object we are setting to set the new values
     // of the nested parent element (should be a part of the original structure of
     // ancestor values).
-    newValues = current[lastIndex];
-  });
+    newValues = current[lastIndex]
+  })
 
-  return newValues;
+  return newValues
 }
 
 export function setParentValues<T>(
@@ -263,41 +263,41 @@ export function setParentValues<T>(
   parentData: ParentData<T>,
   values: Array<any>
 ): void {
-  const treeGroup = parentData.config.treeGroup;
+  const treeGroup = parentData.config.treeGroup
 
   if (treeGroup) {
-    const ancestorEl = treeAncestors[treeGroup];
+    const ancestorEl = treeAncestors[treeGroup]
 
-    const ancestorData = parents.get(ancestorEl);
+    const ancestorData = parents.get(ancestorEl)
 
-    if (!ancestorData) return;
+    if (!ancestorData) return
 
-    const ancestorValues = ancestorData.getValues(ancestorEl);
+    const ancestorValues = ancestorData.getValues(ancestorEl)
 
-    const initialParentValues = parentData.getValues(parent);
+    const initialParentValues = parentData.getValues(parent)
 
     const updatedValues = setValueAtCoordinatesUsingFindIndex(
       ancestorValues,
       initialParentValues,
       values
-    );
+    )
 
     if (!updatedValues) {
-      console.warn("No updated value found");
+      console.warn('No updated value found')
 
-      return;
+      return
     }
 
-    parentData.setValues(updatedValues, parent);
+    parentData.setValues(updatedValues, parent)
 
-    return;
+    return
   }
 
-  parentData.setValues(values, parent);
+  parentData.setValues(values, parent)
 }
 
 export function dragValues<T>(state: DragState<T>): Array<T> {
-  return [...state.draggedNodes.map((x) => x.data.value)];
+  return [...state.draggedNodes.map((x) => x.data.value)]
 }
 
 /**
@@ -307,21 +307,21 @@ export function updateConfig<T>(
   parent: HTMLElement,
   config: Partial<ParentConfig<T>>
 ) {
-  const parentData = parents.get(parent);
+  const parentData = parents.get(parent)
 
-  if (!parentData) return;
+  if (!parentData) return
 
   parents.set(parent, {
     ...parentData,
     config: { ...parentData.config, ...config },
-  });
+  })
 
   dragAndDrop({
     parent,
     getValues: parentData.getValues,
     setValues: parentData.setValues,
     config,
-  });
+  })
 }
 
 /**
@@ -338,9 +338,9 @@ export function dragAndDrop<T>({
   setValues,
   config = {},
 }: DragAndDrop<T>): void {
-  if (!isBrowser) return;
+  if (!isBrowser) return
 
-  tearDown(parent);
+  tearDown(parent)
 
   const parentData: ParentData<T> = {
     getValues,
@@ -379,43 +379,44 @@ export function dragAndDrop<T>({
     },
     enabledNodes: [],
     abortControllers: {},
-  };
+    privateClasses: [],
+  }
 
-  const nodesObserver = new MutationObserver(nodesMutated);
+  const nodesObserver = new MutationObserver(nodesMutated)
 
-  nodesObserver.observe(parent, { childList: true });
+  nodesObserver.observe(parent, { childList: true })
 
-  parents.set(parent, parentData);
+  parents.set(parent, parentData)
 
   if (config.treeAncestor && config.treeGroup)
-    treeAncestors[config.treeGroup] = parent;
+    treeAncestors[config.treeGroup] = parent
 
   config.plugins?.forEach((plugin) => {
-    plugin(parent)?.tearDown?.();
-  });
+    plugin(parent)?.tearDown?.()
+  })
 
   config.plugins?.forEach((plugin) => {
-    plugin(parent)?.tearDown?.();
-  });
+    plugin(parent)?.tearDown?.()
+  })
 
   config.plugins?.forEach((plugin: DNDPlugin) => {
-    plugin(parent)?.setup?.();
-  });
+    plugin(parent)?.setup?.()
+  })
 
-  setup(parent, parentData);
+  setup(parent, parentData)
 
-  remapNodes(parent, true);
+  remapNodes(parent, true)
 }
 
 export function handleParentDrop<T>(data: NodeDragEventData<T>) {}
 
 export function tearDown(parent: HTMLElement) {
-  const parentData = parents.get(parent);
+  const parentData = parents.get(parent)
 
-  if (!parentData) return;
+  if (!parentData) return
 
   if (parentData.abortControllers.mainParent) {
-    parentData.abortControllers.mainParent.abort();
+    parentData.abortControllers.mainParent.abort()
   }
 }
 
@@ -425,19 +426,19 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
     handlePointeroverParent: parentData.config.handlepointeroverParent,
     drop: parentEventData(parentData.config.handleParentDrop),
     hasNestedParent: (e: CustomEvent) => {
-      const parent = parents.get(e.target as HTMLElement);
+      const parent = parents.get(e.target as HTMLElement)
 
-      if (!parent) return;
+      if (!parent) return
 
-      parent.nestedParent = e.detail.parent;
+      parent.nestedParent = e.detail.parent
     },
-  });
+  })
 }
 
 export function setupNode<T>(data: SetupNodeData<T>) {
-  const config = data.parentData.config;
+  const config = data.parentData.config
 
-  data.node.draggable = true;
+  data.node.draggable = true
 
   data.nodeData.abortControllers.mainNode = addEvents(data.node, {
     dragstart: nodeEventData(config.handleDragstart),
@@ -451,53 +452,53 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     pointerup: nodeEventData(config.handleEnd),
     handlePointeroverNode: config.handlePointeroverNode,
     mousedown: () => {
-      isNative = true;
+      isNative = true
     },
-  });
+  })
 
-  config.reapplyDragClasses(data.node, data.parentData);
+  config.reapplyDragClasses(data.node, data.parentData)
 
   data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
-    plugin(data.parent)?.setupNode?.(data);
-  });
+    plugin(data.parent)?.setupNode?.(data)
+  })
 }
 
 export function setupNodeRemap<T>(data: SetupNodeData<T>) {
-  nodes.set(data.node, data.nodeData);
+  nodes.set(data.node, data.nodeData)
 
   data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
-    plugin(data.parent)?.setupNodeRemap?.(data);
-  });
+    plugin(data.parent)?.setupNodeRemap?.(data)
+  })
 }
 
 function reapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
-  if (!state) return;
+  if (!state) return
 
   const dropZoneClass =
-    "touchedNode" in state
+    'touchedNode' in state
       ? parentData.config.touchDropZoneClass
-      : parentData.config.dropZoneClass;
+      : parentData.config.dropZoneClass
 
-  if (state.draggedNode.el !== node) return;
+  if (state.draggedNode.el !== node) return
 
-  addClass([node], dropZoneClass, true);
+  addNodeClass([node], dropZoneClass, true)
 }
 
 export function tearDownNodeRemap<T>(data: TearDownNodeData<T>) {
   data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
-    plugin(data.parent)?.tearDownNodeRemap?.(data);
-  });
+    plugin(data.parent)?.tearDownNodeRemap?.(data)
+  })
 }
 
 export function tearDownNode<T>(data: TearDownNodeData<T>) {
   data.parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
-    plugin(data.parent)?.tearDownNode?.(data);
-  });
+    plugin(data.parent)?.tearDownNode?.(data)
+  })
 
-  data.node.draggable = false;
+  data.node.draggable = false
 
   if (data.nodeData?.abortControllers?.mainNode)
-    data.nodeData?.abortControllers?.mainNode.abort();
+    data.nodeData?.abortControllers?.mainNode.abort()
 }
 
 /**
@@ -510,11 +511,11 @@ export function tearDownNode<T>(data: TearDownNodeData<T>) {
  * @internal
  */
 function nodesMutated(mutationList: MutationRecord[]) {
-  const parentEl = mutationList[0].target;
+  const parentEl = mutationList[0].target
 
-  if (!(parentEl instanceof HTMLElement)) return;
+  if (!(parentEl instanceof HTMLElement)) return
 
-  remapNodes(parentEl);
+  remapNodes(parentEl)
 }
 
 /**
@@ -527,30 +528,32 @@ function nodesMutated(mutationList: MutationRecord[]) {
  * @internal
  */
 export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
-  const parentData = parents.get(parent);
+  const parentData = parents.get(parent)
 
-  if (!parentData) return;
+  if (!parentData) return
 
-  const enabledNodes: Array<Node> = [];
+  parentData.privateClasses = Array.from(parent.classList)
 
-  const config = parentData.config;
+  const enabledNodes: Array<Node> = []
+
+  const config = parentData.config
 
   for (let x = 0; x < parent.children.length; x++) {
-    const node = parent.children[x];
+    const node = parent.children[x]
 
-    if (!isNode(node)) continue;
+    if (!isNode(node)) continue
 
-    const nodeData = nodes.get(node);
+    const nodeData = nodes.get(node)
 
     // Only tear down the node if we have explicitly called dragAndDrop
     if (force || !nodeData) {
-      config.tearDownNode({ node, parent, nodeData, parentData });
+      config.tearDownNode({ node, parent, nodeData, parentData })
     }
 
-    if (config.disabled) continue;
+    if (config.disabled) continue
 
     if (!config.draggable || (config.draggable && config.draggable(node))) {
-      enabledNodes.push(node);
+      enabledNodes.push(node)
     }
   }
 
@@ -559,47 +562,48 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     !config.disabled
   ) {
     console.warn(
-      "The number of enabled nodes does not match the number of values."
-    );
+      'The number of enabled nodes does not match the number of values.'
+    )
 
-    return;
+    return
   }
 
   if (parentData.config.treeGroup && !parentData.config.treeAncestor) {
-    let nextAncestorEl = parent.parentElement;
-    let eventDispatched = false;
+    let nextAncestorEl = parent.parentElement
+
+    let eventDispatched = false
 
     while (nextAncestorEl) {
       if (!parents.has(nextAncestorEl as HTMLElement)) {
-        nextAncestorEl = nextAncestorEl.parentElement;
+        nextAncestorEl = nextAncestorEl.parentElement
 
-        continue;
+        continue
       }
 
       nextAncestorEl.dispatchEvent(
-        new CustomEvent("hasNestedParent", {
+        new CustomEvent('hasNestedParent', {
           detail: {
             parent: { data: parentData, el: parent },
           },
         })
-      );
+      )
 
-      eventDispatched = true;
+      eventDispatched = true
 
-      nextAncestorEl = null;
+      nextAncestorEl = null
     }
 
-    if (!eventDispatched) console.warn("No ancestor found for tree group");
+    if (!eventDispatched) console.warn('No ancestor found for tree group')
   }
 
-  const values = parentData.getValues(parent);
+  const values = parentData.getValues(parent)
 
-  const enabledNodeRecords: Array<NodeRecord<T>> = [];
+  const enabledNodeRecords: Array<NodeRecord<T>> = []
 
   for (let x = 0; x < enabledNodes.length; x++) {
-    const node = enabledNodes[x];
+    const node = enabledNodes[x]
 
-    const prevNodeData = nodes.get(node);
+    const prevNodeData = nodes.get(node)
 
     const nodeData = Object.assign(
       prevNodeData ?? {
@@ -610,13 +614,13 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
         value: values[x],
         index: x,
       }
-    );
+    )
 
     // TODO: maybe get rid of this — duplicate of the next if statement
     if (state && nodeData.value === state.draggedNode.data.value) {
-      state.draggedNode.data = nodeData;
+      state.draggedNode.data = nodeData
 
-      state.draggedNode.el = node;
+      state.draggedNode.el = node
     }
 
     if (
@@ -625,52 +629,51 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     ) {
       const draggedNode = state.draggedNodes.find(
         (x) => x.data.value === nodeData.value
-      );
+      )
 
-      if (draggedNode) draggedNode.el = node;
+      if (draggedNode) draggedNode.el = node
     }
 
     enabledNodeRecords.push({
       el: node,
       data: nodeData,
-    });
+    })
 
     const setupNodeData = {
       node,
       parent,
       parentData,
       nodeData,
-    };
+    }
 
-    if (force || !prevNodeData) config.setupNode(setupNodeData);
+    if (force || !prevNodeData) config.setupNode(setupNodeData)
 
-    setupNodeRemap(setupNodeData);
+    setupNodeRemap(setupNodeData)
   }
 
-  parents.set(parent, { ...parentData, enabledNodes: enabledNodeRecords });
+  parents.set(parent, { ...parentData, enabledNodes: enabledNodeRecords })
 
-  config.remapFinished(parentData);
+  config.remapFinished(parentData)
 
   parentData.config.plugins?.forEach((plugin: DNDPlugin) => {
-    plugin(parent)?.remapFinished?.();
-  });
+    plugin(parent)?.remapFinished?.()
+  })
 }
 
 export function remapFinished() {
   if (state) {
-    state.remapJustFinished = true;
+    state.remapJustFinished = true
 
-    state.affectedNodes = [];
+    state.affectedNodes = []
   }
 }
 
 export function handleDragstart<T>(data: NodeEventData<T>) {
-  if (!(data.e instanceof DragEvent)) return;
-
+  if (!(data.e instanceof DragEvent)) return
   dragstart({
     e: data.e,
     targetData: data.targetData,
-  });
+  })
 }
 
 export function dragstartClasses(
@@ -679,88 +682,85 @@ export function dragstartClasses(
   dropZoneClass: string | undefined,
   dragPlaceholderClass: string | undefined
 ) {
-  addClass([el], draggingClass);
+  addNodeClass([el], draggingClass)
 
   setTimeout(() => {
-    removeClass([el], draggingClass);
+    removeClass([el], draggingClass)
 
-    addClass([el], dragPlaceholderClass);
+    addNodeClass([el], dragPlaceholderClass)
 
-    addClass([el], dropZoneClass);
-  });
+    addNodeClass([el], dropZoneClass)
+  })
 }
 
 export function initDrag<T>(eventData: NodeDragEventData<T>): DragState<T> {
-  const dragState = setDragState(dragStateProps(eventData));
+  const dragState = setDragState(dragStateProps(eventData))
 
-  eventData.e.stopPropagation();
+  eventData.e.stopPropagation()
 
   if (eventData.e.dataTransfer) {
-    eventData.e.dataTransfer.dropEffect = "move";
+    eventData.e.dataTransfer.dropEffect = 'move'
 
-    eventData.e.dataTransfer.effectAllowed = "move";
+    eventData.e.dataTransfer.effectAllowed = 'move'
 
     eventData.e.dataTransfer.setDragImage(
       eventData.targetData.node.el,
       eventData.e.offsetX,
       eventData.e.offsetY
-    );
+    )
   }
 
-  dragState.clonedDraggedNode = undefined;
+  dragState.clonedDraggedNode = undefined
 
-  return dragState;
+  return dragState
 }
 
 export function validateDragHandle<T>(data: NodeEventData<T>): boolean {
   if (!(data.e instanceof DragEvent) && !(data.e instanceof PointerEvent))
-    return false;
+    return false
 
-  const config = data.targetData.parent.data.config;
+  const config = data.targetData.parent.data.config
 
-  if (!config.dragHandle) return true;
+  if (!config.dragHandle) return true
 
   const dragHandles = data.targetData.node.el.querySelectorAll(
     config.dragHandle
-  );
+  )
 
-  if (!dragHandles) return false;
+  if (!dragHandles) return false
 
-  const coordinates = data.e;
+  const coordinates = data.e
 
-  const elFromPoint = config.root.elementFromPoint(
-    coordinates.x,
-    coordinates.y
-  );
+  const elFromPoint = config.root.elementFromPoint(coordinates.x, coordinates.y)
 
-  if (!elFromPoint) return false;
+  if (!elFromPoint) return false
 
   for (const handle of Array.from(dragHandles)) {
-    if (elFromPoint === handle || handle.contains(elFromPoint)) return true;
+    if (elFromPoint === handle || handle.contains(elFromPoint)) return true
   }
 
-  return false;
+  return false
 }
 
 export function pointerdown<T>(data: NodePointerEventData<T>) {
-  if (!validateDragHandle(data)) return;
+  if (!validateDragHandle(data)) return
 
-  const dragState = initSyntheticDrag(data);
+  const dragState = initSyntheticDrag(data)
 
-  handleSyntheticDraggedNode(data, dragState);
+  handleSyntheticDraggedNode(data, dragState)
 
-  handleLongPress(data, dragState);
+  handleLongPress(data, dragState)
 }
 
 export function handleSyntheticDraggedNode<T>(
   data: NodePointerEventData<T>,
   dragState: DragState<T>
 ) {
-  dragState.draggedNodeDisplay = dragState.draggedNode.el.style.display;
+  dragState.draggedNodeDisplay = dragState.draggedNode.el.style.display
 
-  const rect = data.targetData.node.el.getBoundingClientRect();
+  const rect = data.targetData.node.el.getBoundingClientRect()
 
-  if (!dragState.clonedDraggedNode) return;
+  if (!dragState.clonedDraggedNode) return
 
   dragState.clonedDraggedNode.style.cssText = `
             width: ${rect.width}px;
@@ -769,146 +769,146 @@ export function handleSyntheticDraggedNode<T>(
             pointer-events: none;
             z-index: 999999;
             display: none;
-          `;
+          `
 
-  document.body.append(dragState.clonedDraggedNode);
+  document.body.append(dragState.clonedDraggedNode)
 
-  copyNodeStyle(data.targetData.node.el, dragState.clonedDraggedNode);
+  copyNodeStyle(data.targetData.node.el, dragState.clonedDraggedNode)
 
-  dragState.clonedDraggedNode.style.display = "none";
+  dragState.clonedDraggedNode.style.display = 'none'
 
-  dragState.draggedNode.el.setPointerCapture(data.e.pointerId);
+  dragState.draggedNode.el.setPointerCapture(data.e.pointerId)
 
-  document.addEventListener("contextmenu", noDefault);
+  document.addEventListener('contextmenu', noDefault)
 }
 
 export function dragstart<T>(data: NodeDragEventData<T>) {
   if (!validateDragHandle(data)) {
-    data.e.preventDefault();
+    data.e.preventDefault()
 
-    return;
+    return
   }
 
-  const config = data.targetData.parent.data.config;
+  const config = data.targetData.parent.data.config
 
-  const dragState = initDrag(data);
+  const dragState = initDrag(data)
 
-  const originalZIndex = data.targetData.node.el.style.zIndex;
+  const originalZIndex = data.targetData.node.el.style.zIndex
 
-  dragState.originalZIndex = originalZIndex;
+  dragState.originalZIndex = originalZIndex
 
-  data.targetData.node.el.style.zIndex = "9999";
+  data.targetData.node.el.style.zIndex = '9999'
 
   dragstartClasses(
     dragState.draggedNode.el,
     config.draggingClass,
     config.dropZoneClass,
     config.dragPlaceholderClass
-  );
+  )
 }
 
 export function handlePointeroverNode<T>(e: PointeroverNodeEvent<T>) {
-  if (!state) return;
+  if (!state) return
 
   if (e.detail.targetData.parent.el === state.lastParent.el)
-    sort(e.detail, state);
-  else transfer(e.detail, state);
+    sort(e.detail, state)
+  else transfer(e.detail, state)
 }
 
 export function handleEnd<T>(eventData: NodeEventData<T>) {
-  if (!state) return;
+  if (!state) return
 
-  end(eventData, state);
+  end(eventData, state)
 
-  resetState();
+  resetState()
 }
 
 export function end<T>(_eventData: NodeEventData<T>, state: DragState<T>) {
-  document.removeEventListener("contextmenu", noDefault);
+  document.removeEventListener('contextmenu', noDefault)
 
-  if ("longPressTimeout" in state && state.longPressTimeout)
-    clearTimeout(state.longPressTimeout);
+  if ('longPressTimeout' in state && state.longPressTimeout)
+    clearTimeout(state.longPressTimeout)
 
-  const config = parents.get(state.initialParent.el)?.config;
+  const config = parents.get(state.initialParent.el)?.config
 
-  const isSynth = "clonedDraggedNode" in state && state.clonedDraggedNode;
+  const isSynth = 'clonedDraggedNode' in state && state.clonedDraggedNode
 
   const dropZoneClass = isSynth
     ? config?.touchDropZoneClass
-    : config?.dropZoneClass;
+    : config?.dropZoneClass
 
   if (state.originalZIndex !== undefined)
-    state.draggedNode.el.style.zIndex = state.originalZIndex;
+    state.draggedNode.el.style.zIndex = state.originalZIndex
 
-  addClass(
+  addNodeClass(
     state.draggedNodes.map((x) => x.el),
     dropZoneClass,
     true
-  );
+  )
 
   removeClass(
     state.draggedNodes.map((x) => x.el),
     dropZoneClass
-  );
+  )
 
   if (config?.longTouchClass) {
     removeClass(
       state.draggedNodes.map((x) => x.el),
       state.initialParent.data?.config?.longTouchClass
-    );
+    )
   }
 
-  if (isSynth && state.clonedDraggedNode) state.clonedDraggedNode.remove();
+  if (isSynth && state.clonedDraggedNode) state.clonedDraggedNode.remove()
 }
 
 export function handleTouchstart<T>(eventData: NodeEventData<T>) {
-  eventData.e.preventDefault();
+  eventData.e.preventDefault()
 }
 
 export function handlePointerdown<T>(eventData: NodePointerEventData<T>) {
-  eventData.e.stopPropagation();
+  eventData.e.stopPropagation()
 
   pointerdown({
     e: eventData.e,
     targetData: eventData.targetData,
-  });
+  })
 }
 
 export function handlePointermove<T>(eventData: NodePointerEventData<T>) {
-  if (!state || isNative) return;
+  if (!state || isNative) return
 
-  syntheticMove(eventData, state);
+  syntheticMove(eventData, state)
 }
 
 function initSyntheticDrag<T>(data: NodePointerEventData<T>) {
-  data.e.stopPropagation();
+  data.e.stopPropagation()
 
-  const syntheticDragState = setDragState(dragStateProps(data));
+  const syntheticDragState = setDragState(dragStateProps(data))
 
-  return syntheticDragState;
+  return syntheticDragState
 }
 
 export function handleLongPress<T>(
   data: NodePointerEventData<T>,
   dragState: DragState<T>
 ) {
-  const config = data.targetData.parent.data.config;
+  const config = data.targetData.parent.data.config
 
-  if (!config.longPress) return;
+  if (!config.longPress) return
 
   dragState.longPressTimeout = setTimeout(() => {
-    if (!dragState) return;
+    if (!dragState) return
 
-    dragState.longPress = true;
+    dragState.longPress = true
 
     if (config.longPressClass && data.e.cancelable)
-      addClass(
+      addNodeClass(
         dragState.draggedNodes.map((x) => x.el),
         config.longPressClass
-      );
+      )
 
-    data.e.preventDefault();
-  }, config.longPressTimeout || 200);
+    data.e.preventDefault()
+  }, config.longPressTimeout || 200)
 }
 
 function pointermoveClasses<T>(
@@ -919,37 +919,37 @@ function pointermoveClasses<T>(
     removeClass(
       dragState.draggedNodes.map((x) => x.el),
       config?.longTouchClass
-    );
+    )
 
   if (config.touchDraggingClass && dragState.clonedDraggedNode)
-    addClass([dragState.clonedDraggedNode], config.touchDraggingClass);
+    addNodeClass([dragState.clonedDraggedNode], config.touchDraggingClass)
 
   if (config.touchDropZoneClass)
-    addClass(
+    addNodeClass(
       dragState.draggedNodes.map((x) => x.el),
       config.touchDropZoneClass
-    );
+    )
 }
 
 function getScrollData<T>(state?: DragState<T>): ScrollData<T> | void {
-  if (!state || !state.scrollParent) return;
+  if (!state || !state.scrollParent) return
 
   // If the scrollParent is the document and it isn't a touch event, then
   // we can just let the browser handle the scrolling.
   if (
     state.scrollParent === document.documentElement &&
-    !("clonedDraggedNode" in state)
+    !('clonedDraggedNode' in state)
   ) {
-    return;
+    return
   }
 
-  const { x, y, width, height } = state.scrollParent.getBoundingClientRect();
+  const { x, y, width, height } = state.scrollParent.getBoundingClientRect()
 
   const {
     x: xThresh,
     y: yThresh,
     scrollOutside,
-  } = state.lastParent.data.config.scrollBehavior;
+  } = state.lastParent.data.config.scrollBehavior
 
   return {
     state,
@@ -961,26 +961,26 @@ function getScrollData<T>(state?: DragState<T>): ScrollData<T> | void {
     y,
     width,
     height,
-  };
+  }
 }
 
 function shouldScroll<T>(direction: string): DragState<T> | void {
-  const data = getScrollData(state);
+  const data = getScrollData(state)
 
-  if (!data) return;
+  if (!data) return
 
   switch (direction) {
-    case "down":
-      return shouldScrollDown(data.state, data);
+    case 'down':
+      return shouldScrollDown(data.state, data)
 
-    case "up":
-      return shouldScrollUp(data.state, data);
+    case 'up':
+      return shouldScrollUp(data.state, data)
 
-    case "right":
-      return shouldScrollRight(data.state, data);
+    case 'right':
+      return shouldScrollRight(data.state, data)
 
-    case "left":
-      return shouldScrollLeft(data.state, data);
+    case 'left':
+      return shouldScrollLeft(data.state, data)
   }
 }
 
@@ -988,9 +988,9 @@ function shouldScrollRight<T>(
   state: DragState<T> | DragState<T>,
   data: ScrollData<T>
 ): DragState<T> | DragState<T> | void {
-  const diff = data.scrollParent.clientWidth + data.x - state.coordinates.x;
+  const diff = data.scrollParent.clientWidth + data.x - state.coordinates.x
 
-  if (!data.scrollOutside && diff < 0) return;
+  if (!data.scrollOutside && diff < 0) return
 
   if (
     diff < (1 - data.xThresh) * data.scrollParent.clientWidth &&
@@ -999,45 +999,45 @@ function shouldScrollRight<T>(
       data.scrollParent.scrollWidth
     )
   )
-    return state;
+    return state
 }
 
 function shouldScrollLeft<T>(
   state: DragState<T>,
   data: ScrollData<T>
 ): DragState<T> | void {
-  const diff = data.scrollParent.clientWidth + data.x - state.coordinates.x;
+  const diff = data.scrollParent.clientWidth + data.x - state.coordinates.x
 
-  if (!data.scrollOutside && diff > data.scrollParent.clientWidth) return;
+  if (!data.scrollOutside && diff > data.scrollParent.clientWidth) return
 
   if (
     diff > data.xThresh * data.scrollParent.clientWidth &&
     data.scrollParent.scrollLeft !== 0
   )
-    return state;
+    return state
 }
 
 function shouldScrollUp<T>(
   state: DragState<T>,
   data: ScrollData<T>
 ): DragState<T> | void {
-  const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y;
+  const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y
 
-  if (!data.scrollOutside && diff > data.scrollParent.clientHeight) return;
+  if (!data.scrollOutside && diff > data.scrollParent.clientHeight) return
 
   if (
     diff > data.yThresh * data.scrollParent.clientHeight &&
     data.scrollParent.scrollTop !== 0
   )
-    return state;
+    return state
 }
 
 function shouldScrollDown<T>(
   state: DragState<T>,
   data: ScrollData<T>
 ): DragState<T> | void {
-  const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y;
-  if (!data.scrollOutside && diff < 0) return;
+  const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y
+  if (!data.scrollOutside && diff < 0) return
 
   if (
     diff < (1 - data.yThresh) * data.scrollParent.clientHeight &&
@@ -1046,154 +1046,153 @@ function shouldScrollDown<T>(
       data.scrollParent.scrollHeight
     )
   )
-    return state;
+    return state
 }
 
 function moveNode<T>(data: NodePointerEventData<T>, dragState: DragState<T>) {
-  if (!dragState.clonedDraggedNode) return;
+  if (!dragState.clonedDraggedNode) return
 
-  dragState.dragMoving = true;
+  dragState.dragMoving = true
 
-  dragState.clonedDraggedNode.style.display =
-    dragState.draggedNodeDisplay || "";
+  dragState.clonedDraggedNode.style.display = dragState.draggedNodeDisplay || ''
 
-  const { x, y } = eventCoordinates(data.e);
+  const { x, y } = eventCoordinates(data.e)
 
-  dragState.coordinates.y = y;
+  dragState.coordinates.y = y
 
-  dragState.coordinates.x = x;
+  dragState.coordinates.x = x
 
-  const startLeft = dragState.startLeft ?? 0;
+  const startLeft = dragState.startLeft ?? 0
 
-  const startTop = dragState.startTop ?? 0;
+  const startTop = dragState.startTop ?? 0
 
-  dragState.clonedDraggedNode.style.left = `${x - startLeft}px`;
+  dragState.clonedDraggedNode.style.left = `${x - startLeft}px`
 
-  dragState.clonedDraggedNode.style.top = `${y - startTop}px`;
+  dragState.clonedDraggedNode.style.top = `${y - startTop}px`
 
-  if (data.e.cancelable) data.e.preventDefault();
+  if (data.e.cancelable) data.e.preventDefault()
 
-  pointermoveClasses(dragState, data.targetData.parent.data.config);
+  pointermoveClasses(dragState, data.targetData.parent.data.config)
 }
 
 function syntheticMove<T>(
   data: NodePointerEventData<T>,
   dragState: DragState<T>
 ) {
-  dragState.draggedNode.el.setPointerCapture(data.e.pointerId);
+  dragState.draggedNode.el.setPointerCapture(data.e.pointerId)
 
-  const config = data.targetData.parent.data.config;
+  const config = data.targetData.parent.data.config
 
   if (config.longPress && !dragState.longPress) {
-    clearTimeout(dragState.longPressTimeout);
+    clearTimeout(dragState.longPressTimeout)
 
-    return;
+    return
   }
 
-  if (data.e.cancelable) data.e.preventDefault();
+  if (data.e.cancelable) data.e.preventDefault()
 
-  moveNode(data, dragState);
+  moveNode(data, dragState)
 
-  handleScroll();
+  handleScroll()
 
-  const elFromPoint = getElFromPoint(data);
+  const elFromPoint = getElFromPoint(data)
 
-  if (!elFromPoint) return;
+  if (!elFromPoint) return
 
   const pointerMoveEventData = {
     e: data.e,
     targetData: elFromPoint,
-  };
+  }
 
-  if ("node" in elFromPoint) {
+  if ('node' in elFromPoint) {
     elFromPoint.node.el.dispatchEvent(
-      new CustomEvent("handlePointeroverNode", {
+      new CustomEvent('handlePointeroverNode', {
         detail: pointerMoveEventData,
       })
-    );
+    )
   } else {
     elFromPoint.parent.el.dispatchEvent(
-      new CustomEvent("handlePointeroverParent", {
+      new CustomEvent('handlePointeroverParent', {
         detail: pointerMoveEventData,
       })
-    );
+    )
   }
 }
 
 export function handleScroll() {
   for (const direction of Object.keys(scrollConfig)) {
-    const [x, y] = scrollConfig[direction];
-    performScroll(direction, x, y);
+    const [x, y] = scrollConfig[direction]
+    performScroll(direction, x, y)
   }
 }
 
 function performScroll(direction: string, x: number, y: number) {
-  const state = shouldScroll(direction);
+  const state = shouldScroll(direction)
 
-  if (!state) return;
+  if (!state) return
 
-  state.scrollParent.scrollBy(x, y);
+  state.scrollParent.scrollBy(x, y)
 
   setTimeout(
     () => {
-      performScroll(direction, x, y);
+      performScroll(direction, x, y)
     },
-    "clonedDraggedNode" in state ? 10 : 100
-  );
+    'clonedDraggedNode' in state ? 10 : 100
+  )
 }
 
 export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
-  if (!state) return;
+  if (!state) return
 
-  const { x, y } = eventCoordinates(data.e);
+  const { x, y } = eventCoordinates(data.e)
 
-  state.coordinates.y = y;
+  state.coordinates.y = y
 
-  state.coordinates.x = x;
+  state.coordinates.x = x
 
-  handleScroll();
+  handleScroll()
 
-  dragoverNode(data, state);
+  dragoverNode(data, state)
 }
 
 export function handleDragoverParent<T>(data: ParentEventData<T>) {
-  if (!state) return;
+  if (!state) return
 
-  const { x, y } = eventCoordinates(data.e as DragEvent);
+  const { x, y } = eventCoordinates(data.e as DragEvent)
 
-  state.coordinates.y = y;
+  state.coordinates.y = y
 
-  state.coordinates.x = x;
+  state.coordinates.x = x
 
-  handleScroll();
+  handleScroll()
 
-  transfer(data, state);
+  transfer(data, state)
 }
 
 export function handlePointeroverParent<T>(e: PointeroverParentEvent<T>) {
-  if (!state) return;
+  if (!state) return
 
-  transfer(e.detail, state);
+  transfer(e.detail, state)
 }
 
 export function validateTransfer<T>(
   data: ParentEventData<T>,
   state: DragState<T>
 ) {
-  if (data.targetData.parent.el === state.lastParent.el) return false;
+  if (data.targetData.parent.el === state.lastParent.el) return false
 
-  const targetConfig = data.targetData.parent.data.config;
+  const targetConfig = data.targetData.parent.data.config
 
   if (
     targetConfig.treeGroup &&
     state.draggedNode.el.contains(data.targetData.parent.el)
   ) {
-    return false;
+    return false
   }
 
-  if (targetConfig.dropZone === false) return false;
+  if (targetConfig.dropZone === false) return false
 
-  const initialParentConfig = state.initialParent.data.config;
+  const initialParentConfig = state.initialParent.data.config
 
   if (targetConfig.accepts) {
     return targetConfig.accepts(
@@ -1201,42 +1200,42 @@ export function validateTransfer<T>(
       state.initialParent,
       state.lastParent,
       state
-    );
+    )
   } else if (
     !targetConfig.group ||
     targetConfig.group !== initialParentConfig.group
   ) {
-    return false;
+    return false
   }
 
-  return true;
+  return true
 }
 
 function handleDragenterNode<T>(
   data: NodeDragEventData<T>,
   _state: DragState<T>
 ) {
-  data.e.preventDefault();
+  data.e.preventDefault()
 }
 
 function handleDragleaveNode<T>(
   data: NodeDragEventData<T>,
   _state: DragState<T>
 ) {
-  data.e.preventDefault();
+  data.e.preventDefault()
 }
 
 function dragoverNode<T>(
   eventData: NodeDragEventData<T>,
   dragState: DragState<T>
 ) {
-  eventData.e.preventDefault();
+  eventData.e.preventDefault()
 
-  eventData.e.stopPropagation();
+  eventData.e.stopPropagation()
 
   eventData.targetData.parent.el === dragState.lastParent?.el
     ? sort(eventData, dragState)
-    : transfer(eventData, dragState);
+    : transfer(eventData, dragState)
 }
 
 export function validateSort<T>(
@@ -1250,107 +1249,107 @@ export function validateSort<T>(
       .map((x) => x.data.value)
       .includes(data.targetData.node.data.value)
   ) {
-    return false;
+    return false
   }
 
   if (state.remapJustFinished) {
-    state.remapJustFinished = false;
+    state.remapJustFinished = false
 
     if (
       data.targetData.node.data.value === state.lastTargetValue ||
       state.draggedNodes.map((x) => x.el).includes(data.targetData.node.el)
     ) {
-      state.lastTargetValue = data.targetData.node.data.value;
+      state.lastTargetValue = data.targetData.node.data.value
     }
 
-    return false;
+    return false
   }
 
   if (state.draggedNodes.map((x) => x.el).includes(data.targetData.node.el)) {
-    state.lastTargetValue = undefined;
-    return false;
+    state.lastTargetValue = undefined
+    return false
   }
 
-  if (data.targetData.node.data.value === state.lastTargetValue) return false;
+  if (data.targetData.node.data.value === state.lastTargetValue) return false
 
   if (
     data.targetData.parent.el !== state.lastParent?.el ||
     data.targetData.parent.data.config.sortable === false
   )
-    return false;
+    return false
 
-  const targetRect = data.targetData.node.el.getBoundingClientRect();
+  const targetRect = data.targetData.node.el.getBoundingClientRect()
 
-  const dragRect = state.draggedNode.el.getBoundingClientRect();
+  const dragRect = state.draggedNode.el.getBoundingClientRect()
 
-  const yDiff = targetRect.y - dragRect.y;
+  const yDiff = targetRect.y - dragRect.y
 
-  const xDiff = targetRect.x - dragRect.x;
+  const xDiff = targetRect.x - dragRect.x
 
-  let incomingDirection: "above" | "below" | "left" | "right";
+  let incomingDirection: 'above' | 'below' | 'left' | 'right'
 
   if (Math.abs(yDiff) > Math.abs(xDiff)) {
-    incomingDirection = yDiff > 0 ? "above" : "below";
+    incomingDirection = yDiff > 0 ? 'above' : 'below'
   } else {
-    incomingDirection = xDiff > 0 ? "left" : "right";
+    incomingDirection = xDiff > 0 ? 'left' : 'right'
   }
 
-  const threshold = state.lastParent.data.config.threshold;
+  const threshold = state.lastParent.data.config.threshold
 
   switch (incomingDirection) {
-    case "left":
+    case 'left':
       if (x > targetRect.x + targetRect.width * threshold.horizontal) {
-        state.incomingDirection = "left";
+        state.incomingDirection = 'left'
 
-        return true;
+        return true
       }
-      break;
+      break
 
-    case "right":
+    case 'right':
       if (x < targetRect.x + targetRect.width * (1 - threshold.horizontal)) {
-        state.incomingDirection = "right";
+        state.incomingDirection = 'right'
 
-        return true;
+        return true
       }
-      break;
+      break
 
-    case "above":
+    case 'above':
       if (y > targetRect.y + targetRect.height * threshold.vertical) {
-        state.incomingDirection = "above";
+        state.incomingDirection = 'above'
 
-        return true;
+        return true
       }
-      break;
+      break
 
-    case "below":
+    case 'below':
       if (y < targetRect.y + targetRect.height * (1 - threshold.vertical)) {
-        state.incomingDirection = "below";
+        state.incomingDirection = 'below'
 
-        return true;
+        return true
       }
-      break;
+      break
 
     default:
-      break;
+      break
   }
 
-  return false;
+  return false
 }
 
 export function sort<T>(
   data: NodeDragEventData<T> | NodePointerEventData<T>,
   state: DragState<T>
 ) {
-  const { x, y } = eventCoordinates(data.e);
+  const { x, y } = eventCoordinates(data.e)
 
-  if (!validateSort(data, state, x, y)) return;
+  if (!validateSort(data, state, x, y)) return
 
   const range =
     state.draggedNode.data.index > data.targetData.node.data.index
       ? [data.targetData.node.data.index, state.draggedNode.data.index]
-      : [state.draggedNode.data.index, data.targetData.node.data.index];
+      : [state.draggedNode.data.index, data.targetData.node.data.index]
 
-  state.targetIndex = data.targetData.node.data.index;
+  state.targetIndex = data.targetData.node.data.index
 
   state.affectedNodes = data.targetData.parent.data.enabledNodes.filter(
     (node) => {
@@ -1358,11 +1357,11 @@ export function sort<T>(
         range[0] <= node.data.index &&
         node.data.index <= range[1] &&
         node.el !== state.draggedNode.el
-      );
+      )
     }
-  );
+  )
 
-  data.targetData.parent.data.config.performSort(state, data);
+  data.targetData.parent.data.config.performSort(state, data)
 }
 
 /**
@@ -1375,15 +1374,15 @@ export function nodeEventData<T>(
   callback: any
 ): (e: Event) => NodeEventData<T> | undefined {
   function nodeTargetData(node: Node): NodeTargetData<T> | undefined {
-    const nodeData = nodes.get(node);
+    const nodeData = nodes.get(node)
 
-    const parent = node.parentNode || state?.lastParent?.el;
+    const parent = node.parentNode || state?.lastParent?.el
 
-    if (!nodeData) return;
+    if (!nodeData) return
 
-    const parentData = parents.get(parent);
+    const parentData = parents.get(parent)
 
-    if (!parentData) return;
+    if (!parentData) return
 
     return {
       node: {
@@ -1394,19 +1393,19 @@ export function nodeEventData<T>(
         el: parent,
         data: parentData as ParentData<T>,
       },
-    };
+    }
   }
 
   return (e: Event) => {
-    const targetData = nodeTargetData(e.currentTarget as Node);
+    const targetData = nodeTargetData(e.currentTarget as Node)
 
-    if (!targetData) return;
+    if (!targetData) return
 
     return callback({
       e,
       targetData,
-    });
-  };
+    })
+  }
 }
 
 // TRANSFER LOGIC:
@@ -1414,49 +1413,49 @@ export function performTransfer<T>(
   state: DragState<T>,
   data: NodeEventData<T> | ParentEventData<T>
 ) {
-  const draggedValues = dragValues(state);
+  const draggedValues = dragValues(state)
 
   const lastParentValues = parentValues(
     state.lastParent.el,
     state.lastParent.data
-  ).filter((x: any) => !draggedValues.includes(x));
+  ).filter((x: any) => !draggedValues.includes(x))
 
   const targetParentValues = parentValues(
     data.targetData.parent.el,
     data.targetData.parent.data
-  );
+  )
 
   const reset =
     state.initialParent.el === data.targetData.parent.el &&
-    data.targetData.parent.data.config.sortable === false;
+    data.targetData.parent.data.config.sortable === false
 
-  let targetIndex: number;
+  let targetIndex: number
 
-  if ("node" in data.targetData) {
+  if ('node' in data.targetData) {
     if (reset) {
-      targetIndex = state.initialIndex;
+      targetIndex = state.initialIndex
     } else if (data.targetData.parent.data.config.sortable === false) {
-      targetIndex = data.targetData.parent.data.enabledNodes.length;
+      targetIndex = data.targetData.parent.data.enabledNodes.length
     } else {
-      targetIndex = data.targetData.node.data.index;
+      targetIndex = data.targetData.node.data.index
     }
 
-    targetParentValues.splice(targetIndex, 0, ...draggedValues);
+    targetParentValues.splice(targetIndex, 0, ...draggedValues)
   } else {
     targetIndex = reset
       ? state.initialIndex
-      : data.targetData.parent.data.enabledNodes.length;
+      : data.targetData.parent.data.enabledNodes.length
 
-    targetParentValues.splice(targetIndex, 0, ...draggedValues);
+    targetParentValues.splice(targetIndex, 0, ...draggedValues)
   }
 
-  setParentValues(state.lastParent.el, state.lastParent.data, lastParentValues);
+  setParentValues(state.lastParent.el, state.lastParent.data, lastParentValues)
 
   setParentValues(
     data.targetData.parent.el,
     data.targetData.parent.data,
     targetParentValues
-  );
+  )
 
   function createTransferEventData(
     state: DragState<T>,
@@ -1481,7 +1480,7 @@ export function performTransfer<T>(
       draggedNode: state.draggedNode,
       sourcePreviousPosition: state.initialIndex,
       targetPosition: targetIndex,
-    };
+    }
   }
 
   if (data.targetData.parent.data.config.onTransfer) {
@@ -1491,9 +1490,9 @@ export function performTransfer<T>(
       lastParentValues,
       targetParentValues,
       targetIndex
-    );
+    )
 
-    data.targetData.parent.data.config.onTransfer(transferEventData);
+    data.targetData.parent.data.config.onTransfer(transferEventData)
   }
 
   if (state.lastParent.data.config.onTransfer) {
@@ -1503,9 +1502,9 @@ export function performTransfer<T>(
       lastParentValues,
       targetParentValues,
       targetIndex
-    );
+    )
 
-    state.lastParent.data.config.onTransfer(transferEventData);
+    state.lastParent.data.config.onTransfer(transferEventData)
   }
 }
 
@@ -1524,13 +1523,13 @@ export function transfer<T>(
   data: NodeEventData<T> | ParentEventData<T>,
   state: DragState<T>
 ): void {
-  if (!validateTransfer(data, state)) return;
+  if (!validateTransfer(data, state)) return
 
-  data.targetData.parent.data.config.performTransfer(state, data);
+  data.targetData.parent.data.config.performTransfer(state, data)
 
-  state.lastParent = data.targetData.parent;
+  state.lastParent = data.targetData.parent
 
-  state.transferred = true;
+  state.transferred = true
 }
 
 export function parentEventData<T>(
@@ -1539,26 +1538,26 @@ export function parentEventData<T>(
   function parentTargetData(
     parent: HTMLElement
   ): ParentTargetData<T> | undefined {
-    const parentData = parents.get(parent);
+    const parentData = parents.get(parent)
 
-    if (!parentData) return;
+    if (!parentData) return
 
     return {
       parent: {
         el: parent,
         data: parentData as ParentData<T>,
       },
-    };
+    }
   }
 
   return (e: Event) => {
-    const targetData = parentTargetData(e.currentTarget as HTMLElement);
+    const targetData = parentTargetData(e.currentTarget as HTMLElement)
 
-    if (!targetData) return;
+    if (!targetData) return
 
     return callback({
       e,
       targetData,
-    });
-  };
+    })
+  }
 }

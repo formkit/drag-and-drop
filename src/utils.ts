@@ -3,31 +3,32 @@ import type {
   Node,
   NodeEventData,
   NodeFromPoint,
+  NodeData,
   ParentData,
   ParentFromPoint,
-} from "./types";
+} from './types'
 
-import { nodes, parents } from "./index";
+import { nodes, parents } from './index'
 
 export function noDefault(e: Event) {
-  e.preventDefault();
+  e.preventDefault()
 }
 
 export function throttle(callback: any, limit: number) {
-  var wait = false;
+  var wait = false
   return function (...args: any[]) {
     if (!wait) {
-      callback.call(null, ...args);
-      wait = true;
+      callback.call(null, ...args)
+      wait = true
       setTimeout(function () {
-        wait = false;
-      }, limit);
+        wait = false
+      }, limit)
     }
-  };
+  }
 }
 
 function splitClass(className: string): Array<string> {
-  return className.split(" ").filter((x) => x);
+  return className.split(' ').filter((x) => x)
 }
 
 /**
@@ -35,73 +36,109 @@ function splitClass(className: string): Array<string> {
  *
  * @internal
  */
-export const isBrowser = typeof window !== "undefined";
+export const isBrowser = typeof window !== 'undefined'
 
-export function addClass(
+export function addNodeClass<T>(
   els: Array<Node | HTMLElement | Element>,
   className: string | undefined,
   omitAppendPrivateClass = false
 ) {
-  if (!className) return;
+  function nodeSetter<T>(node: Node, nodeData: NodeData<T>) {
+    nodes.set(node, nodeData)
+  }
 
-  const classNames = splitClass(className);
+  for (const el of els) {
+    const nodeData = nodes.get(el as Node)
 
-  if (!classNames.length) return;
+    const newData = addClass(el, className, nodeData, omitAppendPrivateClass)
 
-  if (classNames.includes("longPress")) return;
+    if (!newData) continue
 
-  for (const node of els) {
-    if (!isNode(node) || !nodes.has(node)) {
-      node.classList.add(...classNames);
-
-      continue;
-    }
-
-    const privateClasses = [];
-
-    const nodeData = nodes.get(node);
-
-    if (!nodeData) continue;
-
-    for (const className of classNames) {
-      if (!node.classList.contains(className)) {
-        node.classList.add(className);
-      } else if (
-        node.classList.contains(className) &&
-        omitAppendPrivateClass === false
-      ) {
-        privateClasses.push(className);
-      }
-    }
-
-    nodeData.privateClasses = privateClasses;
-
-    nodes.set(node, nodeData);
+    nodeSetter(el as Node, newData as NodeData<T>)
   }
 }
 
-export function removeClass(
+export function addParentClass<T>(
+  els: Array<HTMLElement>,
+  className: string | undefined,
+  omitAppendPrivateClass = false
+) {
+  function parentSetter<T>(parent: HTMLElement, parentData: ParentData<T>) {
+    parents.set(parent, parentData)
+  }
+
+  for (const el of els) {
+    const parentData = parents.get(el)
+
+    const newData = addClass(el, className, parentData, omitAppendPrivateClass)
+
+    if (!newData) continue
+
+    parentSetter(el, newData as ParentData<T>)
+  }
+}
+
+export function addClass(
+  el: Node | HTMLElement | Element,
+  className: string | undefined,
+  data: NodeData<any> | ParentData<any> | undefined,
+  omitAppendPrivateClass = false
+) {
+  if (!className) return
+
+  const classNames = splitClass(className)
+
+  if (!classNames.length) return
+
+  if (classNames.includes('longPress')) return
+
+  if (!data) {
+    el.classList.add(...classNames)
+
+    return
+  }
+
+  const privateClasses = []
+
+  for (const className of classNames) {
+    if (!el.classList.contains(className)) {
+      el.classList.add(className)
+    } else if (
+      el.classList.contains(className) &&
+      omitAppendPrivateClass === false
+    ) {
+      privateClasses.push(className)
+    }
+  }
+
+  data.privateClasses = privateClasses
+
+  return data
+}
+
+export function removeClass<T>(
   els: Array<Node | HTMLElement | Element>,
   className: string | undefined
 ) {
-  if (!className) return;
+  if (!className) return
 
-  const classNames = splitClass(className);
+  const classNames = splitClass(className)
 
-  if (!classNames.length) return;
+  if (!classNames.length) return
 
   for (const node of els) {
     if (!isNode(node)) {
-      node.classList.remove(...classNames);
-      continue;
+      node.classList.remove(...classNames)
+      continue
     }
 
-    const nodeData = nodes.get(node);
+    const nodeData = nodes.get(node) || parents.get(node)
 
-    if (!nodeData) continue;
+    if (!nodeData) continue
+
     for (const className of classNames) {
       if (!nodeData.privateClasses.includes(className)) {
-        node.classList.remove(className);
+        node.classList.remove(className)
       }
     }
   }
@@ -115,23 +152,23 @@ export function removeClass(
  * @internal
  */
 export function getScrollParent(childNode: HTMLElement): HTMLElement {
-  let parentNode = childNode.parentNode;
+  let parentNode = childNode.parentNode
 
   while (
     parentNode !== null &&
     parentNode.nodeType === 1 &&
     parentNode instanceof HTMLElement
   ) {
-    const computedStyle = window.getComputedStyle(parentNode);
+    const computedStyle = window.getComputedStyle(parentNode)
 
-    const overflow = computedStyle.getPropertyValue("overflow");
+    const overflow = computedStyle.getPropertyValue('overflow')
 
-    if (overflow === "scroll" || overflow === "auto") return parentNode;
+    if (overflow === 'scroll' || overflow === 'auto') return parentNode
 
-    parentNode = parentNode.parentNode;
+    parentNode = parentNode.parentNode
   }
 
-  return document.documentElement;
+  return document.documentElement
 }
 /**
  * Used for setting a single event listener on x number of events for a given
@@ -154,47 +191,47 @@ export function events(
   remove = false
 ) {
   events.forEach((event) => {
-    remove ? el.removeEventListener(event, fn) : el.addEventListener(event, fn);
-  });
+    remove ? el.removeEventListener(event, fn) : el.addEventListener(event, fn)
+  })
 }
 
 export function getElFromPoint<T>(
   eventData: NodeEventData<T>
 ): NodeFromPoint<T> | ParentFromPoint<T> | undefined {
-  if (!(eventData.e instanceof PointerEvent)) return;
+  if (!(eventData.e instanceof PointerEvent)) return
 
-  const newX = eventData.e.clientX;
+  const newX = eventData.e.clientX
 
-  const newY = eventData.e.clientY;
+  const newY = eventData.e.clientY
 
-  let target = document.elementFromPoint(newX, newY);
+  let target = document.elementFromPoint(newX, newY)
 
-  if (!isNode(target)) return;
+  if (!isNode(target)) return
 
-  let isParent;
+  let isParent
 
-  let invalidEl = true;
+  let invalidEl = true
 
   while (target && invalidEl) {
     if (nodes.has(target as Node) || parents.has(target as HTMLElement)) {
-      invalidEl = false;
+      invalidEl = false
 
-      isParent = parents.has(target as HTMLElement);
+      isParent = parents.has(target as HTMLElement)
 
-      break;
+      break
     }
 
-    target = target.parentNode as Node;
+    target = target.parentNode as Node
   }
 
   if (!isParent) {
-    const targetNodeData = nodes.get(target as Node);
+    const targetNodeData = nodes.get(target as Node)
 
-    if (!targetNodeData) return;
+    if (!targetNodeData) return
 
-    const targetParentData = parents.get(target.parentNode as Node);
+    const targetParentData = parents.get(target.parentNode as Node)
 
-    if (!targetParentData) return;
+    if (!targetParentData) return
 
     return {
       node: {
@@ -205,18 +242,18 @@ export function getElFromPoint<T>(
         el: target.parentNode as Node,
         data: targetParentData as ParentData<T>,
       },
-    };
+    }
   } else {
-    const parentData = parents.get(target as HTMLElement);
+    const parentData = parents.get(target as HTMLElement)
 
-    if (!parentData) return;
+    if (!parentData) return
 
     return {
       parent: {
         el: target as HTMLElement,
         data: parentData as ParentData<T>,
       },
-    };
+    }
   }
 }
 
@@ -229,7 +266,7 @@ export function getElFromPoint<T>(
  * @returns {boolean} - Whether or not provided element is of type Node.
  */
 export function isNode(el: unknown): el is Node {
-  return el instanceof HTMLElement && el.parentNode instanceof HTMLElement;
+  return el instanceof HTMLElement && el.parentNode instanceof HTMLElement
 }
 
 /**
@@ -244,15 +281,15 @@ export function addEvents(
   el: Document | ShadowRoot | Node | HTMLElement,
   events: EventHandlers | any
 ): AbortController {
-  const abortController = new AbortController();
+  const abortController = new AbortController()
   for (const eventName in events) {
-    const handler = events[eventName];
+    const handler = events[eventName]
     el.addEventListener(eventName, handler, {
       signal: abortController.signal,
       passive: false,
-    });
+    })
   }
-  return abortController;
+  return abortController
 }
 
 export function copyNodeStyle(
@@ -260,42 +297,42 @@ export function copyNodeStyle(
   targetNode: Node,
   omitKeys = false
 ) {
-  const computedStyle = window.getComputedStyle(sourceNode);
+  const computedStyle = window.getComputedStyle(sourceNode)
 
   const omittedKeys = [
-    "position",
-    "z-index",
-    "top",
-    "left",
-    "x",
-    "pointer-events",
-    "y",
-    "transform-origin",
-    "filter",
-    "-webkit-text-fill-color",
-  ];
+    'position',
+    'z-index',
+    'top',
+    'left',
+    'x',
+    'pointer-events',
+    'y',
+    'transform-origin',
+    'filter',
+    '-webkit-text-fill-color',
+  ]
 
   for (const key of Array.from(computedStyle)) {
-    if (omitKeys === false && key && omittedKeys.includes(key)) continue;
+    if (omitKeys === false && key && omittedKeys.includes(key)) continue
 
     targetNode.style.setProperty(
       key,
       computedStyle.getPropertyValue(key),
       computedStyle.getPropertyPriority(key)
-    );
+    )
   }
 
   for (const child of Array.from(sourceNode.children)) {
-    if (!isNode(child)) continue;
+    if (!isNode(child)) continue
 
     const targetChild = targetNode.children[
       Array.from(sourceNode.children).indexOf(child)
-    ] as Node;
+    ] as Node
 
-    copyNodeStyle(child, targetChild, omitKeys);
+    copyNodeStyle(child, targetChild, omitKeys)
   }
 }
 
 export function eventCoordinates(data: DragEvent | PointerEvent) {
-  return { x: data.clientX, y: data.clientY };
+  return { x: data.clientX, y: data.clientY }
 }

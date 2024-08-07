@@ -1,31 +1,29 @@
-import type { Ref } from "vue";
-import type { VueDragAndDropData, VueParentConfig } from "./types";
+import type { Ref } from 'vue'
+import type { VueDragAndDropData, VueParentConfig } from './types'
 import {
-  ParentConfig,
   dragAndDrop as initParent,
   isBrowser,
   tearDown,
   parents,
   insertion,
-} from "../index";
+} from '../index'
 import {
   onUnmounted,
   ref,
   provide,
   defineComponent,
   h,
-  PropType,
   onMounted,
   inject,
-} from "vue";
-import { handleVueElements } from "./utils";
-export * from "./types";
+} from 'vue'
+import { handleVueElements } from './utils'
+export * from './types'
 
 /**
  * Global store for parent els to values.
  */
 const parentValues: WeakMap<HTMLElement, Ref<Array<any>> | Array<any>> =
-  new WeakMap();
+  new WeakMap()
 
 /**
  * Returns the values of the parent element.
@@ -35,15 +33,15 @@ const parentValues: WeakMap<HTMLElement, Ref<Array<any>> | Array<any>> =
  * @returns The values of the parent element.
  */
 function getValues(parent: HTMLElement): Array<any> {
-  const values = parentValues.get(parent);
+  const values = parentValues.get(parent)
 
   if (!values) {
-    console.warn("No values found for parent element");
+    console.warn('No values found for parent element')
 
-    return [];
+    return []
   }
 
-  return "value" in values ? values.value : values;
+  return 'value' in values ? values.value : values
 }
 
 /**
@@ -56,12 +54,12 @@ function getValues(parent: HTMLElement): Array<any> {
  * @returns void
  */
 function setValues(newValues: Array<any>, parent: HTMLElement): void {
-  const currentValues = parentValues.get(parent);
+  const currentValues = parentValues.get(parent)
 
-  if (currentValues && "value" in currentValues) {
-    currentValues.value = newValues;
+  if (currentValues && 'value' in currentValues) {
+    currentValues.value = newValues
   } else if (currentValues) {
-    parentValues.set(parent, newValues);
+    parentValues.set(parent, newValues)
   }
 }
 /**
@@ -74,15 +72,15 @@ function setValues(newValues: Array<any>, parent: HTMLElement): void {
 export function dragAndDrop<T>(
   data: VueDragAndDropData<T> | Array<VueDragAndDropData<T>>
 ): void {
-  if (!isBrowser) return;
+  if (!isBrowser) return
 
-  if (!Array.isArray(data)) data = [data];
+  if (!Array.isArray(data)) data = [data]
 
   data.forEach((dnd) => {
-    const { parent, values, ...rest } = dnd;
+    const { parent, values, ...rest } = dnd
 
-    handleVueElements(parent, handleParent(rest, values));
-  });
+    handleVueElements(parent, handleParent(rest, values))
+  })
 }
 
 /**
@@ -101,19 +99,19 @@ export function useDragAndDrop<T>(
   Ref<T[]>,
   (config: Partial<VueParentConfig<T>>) => void
 ] {
-  const parent = ref<HTMLElement | undefined>();
+  const parent = ref<HTMLElement | undefined>()
 
-  const values = ref(initialValues) as Ref<T[]>;
+  const values = ref(initialValues) as Ref<T[]>
 
   function updateConfig(config: Partial<VueParentConfig<T>> = {}) {
-    dragAndDrop({ parent, values, ...config });
+    dragAndDrop({ parent, values, ...config })
   }
 
-  dragAndDrop({ parent, values, ...options });
+  dragAndDrop({ parent, values, ...options })
 
-  onUnmounted(() => parent.value && tearDown(parent.value));
+  onUnmounted(() => parent.value && tearDown(parent.value))
 
-  return [parent, values, updateConfig];
+  return [parent, values, updateConfig]
 }
 
 /**
@@ -130,7 +128,7 @@ function handleParent<T>(
   values: Ref<Array<T>> | Array<T>
 ) {
   return (parent: HTMLElement) => {
-    parentValues.set(parent, values);
+    parentValues.set(parent, values)
 
     initParent({
       parent,
@@ -140,8 +138,8 @@ function handleParent<T>(
         ...config,
         dropZones: [],
       },
-    });
-  };
+    })
+  }
 }
 
 /**
@@ -149,9 +147,9 @@ function handleParent<T>(
  */
 export const NestedGroup = /* #__PURE__ */ defineComponent(
   (props, { slots }) => {
-    const parentRef = ref();
+    const parentRef = ref()
 
-    provide("nestedGroup", parentRef);
+    provide('nestedGroup', parentRef)
 
     return () =>
       slots.default
@@ -162,17 +160,17 @@ export const NestedGroup = /* #__PURE__ */ defineComponent(
             },
             slots
           )
-        : null;
+        : null
   },
   {
     props: {
       tag: {
         type: String as PropType<string>,
-        default: "div",
+        default: 'div',
       },
     },
   }
-);
+)
 
 /**
  * Responsible for taking the provided values and initializing the drag and drop with
@@ -180,24 +178,24 @@ export const NestedGroup = /* #__PURE__ */ defineComponent(
  */
 export const NestedList = /* #__PURE__ */ defineComponent(
   (props, { slots }) => {
-    const parentRef = ref();
+    const parentRef = ref()
 
-    const parentValues = ref(props.values);
+    const parentValues = ref(props.values)
 
     onMounted(() => {
-      const groupEl = inject("nestedGroup");
+      const groupEl = inject('nestedGroup')
 
       // useNestedDragAndDrop(groupEl, parentRef.value, props.values);
       dragAndDrop({
         parent: parentRef,
         values: parentValues,
-        group: "nested",
+        group: 'nested',
         nestedConfig: {
           group: groupEl.value,
         },
         plugins: [insertion()],
-      });
-    });
+      })
+    })
 
     return () =>
       slots.default
@@ -208,7 +206,7 @@ export const NestedList = /* #__PURE__ */ defineComponent(
             },
             slots
           )
-        : null;
+        : null
   },
   {
     props: {
@@ -218,7 +216,7 @@ export const NestedList = /* #__PURE__ */ defineComponent(
       },
       tag: {
         type: String as PropType<string>,
-        default: "div",
+        default: 'div',
       },
       config: {
         type: Object as PropType<VueDragAndDropData<unknown>>,
@@ -226,4 +224,4 @@ export const NestedList = /* #__PURE__ */ defineComponent(
       },
     },
   }
-);
+)
