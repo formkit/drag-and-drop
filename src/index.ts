@@ -1415,6 +1415,8 @@ export function validateSort<T>(
     return false;
   }
 
+  if (state.preventEnter) return false;
+
   if (state.draggedNodes.map((x) => x.el).includes(data.targetData.node.el)) {
     state.lastTargetValue = undefined;
     return false;

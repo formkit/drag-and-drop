@@ -641,6 +641,8 @@ export interface DragState<T> extends DragStateProps<T> {
    * The original z-index of the dragged node.
    */
   originalZIndex: string | undefined;
+
+  preventEnter: boolean;
   /**
    * Flag indicating that the remap just finished.
    */
