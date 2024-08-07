@@ -2,9 +2,9 @@
 import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
 import {
   handleDragstart,
-  handleTouchstart,
+  handlePointerdown,
   handleDragoverNode,
-  handleTouchOverNode,
+  handlePointeroverNode,
 } from "@formkit/drag-and-drop";
 
 const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
@@ -19,13 +19,13 @@ const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   },
 
   // Prevent element with value "Orange" from being dragged on mobile
-  handleTouchstart: (eventData) => {
+  handlePointerdown: (eventData) => {
     if (eventData.targetData.node.data.value === "Orange") {
       eventData.e.preventDefault();
       return;
     }
 
-    handleTouchstart(eventData);
+    handlePointerdown(eventData);
   },
 
   // Prevent sort or transfer operation when dragged over element with value
@@ -37,9 +37,9 @@ const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
 
   // Prevent sort or transfer operation when dragged over element with value
   // "Orange" on mobile
-  handleTouchOverNode: (eventData) => {
+  handlePointeroverNode: (eventData) => {
     if (eventData.detail.targetData.node.data.value !== "Orange")
-      handleTouchOverNode(eventData);
+      handlePointeroverNode(eventData);
   },
 });
 </script>
