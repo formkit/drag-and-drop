@@ -73,14 +73,14 @@ __export(src_exports, {
   setParentValues: () => setParentValues,
   setupNode: () => setupNode,
   setupNodeRemap: () => setupNodeRemap,
-  sort: () => sort2,
+  sort: () => sort,
   state: () => state,
   swap: () => swap,
   tearDown: () => tearDown,
   tearDownNode: () => tearDownNode,
   tearDownNodeRemap: () => tearDownNodeRemap,
   throttle: () => throttle,
-  transfer: () => transfer2,
+  transfer: () => transfer,
   treeAncestors: () => treeAncestors,
   updateConfig: () => updateConfig,
   validateDragHandle: () => validateDragHandle,
@@ -697,9 +697,9 @@ function handleDragoverParent(data) {
     if (state.coordinates.y > rect.top && state.coordinates.y < rect.bottom)
       realTargetParent = nestedParent;
   }
-  realTargetParent.el === state.lastParent?.el ? moveBetween(realTargetParent, data.e, state) : moveOutside(realTargetParent, data.e, state);
+  realTargetParent.el === state.lastParent?.el ? moveBetween(realTargetParent) : moveOutside(realTargetParent, state);
 }
-function moveBetween(data, e, state2) {
+function moveBetween(data) {
   if (data.data.config.sortable === false)
     return;
   if (data.el === insertionState.draggedOverParent?.el && insertionState.draggedOverParent.data.getValues(data.el).length === 0) {
@@ -715,9 +715,13 @@ function moveBetween(data, e, state2) {
   if (!foundRange)
     return;
   const position = foundRange[0].data.range[foundRange[1]];
-  positionInsertionPoint(position, foundRange[1] === "ascending", foundRange[0]);
+  positionInsertionPoint(
+    position,
+    foundRange[1] === "ascending",
+    foundRange[0]
+  );
 }
-function moveOutside(data, e, state2) {
+function moveOutside(data, state2) {
   if (data.el === state2.lastParent.el)
     return false;
   const targetConfig = data.data.config;
@@ -797,8 +801,12 @@ function handlePointeroverParent(data) {
   if (!foundRange)
     return;
   const position = foundRange[0].data.range[foundRange[1]];
-  positionInsertionPoint(position, foundRange[1] === "ascending", foundRange[0]);
-  data.detail.targetData.parent.el === state.lastParent?.el ? sort(realTargetParent, data.detail.e, state) : transfer(realTargetParent, data.detail.e, state);
+  positionInsertionPoint(
+    position,
+    foundRange[1] === "ascending",
+    foundRange[0]
+  );
+  data.detail.targetData.parent.el === state.lastParent?.el ? moveBetween(realTargetParent) : moveOutside(realTargetParent, state);
 }
 function positionInsertionPoint(position, ascending, node) {
   if (!state)
@@ -1841,6 +1849,7 @@ function dragStateProps(data) {
   const rect = data.targetData.node.el.getBoundingClientRect();
   return {
     clonedDraggedNode: data.targetData.node.el.cloneNode(true),
+    preventEnter: false,
     coordinates: {
       x,
       y
@@ -2362,9 +2371,9 @@ function handlePointeroverNode2(e) {
   if (!state)
     return;
   if (e.detail.targetData.parent.el === state.lastParent.el)
-    sort2(e.detail, state);
+    sort(e.detail, state);
   else
-    transfer2(e.detail, state);
+    transfer(e.detail, state);
 }
 function handleEnd(eventData) {
   if (!state)
@@ -2613,12 +2622,12 @@ function handleDragoverParent3(data) {
   state.coordinates.y = y;
   state.coordinates.x = x;
   handleScroll();
-  transfer2(data, state);
+  transfer(data, state);
 }
 function handlePointeroverParent3(e) {
   if (!state)
     return;
-  transfer2(e.detail, state);
+  transfer(e.detail, state);
 }
 function validateTransfer(data, state2) {
   if (data.targetData.parent.el === state2.lastParent.el)
@@ -2651,7 +2660,7 @@ function handleDragleaveNode(data, _state) {
 function dragoverNode3(eventData, dragState) {
   eventData.e.preventDefault();
   eventData.e.stopPropagation();
-  eventData.targetData.parent.el === dragState.lastParent?.el ? sort2(eventData, dragState) : transfer2(eventData, dragState);
+  eventData.targetData.parent.el === dragState.lastParent?.el ? sort(eventData, dragState) : transfer(eventData, dragState);
 }
 function validateSort(data, state2, x, y) {
   if (state2.affectedNodes.map((x2) => x2.data.value).includes(data.targetData.node.data.value)) {
@@ -2715,7 +2724,7 @@ function validateSort(data, state2, x, y) {
   }
   return false;
 }
-function sort2(data, state2) {
+function sort(data, state2) {
   const { x, y } = eventCoordinates(data.e);
   if (!validateSort(data, state2, x, y))
     return;
@@ -2758,7 +2767,7 @@ function nodeEventData(callback) {
     });
   };
 }
-function transfer2(data, state2) {
+function transfer(data, state2) {
   if (!validateTransfer(data, state2))
     return;
   data.targetData.parent.data.config.performTransfer(state2, data);
