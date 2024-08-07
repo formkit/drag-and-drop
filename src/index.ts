@@ -204,6 +204,7 @@ export function dragStateProps<T>(
 
   return {
     clonedDraggedNode: data.targetData.node.el.cloneNode(true) as Node,
+    preventEnter: false,
     coordinates: {
       x,
       y,

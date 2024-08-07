@@ -1660,6 +1660,7 @@ function setDragState(dragStateProps2) {
     incomingDirection: void 0,
     enterCount: 0,
     targetIndex: 0,
+    pointerEnter: false,
     affectedNodes: [],
     dragMoving: false,
     longPress: false,
