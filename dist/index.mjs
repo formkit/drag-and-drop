@@ -359,31 +359,13 @@ function insertion(insertionConfig = {}) {
         parentData.config = insertionParentConfig;
         if (parentData.config.sortable === false)
           return;
-        const div = document.createElement("div");
-        div.id = "insertion-point";
+        const insertionPointConfig = insertionConfig.insertionPoint || {};
+        const div = document.createElement(insertionPointConfig.tag || "div");
+        div.id = insertionPointConfig.id || "insertion-point";
         div.classList.add(
-          "absolute",
-          "bg-blue-500",
-          "z-[1000]",
-          "rounded-full",
-          "duration-[5ms]",
-          "before:block",
-          'before:content-["Insert"]',
-          "before:whitespace-nowrap",
-          "before:block",
-          "before:bg-blue-500",
-          "before:py-1",
-          "before:px-2",
-          "before:rounded-full",
-          "before:text-xs",
-          "before:absolute",
-          "before:top-1/2",
-          "before:left-1/2",
-          "before:-translate-y-1/2",
-          "before:-translate-x-1/2",
-          "before:text-white",
-          "before:text-xs"
+          ...insertionPointConfig.classes || ["insertion-point"]
         );
+        div.style.position = "absolute";
         div.style.display = "none";
         document.body.appendChild(div);
         window.addEventListener("scroll", defineRanges.bind(null, parent));
@@ -415,6 +397,7 @@ function checkPosition(e) {
     }
     insertionState.draggedOverNodes = [];
     insertionState.draggedOverParent = null;
+    state.lastParent = state.initialParent;
   }
 }
 function handleDragstart(data) {
@@ -607,6 +590,7 @@ function handleDragoverParent(data) {
       realTargetParent = nestedParent;
   }
   realTargetParent.el === state.lastParent?.el ? moveBetween(realTargetParent) : moveOutside(realTargetParent, state);
+  state.lastParent = realTargetParent;
 }
 function moveBetween(data) {
   if (data.data.config.sortable === false)
@@ -669,7 +653,6 @@ function moveOutside(data, state2) {
       foundRange[0]
     );
   }
-  state2.lastParent = data;
 }
 function findClosest(enabledNodes) {
   let foundRange = null;

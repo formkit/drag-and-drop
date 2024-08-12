@@ -14,6 +14,11 @@ export interface InsertionConfig<T> {
   handlePointeroverParent: (data: PointeroverParentEvent<T>) => void;
   handlePointeroverNode: (data: PointeroverNodeEvent<T>) => void;
   handleEnd: (data: NodeDragEventData<T> | NodePointerEventData<T>) => void;
+  insertionPoint?: {
+    tag?: string;
+    classes?: string[];
+    id?: string;
+  };
 }
 
 export interface InsertionParentConfig<T> extends ParentConfig<T> {

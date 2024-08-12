@@ -764,8 +764,20 @@ declare function animations(animationsConfig?: Partial<AnimationsConfig>): (pare
     setupNodeRemap<T>(data: SetupNodeData<T>): void;
 } | undefined;
 
-interface InsertionConfig<T> extends ParentConfig<T> {
+interface InsertionConfig<T> {
+    handleDragstart: (data: NodeDragEventData<T>) => void;
+    handleDragoverNode: (data: NodeDragEventData<T>) => void;
+    handleDragoverParent: (data: ParentDragEventData<T>) => void;
+    handlePointeroverParent: (data: PointeroverParentEvent<T>) => void;
+    handlePointeroverNode: (data: PointeroverNodeEvent<T>) => void;
+    handleEnd: (data: NodeDragEventData<T> | NodePointerEventData<T>) => void;
+    insertionPoint?: {
+        tag?: string;
+        classes?: string[];
+        id?: string;
+    };
 }
+
 declare function insertion<T>(insertionConfig?: Partial<InsertionConfig<T>>): (parent: HTMLElement) => {
     teardown(): void;
     setup(): void;
