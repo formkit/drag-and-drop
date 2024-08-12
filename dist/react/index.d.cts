@@ -147,10 +147,10 @@ interface ParentConfig<T> {
         vertical: number;
     };
     /**
-     * The class to add to a node when it is being dragged via touch.
+     * The class to add to a node when it is being synthetically dragged.
      */
-    touchDraggingClass?: string;
-    touchDropZoneClass?: string;
+    synthDraggingClass?: string;
+    synthDropZoneClass?: string;
     /**
      * Callback function for when a sort operation is performed.
      */

@@ -10,6 +10,11 @@ import type {
   ParentEventData,
   TearDownNode,
   PointeroverParentEvent,
+  SortEvent,
+  TransferEvent,
+  DragstartEvent,
+  DragendEvent,
+  ParentDragEventData,
 } from "@formkit/drag-and-drop";
 
 /**
@@ -70,41 +75,46 @@ export interface ParentConfig<T> {
   /**
    * Function that is called when a dragover event is triggered on the parent.
    */
-  handleDragoverParent: (data: ParentEventData<T>) => void;
+  handleDragoverParent: (data: ParentDragEventData<T>) => void;
   /**
    * Function that is called when a dragover event is triggered on a node.
    */
   handleDragoverNode: (data: NodeDragEventData<T>) => void;
   /**
-   * Function that is called when a touchmove event is triggered on a node.
+   * Function that is called when either a pointermove or touchmove event is fired
+   * where now the "dragged" node is being moved programatically.
    */
-  handleTouchmove: (data: NodePointerEventData<T>) => void;
+  handlePointermove: (data: NodePointerEventData<T>) => void;
   /**
    * Function that is called when a node that is being moved by touchmove event
    * is over a given node (similar to dragover).
    */
-  handleTouchOverNode: (data: PointeroverNodeEvent<T>) => void;
+  handlePointeroverNode: (data: PointeroverNodeEvent<T>) => void;
   /**
    * Function that is called when a node that is being moved by touchmove event
    * is over the parent (similar to dragover).
    */
-  handleTouchOverParent: (e: PointeroverParentEvent<T>) => void;
+  handlePointeroverParent: (e: PointeroverParentEvent<T>) => void;
   /**
    * A flag to indicate whether long touch is enabled.
    */
-  longTouch?: boolean;
+  longPress?: boolean;
   /**
    * The class to add to a node when a long touch action is performed.
    */
-  longTouchClass?: string;
+  longPressClass?: string;
   /**
    * The time in milliseconds to wait before a long touch is performed.
    */
-  longTouchTimeout?: number;
+  longPressTimeout?: number;
   /**
    * The name of the parent (used for accepts function for increased specificity).
    */
   name?: string;
+  /**
+   * If set to false, the library will not use the native drag and drop API.
+   */
+  nativeDrag?: boolean;
   /**
    * Function that is called when a sort operation is to be performed.
    */
@@ -132,11 +142,11 @@ export interface ParentConfig<T> {
    */
   setupNode: SetupNode;
   /**
-   * Configuration for scrolling behavior.
+   * The scroll behavior of the parent.
    *
    * If a parent of the dragged element is scrollable, the parent will scroll on its x and y axis.
    *
-   * I.e. Setting x: 0.9 will begin scrolling the parent when the dragged element is 90% of the way dragged to the left or the right of the scrollable container.
+   * I.e. Setting x: 0.9 will begin scrolling the parent when the dragged element is 90% horizontally.
    *
    * Scroll Outside determines whether or not the parent will scroll when the dragged element is outside of the parent.
    */
@@ -164,6 +174,24 @@ export interface ParentConfig<T> {
   /**
    * The class to add to a node when it is being dragged via touch.
    */
-  touchDraggingClass?: string;
-  touchDropZoneClass?: string;
+  synthDraggingClass?: string;
+  synthDropZoneClass?: string;
+  /**
+   * EVENT LISTENERS:
+   *
+   * Callback function for when a sort operation is performed.
+   */
+  onSort?: SortEvent;
+  /**
+   * Callback function for when a transfer operation is performed.
+   */
+  onTransfer?: TransferEvent;
+  /**
+   * Fired when a drag is started, whether native drag or synthetic
+   */
+  onDragstart?: DragstartEvent;
+  /**
+   * Fired when a drag is ended, whether native drag or synthetic
+   */
+  onDragend?: DragendEvent;
 }

@@ -155,6 +155,7 @@ function animate(
 
   node.animate(animation, {
     duration: duration,
+    easing: "ease-in-out",
   });
 
   setTimeout(() => {

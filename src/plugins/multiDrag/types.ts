@@ -22,11 +22,11 @@ export interface MultiDragConfig<T> {
   /**
    * Class added when a node is being (touch) dragged.
    */
-  touchDraggingClass?: string;
+  synthDraggingClass?: string;
   /**
    * Class added when a node is being (touch) dragged over a dropZone.
    */
-  touchDropZoneClass?: string;
+  synthDropZoneClass?: string;
   /**
    * Function that is called when dragend event occurrs event occurs.
    */

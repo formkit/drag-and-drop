@@ -179,10 +179,10 @@ export interface ParentConfig<T> {
     vertical: number;
   };
   /**
-   * The class to add to a node when it is being dragged via touch.
+   * The class to add to a node when it is being synthetically dragged.
    */
-  touchDraggingClass?: string;
-  touchDropZoneClass?: string;
+  synthDraggingClass?: string;
+  synthDropZoneClass?: string;
   /**
    * Callback function for when a sort operation is performed.
    */
@@ -698,13 +698,13 @@ export interface ScrollData<T> {
   height: number;
 }
 
-type SortEvent = <T>(data: SortEventData<T>) => void;
+export type SortEvent = <T>(data: SortEventData<T>) => void;
 
-type TransferEvent = <T>(data: TransferEventData<T>) => void;
+export type TransferEvent = <T>(data: TransferEventData<T>) => void;
 
-type DragstartEvent = <T>(data: DragstartEventData<T>) => void;
+export type DragstartEvent = <T>(data: DragstartEventData<T>) => void;
 
-type DragendEvent = <T>(data: DragendEventData<T>) => void;
+export type DragendEvent = <T>(data: DragendEventData<T>) => void;
 
 export interface SortEventData<T> {
   parent: ParentRecord<T>;

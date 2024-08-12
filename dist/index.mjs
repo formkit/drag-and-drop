@@ -312,7 +312,8 @@ function animate(node, animation, duration) {
     return;
   state.preventEnter = true;
   node.animate(animation, {
-    duration
+    duration,
+    easing: "ease-in-out"
   });
   setTimeout(() => {
     if (!state)
@@ -2340,8 +2341,8 @@ function pointermoveClasses(dragState, config) {
       dragState.draggedNodes.map((x) => x.el),
       config?.longTouchClass
     );
-  if (config.touchDraggingClass && dragState.clonedDraggedNode)
-    addNodeClass([dragState.clonedDraggedNode], config.touchDraggingClass);
+  if (config.synthDraggingClass && dragState.clonedDraggedNode)
+    addNodeClass([dragState.clonedDraggedNode], config.synthDraggingClass);
   if (config.touchDropZoneClass)
     addNodeClass(
       dragState.draggedNodes.map((x) => x.el),

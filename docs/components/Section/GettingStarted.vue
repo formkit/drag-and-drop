@@ -22,8 +22,8 @@
       Drag and drop ships two main functions: <code>dragAndDrop</code> and
       <code>useDragAndDrop</code>. These can be imported for your framework of
       choice by using the subpath import
-      <code>@formkit/drag-and-drop/react</code>. A native JavaScript version of
-      the <code>dragAndDrop</code> function is also available at
+      <code>@formkit/drag-and-drop/{react/vue}</code>. A native JavaScript
+      version of the <code>dragAndDrop</code> function is also available at
       <code>@formkit/drag-and-drop</code>.
     </p>
     <h3>useDragAndDrop</h3>

@@ -1054,8 +1054,8 @@ function pointermoveClasses<T>(
       config?.longTouchClass
     );
 
-  if (config.touchDraggingClass && dragState.clonedDraggedNode)
-    addNodeClass([dragState.clonedDraggedNode], config.touchDraggingClass);
+  if (config.synthDraggingClass && dragState.clonedDraggedNode)
+    addNodeClass([dragState.clonedDraggedNode], config.synthDraggingClass);
 
   if (config.touchDropZoneClass)
     addNodeClass(
