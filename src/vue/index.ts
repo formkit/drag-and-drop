@@ -1,20 +1,15 @@
 import type { Ref } from "vue";
 import type { VueDragAndDropData, VueParentConfig } from "./types";
-import {
-  ParentConfig,
-  dragAndDrop as initParent,
-  isBrowser,
-  tearDown,
-} from "../index";
-import { handleVueElements } from "./utils";
+import { dragAndDrop as initParent, isBrowser, tearDown } from "../index";
 import { onUnmounted, ref } from "vue";
-
+import { handleVueElements } from "./utils";
 export * from "./types";
 
 /**
  * Global store for parent els to values.
  */
-const parentValues: WeakMap<HTMLElement, Ref<Array<any>>> = new WeakMap();
+const parentValues: WeakMap<HTMLElement, Ref<Array<any>> | Array<any>> =
+  new WeakMap();
 
 /**
  * Returns the values of the parent element.
@@ -32,7 +27,7 @@ function getValues(parent: HTMLElement): Array<any> {
     return [];
   }
 
-  return values.value;
+  return "value" in values ? values.value : values;
 }
 
 /**
@@ -47,9 +42,12 @@ function getValues(parent: HTMLElement): Array<any> {
 function setValues(newValues: Array<any>, parent: HTMLElement): void {
   const currentValues = parentValues.get(parent);
 
-  if (currentValues) currentValues.value = newValues;
+  if (currentValues && "value" in currentValues) {
+    currentValues.value = newValues;
+  } else if (currentValues) {
+    parentValues.set(parent, newValues);
+  }
 }
-
 /**
  * Entry point for Vue drag and drop.
  *
@@ -76,11 +74,12 @@ export function dragAndDrop<T>(
  * a ref of the values to use in your template.
  *
  * @param initialValues - The initial values of the parent element.
+ *
  * @returns The parent element and values for drag and drop.
  */
 export function useDragAndDrop<T>(
   initialValues: T[],
-  options: Partial<ParentConfig<T>> = {}
+  options: Partial<VueParentConfig<T>> = {}
 ): [
   Ref<HTMLElement | undefined>,
   Ref<T[]>,
@@ -112,7 +111,7 @@ export function useDragAndDrop<T>(
  */
 function handleParent<T>(
   config: Partial<VueParentConfig<T>>,
-  values: Ref<Array<any>>
+  values: Ref<Array<T>> | Array<T>
 ) {
   return (parent: HTMLElement) => {
     parentValues.set(parent, values);

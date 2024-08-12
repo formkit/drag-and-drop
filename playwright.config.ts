@@ -28,22 +28,22 @@ export default defineConfig({
       },
     },
     {
-      name: "Mobile Chrome Touch Tests",
-      testMatch: "tests/touch/**/*.spec.ts",
+      name: "Mobile Chrome Synthetic Drag Tests",
+      testMatch: "tests/synthetic-drag/**/*.spec.ts",
       use: {
         ...devices["Mobile Chrome"],
       },
     },
     {
-      name: "Mobile Safari Touch Tests",
-      testMatch: "tests/touch/**/*.spec.ts",
+      name: "Mobile Safari Synthetic Drag Tests",
+      testMatch: "tests/synthetic-drag/**/*.spec.ts",
       use: {
         ...devices["Mobile Safari"],
       },
     },
     {
-      name: "Mobile Firefox Touch Tests",
-      testMatch: "tests/touch/**/*.spec.ts",
+      name: "Mobile Firefox Synthtic Drag Tests",
+      testMatch: "tests/synthetic-drag/**/*.spec.ts",
       use: {
         ...devices["Mobile Firefox"],
       },

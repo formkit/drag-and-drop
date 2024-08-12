@@ -1,9 +1,6 @@
 // src/vue/index.ts
-import {
-  dragAndDrop as initParent,
-  isBrowser,
-  tearDown
-} from "../index.mjs";
+import { dragAndDrop as initParent, isBrowser, tearDown } from "../index.mjs";
+import { onUnmounted, ref } from "vue";
 
 // src/vue/utils.ts
 import { watch } from "vue";
@@ -33,7 +30,6 @@ function handleVueElements(elements, cb) {
 }
 
 // src/vue/index.ts
-import { onUnmounted, ref } from "vue";
 var parentValues = /* @__PURE__ */ new WeakMap();
 function getValues(parent) {
   const values = parentValues.get(parent);
@@ -41,12 +37,15 @@ function getValues(parent) {
     console.warn("No values found for parent element");
     return [];
   }
-  return values.value;
+  return "value" in values ? values.value : values;
 }
 function setValues(newValues, parent) {
   const currentValues = parentValues.get(parent);
-  if (currentValues)
+  if (currentValues && "value" in currentValues) {
     currentValues.value = newValues;
+  } else if (currentValues) {
+    parentValues.set(parent, newValues);
+  }
 }
 function dragAndDrop(data) {
   if (!isBrowser)

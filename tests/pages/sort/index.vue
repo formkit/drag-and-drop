@@ -2,8 +2,18 @@
 import { useDragAndDrop } from "../../../src/vue/index";
 
 const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
-  touchDraggingClass: "teal",
-  touchDropZoneClass: "yellow",
+  // touchDraggingClass: "teal",
+  // touchDropZoneClass: "yellow",
+  onDragstart: (data) => {
+    console.log("data", data);
+    console.trace();
+  },
+  onSort: (data) => {
+    console.log("data", data);
+  },
+  onDragend: (data) => {
+    console.log("data", data);
+  },
 });
 </script>
 

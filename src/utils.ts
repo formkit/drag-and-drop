@@ -1,13 +1,18 @@
 import type {
+  EventHandlers,
   Node,
   NodeEventData,
   NodeFromPoint,
-  ParentFromPoint,
-  EventHandlers,
+  NodeData,
   ParentData,
+  ParentFromPoint,
 } from "./types";
 
-import { parents, nodes } from "./index";
+import { nodes, parents } from "./index";
+
+export function noDefault(e: Event) {
+  e.preventDefault();
+}
 
 export function throttle(callback: any, limit: number) {
   var wait = false;
@@ -33,9 +38,50 @@ function splitClass(className: string): Array<string> {
  */
 export const isBrowser = typeof window !== "undefined";
 
-export function addClass(
+export function addNodeClass<T>(
   els: Array<Node | HTMLElement | Element>,
   className: string | undefined,
+  omitAppendPrivateClass = false
+) {
+  function nodeSetter<T>(node: Node, nodeData: NodeData<T>) {
+    nodes.set(node, nodeData);
+  }
+
+  for (const el of els) {
+    const nodeData = nodes.get(el as Node);
+
+    const newData = addClass(el, className, nodeData, omitAppendPrivateClass);
+
+    if (!newData) continue;
+
+    nodeSetter(el as Node, newData as NodeData<T>);
+  }
+}
+
+export function addParentClass<T>(
+  els: Array<HTMLElement>,
+  className: string | undefined,
+  omitAppendPrivateClass = false
+) {
+  function parentSetter<T>(parent: HTMLElement, parentData: ParentData<T>) {
+    parents.set(parent, parentData);
+  }
+
+  for (const el of els) {
+    const parentData = parents.get(el);
+
+    const newData = addClass(el, className, parentData, omitAppendPrivateClass);
+
+    if (!newData) continue;
+
+    parentSetter(el, newData as ParentData<T>);
+  }
+}
+
+export function addClass(
+  el: Node | HTMLElement | Element,
+  className: string | undefined,
+  data: NodeData<any> | ParentData<any> | undefined,
   omitAppendPrivateClass = false
 ) {
   if (!className) return;
@@ -44,36 +90,30 @@ export function addClass(
 
   if (!classNames.length) return;
 
-  if (classNames.includes("longTouch")) return;
+  if (classNames.includes("longPress")) return;
 
-  for (const node of els) {
-    if (!isNode(node) || !nodes.has(node)) {
-      node.classList.add(...classNames);
+  if (!data) {
+    el.classList.add(...classNames);
 
-      continue;
-    }
-
-    const privateClasses = [];
-
-    const nodeData = nodes.get(node);
-
-    if (!nodeData) continue;
-
-    for (const className of classNames) {
-      if (!node.classList.contains(className)) {
-        node.classList.add(className);
-      } else if (
-        node.classList.contains(className) &&
-        omitAppendPrivateClass === false
-      ) {
-        privateClasses.push(className);
-      }
-    }
-
-    nodeData.privateClasses = privateClasses;
-
-    nodes.set(node, nodeData);
+    return;
   }
+
+  const privateClasses = [];
+
+  for (const className of classNames) {
+    if (!el.classList.contains(className)) {
+      el.classList.add(className);
+    } else if (
+      el.classList.contains(className) &&
+      omitAppendPrivateClass === false
+    ) {
+      privateClasses.push(className);
+    }
+  }
+
+  data.privateClasses = privateClasses;
+
+  return data;
 }
 
 export function removeClass(
@@ -92,9 +132,10 @@ export function removeClass(
       continue;
     }
 
-    const nodeData = nodes.get(node);
+    const nodeData = nodes.get(node) || parents.get(node);
 
     if (!nodeData) continue;
+
     for (const className of classNames) {
       if (!nodeData.privateClasses.includes(className)) {
         node.classList.remove(className);
@@ -157,11 +198,11 @@ export function events(
 export function getElFromPoint<T>(
   eventData: NodeEventData<T>
 ): NodeFromPoint<T> | ParentFromPoint<T> | undefined {
-  if (!(eventData.e instanceof TouchEvent)) return;
+  if (!(eventData.e instanceof PointerEvent)) return;
 
-  const newX = eventData.e.touches[0].clientX;
+  const newX = eventData.e.clientX;
 
-  const newY = eventData.e.touches[0].clientY;
+  const newY = eventData.e.clientY;
 
   let target = document.elementFromPoint(newX, newY);
 
@@ -292,8 +333,6 @@ export function copyNodeStyle(
   }
 }
 
-export function eventCoordinates(data: DragEvent | TouchEvent) {
-  return data instanceof DragEvent
-    ? { x: data.clientX, y: data.clientY }
-    : { x: data.touches[0].clientX, y: data.touches[0].clientY };
+export function eventCoordinates(data: DragEvent | PointerEvent) {
+  return { x: data.clientX, y: data.clientY };
 }

@@ -1,5 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
-import { dragDrop } from "../../utils";
+import { drag } from "../../utils";
 
 let page: Page;
 
@@ -11,7 +11,7 @@ test.beforeAll(async ({ browser }) => {
 test.describe("Transferring", async () => {
   test("Drag transferring works as expected.", async () => {
     await new Promise((r) => setTimeout(r, 1000));
-    await dragDrop(page, {
+    await drag(page, {
       originEl: {
         id: "Apple",
         position: "center",
@@ -24,7 +24,7 @@ test.describe("Transferring", async () => {
     await expect(page.locator("#values_2")).toHaveText(
       "Cherry Grape Pineapple Apple"
     );
-    await dragDrop(page, {
+    await drag(page, {
       originEl: {
         id: "Apple",
         position: "center",
@@ -38,7 +38,7 @@ test.describe("Transferring", async () => {
     await expect(page.locator("#values_3")).toHaveText(
       "Strawberry Watermelon Kiwi Apple"
     );
-    await dragDrop(page, {
+    await drag(page, {
       originEl: {
         id: "Strawberry",
         position: "center",
@@ -55,7 +55,7 @@ test.describe("Transferring", async () => {
       "Cherry Grape Pineapple Strawberry"
     );
     await expect(page.locator("#values_3")).toHaveText("Watermelon Kiwi Apple");
-    await dragDrop(page, {
+    await drag(page, {
       originEl: {
         id: "Strawberry",
         position: "center",

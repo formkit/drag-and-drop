@@ -2,11 +2,11 @@ import type {
   NodeDragEventData,
   ParentConfig,
   DragState,
-  NodeTouchEventData,
   NodeRecord,
-  TouchOverNodeEvent,
   ParentEventData,
-  TouchOverParentEvent,
+  PointeroverParentEvent,
+  PointeroverNodeEvent,
+  NodePointerEventData,
 } from "../../types";
 import {
   state,
@@ -15,7 +15,7 @@ import {
   parentValues,
   setParentValues,
 } from "../../index";
-import { addClass, removeClass } from "../../utils";
+import { addNodeClass, removeClass } from "../../utils";
 
 export const swapState = {
   draggedOverNodes: Array<NodeRecord<any>>(),
@@ -42,11 +42,11 @@ export function swap<T>(swapConfig: Partial<SwapConfig<T>> = {}) {
         swapParentConfig.handleDragoverNode =
           swapConfig.handleDragoverNode || handleDragoverNode;
 
-        swapParentConfig.handleTouchOverNode =
-          swapConfig.handleTouchOverNode || handleTouchOverNode;
+        swapParentConfig.handlePointeroverNode =
+          swapConfig.handlePointeroverNode || handlePointeroverNode;
 
-        swapParentConfig.handleTouchOverParent =
-          swapConfig.handleTouchOverParent || handleTouchOverParent;
+        swapParentConfig.handlePointeroverParent =
+          swapConfig.handlePointeroverParent || handlePointeroverParent;
 
         swapParentConfig.handleEnd = swapConfig.handleEnd || handleEnd;
 
@@ -64,9 +64,9 @@ function handleDragoverNode<T>(data: NodeDragEventData<T>) {
 
 export function handleDragoverParent<T>(_data: ParentEventData<T>) {}
 
-export function handleTouchOverParent<T>(_data: TouchOverParentEvent<T>) {}
+export function handlePointeroverParent<T>(_data: PointeroverParentEvent<T>) {}
 
-function handleTouchOverNode<T>(data: TouchOverNodeEvent<T>) {
+function handlePointeroverNode<T>(data: PointeroverNodeEvent<T>) {
   if (!state) return;
 
   if (data.detail.targetData.parent.el !== state.lastParent.el) return;
@@ -86,7 +86,9 @@ function handleTouchOverNode<T>(data: TouchOverNodeEvent<T>) {
     data.detail.targetData.node.data.index + state.draggedNodes.length
   );
 
-  addClass(
+  console.log("doing this");
+
+  addNodeClass(
     swapState.draggedOverNodes.map((node) => node.el),
     dropZoneClass,
     true
@@ -120,7 +122,7 @@ function dragoverNode<T>(data: NodeDragEventData<T>, state: DragState<T>) {
     data.targetData.node.data.index + state.draggedNodes.length
   );
 
-  addClass(
+  addNodeClass(
     swapState.draggedOverNodes.map((node) => node.el),
     dropZoneClass,
     true
@@ -131,7 +133,7 @@ function dragoverNode<T>(data: NodeDragEventData<T>, state: DragState<T>) {
   state.lastParent = data.targetData.parent;
 }
 
-function handleEnd<T>(data: NodeDragEventData<T> | NodeTouchEventData<T>) {
+function handleEnd<T>(data: NodeDragEventData<T> | NodePointerEventData<T>) {
   if (!state) return;
 
   if (!state.transferred) {
@@ -152,6 +154,8 @@ function handleEnd<T>(data: NodeDragEventData<T> | NodeTouchEventData<T>) {
     );
 
     const draggedIndex = state.draggedNodes[0].data.index;
+
+    console.log("draggedIndex", swapState.draggedOverNodes);
 
     const draggedOverIndex = swapState.draggedOverNodes[0].data.index;
 
@@ -189,7 +193,7 @@ function handleEnd<T>(data: NodeDragEventData<T> | NodeTouchEventData<T>) {
   }
 
   const dropZoneClass =
-    "touchedNode" in state
+    "clonedDraggedNode" in state
       ? data.targetData.parent.data.config.touchDropZoneClass
       : data.targetData.parent.data.config.dropZoneClass;
 

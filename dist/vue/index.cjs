@@ -25,6 +25,7 @@ __export(vue_exports, {
 });
 module.exports = __toCommonJS(vue_exports);
 var import__ = require("../index.cjs");
+var import_vue2 = require("vue");
 
 // src/vue/utils.ts
 var import_vue = require("vue");
@@ -54,7 +55,6 @@ function handleVueElements(elements, cb) {
 }
 
 // src/vue/index.ts
-var import_vue2 = require("vue");
 var parentValues = /* @__PURE__ */ new WeakMap();
 function getValues(parent) {
   const values = parentValues.get(parent);
@@ -62,12 +62,15 @@ function getValues(parent) {
     console.warn("No values found for parent element");
     return [];
   }
-  return values.value;
+  return "value" in values ? values.value : values;
 }
 function setValues(newValues, parent) {
   const currentValues = parentValues.get(parent);
-  if (currentValues)
+  if (currentValues && "value" in currentValues) {
     currentValues.value = newValues;
+  } else if (currentValues) {
+    parentValues.set(parent, newValues);
+  }
 }
 function dragAndDrop(data) {
   if (!import__.isBrowser)

@@ -1,16 +1,15 @@
 import type {
   ParentRecord,
   DragState,
-  TouchState,
   NodeDragEventData,
-  NodeTouchEventData,
+  NodePointerEventData,
   NodeEventData,
   DNDPlugin,
-  TouchOverNodeEvent,
-  TouchOverParentEvent,
+  PointeroverNodeEvent,
   SetupNode,
   ParentEventData,
   TearDownNode,
+  PointeroverParentEvent,
 } from "@formkit/drag-and-drop";
 
 /**
@@ -25,7 +24,7 @@ export interface ParentConfig<T> {
     targetParentData: ParentRecord<T>,
     initialParentData: ParentRecord<T>,
     lastParentData: ParentRecord<T>,
-    state: DragState<T> | TouchState<T>
+    state: DragState<T>
   ) => boolean;
   /**
    * A flag to disable dragability of all nodes in the parent.
@@ -59,7 +58,7 @@ export interface ParentConfig<T> {
   /**
    * Function that is called when dragend or touchend event occurs.
    */
-  handleEnd: (data: NodeDragEventData<T> | NodeTouchEventData<T>) => void;
+  handleEnd: (data: NodeDragEventData<T> | NodePointerEventData<T>) => void;
   /**
    * Function that is called when dragstart event occurs.
    */
@@ -67,7 +66,7 @@ export interface ParentConfig<T> {
   /**
    * Function that is called when touchstart event occurs.
    */
-  handleTouchstart: (data: NodeTouchEventData<T>) => void;
+  handleTouchstart: (data: NodePointerEventData<T>) => void;
   /**
    * Function that is called when a dragover event is triggered on the parent.
    */
@@ -79,17 +78,17 @@ export interface ParentConfig<T> {
   /**
    * Function that is called when a touchmove event is triggered on a node.
    */
-  handleTouchmove: (data: NodeTouchEventData<T>) => void;
+  handleTouchmove: (data: NodePointerEventData<T>) => void;
   /**
    * Function that is called when a node that is being moved by touchmove event
    * is over a given node (similar to dragover).
    */
-  handleTouchOverNode: (data: TouchOverNodeEvent<T>) => void;
+  handleTouchOverNode: (data: PointeroverNodeEvent<T>) => void;
   /**
    * Function that is called when a node that is being moved by touchmove event
    * is over the parent (similar to dragover).
    */
-  handleTouchOverParent: (e: TouchOverParentEvent<T>) => void;
+  handleTouchOverParent: (e: PointeroverParentEvent<T>) => void;
   /**
    * A flag to indicate whether long touch is enabled.
    */
@@ -110,14 +109,14 @@ export interface ParentConfig<T> {
    * Function that is called when a sort operation is to be performed.
    */
   performSort: (
-    state: DragState<T> | TouchState<T>,
-    data: NodeDragEventData<T> | NodeTouchEventData<T>
+    state: DragState<T>,
+    data: NodeDragEventData<T> | NodePointerEventData<T>
   ) => void;
   /**
    * Function that is called when a transfer operation is to be performed.
    */
   performTransfer: (
-    state: DragState<T> | TouchState<T>,
+    state: DragState<T>,
     data: NodeEventData<T> | ParentEventData<T>
   ) => void;
   /**

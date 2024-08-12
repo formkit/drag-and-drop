@@ -1,5 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
-import { touchDrop } from "../../utils";
+import { syntheticDrag } from "../../utils";
 
 let page: Page;
 
@@ -11,7 +11,7 @@ test.describe("Touch swap", async () => {
   test("Touch swap", async () => {
     await page.goto("http://localhost:3001/swap");
     await new Promise((r) => setTimeout(r, 1000));
-    await touchDrop(page, {
+    await syntheticDrag(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
       dragStart: true,
@@ -19,7 +19,7 @@ test.describe("Touch swap", async () => {
     // await expect(page.locator("#Apple")).not.toHaveClass("item yellow");
     // await expect(page.locator("#Banana")).toHaveClass("item yellow");
     await expect(page.locator("#values_1")).toHaveText("Apple Banana Orange");
-    await touchDrop(page, {
+    await syntheticDrag(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
       drop: true,
