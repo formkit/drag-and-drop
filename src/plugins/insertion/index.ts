@@ -1,8 +1,8 @@
+import type { InsertionConfig, InsertionParentConfig } from "./types";
 import type {
   DragState,
   NodeDragEventData,
   NodeRecord,
-  ParentConfig,
   ParentEventData,
   NodePointerEventData,
   PointeroverParentEvent,
@@ -19,7 +19,6 @@ import {
   addParentClass,
   pointerdown,
 } from "../../index";
-
 import { eventCoordinates, removeClass } from "../../utils";
 
 export const insertionState = {
@@ -28,8 +27,6 @@ export const insertionState = {
   targetIndex: 0,
   ascending: false,
 };
-
-interface InsertionConfig<T> extends ParentConfig<T> {}
 
 // WIP: This is a work in progress and not yet fully functional
 export function insertion<T>(
@@ -43,7 +40,7 @@ export function insertion<T>(
     const insertionParentConfig = {
       ...parentData.config,
       insertionConfig: insertionConfig,
-    } as InsertionConfig<T>;
+    } as InsertionParentConfig<T>;
 
     return {
       teardown() {
@@ -84,33 +81,17 @@ export function insertion<T>(
 
         if (parentData.config.sortable === false) return;
 
-        const div = document.createElement("div");
+        const insertionPointConfig = insertionConfig.insertionPoint || {};
 
-        div.id = "insertion-point";
+        const div = document.createElement(insertionPointConfig.tag || "div");
+
+        div.id = insertionPointConfig.id || "insertion-point";
 
         div.classList.add(
-          "absolute",
-          "bg-blue-500",
-          "z-[1000]",
-          "rounded-full",
-          "duration-[5ms]",
-          "before:block",
-          'before:content-["Insert"]',
-          "before:whitespace-nowrap",
-          "before:block",
-          "before:bg-blue-500",
-          "before:py-1",
-          "before:px-2",
-          "before:rounded-full",
-          "before:text-xs",
-          "before:absolute",
-          "before:top-1/2",
-          "before:left-1/2",
-          "before:-translate-y-1/2",
-          "before:-translate-x-1/2",
-          "before:text-white",
-          "before:text-xs"
+          ...(insertionPointConfig.classes || ["insertion-point"])
         );
+
+        div.style.position = "absolute";
 
         div.style.display = "none";
 
@@ -152,6 +133,8 @@ function checkPosition(e: DragEvent | PointerEvent) {
     insertionState.draggedOverNodes = [];
 
     insertionState.draggedOverParent = null;
+
+    state.lastParent = state.initialParent;
   }
 }
 
@@ -440,6 +423,8 @@ export function handleDragoverParent<T>(data: ParentEventData<T>) {
   realTargetParent.el === state.lastParent?.el
     ? moveBetween(realTargetParent)
     : moveOutside(realTargetParent, state);
+
+  state.lastParent = realTargetParent;
 }
 
 export function moveBetween<T>(data: ParentRecord<T>) {
@@ -524,8 +509,6 @@ function moveOutside<T>(data: ParentRecord<T>, state: DragState<T>) {
       foundRange[0]
     );
   }
-
-  state.lastParent = data;
 }
 
 function findClosest<T>(enabledNodes: NodeRecord<T>[]) {

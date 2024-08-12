@@ -1649,7 +1649,6 @@ function handlePointeroverNode(data) {
     data.detail.targetData.node.data.index,
     data.detail.targetData.node.data.index + state.draggedNodes.length
   );
-  console.log("doing this");
   addNodeClass(
     swapState.draggedOverNodes.map((node) => node.el),
     dropZoneClass,
@@ -1700,7 +1699,6 @@ function handleEnd4(data) {
       (node) => node.data.value
     );
     const draggedIndex = state.draggedNodes[0].data.index;
-    console.log("draggedIndex", swapState.draggedOverNodes);
     const draggedOverIndex = swapState.draggedOverNodes[0].data.index;
     targetParentValues.splice(
       draggedOverIndex,
@@ -2335,7 +2333,6 @@ function handleSyntheticDraggedNode(data, dragState) {
   document.body.append(dragState.clonedDraggedNode);
   copyNodeStyle(data.targetData.node.el, dragState.clonedDraggedNode);
   dragState.clonedDraggedNode.style.display = "none";
-  console.log(data.e.pointerId);
   dragState.draggedNode.el.setPointerCapture(data.e.pointerId);
   document.addEventListener("contextmenu", noDefault);
 }
@@ -2545,7 +2542,6 @@ function moveNode(data, dragState) {
   dragState.pointerMoved = true;
   dragState.clonedDraggedNode.style.display = dragState.draggedNodeDisplay || "";
   const { x, y } = eventCoordinates(data.e);
-  console.log("event coordinates", data.e);
   dragState.coordinates.y = y;
   dragState.coordinates.x = x;
   const startLeft = dragState.startLeft ?? 0;

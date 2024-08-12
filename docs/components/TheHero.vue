@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { dragAndDrop } from "@formkit/drag-and-drop/vue";
-import { animations } from "@formkit/drag-and-drop";
 
 const dragList = ref(undefined);
 const showHand = ref(true);
@@ -45,11 +44,6 @@ dragAndDrop({
   values: features,
   draggingClass: "[&>.card]:-rotate-2 before:-rotate-2",
   dropZoneClass: "blur-[2px] opacity-60",
-  plugins: [
-    animations({
-      duration: 150,
-    }),
-  ],
 });
 
 function toggleFrameworkList(setting: boolean) {

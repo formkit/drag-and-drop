@@ -7,7 +7,7 @@ const state = reactive({
 
 html`
   <ul id="list">
-    ${state.items.map((item) => html`<li>${item}</li>`.key(item))}
+    ${() => state.items.map((item) => html`<li>${item}</li>`.key(item))}
   </ul>
 `(document.getElementById("app")!);
 

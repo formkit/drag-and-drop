@@ -27,9 +27,10 @@ dragAndDrop<string>({
 html`
   <div class="kanban-board">
     <ul class="kanban-list" id="todo-list">
-      ${state.todos.map((todo) =>
-        html`<li class="kanban-item">${todo}</li>`.key(todo)
-      )}
+      ${() =>
+        state.todos.map((todo) =>
+          html`<li class="kanban-item">${todo}</li>`.key(todo)
+        )}
     </ul>
   </div>
 `(document.getElementById("app")!);

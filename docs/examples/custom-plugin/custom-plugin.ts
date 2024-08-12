@@ -51,7 +51,7 @@ html`
     <span>${state.dragStatus}</span>
     <span>${state.dragCount}</span>
     <ul id="list">
-      ${state.items.map((item) => html`<li>${item}</li>`.key(item))}
+      ${() => state.items.map((item) => html`<li>${item}</li>`.key(item))}
     </ul>
   </div>
 `(document.getElementById("app")!);

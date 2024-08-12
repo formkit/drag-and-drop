@@ -152,7 +152,6 @@ export async function syntheticDrag(
       );
     }
 
-    console.log("bing bang boom");
     originElement.dispatchEvent(
       new PointerEvent("pointermove", {
         pointerId: 1,

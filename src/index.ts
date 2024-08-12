@@ -898,8 +898,6 @@ export function handleSyntheticDraggedNode<T>(
 
   dragState.clonedDraggedNode.style.display = "none";
 
-  console.log(data.e.pointerId);
-
   dragState.draggedNode.el.setPointerCapture(data.e.pointerId);
 
   document.addEventListener("contextmenu", noDefault);
@@ -1207,8 +1205,6 @@ function moveNode<T>(data: NodePointerEventData<T>, dragState: DragState<T>) {
     dragState.draggedNodeDisplay || "";
 
   const { x, y } = eventCoordinates(data.e);
-
-  console.log("event coordinates", data.e);
 
   dragState.coordinates.y = y;
 

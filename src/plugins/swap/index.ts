@@ -86,8 +86,6 @@ function handlePointeroverNode<T>(data: PointeroverNodeEvent<T>) {
     data.detail.targetData.node.data.index + state.draggedNodes.length
   );
 
-  console.log("doing this");
-
   addNodeClass(
     swapState.draggedOverNodes.map((node) => node.el),
     dropZoneClass,
@@ -154,8 +152,6 @@ function handleEnd<T>(data: NodeDragEventData<T> | NodePointerEventData<T>) {
     );
 
     const draggedIndex = state.draggedNodes[0].data.index;
-
-    console.log("draggedIndex", swapState.draggedOverNodes);
 
     const draggedOverIndex = swapState.draggedOverNodes[0].data.index;
 
