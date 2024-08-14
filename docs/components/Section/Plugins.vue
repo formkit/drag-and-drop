@@ -14,18 +14,29 @@
       first-party <code>animations</code> plugin.
     </p>
     <CodeExample example="animations" />
-    <h3 id="swap">Swap</h3>
+    <h3 id="insertion">Insertion</h3>
     <p>
-      If you would prefer to only update values (sort) when the drag is
-      released, you can use the <code>swap</code> plugin.
+      By default, <code>@formkit/drag-and-drop</code> will immediately update
+      the values of the list when the dragged element is moved over another
+      element. If you would prefer to only update values when the drag is
+      released, you can use the <code>insertion</code> plugin. When using the
+      insertion plugin, an <code>insertion point</code> will be displayed to
+      indicate where the dragged element will be placed when the drag is
+      released.
     </p>
     <CodeExample example="swap" />
-    <h3 id="multi-drag">Multi Drag</h3>
+    <h3 id="swap">Swap</h3>
+    <p>
+      Similar to the insertion plugin, if you would prefer to only update values
+      (sort) when the drag is released, you can use the
+      <code>swap</code> plugin.
+    </p>
+    <CodeExample example="multi-drag" />
+    <h3 id="insertion">Multi Drag</h3>
     <p>
       The multi-drag plugin allows you to select multiple items and drag them
       together.
     </p>
-    <CodeExample example="multi-drag" />
     <p>
       Notice in the last example we are passing a separate plugin to the
       multi-drag plugin. This is the selections plugin, which sets things like

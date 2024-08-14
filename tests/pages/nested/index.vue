@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { dragAndDrop } from "../../../src/vue/index";
 import { insertion } from "../../../src";
-import { NestedGroup, NestedList } from "../../../src/vue";
 
 import List from "../../components/List.vue";
 import ListItem from "../../components/ListItem.vue";

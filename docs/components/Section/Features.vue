@@ -59,6 +59,10 @@
       be used to find the handle.
     </p>
     <CodeExample example="drag-handles" />
+    <h3 id="nested-drag-and-drop">Nested Drag and Drop</h3>
+    <p>A command usecase for drag and drop is nested drag and drop.</p>
+    <p>Testing this</p>
+    <CodeExample example="nested-drag-and-drop" />
     <h3 id="update-config">Updating config</h3>
     <p>
       The parent config can be updated at any time by using the
