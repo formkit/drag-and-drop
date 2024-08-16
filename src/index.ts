@@ -74,6 +74,16 @@ export function resetState() {
   state = undefined;
 }
 
+const stateHandler = {
+  get(target: DragState<any>, prop: string, receiver: any) {
+    return Reflect.get(target, prop, receiver);
+  },
+  set(target: DragState<any>, prop: string, value: any, receiver: any) {
+    Reflect.set(target, prop, value, receiver);
+    return true;
+  },
+};
+
 /**
  * @param {DragStateProps} dragStateProps - Attributes to update state with.
  *
@@ -81,31 +91,29 @@ export function resetState() {
  *
  * @returns void
  */
-export function setDragState<T>(
-  dragStateProps: DragStateProps<T>
-): DragState<T> {
-  state = {
-    ascendingDirection: false,
-    incomingDirection: undefined,
-    enterCount: 0,
-    targetIndex: 0,
-    pointerEnter: false,
-    affectedNodes: [],
-    dragMoving: false,
-    longPress: false,
-    pointerMoved: false,
-    draggedNodeDisplay: undefined,
-    dynamicValues: [],
-    longPressTimeout: 0,
-    lastValue: undefined,
-    activeNode: undefined,
-    lastTargetValue: undefined,
-    remapJustFinished: false,
-    clonedDraggedEls: [],
-    originalZIndex: undefined,
-    transferred: false,
-    ...dragStateProps,
-  } as DragState<T>;
+export function setDragState<T>(dragStateProps: DragStateProps<T>) {
+  state = new Proxy(
+    {
+      ascendingDirection: false,
+      incomingDirection: undefined,
+      targetIndex: 0,
+      affectedNodes: [],
+      longPress: false,
+      pointerMoved: false,
+      draggedNodeDisplay: undefined,
+      dynamicValues: [],
+      longPressTimeout: 0,
+      lastValue: undefined,
+      activeNode: undefined,
+      lastTargetValue: undefined,
+      remapJustFinished: false,
+      clonedDraggedEls: [],
+      originalZIndex: undefined,
+      transferred: false,
+      ...dragStateProps,
+    },
+    stateHandler
+  );
 
   return state;
 }
@@ -139,11 +147,11 @@ export function dragAndDrop<T>({
       handleTouchstart,
       handlePointeroverNode,
       handlePointeroverParent,
-      handlePointerdown,
+      handlePointerdownNode,
       handlePointermove,
       handleDragenterNode,
       handleDragleaveNode,
-      handleParentDrop,
+      handleDropParent,
       nativeDrag: config.nativeDrag ?? true,
       performSort,
       performTransfer,
@@ -509,7 +517,10 @@ export function updateConfig<T>(
   });
 }
 
-export function handleParentDrop<T>(_data: NodeDragEventData<T>) {}
+export function handleDropParent<T>(
+  _data: ParentEventData<T>,
+  _state: DragState<T>
+) {}
 
 export function tearDown(parent: HTMLElement) {
   const parentData = parents.get(parent);
@@ -524,8 +535,8 @@ export function tearDown(parent: HTMLElement) {
 function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
   parentData.abortControllers.mainParent = addEvents(parent, {
     dragover: parentEventData(parentData.config.handleDragoverParent),
-    handlePointeroverParent: parentData.config.handlepointeroverParent,
-    drop: parentEventData(parentData.config.handleParentDrop),
+    handlePointeroverParent: parentData.config.handlePointeroverParent,
+    drop: parentEventData(parentData.config.handleDropParent),
     hasNestedParent: (e: CustomEvent) => {
       const parent = parents.get(e.target as HTMLElement);
 
@@ -548,7 +559,7 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     dragleave: nodeEventData(config.handleDragleaveNode),
     dragend: nodeEventData(config.handleEnd),
     touchstart: noDefault,
-    pointerdown: nodeEventData(config.handlePointerdown),
+    pointerdown: nodeEventData(config.handlePointerdownNode),
     pointermove: nodeEventData(config.handlePointermove),
     pointerup: nodeEventData(config.handleEnd),
     handlePointeroverNode: config.handlePointeroverNode,
@@ -578,7 +589,7 @@ function reapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
 
   const dropZoneClass =
     "clonedDraggedNode" in state
-      ? parentData.config.touchDropZoneClass
+      ? parentData.config.synthDropZoneClass
       : parentData.config.dropZoneClass;
 
   if (state.draggedNode.el !== node) return;
@@ -785,7 +796,7 @@ export function handleDragstart<T>(data: NodeEventData<T>) {
   });
 }
 
-export function handlePointerdown<T>(eventData: NodePointerEventData<T>) {
+export function handlePointerdownNode<T>(eventData: NodePointerEventData<T>) {
   eventData.e.stopPropagation();
 
   pointerdown({
@@ -967,7 +978,7 @@ export function end<T>(_eventData: NodeEventData<T>, state: DragState<T>) {
   const isSynth = "clonedDraggedNode" in state && state.clonedDraggedNode;
 
   const dropZoneClass = isSynth
-    ? config?.touchDropZoneClass
+    ? config?.synthDropZoneClass
     : config?.dropZoneClass;
 
   if (state.originalZIndex !== undefined)
@@ -984,10 +995,10 @@ export function end<T>(_eventData: NodeEventData<T>, state: DragState<T>) {
     dropZoneClass
   );
 
-  if (config?.longTouchClass) {
+  if (config?.longPressClass) {
     removeClass(
       state.draggedNodes.map((x) => x.el),
-      state.initialParent.data?.config?.longTouchClass
+      state.initialParent.data?.config?.longPressClass
     );
   }
 
@@ -1048,19 +1059,19 @@ function pointermoveClasses<T>(
   dragState: DragState<T>,
   config: ParentConfig<T>
 ) {
-  if (config.longTouchClass)
+  if (config.longPressClass)
     removeClass(
       dragState.draggedNodes.map((x) => x.el),
-      config?.longTouchClass
+      config?.longPressClass
     );
 
   if (config.synthDraggingClass && dragState.clonedDraggedNode)
     addNodeClass([dragState.clonedDraggedNode], config.synthDraggingClass);
 
-  if (config.touchDropZoneClass)
+  if (config.synthDropZoneClass)
     addNodeClass(
       dragState.draggedNodes.map((x) => x.el),
-      config.touchDropZoneClass
+      config.synthDropZoneClass
     );
 }
 
@@ -1359,10 +1370,7 @@ export function validateTransfer<T>(
   return true;
 }
 
-function handleDragenterNode<T>(
-  data: NodeDragEventData<T>,
-  _state: DragState<T>
-) {
+function handleDragenterNode<T>(data: NodeDragEventData<T>) {
   data.e.preventDefault();
 }
 
