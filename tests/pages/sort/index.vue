@@ -4,14 +4,14 @@ import { useDragAndDrop } from "../../../src/vue/index";
 const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   isNative: false,
   onDragstart: (data) => {
-    console.log("data", data);
-    console.trace();
+    //console.log("data", data);
+    //console.trace();
   },
   onSort: (data) => {
-    console.log("data", data);
+    //console.log("data", data);
   },
   onDragend: (data) => {
-    console.log("data", data);
+    //console.log("data", data);
   },
 });
 </script>

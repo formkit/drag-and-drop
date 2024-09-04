@@ -147,25 +147,33 @@ export function removeClass(
 /**
  * Used for getting the closest scrollable parent of a given element.
  *
- * @param node - The element to get the closest scrollable parent of.
+ * @param node - The parent element to start the search from.
+ *
+ * @returns The closest scrollable parent or the document's root element.
  *
  * @internal
  */
-export function getScrollParent(childNode: HTMLElement): HTMLElement {
-  let parentNode = childNode.parentNode;
+export function getScrollParent(node: HTMLElement): HTMLElement {
+  let currentNode = node;
 
   while (
-    parentNode !== null &&
-    parentNode.nodeType === 1 &&
-    parentNode instanceof HTMLElement
+    currentNode !== null &&
+    currentNode.nodeType === 1 &&
+    currentNode instanceof HTMLElement
   ) {
-    const computedStyle = window.getComputedStyle(parentNode);
+    const computedStyle = window.getComputedStyle(currentNode);
 
     const overflow = computedStyle.getPropertyValue("overflow");
 
-    if (overflow === "scroll" || overflow === "auto") return parentNode;
+    if (
+      overflow === "scroll" ||
+      overflow === "auto" ||
+      overflow === "auto scroll"
+    ) {
+      return currentNode;
+    }
 
-    parentNode = parentNode.parentNode;
+    currentNode = currentNode.parentNode as HTMLElement;
   }
 
   return document.documentElement;

@@ -815,7 +815,7 @@ export function handleEnd<T>(
 
   const dropZoneClass =
     "clonedDraggedNode" in state
-      ? data.targetData.parent.data.config.touchDropZoneClass
+      ? data.targetData.parent.data.config.synthDropZoneClass
       : data.targetData.parent.data.config.dropZoneClass;
 
   removeClass(

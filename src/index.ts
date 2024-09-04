@@ -55,7 +55,7 @@ const scrollConfig: {
   right: [1, 0],
 };
 
-export const nodes: NodesData<any> = new WeakMap<Node, NodeData<any>>();
+export const nodes: NodesData<any> = new WeakMap<Node, NodeData<unknown>>();
 
 export const parents: ParentsData<any> = new WeakMap<
   HTMLElement,
@@ -99,6 +99,7 @@ export function setDragState<T>(
     longPressTimeout: 0,
     lastValue: undefined,
     activeNode: undefined,
+    scrollParentAbortController: undefined,
     lastTargetValue: undefined,
     remapJustFinished: false,
     clonedDraggedEls: [],
@@ -139,11 +140,11 @@ export function dragAndDrop<T>({
       handleTouchstart,
       handlePointeroverNode,
       handlePointeroverParent,
-      handlePointerdown,
+      handlePointerdownNode,
       handlePointermove,
       handleDragenterNode,
       handleDragleaveNode,
-      handleParentDrop,
+      handleDropParent,
       nativeDrag: config.nativeDrag ?? true,
       performSort,
       performTransfer,
@@ -228,7 +229,6 @@ export function dragStateProps<T>(
       el: data.targetData.parent.el,
       data: data.targetData.parent.data,
     },
-    scrollParent: getScrollParent(data.targetData.node.el),
     startLeft: x - rect.left,
     startTop: y - rect.top,
   };
@@ -509,7 +509,7 @@ export function updateConfig<T>(
   });
 }
 
-export function handleParentDrop<T>(_data: NodeDragEventData<T>) {}
+export function handleDropParent<T>(_data: ParentEventData<T>) {}
 
 export function tearDown(parent: HTMLElement) {
   const parentData = parents.get(parent);
@@ -524,8 +524,8 @@ export function tearDown(parent: HTMLElement) {
 function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
   parentData.abortControllers.mainParent = addEvents(parent, {
     dragover: parentEventData(parentData.config.handleDragoverParent),
-    handlePointeroverParent: parentData.config.handlepointeroverParent,
-    drop: parentEventData(parentData.config.handleParentDrop),
+    handlePointeroverParent: parentData.config.handlePointeroverParent,
+    drop: parentEventData(parentData.config.handleDropParent),
     hasNestedParent: (e: CustomEvent) => {
       const parent = parents.get(e.target as HTMLElement);
 
@@ -548,7 +548,7 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     dragleave: nodeEventData(config.handleDragleaveNode),
     dragend: nodeEventData(config.handleEnd),
     touchstart: noDefault,
-    pointerdown: nodeEventData(config.handlePointerdown),
+    pointerdown: nodeEventData(config.handlePointerdownNode),
     pointermove: nodeEventData(config.handlePointermove),
     pointerup: nodeEventData(config.handleEnd),
     handlePointeroverNode: config.handlePointeroverNode,
@@ -578,7 +578,7 @@ function reapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
 
   const dropZoneClass =
     "clonedDraggedNode" in state
-      ? parentData.config.touchDropZoneClass
+      ? parentData.config.synthDropZoneClass
       : parentData.config.dropZoneClass;
 
   if (state.draggedNode.el !== node) return;
@@ -648,9 +648,8 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     const nodeData = nodes.get(node);
 
     // Only tear down the node if we have explicitly called dragAndDrop
-    if (force || !nodeData) {
+    if (force || !nodeData)
       config.tearDownNode({ node, parent, nodeData, parentData });
-    }
 
     if (config.disabled) continue;
 
@@ -785,7 +784,7 @@ export function handleDragstart<T>(data: NodeEventData<T>) {
   });
 }
 
-export function handlePointerdown<T>(eventData: NodePointerEventData<T>) {
+export function handlePointerdownNode<T>(eventData: NodePointerEventData<T>) {
   eventData.e.stopPropagation();
 
   pointerdown({
@@ -903,6 +902,20 @@ export function handleSyntheticDraggedNode<T>(
   document.addEventListener("contextmenu", noDefault);
 }
 
+export function preventSortOnScroll() {
+  let scrollTimeout: number;
+
+  return () => {
+    clearTimeout(scrollTimeout);
+
+    if (state) state.preventEnter = true;
+
+    scrollTimeout = setTimeout(() => {
+      if (state) state.preventEnter = false;
+    }, 100);
+  };
+}
+
 export function dragstart<T>(data: NodeDragEventData<T>) {
   if (!validateDragHandle(data)) {
     data.e.preventDefault();
@@ -919,6 +932,12 @@ export function dragstart<T>(data: NodeDragEventData<T>) {
   dragState.originalZIndex = originalZIndex;
 
   data.targetData.node.el.style.zIndex = "9999";
+
+  const scrollParent = getScrollParent(data.targetData.node.el);
+
+  dragState.scrollParentAbortController = addEvents(scrollParent, {
+    scroll: preventSortOnScroll(),
+  });
 
   dragstartClasses(
     dragState.draggedNode.el,
@@ -967,7 +986,7 @@ export function end<T>(_eventData: NodeEventData<T>, state: DragState<T>) {
   const isSynth = "clonedDraggedNode" in state && state.clonedDraggedNode;
 
   const dropZoneClass = isSynth
-    ? config?.touchDropZoneClass
+    ? config?.synthDropZoneClass
     : config?.dropZoneClass;
 
   if (state.originalZIndex !== undefined)
@@ -984,10 +1003,10 @@ export function end<T>(_eventData: NodeEventData<T>, state: DragState<T>) {
     dropZoneClass
   );
 
-  if (config?.longTouchClass) {
+  if (config?.longPressClass) {
     removeClass(
       state.draggedNodes.map((x) => x.el),
-      state.initialParent.data?.config?.longTouchClass
+      state.initialParent.data?.config?.longPressClass
     );
   }
 
@@ -1016,9 +1035,7 @@ export function handlePointermove<T>(eventData: NodePointerEventData<T>) {
 function initSyntheticDrag<T>(data: NodePointerEventData<T>) {
   data.e.stopPropagation();
 
-  const syntheticDragState = setDragState(dragStateProps(data));
-
-  return syntheticDragState;
+  return setDragState(dragStateProps(data));
 }
 
 export function handleLongPress<T>(
@@ -1048,19 +1065,19 @@ function pointermoveClasses<T>(
   dragState: DragState<T>,
   config: ParentConfig<T>
 ) {
-  if (config.longTouchClass)
+  if (config.longPressClass)
     removeClass(
       dragState.draggedNodes.map((x) => x.el),
-      config?.longTouchClass
+      config?.longPressClass
     );
 
   if (config.synthDraggingClass && dragState.clonedDraggedNode)
     addNodeClass([dragState.clonedDraggedNode], config.synthDraggingClass);
 
-  if (config.touchDropZoneClass)
+  if (config.synthDropZoneClass)
     addNodeClass(
       dragState.draggedNodes.map((x) => x.el),
-      config.touchDropZoneClass
+      config.synthDropZoneClass
     );
 }
 
@@ -1298,7 +1315,7 @@ export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
 
   state.coordinates.x = x;
 
-  handleScroll();
+  //handleScroll();
 
   dragoverNode(data, state);
 }
@@ -1312,7 +1329,7 @@ export function handleDragoverParent<T>(data: ParentEventData<T>) {
 
   state.coordinates.x = x;
 
-  handleScroll();
+  //handleScroll();
 
   transfer(data, state);
 }
