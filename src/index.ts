@@ -978,6 +978,9 @@ export function handleEnd<T>(eventData: NodeEventData<T>) {
 export function end<T>(_eventData: NodeEventData<T>, state: DragState<T>) {
   document.removeEventListener("contextmenu", noDefault);
 
+  if (state.scrollParentAbortController)
+    state.scrollParentAbortController.abort();
+
   if ("longPressTimeout" in state && state.longPressTimeout)
     clearTimeout(state.longPressTimeout);
 
