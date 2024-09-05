@@ -24,7 +24,9 @@ const fruits = [
   "Avocado",
 ];
 
-const [parent, values] = useDragAndDrop(fruits);
+const [parent, values] = useDragAndDrop(fruits, {
+  group: "fruits",
+});
 
 const vegetables = [
   "Carrot",
@@ -49,7 +51,9 @@ const vegetables = [
   "Bell Pepper",
 ];
 
-const [parent2, values2] = useDragAndDrop(vegetables);
+const [parent2, values2] = useDragAndDrop(vegetables, {
+  group: "fruits",
+});
 </script>
 
 <template>

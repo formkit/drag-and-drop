@@ -137,6 +137,10 @@ export function dragAndDrop<T>({
 
   tearDown(parent);
 
+  document.addEventListener("dragover", (e) => {
+    e.preventDefault();
+  });
+
   const parentData: ParentData<T> = {
     getValues,
     setValues,
@@ -545,9 +549,6 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
 
       parent.nestedParent = e.detail.parent;
     },
-    dragStarted: () => {
-      console.log("YAYAYAYAY");
-    },
   });
 }
 
@@ -934,9 +935,16 @@ export function dragstart<T>(data: NodeDragEventData<T>) {
     return;
   }
 
-  const config = data.targetData.parent.data.config;
+  const scrollParent = getScrollables();
 
+  console.log(scrollParent);
   const dragState = initDrag(data);
+
+  //dragState.scrollParentAbortController = addEvents(scrollParent, {
+  //  scroll: preventSortOnScroll(),
+  //});
+
+  const config = data.targetData.parent.data.config;
 
   const originalZIndex = data.targetData.node.el.style.zIndex;
 
@@ -975,6 +983,8 @@ export function handlePointeroverNode<T>(e: PointeroverNodeEvent<T>) {
 
 export function handleEnd<T>(eventData: NodeEventData<T>) {
   if (!state) return;
+
+  eventData.e.preventDefault();
 
   end(eventData, state);
 

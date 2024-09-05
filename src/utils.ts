@@ -165,7 +165,8 @@ function isScrollable(element) {
  * @internal
  */
 export function getScrollables<T>(
-  data: ParentData<T>
+  data: ParentData<T>,
+  withRoot = false
 ): [HTMLElement, AbortController] {
   // Get all potentially scrollable elements
   const scrollableElements = document.querySelectorAll("*");
@@ -177,11 +178,11 @@ export function getScrollables<T>(
       return isScrollable(element);
     });
 
-  nonChildScrollableElements.push(data.config.root);
+  //nonChildScrollableElements.push(data.config.root);
 
   console.log(nonChildScrollableElements);
 
-  return [];
+  return nonChildScrollableElements as [HTMLElement, AbortController];
 }
 /**
  * Used for setting a single event listener on x number of events for a given
