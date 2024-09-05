@@ -169,6 +169,12 @@ export interface ParentConfig<T> {
    */
   nativeDrag?: boolean;
   /**
+   * Is using native drag events, indicates whether native drag scroll should be
+   * used (the default behavior when dragging an item to the edge of a scrollable
+   * container) or if the library should handle scrolling itself
+   */
+  nativeDragScroll?: boolean;
+  /**
    * Function that is called when a sort operation is to be performed.
    */
   performSort: (
@@ -721,6 +727,10 @@ export interface DragState<T> extends DragStateProps<T> {
    */
   remapJustFinished: boolean;
   /**
+   * scrollEls
+   */
+  scrollEls: Array<[HTMLElement, AbortController]>;
+  /**
    * The top position of pointerdown.
    */
   startTop: number;
@@ -750,22 +760,10 @@ export interface DragStateProps<T> {
   initialParent: ParentRecord<T>;
   lastParent: ParentRecord<T>;
   preventEnter: boolean;
-  scrollParent: HTMLElement;
+  scrollEls: Array<[HTMLElement, AbortController]>;
   scrollParentAbortController?: AbortController;
   startTop: number;
   startLeft: number;
-}
-
-export interface ScrollData<T> {
-  state: DragState<T>;
-  xThresh: number;
-  yThresh: number;
-  scrollParent: HTMLElement;
-  scrollOutside?: boolean;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
 }
 
 export type SortEvent = <T>(data: SortEventData<T>) => void;
@@ -817,4 +815,25 @@ export interface DragendEventData<T> {
   draggedNode: NodeRecord<T>;
   draggedNodes: Array<NodeRecord<T>>;
   position: number;
+}
+
+export interface ScrollData<T> {
+  state: DragState<T>;
+  xThresh: number;
+  yThresh: number;
+  scrollParent: Array<[HTMLElement, AbortController]>;
+  scrollOutside?: boolean;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface Coordinates {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+  height: number;
+  width: number;
 }

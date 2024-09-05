@@ -7,6 +7,7 @@ import type {
   NodePointerEventData,
   PointeroverParentEvent,
   ParentRecord,
+  Coordinates,
 } from "../../types";
 import {
   dragstart,
@@ -19,7 +20,7 @@ import {
   addParentClass,
   pointerdown,
 } from "../../index";
-import { eventCoordinates, removeClass } from "../../utils";
+import { eventCoordinates, removeClass, getRealCoords } from "../../utils";
 
 export const insertionState = {
   draggedOverNodes: Array<NodeRecord<any>>(),
@@ -271,37 +272,6 @@ function descendingHorizontal(
     ],
     y: [nodeCoords.top, nodeCoords.bottom],
     vertical: false,
-  };
-}
-
-interface Coordinates {
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
-  height: number;
-  width: number;
-}
-
-function getRealCoords(el: HTMLElement): Coordinates {
-  const { top, bottom, left, right, height, width } =
-    el.getBoundingClientRect();
-
-  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-  const scrollTop = window.scrollY || document.documentElement.scrollTop;
-
-  const adjustedTop = top + scrollTop;
-  const adjustedBottom = bottom + scrollTop;
-  const adjustedLeft = left + scrollLeft;
-  const adjustedRight = right + scrollLeft;
-
-  return {
-    top: adjustedTop,
-    bottom: adjustedBottom,
-    left: adjustedLeft,
-    right: adjustedRight,
-    height,
-    width,
   };
 }
 

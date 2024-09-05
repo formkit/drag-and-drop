@@ -2,7 +2,6 @@
 import { useDragAndDrop } from "../../../src/vue/index";
 
 const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
-  isNative: false,
   onDragstart: (data) => {
     //console.log("data", data);
     //console.trace();
@@ -33,7 +32,10 @@ const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   </div>
 </template>
 
-<style scoped>
+<style>
+body {
+  height: 10000px !important;
+}
 h1 {
   margin-bottom: 1em;
 }

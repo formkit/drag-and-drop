@@ -61,12 +61,16 @@ const [parent2, values2] = useDragAndDrop(vegetables);
   <div class="container" style="display: flex">
     <div class="scroll" style="height: 500px; overflow-y: scroll">
       <div style="height: 200px" ref="parent" id="parent">
-        <div v-for="i in values" :key="i" :id="i" class="item">{{ i }}</div>
+        <div v-for="i in values" :key="i" :id="i" class="item">
+          <span :id="i + 'world'">{{ i }}</span>
+        </div>
       </div>
     </div>
     <div class="scroll" style="height: 500px; overflow-y: scroll">
       <div style="height: 200px" ref="parent2" id="parent2">
-        <div v-for="i in values2" :key="i" :id="i" class="item">{{ i }}</div>
+        <div v-for="i in values2" :key="i" :id="i" class="item">
+          <span :id="i + 'hello'">{{ i }}</span>
+        </div>
       </div>
     </div>
   </div>

@@ -1,49 +1,49 @@
 import type {
   DNDPlugin,
   DragAndDrop,
+  DragState,
   DragStateProps,
   Node,
-  DragState,
   NodeData,
   NodeDragEventData,
   NodeEventData,
+  NodePointerEventData,
   NodeRecord,
-  NodesData,
   NodeTargetData,
+  NodesData,
   ParentConfig,
   ParentData,
   ParentEventData,
-  ParentsData,
   ParentTargetData,
+  ParentsData,
+  PointeroverNodeEvent,
+  PointeroverParentEvent,
   ScrollData,
   SetupNodeData,
   TearDownNodeData,
-  PointeroverNodeEvent,
-  PointeroverParentEvent,
-  NodePointerEventData,
 } from "./types";
 import {
-  addNodeClass,
   addEvents,
+  addNodeClass,
   copyNodeStyle,
   eventCoordinates,
   getElFromPoint,
-  getScrollParent,
+  getScrollables,
   isBrowser,
   isNode,
   noDefault,
   removeClass,
 } from "./utils";
-export { animations } from "./plugins/animations";
-export { insertion } from "./plugins/insertion";
-export { multiDrag } from "./plugins/multiDrag";
-export { selections } from "./plugins/multiDrag/plugins/selections";
-export { place } from "./plugins/place";
-export { swap } from "./plugins/swap";
+
 export * from "./types";
 export * from "./utils";
+export { animations } from "./plugins/animations";
+export { insertion } from "./plugins/insertion";
 export { isBrowser };
-
+export { multiDrag } from "./plugins/multiDrag";
+export { place } from "./plugins/place";
+export { selections } from "./plugins/multiDrag/plugins/selections";
+export { swap } from "./plugins/swap";
 let isNative = false;
 
 const scrollConfig: {
@@ -64,14 +64,40 @@ export const parents: ParentsData<any> = new WeakMap<
 
 export const treeAncestors: Record<string, HTMLElement> = {};
 
+let synthNodePointerDown = false;
+
 /**
  * The state of the drag and drop. Is undefined until either dragstart or
  * touchstart is called.
  */
-export let state: DragState<any> | undefined;
+export let state: DragState<any> | undefined = {};
+
+const [emit, on] = createEmitter();
+state.emit = emit;
+state.on = on;
+
+function createEmitter() {
+  const callbacks = new Map<string, CallableFunction[]>();
+
+  const emit = function (eventName, ...data) {
+    console.log("emit", eventName, data);
+    console.log("callbacks", callbacks.get(eventName));
+    callbacks.get(eventName).forEach((cb) => {
+      cb(...data);
+    });
+  };
+
+  const on = function (eventName, callback) {
+    console.log("on", eventName, callback);
+    const cbs = callbacks.get(eventName) ?? [];
+    cbs.push(callback);
+    callbacks.set(eventName, cbs);
+  };
+  return [emit, on];
+}
 
 export function resetState() {
-  state = undefined;
+  state = {};
 }
 
 /**
@@ -82,31 +108,37 @@ export function resetState() {
  * @returns void
  */
 export function setDragState<T>(
-  dragStateProps: DragStateProps<T>
+  dragStateProps: DragStateProps<T>,
+  dispatchEvent = true
 ): DragState<T> {
   state = {
-    ascendingDirection: false,
-    incomingDirection: undefined,
-    enterCount: 0,
-    targetIndex: 0,
-    pointerEnter: false,
+    activeNode: undefined,
     affectedNodes: [],
+    ascendingDirection: false,
+    clonedDraggedEls: [],
+    setDragEventsFired: false,
     dragMoving: false,
-    longPress: false,
-    pointerMoved: false,
     draggedNodeDisplay: undefined,
     dynamicValues: [],
-    longPressTimeout: 0,
-    lastValue: undefined,
-    activeNode: undefined,
-    scrollParentAbortController: undefined,
+    enterCount: 0,
+    incomingDirection: undefined,
     lastTargetValue: undefined,
-    remapJustFinished: false,
-    clonedDraggedEls: [],
+    lastValue: undefined,
+    longPress: false,
+    longPressTimeout: 0,
     originalZIndex: undefined,
+    pointerEnter: false,
+    pointerMoved: false,
+    remapJustFinished: false,
+    scrollParentAbortController: undefined,
+    targetIndex: 0,
     transferred: false,
     ...dragStateProps,
+    ...state,
   } as DragState<T>;
+
+  console.log("state", state);
+  if (dispatchEvent) state.emit("dragStarted", state);
 
   return state;
 }
@@ -146,6 +178,7 @@ export function dragAndDrop<T>({
       handleDragleaveNode,
       handleDropParent,
       nativeDrag: config.nativeDrag ?? true,
+      nativeDragScroll: config.nativeDragScroll ?? true,
       performSort,
       performTransfer,
       root: document,
@@ -229,6 +262,7 @@ export function dragStateProps<T>(
       el: data.targetData.parent.el,
       data: data.targetData.parent.data,
     },
+    scrollEls: getScrollables(data.targetData.parent.data),
     startLeft: x - rect.left,
     startTop: y - rect.top,
   };
@@ -516,12 +550,14 @@ export function tearDown(parent: HTMLElement) {
 
   if (!parentData) return;
 
-  if (parentData.abortControllers.mainParent) {
+  if (parentData.abortControllers.mainParent)
     parentData.abortControllers.mainParent.abort();
-  }
 }
 
 function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
+  state.on("dragStarted", () => {
+    console.log("dslkfkldsjfkld");
+  });
   parentData.abortControllers.mainParent = addEvents(parent, {
     dragover: parentEventData(parentData.config.handleDragoverParent),
     handlePointeroverParent: parentData.config.handlePointeroverParent,
@@ -532,6 +568,9 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
       if (!parent) return;
 
       parent.nestedParent = e.detail.parent;
+    },
+    dragStarted: () => {
+      console.log("YAYAYAYAY");
     },
   });
 }
@@ -574,7 +613,7 @@ export function setupNodeRemap<T>(data: SetupNodeData<T>) {
 }
 
 function reapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
-  if (!state) return;
+  if (!state.draggedNode) return;
 
   const dropZoneClass =
     "clonedDraggedNode" in state
@@ -718,14 +757,14 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     );
 
     // TODO: maybe get rid of this — duplicate of the next if statement
-    if (state && nodeData.value === state.draggedNode.data.value) {
+    if (state.draggedNode && nodeData.value === state.draggedNode.data.value) {
       state.draggedNode.data = nodeData;
 
       state.draggedNode.el = node;
     }
 
     if (
-      state &&
+      state.draggedNode &&
       state.draggedNodes.map((x) => x.data.value).includes(nodeData.value)
     ) {
       const draggedNode = state.draggedNodes.find(
@@ -865,11 +904,7 @@ export function validateDragHandle<T>(data: NodeEventData<T>): boolean {
 export function pointerdown<T>(data: NodePointerEventData<T>) {
   if (!validateDragHandle(data)) return;
 
-  const dragState = initSyntheticDrag(data);
-
-  handleSyntheticDraggedNode(data, dragState);
-
-  handleLongPress(data, dragState);
+  synthNodePointerDown = true;
 }
 
 export function handleSyntheticDraggedNode<T>(
@@ -931,13 +966,8 @@ export function dragstart<T>(data: NodeDragEventData<T>) {
 
   dragState.originalZIndex = originalZIndex;
 
+  // TODO: Gross
   data.targetData.node.el.style.zIndex = "9999";
-
-  const scrollParent = getScrollParent(data.targetData.node.el);
-
-  dragState.scrollParentAbortController = addEvents(scrollParent, {
-    scroll: preventSortOnScroll(),
-  });
 
   dragstartClasses(
     dragState.draggedNode.el,
@@ -960,7 +990,7 @@ export function dragstart<T>(data: NodeDragEventData<T>) {
 }
 
 export function handlePointeroverNode<T>(e: PointeroverNodeEvent<T>) {
-  if (!state) return;
+  if (!state.draggedNode) return;
 
   if (e.detail.targetData.parent.el === state.lastParent.el)
     sort(e.detail, state);
@@ -973,6 +1003,8 @@ export function handleEnd<T>(eventData: NodeEventData<T>) {
   end(eventData, state);
 
   resetState();
+
+  synthNodePointerDown = false;
 }
 
 export function end<T>(_eventData: NodeEventData<T>, state: DragState<T>) {
@@ -1030,9 +1062,9 @@ export function handleTouchstart<T>(eventData: NodeEventData<T>) {
 }
 
 export function handlePointermove<T>(eventData: NodePointerEventData<T>) {
-  if (!state || isNative) return;
+  if (isNative) return;
 
-  syntheticMove(eventData, state);
+  syntheticMove(eventData);
 }
 
 function initSyntheticDrag<T>(data: NodePointerEventData<T>) {
@@ -1085,6 +1117,7 @@ function pointermoveClasses<T>(
 }
 
 function getScrollData<T>(state?: DragState<T>): ScrollData<T> | void {
+  return;
   if (!state || !state.scrollParent) return;
 
   // If the scrollParent is the document and it isn't a touch event, then
@@ -1092,9 +1125,8 @@ function getScrollData<T>(state?: DragState<T>): ScrollData<T> | void {
   if (
     state.scrollParent === document.documentElement &&
     !("clonedDraggedNode" in state)
-  ) {
+  )
     return;
-  }
 
   const { x, y, width, height } = state.scrollParent.getBoundingClientRect();
 
@@ -1109,7 +1141,7 @@ function getScrollData<T>(state?: DragState<T>): ScrollData<T> | void {
     xThresh,
     yThresh,
     scrollOutside,
-    scrollParent: state.scrollParent,
+    scrollEls: state.scrollEls,
     x,
     y,
     width,
@@ -1243,10 +1275,19 @@ function moveNode<T>(data: NodePointerEventData<T>, dragState: DragState<T>) {
   pointermoveClasses(dragState, data.targetData.parent.data.config);
 }
 
-function syntheticMove<T>(
-  data: NodePointerEventData<T>,
-  dragState: DragState<T>
-) {
+function syntheticMove<T>(data: NodePointerEventData<T>) {
+  if (!validateDragHandle(data) || !synthNodePointerDown) return;
+
+  let dragState = state || undefined;
+
+  if (!state.draggedNode) {
+    dragState = initSyntheticDrag(data);
+  } else {
+    dragState = state;
+  }
+
+  handleSyntheticDraggedNode(data, dragState);
+
   dragState.draggedNode.el.setPointerCapture(data.e.pointerId);
 
   const config = data.targetData.parent.data.config;
@@ -1290,6 +1331,7 @@ function syntheticMove<T>(
 export function handleScroll() {
   for (const direction of Object.keys(scrollConfig)) {
     const [x, y] = scrollConfig[direction];
+
     performScroll(direction, x, y);
   }
 }
@@ -1297,7 +1339,7 @@ export function handleScroll() {
 function performScroll(direction: string, x: number, y: number) {
   const state = shouldScroll(direction);
 
-  if (!state) return;
+  if (!state.draggedNode) return;
 
   state.scrollParent.scrollBy(x, y);
 
@@ -1305,12 +1347,12 @@ function performScroll(direction: string, x: number, y: number) {
     () => {
       performScroll(direction, x, y);
     },
-    "clonedDraggedNode" in state ? 10 : 100
+    "clonedDraggedNode" in state ? 50 : 100
   );
 }
 
 export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
-  if (!state) return;
+  if (!state.draggedNode) return;
 
   const { x, y } = eventCoordinates(data.e);
 
@@ -1318,7 +1360,7 @@ export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
 
   state.coordinates.x = x;
 
-  //handleScroll();
+  if (!state.initialParent.data.config.nativeDragScroll) handleScroll();
 
   dragoverNode(data, state);
 }
@@ -1332,7 +1374,7 @@ export function handleDragoverParent<T>(data: ParentEventData<T>) {
 
   state.coordinates.x = x;
 
-  //handleScroll();
+  if (!state.initialParent.data.config.nativeDragScroll) handleScroll();
 
   transfer(data, state);
 }

@@ -6,6 +6,7 @@ import type {
   NodeData,
   ParentData,
   ParentFromPoint,
+  Coordinates,
 } from "./types";
 
 import { nodes, parents } from "./index";
@@ -144,6 +145,16 @@ export function removeClass(
   }
 }
 
+// Function to check if an element is scrollable
+function isScrollable(element) {
+  const style = window.getComputedStyle(element);
+  return (
+    ((style.overflowY === "auto" || style.overflowY === "scroll") &&
+      element.scrollHeight > element.clientHeight) ||
+    ((style.overflowX === "auto" || style.overflowX === "scroll") &&
+      element.scrollWidth > element.clientWidth)
+  );
+}
 /**
  * Used for getting the closest scrollable parent of a given element.
  *
@@ -153,30 +164,24 @@ export function removeClass(
  *
  * @internal
  */
-export function getScrollParent(node: HTMLElement): HTMLElement {
-  let currentNode = node;
+export function getScrollables<T>(
+  data: ParentData<T>
+): [HTMLElement, AbortController] {
+  // Get all potentially scrollable elements
+  const scrollableElements = document.querySelectorAll("*");
 
-  while (
-    currentNode !== null &&
-    currentNode.nodeType === 1 &&
-    currentNode instanceof HTMLElement
-  ) {
-    const computedStyle = window.getComputedStyle(currentNode);
+  // Filter out elements that are scrollable and not children of the excluded element
 
-    const overflow = computedStyle.getPropertyValue("overflow");
+  const nonChildScrollableElements: Array<Element | Document | ShadowRoot> =
+    Array.from(scrollableElements).filter((element) => {
+      return isScrollable(element);
+    });
 
-    if (
-      overflow === "scroll" ||
-      overflow === "auto" ||
-      overflow === "auto scroll"
-    ) {
-      return currentNode;
-    }
+  nonChildScrollableElements.push(data.config.root);
 
-    currentNode = currentNode.parentNode as HTMLElement;
-  }
+  console.log(nonChildScrollableElements);
 
-  return document.documentElement;
+  return [];
 }
 /**
  * Used for setting a single event listener on x number of events for a given
@@ -290,13 +295,16 @@ export function addEvents(
   events: EventHandlers | any
 ): AbortController {
   const abortController = new AbortController();
+
   for (const eventName in events) {
     const handler = events[eventName];
+
     el.addEventListener(eventName, handler, {
       signal: abortController.signal,
       passive: false,
     });
   }
+
   return abortController;
 }
 
@@ -343,4 +351,26 @@ export function copyNodeStyle(
 
 export function eventCoordinates(data: DragEvent | PointerEvent) {
   return { x: data.clientX, y: data.clientY };
+}
+
+export function getRealCoords(el: HTMLElement): Coordinates {
+  const { top, bottom, left, right, height, width } =
+    el.getBoundingClientRect();
+
+  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+
+  const adjustedTop = top + scrollTop;
+  const adjustedBottom = bottom + scrollTop;
+  const adjustedLeft = left + scrollLeft;
+  const adjustedRight = right + scrollLeft;
+
+  return {
+    top: adjustedTop,
+    bottom: adjustedBottom,
+    left: adjustedLeft,
+    right: adjustedRight,
+    height,
+    width,
+  };
 }
