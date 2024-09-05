@@ -33,6 +33,7 @@ import {
   isNode,
   noDefault,
   removeClass,
+  createEmitter,
 } from "./utils";
 
 export * from "./types";
@@ -66,35 +67,33 @@ export const treeAncestors: Record<string, HTMLElement> = {};
 
 let synthNodePointerDown = false;
 
+const [emit, on] = createEmitter();
+
 /**
  * The state of the drag and drop. Is undefined until either dragstart or
  * touchstart is called.
  */
-export let state: DragState<any> | undefined = {};
-
-const [emit, on] = createEmitter();
-state.emit = emit;
-state.on = on;
-
-function createEmitter() {
-  const callbacks = new Map<string, CallableFunction[]>();
-
-  const emit = function (eventName, ...data) {
-    console.log("emit", eventName, data);
-    console.log("callbacks", callbacks.get(eventName));
-    callbacks.get(eventName).forEach((cb) => {
-      cb(...data);
-    });
-  };
-
-  const on = function (eventName, callback) {
-    console.log("on", eventName, callback);
-    const cbs = callbacks.get(eventName) ?? [];
-    cbs.push(callback);
-    callbacks.set(eventName, cbs);
-  };
-  return [emit, on];
-}
+export let state: Partial<DragState<any>> = {
+  emit,
+  on,
+  activeNode: undefined,
+  affectedNodes: [],
+  ascendingDirection: false,
+  clonedDraggedEls: [],
+  draggedNodeDisplay: undefined,
+  dynamicValues: [],
+  incomingDirection: undefined,
+  lastTargetValue: undefined,
+  lastValue: undefined,
+  longPress: false,
+  longPressTimeout: 0,
+  originalZIndex: undefined,
+  pointerMoved: false,
+  remapJustFinished: false,
+  scrollParentAbortController: undefined,
+  targetIndex: 0,
+  transferred: false,
+};
 
 export function resetState() {
   state = {};
@@ -108,39 +107,16 @@ export function resetState() {
  * @returns void
  */
 export function setDragState<T>(
-  dragStateProps: DragStateProps<T>,
-  dispatchEvent = true
+  dragStateProps: DragStateProps<T>
 ): DragState<T> {
   state = {
-    activeNode: undefined,
-    affectedNodes: [],
-    ascendingDirection: false,
-    clonedDraggedEls: [],
-    setDragEventsFired: false,
-    dragMoving: false,
-    draggedNodeDisplay: undefined,
-    dynamicValues: [],
-    enterCount: 0,
-    incomingDirection: undefined,
-    lastTargetValue: undefined,
-    lastValue: undefined,
-    longPress: false,
-    longPressTimeout: 0,
-    originalZIndex: undefined,
-    pointerEnter: false,
-    pointerMoved: false,
-    remapJustFinished: false,
-    scrollParentAbortController: undefined,
-    targetIndex: 0,
-    transferred: false,
-    ...dragStateProps,
     ...state,
+    ...dragStateProps,
   } as DragState<T>;
 
-  console.log("state", state);
-  if (dispatchEvent) state.emit("dragStarted", state);
+  if (state.emit) state.emit("dragStarted", state);
 
-  return state;
+  return state as DragState<T>;
 }
 
 /**

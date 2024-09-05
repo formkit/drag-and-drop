@@ -685,6 +685,10 @@ export interface DragState<T> extends DragStateProps<T> {
    */
   dynamicValues: Array<T>;
   /**
+   * Emitter
+   */
+  emit: (event: string, data: unknown) => void;
+  /**
    * The direction that the dragged node is moving into a dragover node.
    */
   incomingDirection: "above" | "below" | "left" | "right" | undefined;
@@ -716,6 +720,10 @@ export interface DragState<T> extends DragStateProps<T> {
    * Long press timeout
    */
   longPressTimeout: any;
+  /**
+   * Listener
+   */
+  on: (event: string, callback: () => void) => void;
   /**
    * The original z-index of the dragged node.
    */
