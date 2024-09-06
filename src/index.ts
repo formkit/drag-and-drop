@@ -67,36 +67,15 @@ export const treeAncestors: Record<string, HTMLElement> = {};
 
 let synthNodePointerDown = false;
 
-const [emit, on] = createEmitter();
+export const [emit, on] = createEmitter();
 
 /**
- * The state of the drag and drop. Is undefined until either dragstart or
- * touchstart is called.
+ * The state of the drag and drop.
  */
-export let state: Partial<DragState<any>> = {
-  emit,
-  on,
-  activeNode: undefined,
-  affectedNodes: [],
-  ascendingDirection: false,
-  clonedDraggedEls: [],
-  draggedNodeDisplay: undefined,
-  dynamicValues: [],
-  incomingDirection: undefined,
-  lastTargetValue: undefined,
-  lastValue: undefined,
-  longPress: false,
-  longPressTimeout: 0,
-  originalZIndex: undefined,
-  pointerMoved: false,
-  remapJustFinished: false,
-  scrollParentAbortController: undefined,
-  targetIndex: 0,
-  transferred: false,
-};
+export let state: DragState<any> | undefined;
 
 export function resetState() {
-  state = {};
+  state = undefined;
 }
 
 /**
@@ -109,12 +88,13 @@ export function resetState() {
 export function setDragState<T>(
   dragStateProps: DragStateProps<T>
 ): DragState<T> {
+  // TODO:
   state = {
     ...state,
     ...dragStateProps,
   } as DragState<T>;
 
-  if (state.emit) state.emit("dragStarted", state);
+  state.emit("dragStarted", state);
 
   return state as DragState<T>;
 }
@@ -216,6 +196,8 @@ export function dragStateProps<T>(
 
   const rect = data.targetData.node.el.getBoundingClientRect();
 
+  console.log("getScrollables", getScrollables());
+
   return {
     clonedDraggedNode: data.targetData.node.el.cloneNode(true) as Node,
     preventEnter: false,
@@ -242,7 +224,7 @@ export function dragStateProps<T>(
       el: data.targetData.parent.el,
       data: data.targetData.parent.data,
     },
-    scrollEls: getScrollables(data.targetData.parent.data),
+    scrollEls: getScrollables(),
     startLeft: x - rect.left,
     startTop: y - rect.top,
   };
@@ -535,9 +517,10 @@ export function tearDown(parent: HTMLElement) {
 }
 
 function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
-  state.on("dragStarted", () => {
-    console.log("dslkfkldsjfkld");
-  });
+  if (state)
+    on("dragStarted", () => {
+      console.log("dslkfkldsjfkld");
+    });
   parentData.abortControllers.mainParent = addEvents(parent, {
     dragover: parentEventData(parentData.config.handleDragoverParent),
     handlePointeroverParent: parentData.config.handlePointeroverParent,
@@ -590,7 +573,7 @@ export function setupNodeRemap<T>(data: SetupNodeData<T>) {
 }
 
 function reapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
-  if (!state.draggedNode) return;
+  if (!state) return;
 
   const dropZoneClass =
     "clonedDraggedNode" in state
@@ -734,14 +717,14 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     );
 
     // TODO: maybe get rid of this — duplicate of the next if statement
-    if (state.draggedNode && nodeData.value === state.draggedNode.data.value) {
+    if (state && nodeData.value === state.draggedNode.data.value) {
       state.draggedNode.data = nodeData;
 
       state.draggedNode.el = node;
     }
 
     if (
-      state.draggedNode &&
+      state &&
       state.draggedNodes.map((x) => x.data.value).includes(nodeData.value)
     ) {
       const draggedNode = state.draggedNodes.find(
@@ -974,7 +957,7 @@ export function dragstart<T>(data: NodeDragEventData<T>) {
 }
 
 export function handlePointeroverNode<T>(e: PointeroverNodeEvent<T>) {
-  if (!state.draggedNode) return;
+  if (!state) return;
 
   if (e.detail.targetData.parent.el === state.lastParent.el)
     sort(e.detail, state);
@@ -1266,7 +1249,7 @@ function syntheticMove<T>(data: NodePointerEventData<T>) {
 
   let dragState = state || undefined;
 
-  if (!state.draggedNode) {
+  if (!state) {
     dragState = initSyntheticDrag(data);
   } else {
     dragState = state;
@@ -1325,7 +1308,7 @@ export function handleScroll() {
 function performScroll(direction: string, x: number, y: number) {
   const state = shouldScroll(direction);
 
-  if (!state.draggedNode) return;
+  if (!state) return;
 
   state.scrollParent.scrollBy(x, y);
 
@@ -1338,7 +1321,7 @@ function performScroll(direction: string, x: number, y: number) {
 }
 
 export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
-  if (!state.draggedNode) return;
+  if (!state) return;
 
   const { x, y } = eventCoordinates(data.e);
 

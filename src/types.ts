@@ -634,6 +634,12 @@ export type EventHandlers = Record<string, (e: Event) => void>;
  * @param targetIndex - The index of the node that the dragged node is moving
  * into.
  */
+
+export interface NonDragState {
+  emit: (event: string, data: unknown) => void;
+  on: (event: string, callback: () => void) => void;
+}
+
 export interface DragState<T> extends DragStateProps<T> {
   /**
    * The node that was most recently clicked (used optionally).

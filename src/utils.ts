@@ -164,25 +164,18 @@ function isScrollable(element) {
  *
  * @internal
  */
-export function getScrollables<T>(
-  data: ParentData<T>,
-  withRoot = false
-): [HTMLElement, AbortController] {
-  // Get all potentially scrollable elements
-  const scrollableElements = document.querySelectorAll("*");
+export function getScrollables(): Array<[HTMLElement, AbortController]> {
+  const scrollables: Array<[HTMLElement, AbortController]> = [];
 
-  // Filter out elements that are scrollable and not children of the excluded element
+  for (const el of Array.from(document.querySelectorAll("*"))) {
+    if (!isScrollable(el) || !(el instanceof HTMLElement)) continue;
 
-  const nonChildScrollableElements: Array<Element | Document | ShadowRoot> =
-    Array.from(scrollableElements).filter((element) => {
-      return isScrollable(element);
-    });
+    const abortController = new AbortController();
 
-  //nonChildScrollableElements.push(data.config.root);
+    scrollables.push([el, abortController]);
+  }
 
-  console.log(nonChildScrollableElements);
-
-  return nonChildScrollableElements as [HTMLElement, AbortController];
+  return scrollables;
 }
 /**
  * Used for setting a single event listener on x number of events for a given
