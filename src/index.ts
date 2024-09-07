@@ -21,6 +21,8 @@ import type {
   ScrollData,
   SetupNodeData,
   TearDownNodeData,
+  BaseDragState,
+  SynthDragState,
 } from "./types";
 import {
   addEvents,
@@ -69,13 +71,22 @@ let synthNodePointerDown = false;
 
 export const [emit, on] = createEmitter();
 
+const baseDragState = {
+  on,
+  emit,
+  originalZIndex: undefined,
+  preventEnter: false,
+  remapJustFinished: false,
+};
+
 /**
  * The state of the drag and drop.
  */
-export let state: DragState<any> | undefined;
+export let state: DragState<unknown> | SynthDragState<unknown> | BaseDragState =
+  baseDragState;
 
 export function resetState() {
-  state = undefined;
+  state = baseDragState;
 }
 
 /**
@@ -88,11 +99,10 @@ export function resetState() {
 export function setDragState<T>(
   dragStateProps: DragStateProps<T>
 ): DragState<T> {
-  // TODO:
   state = {
     ...state,
     ...dragStateProps,
-  } as DragState<T>;
+  };
 
   state.emit("dragStarted", state);
 
@@ -196,11 +206,11 @@ export function dragStateProps<T>(
 
   const rect = data.targetData.node.el.getBoundingClientRect();
 
-  console.log("getScrollables", getScrollables());
-
   return {
-    clonedDraggedNode: data.targetData.node.el.cloneNode(true) as Node,
-    preventEnter: false,
+    affectedNodes: [],
+    ascendingDirection: false,
+    dynamicValues: [],
+    pointerMoved: false,
     coordinates: {
       x,
       y,
@@ -215,6 +225,7 @@ export function dragStateProps<T>(
         data: data.targetData.node.data,
       },
     ],
+    incomingDirection: undefined,
     initialIndex: data.targetData.node.data.index,
     initialParent: {
       el: data.targetData.parent.el,
@@ -224,9 +235,14 @@ export function dragStateProps<T>(
       el: data.targetData.parent.el,
       data: data.targetData.parent.data,
     },
+    longPress: data.targetData.parent.data.config.longPress ?? false,
+    longPressTimeout: 0,
+    lastTargetValue: data.targetData.node.data.value,
     scrollEls: getScrollables(),
     startLeft: x - rect.left,
     startTop: y - rect.top,
+    targetIndex: data.targetData.node.data.index,
+    transferred: false,
   };
 }
 
@@ -516,6 +532,10 @@ export function tearDown(parent: HTMLElement) {
     parentData.abortControllers.mainParent.abort();
 }
 
+function isDragState<T>(state: BaseDragState): state is DragState<T> {
+  return "draggedNode" in state;
+}
+
 function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
   if (state)
     on("dragStarted", () => {
@@ -573,7 +593,7 @@ export function setupNodeRemap<T>(data: SetupNodeData<T>) {
 }
 
 function reapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
-  if (!state) return;
+  if (!isDragState(state)) return;
 
   const dropZoneClass =
     "clonedDraggedNode" in state
@@ -716,17 +736,14 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
       }
     );
 
-    // TODO: maybe get rid of this — duplicate of the next if statement
-    if (state && nodeData.value === state.draggedNode.data.value) {
+    if (
+      isDragState(state) &&
+      state.draggedNode &&
+      nodeData.value === state.draggedNode.data.value
+    ) {
       state.draggedNode.data = nodeData;
 
       state.draggedNode.el = node;
-    }
-
-    if (
-      state &&
-      state.draggedNodes.map((x) => x.data.value).includes(nodeData.value)
-    ) {
       const draggedNode = state.draggedNodes.find(
         (x) => x.data.value === nodeData.value
       );
@@ -761,14 +778,15 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
 }
 
 export function remapFinished() {
-  if (state) {
-    state.remapJustFinished = true;
+  state.remapJustFinished = true;
 
-    state.affectedNodes = [];
-  }
+  if ("draggedNode" in state) state.affectedNodes = [];
 }
 
-export function handleDragstart<T>(data: NodeEventData<T>) {
+export function handleDragstart<T>(
+  data: NodeEventData<T>,
+  state: BaseDragState
+) {
   if (!(data.e instanceof DragEvent)) return;
 
   if (!data.targetData.parent.data.config.nativeDrag) {
@@ -777,19 +795,28 @@ export function handleDragstart<T>(data: NodeEventData<T>) {
     return;
   }
 
-  dragstart({
-    e: data.e,
-    targetData: data.targetData,
-  });
+  dragstart(
+    {
+      e: data.e,
+      targetData: data.targetData,
+    },
+    state
+  );
 }
 
-export function handlePointerdownNode<T>(eventData: NodePointerEventData<T>) {
+export function handlePointerdownNode<T>(
+  eventData: NodePointerEventData<T>,
+  state: BaseDragState
+) {
   eventData.e.stopPropagation();
 
-  pointerdown({
-    e: eventData.e,
-    targetData: eventData.targetData,
-  });
+  pointerdown(
+    {
+      e: eventData.e,
+      targetData: eventData.targetData,
+    },
+    state
+  );
 }
 
 export function dragstartClasses(
@@ -826,8 +853,6 @@ export function initDrag<T>(eventData: NodeDragEventData<T>): DragState<T> {
     );
   }
 
-  dragState.clonedDraggedNode = undefined;
-
   return dragState;
 }
 
@@ -861,7 +886,10 @@ export function validateDragHandle<T>(data: NodeEventData<T>): boolean {
   return false;
 }
 
-export function pointerdown<T>(data: NodePointerEventData<T>) {
+export function pointerdown<T>(
+  data: NodePointerEventData<T>,
+  _state: BaseDragState
+) {
   if (!validateDragHandle(data)) return;
 
   synthNodePointerDown = true;
@@ -869,7 +897,7 @@ export function pointerdown<T>(data: NodePointerEventData<T>) {
 
 export function handleSyntheticDraggedNode<T>(
   data: NodePointerEventData<T>,
-  dragState: DragState<T>
+  dragState: SynthDragState<T>
 ) {
   dragState.draggedNodeDisplay = dragState.draggedNode.el.style.display;
 
@@ -911,7 +939,10 @@ export function preventSortOnScroll() {
   };
 }
 
-export function dragstart<T>(data: NodeDragEventData<T>) {
+export function dragstart<T>(
+  data: NodeDragEventData<T>,
+  _state: BaseDragState
+) {
   if (!validateDragHandle(data)) {
     data.e.preventDefault();
 
@@ -956,8 +987,11 @@ export function dragstart<T>(data: NodeDragEventData<T>) {
     });
 }
 
-export function handlePointeroverNode<T>(e: PointeroverNodeEvent<T>) {
-  if (!state) return;
+export function handlePointeroverNode<T>(
+  e: PointeroverNodeEvent<T>,
+  state: SynthDragState<T> | BaseDragState
+) {
+  if (!("draggedNode" in state)) return;
 
   if (e.detail.targetData.parent.el === state.lastParent.el)
     sort(e.detail, state);
@@ -979,8 +1013,9 @@ export function handleEnd<T>(eventData: NodeEventData<T>) {
 export function end<T>(_eventData: NodeEventData<T>, state: DragState<T>) {
   document.removeEventListener("contextmenu", noDefault);
 
-  if (state.scrollParentAbortController)
-    state.scrollParentAbortController.abort();
+  // Abort scroll parents
+  //if (state.scrollParentAbortController)
+  //  state.scrollParentAbortController.abort();
 
   if ("longPressTimeout" in state && state.longPressTimeout)
     clearTimeout(state.longPressTimeout);
@@ -1026,14 +1061,18 @@ export function end<T>(_eventData: NodeEventData<T>, state: DragState<T>) {
     });
 }
 
-export function handleTouchstart<T>(eventData: NodeEventData<T>) {
+export function handleTouchstart<T>(
+  eventData: NodeEventData<T>,
+  _state: BaseDragState
+) {
   eventData.e.preventDefault();
 }
 
-export function handlePointermove<T>(eventData: NodePointerEventData<T>) {
-  if (isNative) return;
-
-  syntheticMove(eventData);
+export function handlePointermove<T>(
+  eventData: NodePointerEventData<T>,
+  state: SynthDragState<T> | BaseDragState
+) {
+  syntheticMove(eventData, state);
 }
 
 function initSyntheticDrag<T>(data: NodePointerEventData<T>) {
@@ -1044,7 +1083,7 @@ function initSyntheticDrag<T>(data: NodePointerEventData<T>) {
 
 export function handleLongPress<T>(
   data: NodePointerEventData<T>,
-  dragState: DragState<T>
+  dragState: SynthDragState<T>
 ) {
   const config = data.targetData.parent.data.config;
 
@@ -1244,20 +1283,19 @@ function moveNode<T>(data: NodePointerEventData<T>, dragState: DragState<T>) {
   pointermoveClasses(dragState, data.targetData.parent.data.config);
 }
 
-function syntheticMove<T>(data: NodePointerEventData<T>) {
-  if (!validateDragHandle(data) || !synthNodePointerDown) return;
+function syntheticMove<T>(
+  data: NodePointerEventData<T>,
+  state: SynthDragState<T> | BaseDragState
+) {
+  if (isNative || !validateDragHandle(data) || !synthNodePointerDown) return;
 
-  let dragState = state || undefined;
+  let synthState = state || undefined;
 
-  if (!state) {
-    dragState = initSyntheticDrag(data);
-  } else {
-    dragState = state;
-  }
+  synthState = !("draggedNode" in state) ? initSyntheticDrag(data) : state;
 
-  handleSyntheticDraggedNode(data, dragState);
+  handleSyntheticDraggedNode(data, synthState);
 
-  dragState.draggedNode.el.setPointerCapture(data.e.pointerId);
+  synthState.draggedNode.el.setPointerCapture(data.e.pointerId);
 
   const config = data.targetData.parent.data.config;
 
@@ -1310,7 +1348,7 @@ function performScroll(direction: string, x: number, y: number) {
 
   if (!state) return;
 
-  state.scrollParent.scrollBy(x, y);
+  //state.scrollParent.scrollBy(x, y);
 
   setTimeout(
     () => {
@@ -1320,9 +1358,10 @@ function performScroll(direction: string, x: number, y: number) {
   );
 }
 
-export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
-  if (!state) return;
-
+export function handleDragoverNode<T>(
+  data: NodeDragEventData<T>,
+  state: DragState<T>
+) {
   const { x, y } = eventCoordinates(data.e);
 
   state.coordinates.y = y;
@@ -1557,11 +1596,9 @@ export function nodeEventData<T>(
   function nodeTargetData(node: Node): NodeTargetData<T> | undefined {
     const nodeData = nodes.get(node);
 
-    const parent = node.parentNode || state?.lastParent?.el;
-
     if (!nodeData) return;
 
-    const parentData = parents.get(parent);
+    const parentData = parents.get(node.parentNode);
 
     if (!parentData) return;
 
@@ -1585,6 +1622,7 @@ export function nodeEventData<T>(
     return callback({
       e,
       targetData,
+      state,
     });
   };
 }
@@ -1639,6 +1677,7 @@ export function parentEventData<T>(
     return callback({
       e,
       targetData,
+      state,
     });
   };
 }

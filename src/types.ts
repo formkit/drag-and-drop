@@ -635,16 +635,41 @@ export type EventHandlers = Record<string, (e: Event) => void>;
  * into.
  */
 
-export interface NonDragState {
-  emit: (event: string, data: unknown) => void;
-  on: (event: string, callback: () => void) => void;
+export type SynthDragState<T> = SynthDragStateProps<T> & DragState<T>;
+
+export interface SynthDragStateProps<T> {
+  /**
+   * The cloned elements of the dragged node. This is used primarily for
+   * TouchEvents or multi-drag purposes.
+   */
+  clonedDraggedEls: Array<Element>;
+  /**
+   * Element
+   */
+  clonedDraggedNode: Node;
+  /**
+   * The display of the synthetic node.
+   */
+  draggedNodeDisplay: string | undefined;
 }
 
-export interface DragState<T> extends DragStateProps<T> {
+export type DragState<T> = DragStateProps<T> & BaseDragState;
+
+export type BaseDragState = {
+  emit: (event: string, data: unknown) => void;
+  on: (event: string, callback: () => void) => void;
   /**
-   * The node that was most recently clicked (used optionally).
+   * The original z-index of the dragged node.
    */
-  activeNode: NodeRecord<T> | undefined;
+  originalZIndex?: string;
+  preventEnter: boolean;
+  /**
+   * Flag indicating that the remap just finished.
+   */
+  remapJustFinished: boolean;
+};
+
+export interface DragStateProps<T> {
   /**
    * The nodes that will be updated by a drag action (sorted).
    */
@@ -654,15 +679,6 @@ export interface DragState<T> extends DragStateProps<T> {
    * or not.
    */
   ascendingDirection: boolean;
-  /**
-   * The cloned elements of the dragged node. This is used primarily for
-   * TouchEvents or multi-drag purposes.
-   */
-  clonedDraggedEls: Array<Element>;
-  /**
-   * Element
-   */
-  clonedDraggedNode: Node | undefined;
   /**
    * The coordinates of the dragged element itself.
    */
@@ -679,10 +695,6 @@ export interface DragState<T> extends DragStateProps<T> {
    */
   draggedNode: NodeRecord<T>;
   /**
-   * The display of the touched node.
-   */
-  draggedNodeDisplay: string | undefined;
-  /**
    * The nodes that are being dragged.
    */
   draggedNodes: Array<NodeRecord<T>>;
@@ -690,10 +702,6 @@ export interface DragState<T> extends DragStateProps<T> {
    * Values to be inserted during sort and transfer operations.
    */
   dynamicValues: Array<T>;
-  /**
-   * Emitter
-   */
-  emit: (event: string, data: unknown) => void;
   /**
    * The direction that the dragged node is moving into a dragover node.
    */
@@ -711,13 +719,9 @@ export interface DragState<T> extends DragStateProps<T> {
    */
   lastParent: ParentRecord<T>;
   /**
-   * The last value of the dragged node.
-   */
-  lastValue: any;
-  /**
    * The last value the dragged node targeted.
    */
-  lastTargetValue: any;
+  lastTargetValue: T;
   /**
    * longPress - A flag to indicate whether a long press has occurred.
    */
@@ -725,21 +729,7 @@ export interface DragState<T> extends DragStateProps<T> {
   /**
    * Long press timeout
    */
-  longPressTimeout: any;
-  /**
-   * Listener
-   */
-  on: (event: string, callback: () => void) => void;
-  /**
-   * The original z-index of the dragged node.
-   */
-  originalZIndex: string | undefined;
-
-  preventEnter: boolean;
-  /**
-   * Flag indicating that the remap just finished.
-   */
-  remapJustFinished: boolean;
+  longPressTimeout: number;
   /**
    * scrollEls
    */
@@ -760,24 +750,6 @@ export interface DragState<T> extends DragStateProps<T> {
    * Flag indicating that the dragged node was transferred
    */
   transferred: boolean;
-}
-
-export interface DragStateProps<T> {
-  clonedDraggedNode: Node | undefined;
-  coordinates: {
-    x: number;
-    y: number;
-  };
-  draggedNode: NodeRecord<T>;
-  draggedNodes: Array<NodeRecord<T>>;
-  initialIndex: number;
-  initialParent: ParentRecord<T>;
-  lastParent: ParentRecord<T>;
-  preventEnter: boolean;
-  scrollEls: Array<[HTMLElement, AbortController]>;
-  scrollParentAbortController?: AbortController;
-  startTop: number;
-  startLeft: number;
 }
 
 export type SortEvent = <T>(data: SortEventData<T>) => void;
