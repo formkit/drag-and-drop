@@ -478,6 +478,7 @@ export interface PointeroverNodeEvent<T> extends Event {
   detail: {
     e: PointerEvent;
     targetData: NodeTargetData<T>;
+    state: SynthDragState<T>;
   };
 }
 
@@ -489,6 +490,7 @@ export interface PointeroverParentEvent<T> extends Event {
   detail: {
     e: PointerEvent;
     targetData: ParentTargetData<T>;
+    state: SynthDragState<T>;
   };
 }
 
@@ -650,7 +652,7 @@ export interface SynthDragStateProps<T> {
   /**
    * The display of the synthetic node.
    */
-  draggedNodeDisplay: string | undefined;
+  draggedNodeDisplay: string;
 }
 
 export type DragState<T> = DragStateProps<T> & BaseDragState;

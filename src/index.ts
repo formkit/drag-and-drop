@@ -23,6 +23,7 @@ import type {
   TearDownNodeData,
   BaseDragState,
   SynthDragState,
+  SynthDragStateProps,
 } from "./types";
 import {
   addEvents,
@@ -86,6 +87,7 @@ export let state: DragState<unknown> | SynthDragState<unknown> | BaseDragState =
   baseDragState;
 
 export function resetState() {
+  console.log("reset state");
   state = baseDragState;
 }
 
@@ -97,14 +99,18 @@ export function resetState() {
  * @returns void
  */
 export function setDragState<T>(
-  dragStateProps: DragStateProps<T>
+  dragStateProps:
+    | (SynthDragStateProps<T> & DragStateProps<T>)
+    | DragStateProps<T>
+    | undefined
 ): DragState<T> | SynthDragState<T> {
+  console.log("drag state props", dragStateProps.clonedDraggedNode);
   state = {
     ...state,
     ...dragStateProps,
-  };
+  } as DragState<T> | SynthDragState<T>;
 
-  state.emit("dragStarted", state);
+  state.emit("dragStarted", state.clonedDraggedNode);
 
   return state as DragState<T> | SynthDragState<T>;
 }
@@ -965,23 +971,23 @@ export function dragstart<T>(
     });
 }
 
-export function handlePointeroverNode<T>(
-  e: PointeroverNodeEvent<T>,
-  state: SynthDragState<T> | BaseDragState
-) {
-  if (!("draggedNode" in state)) return;
-
-  if (e.detail.targetData.parent.el === state.lastParent.el)
-    sort(e.detail, state);
-  else transfer(e.detail, state);
+export function handlePointeroverNode<T>(e: PointeroverNodeEvent<T>) {
+  if (e.detail.targetData.parent.el === e.detail.state.lastParent.el)
+    sort(e.detail, e.detail.state);
+  else transfer(e.detail, e.detail.state);
 }
 
-export function handleEnd<T>(eventData: NodeEventData<T>) {
+export function handleEnd<T>(
+  data: NodeEventData<T>,
+  state: DragState<T> | SynthDragState<T>
+) {
   if (!state) return;
 
-  eventData.e.preventDefault();
+  return;
 
-  end(eventData, state);
+  data.e.preventDefault();
+
+  end(data, state);
 
   resetState();
 
@@ -992,6 +998,7 @@ export function end<T>(
   _eventData: NodeEventData<T>,
   state: DragState<T> | SynthDragState<T>
 ) {
+  return;
   document.removeEventListener("contextmenu", noDefault);
 
   // Abort scroll parents
@@ -1057,15 +1064,33 @@ export function handlePointermove<T>(
   if (isNative || !synthNodePointerDown || !validateDragHandle(data)) return;
 
   if (!isSynthDragState(state)) {
-    const synthState = initSyntheticDrag(data, state) as SynthDragState<T>;
+    const synthDragState = initSyntheticDrag(data, state) as SynthDragState<T>;
 
-    synthMove(data, synthState);
+    synthDragState.draggedNode.el.setPointerCapture(data.e.pointerId);
+
+    console.log("look here first", synthDragState);
+
+    synthMove(data, synthDragState);
+
+    if (data.targetData.parent.data.config.onDragstart)
+      data.targetData.parent.data.config.onDragstart({
+        parent: data.targetData.parent,
+        values: parentValues(
+          data.targetData.parent.el,
+          data.targetData.parent.data
+        ),
+        draggedNode: synthDragState.draggedNode,
+        draggedNodes: synthDragState.draggedNodes,
+        position: synthDragState.initialIndex,
+      });
 
     return;
   }
 
-  // TODO:
-  synthMove(data, state);
+  if (data.e.cancelable) data.e.preventDefault();
+
+  console.log("look here", state.clonedDraggedNode);
+  synthMove(data, state as SynthDragState<T>);
 }
 
 function initSyntheticDrag<T>(
@@ -1074,9 +1099,9 @@ function initSyntheticDrag<T>(
 ): SynthDragState<T> {
   data.e.stopPropagation();
 
-  let dragState = setDragState(dragStateProps(data));
+  console.log("initSyntheticDrag");
 
-  const display = dragState.draggedNode.el.style.display;
+  const display = data.targetData.node.el.style.display;
 
   const rect = data.targetData.node.el.getBoundingClientRect();
 
@@ -1087,29 +1112,34 @@ function initSyntheticDrag<T>(
   clonedDraggedNode.style.cssText = `
             width: ${rect.width}px;
             position: fixed;
-            top: -9999px;
             pointer-events: none;
             z-index: 999999;
-            display: none;
           `;
 
   document.body.append(clonedDraggedNode);
+
+  clonedDraggedNode.id = "hello world";
 
   copyNodeStyle(data.targetData.node.el, clonedDraggedNode);
 
   clonedDraggedNode.style.display = "none";
 
-  dragState = {
-    ...dragState,
-    clonedDraggedNode: data.targetData.node.el.cloneNode(true) as HTMLElement,
+  const synthDragStateProps = {
+    clonedDraggedEls: [],
+    clonedDraggedNode,
     draggedNodeDisplay: display,
   };
 
-  dragState.draggedNode.el.setPointerCapture(data.e.pointerId);
-
   document.addEventListener("contextmenu", noDefault);
 
-  return dragState as SynthDragState<T>;
+  const synthDragState = setDragState({
+    ...dragStateProps(data),
+    ...synthDragStateProps,
+  });
+
+  synthDragState.draggedNode.el.setPointerCapture(data.e.pointerId);
+
+  return synthDragState as SynthDragState<T>;
 }
 
 export function handleLongPress<T>(
@@ -1280,20 +1310,6 @@ function shouldScrollDown<T>(
 }
 
 function moveNode<T>(data: NodePointerEventData<T>, state: SynthDragState<T>) {
-  if (!state.pointerMoved) {
-    if (data.targetData.parent.data.config.onDragstart)
-      data.targetData.parent.data.config.onDragstart({
-        parent: data.targetData.parent,
-        values: parentValues(
-          data.targetData.parent.el,
-          data.targetData.parent.data
-        ),
-        draggedNode: state.draggedNode,
-        draggedNodes: state.draggedNodes,
-        position: state.initialIndex,
-      });
-  }
-
   state.pointerMoved = true;
 
   state.clonedDraggedNode.style.display = state.draggedNodeDisplay || "";
@@ -1312,6 +1328,8 @@ function moveNode<T>(data: NodePointerEventData<T>, state: SynthDragState<T>) {
 
   state.clonedDraggedNode.style.top = `${y - startTop}px`;
 
+  console.log("getting here", state.clonedDraggedNode.style.top);
+
   if (data.e.cancelable) data.e.preventDefault();
 
   pointermoveClasses(state, data.targetData.parent.data.config);
@@ -1329,13 +1347,9 @@ export function synthMove<T>(
     return;
   }
 
-  state.draggedNode.el.setPointerCapture(data.e.pointerId);
-
-  if (data.e.cancelable) data.e.preventDefault();
-
   moveNode(data, state);
 
-  handleScroll();
+  //handleScroll();
 
   const elFromPoint = getElFromPoint(data);
 
@@ -1344,6 +1358,7 @@ export function synthMove<T>(
   const pointerMoveEventData = {
     e: data.e,
     targetData: elFromPoint,
+    state,
   };
 
   if ("node" in elFromPoint) {

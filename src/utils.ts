@@ -342,15 +342,15 @@ export function createEmitter() {
   const callbacks = new Map<string, CallableFunction[]>();
 
   const emit = function (eventName, ...data) {
-    console.log("emit", eventName, data);
-    console.log("callbacks", callbacks.get(eventName));
+    //console.log("emit", eventName, data);
+    //console.log("callbacks", callbacks.get(eventName));
     callbacks.get(eventName).forEach((cb) => {
       cb(...data);
     });
   };
 
   const on = function (eventName, callback) {
-    console.log("on", eventName, callback);
+    //console.log("on", eventName, callback);
     const cbs = callbacks.get(eventName) ?? [];
     cbs.push(callback);
     callbacks.set(eventName, cbs);
