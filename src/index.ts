@@ -86,6 +86,7 @@ export let state: DragState<unknown> | SynthDragState<unknown> | BaseDragState =
   baseDragState;
 
 export function resetState() {
+  console.log("reset tate");
   state = baseDragState;
 }
 
@@ -210,9 +211,7 @@ export function dragStateProps<T>(
 
   for (const scrollable of getScrollables()) {
     const controller = addEvents(scrollable, {
-      scroll: () => {
-        if (state) state.preventEnter = true;
-      },
+      scroll: preventSortOnScroll,
     });
 
     scrollEls.push([scrollable, controller]);
@@ -939,7 +938,10 @@ export function dragstart<T>(
 
   const dragState = initDrag(data);
 
+  console.log("dragState", dragState);
+
   for (const el of dragState.scrollEls) {
+    el[1].abort();
   }
 
   //dragState.scrollParentAbortController = addEvents(scrollParent, {
@@ -1409,7 +1411,10 @@ export function handleDragoverNode<T>(
   dragoverNode(data, state);
 }
 
-export function handleDragoverParent<T>(data: ParentEventData<T>) {
+export function handleDragoverParent<T>(
+  data: ParentEventData<T>,
+  state: DragState<T>
+) {
   if (!state) return;
 
   const { x, y } = eventCoordinates(data.e as DragEvent);
@@ -1644,7 +1649,7 @@ export function nodeEventData<T>(
         data: nodeData,
       },
       parent: {
-        el: parent,
+        el: node.parentNode,
         data: parentData as ParentData<T>,
       },
     };
@@ -1655,11 +1660,13 @@ export function nodeEventData<T>(
 
     if (!targetData) return;
 
-    return callback({
-      e,
-      targetData,
-      state,
-    });
+    return callback(
+      {
+        e,
+        targetData,
+      },
+      state
+    );
   };
 }
 

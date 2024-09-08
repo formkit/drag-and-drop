@@ -167,7 +167,7 @@ function isScrollable(element: HTMLElement) {
  */
 export function getScrollables(): Array<HTMLElement> {
   return Array.from(document.querySelectorAll("*")).filter(
-    (el) => isScrollable(el) && el instanceof HTMLElement
+    (el) => el instanceof HTMLElement && isScrollable(el)
   ) as Array<HTMLElement>;
 }
 
