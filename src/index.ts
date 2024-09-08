@@ -98,7 +98,7 @@ export function resetState() {
  */
 export function setDragState<T>(
   dragStateProps: DragStateProps<T>
-): DragState<T> {
+): DragState<T> | SynthDragState<T> {
   state = {
     ...state,
     ...dragStateProps,
@@ -106,7 +106,7 @@ export function setDragState<T>(
 
   state.emit("dragStarted", state);
 
-  return state as DragState<T>;
+  return state as DragState<T> | SynthDragState<T>;
 }
 
 /**
@@ -206,6 +206,18 @@ export function dragStateProps<T>(
 
   const rect = data.targetData.node.el.getBoundingClientRect();
 
+  const scrollEls: Array<[HTMLElement, AbortController]> = [];
+
+  for (const scrollable of getScrollables()) {
+    const controller = addEvents(scrollable, {
+      scroll: () => {
+        if (state) state.preventEnter = true;
+      },
+    });
+
+    scrollEls.push([scrollable, controller]);
+  }
+
   return {
     affectedNodes: [],
     ascendingDirection: false,
@@ -238,7 +250,7 @@ export function dragStateProps<T>(
     longPress: data.targetData.parent.data.config.longPress ?? false,
     longPressTimeout: 0,
     lastTargetValue: data.targetData.node.data.value,
-    scrollEls: getScrollables(),
+    scrollEls,
     startLeft: x - rect.left,
     startTop: y - rect.top,
     targetIndex: data.targetData.node.data.index,
@@ -532,8 +544,14 @@ export function tearDown(parent: HTMLElement) {
     parentData.abortControllers.mainParent.abort();
 }
 
-function isDragState<T>(state: BaseDragState): state is DragState<T> {
+function isDragState<T>(
+  state: BaseDragState
+): state is DragState<T> | SynthDragState<T> {
   return "draggedNode" in state;
+}
+
+function isSynthDragState<T>(state: BaseDragState): state is SynthDragState<T> {
+  return "clonedDraggedNode" in state;
 }
 
 function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
@@ -895,36 +913,6 @@ export function pointerdown<T>(
   synthNodePointerDown = true;
 }
 
-export function handleSyntheticDraggedNode<T>(
-  data: NodePointerEventData<T>,
-  dragState: SynthDragState<T>
-) {
-  dragState.draggedNodeDisplay = dragState.draggedNode.el.style.display;
-
-  const rect = data.targetData.node.el.getBoundingClientRect();
-
-  if (!dragState.clonedDraggedNode) return;
-
-  dragState.clonedDraggedNode.style.cssText = `
-            width: ${rect.width}px;
-            position: fixed;
-            top: -9999px;
-            pointer-events: none;
-            z-index: 999999;
-            display: none;
-          `;
-
-  document.body.append(dragState.clonedDraggedNode);
-
-  copyNodeStyle(data.targetData.node.el, dragState.clonedDraggedNode);
-
-  dragState.clonedDraggedNode.style.display = "none";
-
-  dragState.draggedNode.el.setPointerCapture(data.e.pointerId);
-
-  document.addEventListener("contextmenu", noDefault);
-}
-
 export function preventSortOnScroll() {
   let scrollTimeout: number;
 
@@ -949,10 +937,10 @@ export function dragstart<T>(
     return;
   }
 
-  const scrollParent = getScrollables();
-
-  console.log(scrollParent);
   const dragState = initDrag(data);
+
+  for (const el of dragState.scrollEls) {
+  }
 
   //dragState.scrollParentAbortController = addEvents(scrollParent, {
   //  scroll: preventSortOnScroll(),
@@ -1010,7 +998,10 @@ export function handleEnd<T>(eventData: NodeEventData<T>) {
   synthNodePointerDown = false;
 }
 
-export function end<T>(_eventData: NodeEventData<T>, state: DragState<T>) {
+export function end<T>(
+  _eventData: NodeEventData<T>,
+  state: DragState<T> | SynthDragState<T>
+) {
   document.removeEventListener("contextmenu", noDefault);
 
   // Abort scroll parents
@@ -1049,7 +1040,8 @@ export function end<T>(_eventData: NodeEventData<T>, state: DragState<T>) {
     );
   }
 
-  if (isSynth && state.clonedDraggedNode) state.clonedDraggedNode.remove();
+  if ("clonedDraggedNode" in state && state.clonedDraggedNode)
+    state.clonedDraggedNode.remove();
 
   if (config?.onDragend)
     config.onDragend({
@@ -1069,16 +1061,65 @@ export function handleTouchstart<T>(
 }
 
 export function handlePointermove<T>(
-  eventData: NodePointerEventData<T>,
+  data: NodePointerEventData<T>,
   state: SynthDragState<T> | BaseDragState
 ) {
-  syntheticMove(eventData, state);
+  if (isNative || !synthNodePointerDown || !validateDragHandle(data)) return;
+
+  if (!isSynthDragState(state)) {
+    const synthState = initSyntheticDrag(data, state) as SynthDragState<T>;
+
+    synthMove(data, synthState);
+
+    return;
+  }
+
+  // TODO:
+  synthMove(data, state);
 }
 
-function initSyntheticDrag<T>(data: NodePointerEventData<T>) {
+function initSyntheticDrag<T>(
+  data: NodePointerEventData<T>,
+  _state: BaseDragState
+): SynthDragState<T> {
   data.e.stopPropagation();
 
-  return setDragState(dragStateProps(data));
+  let dragState = setDragState(dragStateProps(data));
+
+  const display = dragState.draggedNode.el.style.display;
+
+  const rect = data.targetData.node.el.getBoundingClientRect();
+
+  const clonedDraggedNode = data.targetData.node.el.cloneNode(
+    true
+  ) as HTMLElement;
+
+  clonedDraggedNode.style.cssText = `
+            width: ${rect.width}px;
+            position: fixed;
+            top: -9999px;
+            pointer-events: none;
+            z-index: 999999;
+            display: none;
+          `;
+
+  document.body.append(clonedDraggedNode);
+
+  copyNodeStyle(data.targetData.node.el, clonedDraggedNode);
+
+  clonedDraggedNode.style.display = "none";
+
+  dragState = {
+    ...dragState,
+    clonedDraggedNode: data.targetData.node.el.cloneNode(true) as HTMLElement,
+    draggedNodeDisplay: display,
+  };
+
+  dragState.draggedNode.el.setPointerCapture(data.e.pointerId);
+
+  document.addEventListener("contextmenu", noDefault);
+
+  return dragState as SynthDragState<T>;
 }
 
 export function handleLongPress<T>(
@@ -1105,26 +1146,28 @@ export function handleLongPress<T>(
 }
 
 function pointermoveClasses<T>(
-  dragState: DragState<T>,
+  state: SynthDragState<T>,
   config: ParentConfig<T>
 ) {
   if (config.longPressClass)
     removeClass(
-      dragState.draggedNodes.map((x) => x.el),
+      state.draggedNodes.map((x) => x.el),
       config?.longPressClass
     );
 
-  if (config.synthDraggingClass && dragState.clonedDraggedNode)
-    addNodeClass([dragState.clonedDraggedNode], config.synthDraggingClass);
+  if (config.synthDraggingClass && state.clonedDraggedNode)
+    addNodeClass([state.clonedDraggedNode], config.synthDraggingClass);
 
   if (config.synthDropZoneClass)
     addNodeClass(
-      dragState.draggedNodes.map((x) => x.el),
+      state.draggedNodes.map((x) => x.el),
       config.synthDropZoneClass
     );
 }
 
-function getScrollData<T>(state?: DragState<T>): ScrollData<T> | void {
+function getScrollData<T>(
+  state?: DragState<T> | SynthDragState<T>
+): ScrollData<T> | void {
   return;
   if (!state || !state.scrollParent) return;
 
@@ -1178,9 +1221,10 @@ function shouldScroll<T>(direction: string): DragState<T> | void {
 }
 
 function shouldScrollRight<T>(
-  state: DragState<T> | DragState<T>,
+  state: DragState<T> | SynthDragState<T>,
   data: ScrollData<T>
 ): DragState<T> | DragState<T> | void {
+  return;
   const diff = data.scrollParent.clientWidth + data.x - state.coordinates.x;
 
   if (!data.scrollOutside && diff < 0) return;
@@ -1199,6 +1243,7 @@ function shouldScrollLeft<T>(
   state: DragState<T>,
   data: ScrollData<T>
 ): DragState<T> | void {
+  return;
   const diff = data.scrollParent.clientWidth + data.x - state.coordinates.x;
 
   if (!data.scrollOutside && diff > data.scrollParent.clientWidth) return;
@@ -1214,6 +1259,7 @@ function shouldScrollUp<T>(
   state: DragState<T>,
   data: ScrollData<T>
 ): DragState<T> | void {
+  return;
   const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y;
 
   if (!data.scrollOutside && diff > data.scrollParent.clientHeight) return;
@@ -1229,6 +1275,7 @@ function shouldScrollDown<T>(
   state: DragState<T>,
   data: ScrollData<T>
 ): DragState<T> | void {
+  return;
   const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y;
   if (!data.scrollOutside && diff < 0) return;
 
@@ -1242,10 +1289,8 @@ function shouldScrollDown<T>(
     return state;
 }
 
-function moveNode<T>(data: NodePointerEventData<T>, dragState: DragState<T>) {
-  if (!dragState.clonedDraggedNode) return;
-
-  if (!dragState.pointerMoved) {
+function moveNode<T>(data: NodePointerEventData<T>, state: SynthDragState<T>) {
+  if (!state.pointerMoved) {
     if (data.targetData.parent.data.config.onDragstart)
       data.targetData.parent.data.config.onDragstart({
         parent: data.targetData.parent,
@@ -1253,61 +1298,52 @@ function moveNode<T>(data: NodePointerEventData<T>, dragState: DragState<T>) {
           data.targetData.parent.el,
           data.targetData.parent.data
         ),
-        draggedNode: dragState.draggedNode,
-        draggedNodes: dragState.draggedNodes,
-        position: dragState.initialIndex,
+        draggedNode: state.draggedNode,
+        draggedNodes: state.draggedNodes,
+        position: state.initialIndex,
       });
   }
 
-  dragState.pointerMoved = true;
+  state.pointerMoved = true;
 
-  dragState.clonedDraggedNode.style.display =
-    dragState.draggedNodeDisplay || "";
+  state.clonedDraggedNode.style.display = state.draggedNodeDisplay || "";
 
   const { x, y } = eventCoordinates(data.e);
 
-  dragState.coordinates.y = y;
+  state.coordinates.y = y;
 
-  dragState.coordinates.x = x;
+  state.coordinates.x = x;
 
-  const startLeft = dragState.startLeft ?? 0;
+  const startLeft = state.startLeft ?? 0;
 
-  const startTop = dragState.startTop ?? 0;
+  const startTop = state.startTop ?? 0;
 
-  dragState.clonedDraggedNode.style.left = `${x - startLeft}px`;
+  state.clonedDraggedNode.style.left = `${x - startLeft}px`;
 
-  dragState.clonedDraggedNode.style.top = `${y - startTop}px`;
+  state.clonedDraggedNode.style.top = `${y - startTop}px`;
 
   if (data.e.cancelable) data.e.preventDefault();
 
-  pointermoveClasses(dragState, data.targetData.parent.data.config);
+  pointermoveClasses(state, data.targetData.parent.data.config);
 }
 
-function syntheticMove<T>(
+export function synthMove<T>(
   data: NodePointerEventData<T>,
-  state: SynthDragState<T> | BaseDragState
+  state: SynthDragState<T>
 ) {
-  if (isNative || !validateDragHandle(data) || !synthNodePointerDown) return;
-
-  let synthState = state || undefined;
-
-  synthState = !("draggedNode" in state) ? initSyntheticDrag(data) : state;
-
-  handleSyntheticDraggedNode(data, synthState);
-
-  synthState.draggedNode.el.setPointerCapture(data.e.pointerId);
-
   const config = data.targetData.parent.data.config;
 
-  if (config.longPress && !dragState.longPress) {
-    clearTimeout(dragState.longPressTimeout);
+  if (config.longPress && !state.longPress) {
+    clearTimeout(state.longPressTimeout);
 
     return;
   }
 
+  state.draggedNode.el.setPointerCapture(data.e.pointerId);
+
   if (data.e.cancelable) data.e.preventDefault();
 
-  moveNode(data, dragState);
+  moveNode(data, state);
 
   handleScroll();
 

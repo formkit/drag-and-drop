@@ -146,7 +146,7 @@ export function removeClass(
 }
 
 // Function to check if an element is scrollable
-function isScrollable(element) {
+function isScrollable(element: HTMLElement) {
   const style = window.getComputedStyle(element);
   return (
     ((style.overflowY === "auto" || style.overflowY === "scroll") &&
@@ -155,6 +155,7 @@ function isScrollable(element) {
       element.scrollWidth > element.clientWidth)
   );
 }
+
 /**
  * Used for getting the closest scrollable parent of a given element.
  *
@@ -164,42 +165,10 @@ function isScrollable(element) {
  *
  * @internal
  */
-export function getScrollables(): Array<[HTMLElement, AbortController]> {
-  const scrollables: Array<[HTMLElement, AbortController]> = [];
-
-  for (const el of Array.from(document.querySelectorAll("*"))) {
-    if (!isScrollable(el) || !(el instanceof HTMLElement)) continue;
-
-    const abortController = new AbortController();
-
-    scrollables.push([el, abortController]);
-  }
-
-  return scrollables;
-}
-/**
- * Used for setting a single event listener on x number of events for a given
- * element.
- *
- * @param el - The element to set the event listener on.
- *
- * @param events - An array of events to set the event listener on.
- *
- * @param fn - The function to run when the event is triggered.
- *
- * @param remove - Whether or not to remove the event listener.
- *
- * @internal
- */
-export function events(
-  el: Node | HTMLElement,
-  events: Array<string>,
-  fn: any,
-  remove = false
-) {
-  events.forEach((event) => {
-    remove ? el.removeEventListener(event, fn) : el.addEventListener(event, fn);
-  });
+export function getScrollables(): Array<HTMLElement> {
+  return Array.from(document.querySelectorAll("*")).filter(
+    (el) => isScrollable(el) && el instanceof HTMLElement
+  ) as Array<HTMLElement>;
 }
 
 export function getElFromPoint<T>(
@@ -303,8 +272,8 @@ export function addEvents(
 }
 
 export function copyNodeStyle(
-  sourceNode: Node,
-  targetNode: Node,
+  sourceNode: HTMLElement,
+  targetNode: HTMLElement,
   omitKeys = false
 ) {
   const computedStyle = window.getComputedStyle(sourceNode);

@@ -646,7 +646,7 @@ export interface SynthDragStateProps<T> {
   /**
    * Element
    */
-  clonedDraggedNode: Node;
+  clonedDraggedNode: HTMLElement;
   /**
    * The display of the synthetic node.
    */
