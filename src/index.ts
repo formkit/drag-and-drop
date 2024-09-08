@@ -86,7 +86,6 @@ export let state: DragState<unknown> | SynthDragState<unknown> | BaseDragState =
   baseDragState;
 
 export function resetState() {
-  console.log("reset tate");
   state = baseDragState;
 }
 
@@ -208,10 +207,9 @@ export function dragStateProps<T>(
   const rect = data.targetData.node.el.getBoundingClientRect();
 
   const scrollEls: Array<[HTMLElement, AbortController]> = [];
-
   for (const scrollable of getScrollables()) {
     const controller = addEvents(scrollable, {
-      scroll: preventSortOnScroll,
+      scroll: preventSortOnScroll(),
     });
 
     scrollEls.push([scrollable, controller]);
@@ -554,10 +552,7 @@ function isSynthDragState<T>(state: BaseDragState): state is SynthDragState<T> {
 }
 
 function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
-  if (state)
-    on("dragStarted", () => {
-      console.log("dslkfkldsjfkld");
-    });
+  if (state) on("dragStarted", () => {});
   parentData.abortControllers.mainParent = addEvents(parent, {
     dragover: parentEventData(parentData.config.handleDragoverParent),
     handlePointeroverParent: parentData.config.handlePointeroverParent,
@@ -938,15 +933,8 @@ export function dragstart<T>(
 
   const dragState = initDrag(data);
 
-  console.log("dragState", dragState);
-
-  for (const el of dragState.scrollEls) {
-    el[1].abort();
-  }
-
-  //dragState.scrollParentAbortController = addEvents(scrollParent, {
-  //  scroll: preventSortOnScroll(),
-  //});
+  //for (const el of dragState.scrollEls) el[1].abort();
+  //}
 
   const config = data.targetData.parent.data.config;
 
