@@ -260,6 +260,11 @@ export interface ParentConfig<T> {
   synthDraggingClass?: string;
   synthDropZoneClass?: string;
   /**
+   * Config option to allow recursive copying of computed styles of dragged
+   * element to the cloned one that will be dragged (only for synthetic drag).
+   */
+  deepCopyStyles?: boolean;
+  /**
    * Callback function for when a sort operation is performed.
    */
   onSort?: SortEvent;
@@ -653,6 +658,10 @@ export interface SynthDragStateProps<T> {
    * The display of the synthetic node.
    */
   draggedNodeDisplay: string;
+  /**
+   * Pointer id of dragged el
+   */
+  pointerId: number;
 }
 
 export type DragState<T> = DragStateProps<T> & BaseDragState;

@@ -143,6 +143,7 @@ export function dragAndDrop<T>({
     getValues,
     setValues,
     config: {
+      deepCopyStyles: false,
       handleDragstart,
       handleDragoverNode,
       handleDragoverParent,
@@ -590,7 +591,7 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     dragenter: nodeEventData(config.handleDragenterNode),
     dragleave: nodeEventData(config.handleDragleaveNode),
     dragend: nodeEventData(config.handleEnd),
-    touchstart: noDefault,
+    touchstart: nodeEventData(config.handleTouchstart),
     pointerdown: nodeEventData(config.handlePointerdownNode),
     pointermove: nodeEventData(config.handlePointermove),
     pointerup: nodeEventData(config.handleEnd),
@@ -773,6 +774,9 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
       );
 
       if (draggedNode) draggedNode.el = node;
+
+      if (isSynthDragState(state))
+        state.draggedNode.el.setPointerCapture(state.pointerId);
     }
 
     enabledNodeRecords.push({
@@ -1008,11 +1012,6 @@ export function end<T>(
 
     documentController = undefined;
   }
-  document.removeEventListener("contextmenu", noDefault);
-
-  // Abort scroll parents
-  //if (state.scrollParentAbortController)
-  //  state.scrollParentAbortController.abort();
 
   if ("longPressTimeout" in state && state.longPressTimeout)
     clearTimeout(state.longPressTimeout);
@@ -1063,6 +1062,7 @@ export function handleTouchstart<T>(
   data: NodeEventData<T>,
   _state: BaseDragState
 ) {
+  console.log("handle touchstart");
   data.e.preventDefault();
 }
 
@@ -1075,7 +1075,16 @@ export function handlePointermove<T>(
   if (!isSynthDragState(state)) {
     const synthDragState = initSyntheticDrag(data, state) as SynthDragState<T>;
 
-    synthDragState.draggedNode.el.setPointerCapture(data.e.pointerId);
+    synthDragState.draggedNode.el.addEventListener(
+      "lostpointercapture",
+      (event) => {
+        console.log("lost pointer capture");
+      }
+    );
+
+    synthDragState.draggedNode.el.addEventListener("pointercancel", (event) => {
+      console.log("pointer cancel");
+    });
 
     synthMove(data, synthDragState);
 
@@ -1091,10 +1100,12 @@ export function handlePointermove<T>(
         position: synthDragState.initialIndex,
       });
 
+    synthDragState.draggedNode.el.setPointerCapture(data.e.pointerId);
+
+    synthDragState.pointerId = data.e.pointerId;
+
     return;
   }
-
-  if (data.e.cancelable) data.e.preventDefault();
 
   synthMove(data, state as SynthDragState<T>);
 }
@@ -1124,7 +1135,7 @@ function initSyntheticDrag<T>(
 
   clonedDraggedNode.id = "hello world";
 
-  if (data.targetData.parent.data.config.deeplyStyle)
+  if (data.targetData.parent.data.config.deepCopyStyles)
     copyNodeStyle(data.targetData.node.el, clonedDraggedNode);
 
   clonedDraggedNode.style.display = "none";
@@ -1135,14 +1146,14 @@ function initSyntheticDrag<T>(
     draggedNodeDisplay: display,
   };
 
-  document.addEventListener("contextmenu", noDefault);
+  addEvents(document, {
+    contextmenu: noDefault,
+  });
 
   const synthDragState = setDragState({
     ...dragStateProps(data),
     ...synthDragStateProps,
   });
-
-  synthDragState.draggedNode.el.setPointerCapture(data.e.pointerId);
 
   return synthDragState as SynthDragState<T>;
 }
