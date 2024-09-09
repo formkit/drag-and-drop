@@ -245,6 +245,10 @@ export function isNode(el: unknown): el is Node {
   return el instanceof HTMLElement && el.parentNode instanceof HTMLElement;
 }
 
+export function preventDefault(e: Event) {
+  e.preventDefault();
+}
+
 /**
  * Takes a given el and event handlers, assigns them, and returns the used abort
  * controller.

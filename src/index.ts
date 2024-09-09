@@ -37,6 +37,7 @@ import {
   noDefault,
   removeClass,
   createEmitter,
+  preventDefault,
 } from "./utils";
 
 export * from "./types";
@@ -48,6 +49,12 @@ export { multiDrag } from "./plugins/multiDrag";
 export { place } from "./plugins/place";
 export { selections } from "./plugins/multiDrag/plugins/selections";
 export { swap } from "./plugins/swap";
+
+/**
+ * Abort controller for the document.
+ */
+let documentController: AbortController | undefined;
+
 let isNative = false;
 
 const scrollConfig: {
@@ -104,7 +111,6 @@ export function setDragState<T>(
     | DragStateProps<T>
     | undefined
 ): DragState<T> | SynthDragState<T> {
-  console.log("drag state props", dragStateProps.clonedDraggedNode);
   state = {
     ...state,
     ...dragStateProps,
@@ -132,10 +138,6 @@ export function dragAndDrop<T>({
   if (!isBrowser) return;
 
   tearDown(parent);
-
-  document.addEventListener("dragover", (e) => {
-    e.preventDefault();
-  });
 
   const parentData: ParentData<T> = {
     getValues,
@@ -220,6 +222,10 @@ export function dragStateProps<T>(
 
     scrollEls.push([scrollable, controller]);
   }
+
+  documentController = addEvents(document, {
+    dragover: preventDefault,
+  });
 
   return {
     affectedNodes: [],
@@ -982,7 +988,6 @@ export function handleEnd<T>(
   state: DragState<T> | SynthDragState<T>
 ) {
   if (!state) return;
-
   return;
 
   data.e.preventDefault();
@@ -998,7 +1003,11 @@ export function end<T>(
   _eventData: NodeEventData<T>,
   state: DragState<T> | SynthDragState<T>
 ) {
-  return;
+  if (documentController) {
+    documentController.abort();
+
+    documentController = undefined;
+  }
   document.removeEventListener("contextmenu", noDefault);
 
   // Abort scroll parents
@@ -1051,10 +1060,10 @@ export function end<T>(
 }
 
 export function handleTouchstart<T>(
-  eventData: NodeEventData<T>,
+  data: NodeEventData<T>,
   _state: BaseDragState
 ) {
-  eventData.e.preventDefault();
+  data.e.preventDefault();
 }
 
 export function handlePointermove<T>(
@@ -1067,8 +1076,6 @@ export function handlePointermove<T>(
     const synthDragState = initSyntheticDrag(data, state) as SynthDragState<T>;
 
     synthDragState.draggedNode.el.setPointerCapture(data.e.pointerId);
-
-    console.log("look here first", synthDragState);
 
     synthMove(data, synthDragState);
 
@@ -1089,7 +1096,6 @@ export function handlePointermove<T>(
 
   if (data.e.cancelable) data.e.preventDefault();
 
-  console.log("look here", state.clonedDraggedNode);
   synthMove(data, state as SynthDragState<T>);
 }
 
@@ -1098,8 +1104,6 @@ function initSyntheticDrag<T>(
   _state: BaseDragState
 ): SynthDragState<T> {
   data.e.stopPropagation();
-
-  console.log("initSyntheticDrag");
 
   const display = data.targetData.node.el.style.display;
 
@@ -1111,7 +1115,7 @@ function initSyntheticDrag<T>(
 
   clonedDraggedNode.style.cssText = `
             width: ${rect.width}px;
-            position: fixed;
+            position: absolute;
             pointer-events: none;
             z-index: 999999;
           `;
@@ -1120,7 +1124,8 @@ function initSyntheticDrag<T>(
 
   clonedDraggedNode.id = "hello world";
 
-  copyNodeStyle(data.targetData.node.el, clonedDraggedNode);
+  if (data.targetData.parent.data.config.deeplyStyle)
+    copyNodeStyle(data.targetData.node.el, clonedDraggedNode);
 
   clonedDraggedNode.style.display = "none";
 
@@ -1328,8 +1333,6 @@ function moveNode<T>(data: NodePointerEventData<T>, state: SynthDragState<T>) {
 
   state.clonedDraggedNode.style.top = `${y - startTop}px`;
 
-  console.log("getting here", state.clonedDraggedNode.style.top);
-
   if (data.e.cancelable) data.e.preventDefault();
 
   pointermoveClasses(state, data.targetData.parent.data.config);
@@ -1349,7 +1352,7 @@ export function synthMove<T>(
 
   moveNode(data, state);
 
-  //handleScroll();
+  handleScroll();
 
   const elFromPoint = getElFromPoint(data);
 
