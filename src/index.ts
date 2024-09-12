@@ -111,10 +111,7 @@ export function setDragState<T>(
     | DragStateProps<T>
     | undefined
 ): DragState<T> | SynthDragState<T> {
-  state = {
-    ...state,
-    ...dragStateProps,
-  } as DragState<T> | SynthDragState<T>;
+  Object.assign(state, dragStateProps);
 
   state.emit("dragStarted", state.clonedDraggedNode);
 
@@ -1228,6 +1225,8 @@ function getScrollData<T>(
 
 let interval: number | null = null;
 
+let animationFrameId: number | null = null;
+
 function setSynthScrollDirection<T>(
   direction: "up" | "down" | "left" | "right" | undefined,
   el: HTMLElement,
@@ -1237,36 +1236,48 @@ function setSynthScrollDirection<T>(
 
   state.syntheticScrollDirection = direction;
 
-  if (interval !== null) clearInterval(interval);
+  // Cancel any ongoing animation frame when direction changes
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId);
 
-  interval = setInterval(
-    (direction: "up" | "down" | "left" | "right") => {
-      console.log("direction", direction);
-      switch (direction) {
-        case "up":
-          el.scrollBy(0, -1);
+    animationFrameId = null;
+  }
 
-          break;
+  // Function to perform the scrolling based on the current direction
+  const scroll = () => {
+    if (state.syntheticScrollDirection === undefined && animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
 
-        case "down":
-          el.scrollBy(0, 1);
+      animationFrameId = null;
 
-          break;
+      return;
+    }
 
-        case "left":
-          el.scrollBy(-1, 0);
+    switch (direction) {
+      case "up":
+        el.scrollBy(0, -3);
 
-          break;
+        break;
+      case "down":
+        el.scrollBy(0, 3);
 
-        case "right":
-          el.scrollBy(1, 0);
+        break;
+      case "left":
+        el.scrollBy(-3, 0);
 
-          break;
-      }
-    },
-    20,
-    direction
-  );
+        break;
+      case "right":
+        el.scrollBy(3, 0);
+
+        break;
+    }
+
+    // Continue the loop by requesting the next animation frame
+    animationFrameId = requestAnimationFrame(scroll);
+  };
+
+  // Start the scrolling loop
+  animationFrameId = requestAnimationFrame(scroll);
 }
 
 function shouldScroll<T>(
@@ -1439,6 +1450,8 @@ export function handleScroll<T>(e: DragEvent | PointerEvent) {
   for (const direction of Object.keys(scrollConfig)) {
     if (shouldScroll(direction, e, state)) {
       setSynthScrollDirection(direction, e.currentTarget, state);
+
+      directionSet = true;
 
       break;
     }
