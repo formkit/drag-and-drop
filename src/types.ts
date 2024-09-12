@@ -85,6 +85,7 @@ export interface ParentConfig<T> {
    * Function that is called when dragstart event occurs.
    */
   handleDragstart: (data: NodeDragEventData<T>, state: DragState<T>) => void;
+  handlePointerup: (data: NodePointerEventData<T>, state: DragState<T>) => void;
   /**
    * Function that is called when touchstart event occurs.
    */
@@ -872,15 +873,21 @@ export interface MultiDragConfig<T> {
   /**
    * Function that is called when dragend event occurrs event occurs.
    */
-  handleEnd: (data: NodeDragEventData<T> | NodePointerEventData<T>) => void;
+  handleEnd: (
+    data: NodeDragEventData<T> | NodePointerEventData<T>,
+    state: DragState<T>
+  ) => void;
   /**
    * Function that is called when dragstart occurs.
    */
-  handleDragstart: (data: NodeDragEventData<T>) => void;
+  handleDragstart: (data: NodeDragEventData<T>, state: DragState<T>) => void;
   /**
    * Function that is called when dragstart event occurs.
    */
-  handlePointerdownNode: (data: NodePointerEventData<T>) => void;
+  handlePointerdownNode: (
+    data: NodePointerEventData<T>,
+    state: DragState<T>
+  ) => void;
   /**
    * An array of functions to use for a given parent.
    */
@@ -911,7 +918,6 @@ export interface MultiDragParentConfig<T> extends ParentConfig<T> {
 export interface MultiDragState<T> {
   selectedNodes: Array<NodeRecord<T>>;
   activeNode: NodeRecord<T> | undefined;
-  isTouch: boolean;
 }
 
 export interface SelectionsParentConfig<T extends any> extends ParentConfig<T> {

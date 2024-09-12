@@ -1,13 +1,17 @@
 <script setup lang="ts">
-import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
-import { multiDrag, selections } from "@formkit/drag-and-drop";
+import { useDragAndDrop } from "../../../src/vue/index";
+import { multiDrag, selections } from "../../../src";
 
 const [parent, values] = useDragAndDrop(
   ["Apple", "Banana", "Orange", "Strawberry", "Pineapple", "Grapes"],
   {
     plugins: [
       multiDrag({
-        plugins: [selections()],
+        plugins: [
+          selections({
+            selectedClass: "bg-blue-500 text-white",
+          }),
+        ],
       }),
     ],
   }

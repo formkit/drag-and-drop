@@ -52,6 +52,7 @@ __export(src_exports, {
   handlePointermove: () => handlePointermove,
   handlePointeroverNode: () => handlePointeroverNode3,
   handlePointeroverParent: () => handlePointeroverParent4,
+  handlePointerup: () => handlePointerup,
   handleScroll: () => handleScroll,
   handleTouchstart: () => handleTouchstart,
   initDrag: () => initDrag,
@@ -997,8 +998,7 @@ function handleEnd2(data, state2) {
 // src/plugins/multiDrag/index.ts
 var multiDragState = {
   selectedNodes: Array(),
-  activeNode: void 0,
-  isTouch: false
+  activeNode: void 0
 };
 function multiDrag(multiDragConfig = {}) {
   return (parent) => {
@@ -1063,7 +1063,7 @@ function handleEnd3(data, state2) {
   selectionsEnd(data, state2);
   resetState();
 }
-function selectionsEnd(data, state2) {
+function selectionsEnd(data, _state) {
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
   if (!multiDragConfig)
     return;
@@ -1076,23 +1076,20 @@ function selectionsEnd(data, state2) {
   }
   multiDragState.selectedNodes = [];
   multiDragState.activeNode = void 0;
-  const dropZoneClass = isSynthDragState(state2) ? multiDragConfig.selectionsDropZoneClass : multiDragConfig.synthSelctionsDraggingClass;
-  removeClass(
-    state2.draggedNodes.map((x) => x.el),
-    dropZoneClass
-  );
 }
-function handleDragstart2(data) {
+function handleDragstart2(data, state2) {
   if (!(data.e instanceof DragEvent))
     return;
-  multiDragstart({
-    e: data.e,
-    targetData: data.targetData
-  });
+  multiDragstart(
+    {
+      e: data.e,
+      targetData: data.targetData
+    },
+    state2
+  );
 }
-function multiDragstart(data, state2) {
+function multiDragstart(data, _state) {
   const dragState = initDrag(data);
-  multiDragState.isTouch = false;
   const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
   if (!multiDragConfig)
     return;
@@ -1132,49 +1129,21 @@ function multiDragstart(data, state2) {
     );
   }
 }
-function handlePointerdownNode(data) {
-  if (!(data.e instanceof TouchEvent))
-    return;
+function handlePointerdownNode(data, state2) {
   multiPointerdown(
     {
       e: data.e,
       targetData: data.targetData
     },
-    state
+    state2
   );
 }
-function multiPointerdown(data, state2) {
-  multiDragState.isTouch = true;
-  multiDragState.activeNode = data.targetData.node;
-  const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
-  if (!multiDragConfig)
-    return;
-  const parentValues2 = data.targetData.parent.data.getValues(
-    data.targetData.parent.el
-  );
-  let selectedValues = [];
-  if (data.targetData.parent.data.config.selectionsConfig) {
-    selectedValues = multiDragState.selectedNodes.map((x) => x.data.value);
-  } else {
-    selectedValues = multiDragConfig.selections && multiDragConfig.selections(parentValues2, data.targetData.parent.el) || [];
-  }
-  selectedValues = [data.targetData.node.data.value, ...selectedValues];
-  const selectionConfig = data.targetData.parent.data.config.selectionsConfig;
-  addNodeClass([data.targetData.node.el], selectionConfig?.selectedClass, true);
-  if (Array.isArray(selectedValues) && selectedValues.length) {
-    stackNodes(
-      handleSelections(
-        data,
-        selectedValues,
-        state2,
-        state2.startLeft,
-        state2.startTop
-      )
-    );
-  }
-  handleLongPress(data, state2);
+function multiPointerdown(_data, _state) {
+  return;
+  console.log("redo multi pointerdown");
 }
 function handleSelections(data, selectedValues, state2, x, y) {
+  console.log("state", state2);
   for (const child of data.targetData.parent.data.enabledNodes) {
     if (child.el === state2.draggedNode.el)
       continue;
@@ -1398,6 +1367,8 @@ function handleClickNode(data) {
 }
 function click(data) {
   data.e.stopPropagation();
+  console.log("click");
+  return;
   const selectionsConfig = data.targetData.parent.data.config.selectionsConfig;
   if (!selectionsConfig)
     return;
@@ -1594,7 +1565,7 @@ function keydown(data) {
       parentValues2[nodeData.index]
     ];
     parentData.setValues(parentValues2, data.targetData.parent.el);
-  } else if (data.e.shiftKey && multiDragState.isTouch === false) {
+  } else if (data.e.shiftKey && true) {
     if (!multiDragState.selectedNodes.map((x) => x.el).includes(adjacentNode.el)) {
       multiDragState.selectedNodes.push(adjacentNode);
       if (selectedClass) {
@@ -1816,6 +1787,7 @@ function dragAndDrop({
       handleDragoverNode: handleDragoverNode4,
       handleDragoverParent: handleDragoverParent3,
       handleEnd,
+      handlePointerup,
       handleTouchstart,
       handlePointeroverNode: handlePointeroverNode3,
       handlePointeroverParent: handlePointeroverParent4,
@@ -2158,7 +2130,7 @@ function setupNode(data) {
     touchstart: nodeEventData(config.handleTouchstart),
     pointerdown: nodeEventData(config.handlePointerdownNode),
     pointermove: nodeEventData(config.handlePointermove),
-    pointerup: nodeEventData(config.handleEnd),
+    pointerup: nodeEventData(config.handlePointerup),
     handlePointeroverNode: config.handlePointeroverNode,
     mousedown: () => {
       if (!config.nativeDrag)
@@ -2434,14 +2406,12 @@ function handlePointeroverNode3(e) {
     transfer(e.detail, e.detail.state);
 }
 function handleEnd(data, state2) {
-  if (!state2)
-    return;
   data.e.preventDefault();
   end(data, state2);
   resetState();
   synthNodePointerDown = false;
 }
-function end(_eventData, state2) {
+function end(_data, state2) {
   if (documentController) {
     documentController.abort();
     documentController = void 0;
@@ -2481,6 +2451,11 @@ function end(_eventData, state2) {
 }
 function handleTouchstart(data, _state) {
   data.e.preventDefault();
+}
+function handlePointerup(data, state2) {
+  if (!isDragState(state2))
+    return;
+  handleEnd(data, state2);
 }
 function handlePointermove(data, state2) {
   if (isNative || !synthNodePointerDown || !validateDragHandle(data))
@@ -2969,6 +2944,7 @@ function parentEventData(callback) {
   handlePointermove,
   handlePointeroverNode,
   handlePointeroverParent,
+  handlePointerup,
   handleScroll,
   handleTouchstart,
   initDrag,

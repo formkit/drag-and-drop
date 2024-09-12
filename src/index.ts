@@ -148,6 +148,7 @@ export function dragAndDrop<T>({
       handleDragoverNode,
       handleDragoverParent,
       handleEnd,
+      handlePointerup,
       handleTouchstart,
       handlePointeroverNode,
       handlePointeroverParent,
@@ -600,7 +601,7 @@ export function setupNode<T>(data: SetupNodeData<T>) {
   data.node.draggable = true;
 
   data.nodeData.abortControllers.mainNode = addEvents(data.node, {
-    click: nodeEventData(config.handleClickParent),
+    click: nodeEventData(config.handleClickNode),
     keydown: nodeEventData(config.handleKeydownNode),
     dragstart: nodeEventData(config.handleDragstart),
     dragover: nodeEventData(config.handleDragoverNode),
@@ -610,7 +611,7 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     touchstart: nodeEventData(config.handleTouchstart),
     pointerdown: nodeEventData(config.handlePointerdownNode),
     pointermove: nodeEventData(config.handlePointermove),
-    pointerup: nodeEventData(config.handleEnd),
+    pointerup: nodeEventData(config.handlePointerup),
     handlePointeroverNode: config.handlePointeroverNode,
     mousedown: () => {
       if (!config.nativeDrag) isNative = false;
@@ -832,7 +833,6 @@ export function handleDragstart<T>(
   state: BaseDragState
 ) {
   if (!(data.e instanceof DragEvent)) return;
-
   if (!data.targetData.parent.data.config.nativeDrag) {
     data.e.preventDefault();
 
@@ -930,7 +930,9 @@ export function validateDragHandle<T>(data: NodeEventData<T>): boolean {
   return false;
 }
 
-export function handleClickNode<T>(_data: NodeEventData<T>) {}
+export function handleClickNode<T>(_data: NodeEventData<T>) {
+  //console.log("root handle click node");
+}
 
 export function handleClickParent<T>(_data: ParentEventData<T>) {}
 
@@ -973,9 +975,6 @@ export function dragstart<T>(
 
   const dragState = initDrag(data);
 
-  //for (const el of dragState.scrollEls) el[1].abort();
-  //}
-
   const config = data.targetData.parent.data.config;
 
   const originalZIndex = data.targetData.node.el.style.zIndex;
@@ -1015,8 +1014,6 @@ export function handleEnd<T>(
   data: NodeEventData<T>,
   state: DragState<T> | SynthDragState<T>
 ) {
-  if (!state) return;
-
   data.e.preventDefault();
 
   end(data, state);
@@ -1027,7 +1024,7 @@ export function handleEnd<T>(
 }
 
 export function end<T>(
-  _eventData: NodeEventData<T>,
+  _data: NodeEventData<T>,
   state: DragState<T> | SynthDragState<T>
 ) {
   if (documentController) {
@@ -1088,12 +1085,20 @@ export function handleTouchstart<T>(
   data.e.preventDefault();
 }
 
+export function handlePointerup<T>(
+  data: NodePointerEventData<T>,
+  state: DragState<T> | SynthDragState<T> | BaseDragState
+) {
+  if (!isDragState(state)) return;
+
+  handleEnd(data, state as DragState<T> | SynthDragState<T>);
+}
+
 export function handlePointermove<T>(
   data: NodePointerEventData<T>,
   state: SynthDragState<T> | BaseDragState
 ) {
   // TODO: Probably need stopPropagation here
-
   if (isNative || !synthNodePointerDown || !validateDragHandle(data)) return;
 
   if (!isSynthDragState(state)) {
@@ -1172,7 +1177,7 @@ function initSyntheticDrag<T>(
 
 export function handleLongPress<T>(
   data: NodePointerEventData<T>,
-  dragState: SynthDragState<T>
+  dragState: DragState<T>
 ) {
   const config = data.targetData.parent.data.config;
 

@@ -7,7 +7,7 @@ import type {
   SelectionsParentConfig,
 } from "../../../../types";
 
-import { parents, nodeEventData } from "../../../../index";
+import { parents } from "../../../../index";
 import { addEvents, removeClass, addNodeClass } from "../../../../utils";
 import { multiDragState } from "../../index";
 
@@ -24,8 +24,6 @@ export function selections<T>(selectionsConfig: SelectionsConfig<T> = {}) {
 
     return {
       setup() {
-        parentData.config.selectionsConfig = selectionsConfig;
-
         selectionsParentConfig.handleClickNode =
           selectionsConfig.handleClickNode || handleClickNode;
 
@@ -44,6 +42,10 @@ export function selections<T>(selectionsConfig: SelectionsConfig<T> = {}) {
         });
 
         parentData.abortControllers["root"] = rootAbortControllers;
+
+        parentData.config.selectionsConfig = selectionsConfig;
+
+        parentData.config = selectionsParentConfig;
       },
 
       tearDown() {
@@ -59,16 +61,7 @@ export function selections<T>(selectionsConfig: SelectionsConfig<T> = {}) {
       },
 
       setupNode<T>(data: SetupNodeData<T>) {
-        const config = data.parentData.config;
-
         data.node.setAttribute("tabindex", "0");
-
-        const abortControllers = addEvents(data.node, {
-          click: nodeEventData(config.handleClickNode),
-          keydown: nodeEventData(config.handleKeydownNode),
-        });
-
-        data.nodeData.abortControllers["selectionsNode"] = abortControllers;
       },
     };
   };
@@ -92,11 +85,15 @@ function handleKeydownNode<T>(data: NodeEventData<T>) {
 }
 
 function handleClickNode<T>(data: NodeEventData<T>) {
+  console.log("click node?");
   click(data);
 }
 
 function click<T>(data: NodeEventData<T>) {
   data.e.stopPropagation();
+  console.log("click");
+
+  return;
 
   const selectionsConfig = data.targetData.parent.data.config.selectionsConfig;
 
@@ -334,7 +331,7 @@ function keydown<T>(data: NodeEventData<T>) {
     ];
 
     parentData.setValues(parentValues, data.targetData.parent.el);
-  } else if (data.e.shiftKey && multiDragState.isTouch === false) {
+  } else if (data.e.shiftKey && false === false) {
     if (
       !multiDragState.selectedNodes.map((x) => x.el).includes(adjacentNode.el)
     ) {
