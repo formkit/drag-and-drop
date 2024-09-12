@@ -1234,6 +1234,16 @@ function setSynthScrollDirection<T>(
 ) {
   if (state.syntheticScrollDirection === direction) return;
 
+  if (direction === "up" && el.scrollTop === 0) return;
+
+  if (direction === "down" && el.scrollTop + el.clientHeight >= el.scrollHeight)
+    return;
+
+  if (direction === "left" && el.scrollLeft === 0) return;
+
+  if (direction === "right" && el.scrollLeft + el.clientWidth >= el.scrollWidth)
+    return;
+
   state.syntheticScrollDirection = direction;
 
   // Cancel any ongoing animation frame when direction changes
@@ -1243,8 +1253,19 @@ function setSynthScrollDirection<T>(
     animationFrameId = null;
   }
 
+  let lastTimestamp: number | null = null;
+
   // Function to perform the scrolling based on the current direction
-  const scroll = () => {
+  const scroll = (timestamp: number) => {
+    if (lastTimestamp === null) lastTimestamp = timestamp;
+
+    const elapsed = timestamp - lastTimestamp;
+
+    // Base scroll speed in pixels per second
+    const baseSpeed = 1000; // Adjust this value as needed
+
+    // Calculate how much to scroll based on time elapsed
+    const distance = (baseSpeed * elapsed) / 1000; // Pixels to scroll
     if (state.syntheticScrollDirection === undefined && animationFrameId) {
       cancelAnimationFrame(animationFrameId);
 
@@ -1255,22 +1276,24 @@ function setSynthScrollDirection<T>(
 
     switch (direction) {
       case "up":
-        el.scrollBy(0, -3);
+        el.scrollBy(0, -distance);
 
         break;
       case "down":
-        el.scrollBy(0, 3);
+        el.scrollBy(0, distance);
 
         break;
       case "left":
-        el.scrollBy(-3, 0);
+        el.scrollBy(-distance, 0);
 
         break;
       case "right":
-        el.scrollBy(3, 0);
+        el.scrollBy(distance, 0);
 
         break;
     }
+
+    lastTimestamp = timestamp;
 
     // Continue the loop by requesting the next animation frame
     animationFrameId = requestAnimationFrame(scroll);
