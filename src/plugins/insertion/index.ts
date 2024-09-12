@@ -9,9 +9,9 @@ import type {
   ParentRecord,
   Coordinates,
 } from "../../types";
+
 import {
   dragstart,
-  handleScroll,
   handleEnd as originalHandleEnd,
   parents,
   parentValues,
@@ -19,6 +19,7 @@ import {
   state,
   addParentClass,
   pointerdown,
+  isDragState,
 } from "../../index";
 import { eventCoordinates, removeClass, getRealCoords } from "../../utils";
 
@@ -111,7 +112,7 @@ export function insertion<T>(
 }
 
 function checkPosition(e: DragEvent | PointerEvent) {
-  if (!state) return;
+  if (!isDragState(state)) return;
 
   const el = document.elementFromPoint(e.clientX, e.clientY);
 
@@ -139,13 +140,19 @@ function checkPosition(e: DragEvent | PointerEvent) {
   }
 }
 
-export function handleDragstart<T>(data: NodeDragEventData<T>) {
+export function handleDragstart<T>(
+  data: NodeDragEventData<T>,
+  state: DragState<T>
+) {
   if (!(data.e instanceof DragEvent)) return;
 
-  dragstart({
-    e: data.e,
-    targetData: data.targetData,
-  });
+  dragstart(
+    {
+      e: data.e,
+      targetData: data.targetData,
+    },
+    state
+  );
 
   setTimeout(() => {
     if (data.targetData.parent.data.config.sortable === false) return;
@@ -154,13 +161,19 @@ export function handleDragstart<T>(data: NodeDragEventData<T>) {
   });
 }
 
-export function handlePointerdown<T>(data: NodePointerEventData<T>) {
+export function handlePointerdown<T>(
+  data: NodePointerEventData<T>,
+  state: DragState<T>
+) {
   if (!(data.e instanceof PointerEvent)) return;
 
-  pointerdown({
-    e: data.e,
-    targetData: data.targetData,
-  });
+  pointerdown(
+    {
+      e: data.e,
+      targetData: data.targetData,
+    },
+    state
+  );
 
   setTimeout(() => {
     if (data.targetData.parent.data.config.sortable === false) return;
@@ -283,8 +296,6 @@ function defineRanges(parent: HTMLElement) {
   const enabledNodes = parentData.enabledNodes;
 
   enabledNodes.forEach((node, index) => {
-    node.data.range = {};
-
     let aboveOrBelowPrevious = false;
 
     let aboveOrBelowAfter = false;
@@ -315,6 +326,8 @@ function defineRanges(parent: HTMLElement) {
 
     const fullishWidth =
       parent.getBoundingClientRect().width * 0.8 < nodeCoords.width;
+
+    if (!node.data.range) return;
 
     if (fullishWidth) {
       node.data.range.ascending = ascendingVertical(nodeCoords, nextNodeCoords);
@@ -358,8 +371,11 @@ export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
   data.e.preventDefault();
 }
 
-export function handleDragoverParent<T>(data: ParentEventData<T>) {
-  if (!state || !insertionState) return;
+export function handleDragoverParent<T>(
+  data: ParentEventData<T>,
+  state: DragState<T>
+) {
+  if (!insertionState) return;
 
   data.e.stopPropagation();
 
@@ -417,7 +433,10 @@ export function moveBetween<T>(data: ParentRecord<T>) {
 
   if (!foundRange) return;
 
-  const position = foundRange[0].data.range[foundRange[1]];
+  const position =
+    foundRange[0].data.range![foundRange[1] as "ascending" | "descending"];
+
+  if (!position) return;
 
   positionInsertionPoint(
     position,
@@ -471,7 +490,10 @@ function moveOutside<T>(data: ParentRecord<T>, state: DragState<T>) {
 
     if (!foundRange) return;
 
-    const position = foundRange[0].data.range[foundRange[1]];
+    const position =
+      foundRange[0].data.range![foundRange[1] as "ascending" | "descending"];
+
+    if (!position) return;
 
     positionInsertionPoint(
       position,
@@ -485,14 +507,20 @@ function findClosest<T>(enabledNodes: NodeRecord<T>[]) {
   let foundRange: [NodeRecord<T>, string] | null = null;
 
   for (let x = 0; x < enabledNodes.length; x++) {
-    if (!state || !enabledNodes[x].data.range) continue;
+    if (!isDragState(state) || !enabledNodes[x].data.range) continue;
 
-    if (enabledNodes[x].data.range.ascending) {
+    const ascending = enabledNodes[x].data.range!.ascending;
+
+    const descending = enabledNodes[x].data.range!.descending;
+
+    if (!ascending && !descending) continue;
+
+    if (ascending) {
       if (
-        state.coordinates.y > enabledNodes[x].data.range.ascending.y[0] &&
-        state.coordinates.y < enabledNodes[x].data.range.ascending.y[1] &&
-        state.coordinates.x > enabledNodes[x].data.range.ascending.x[0] &&
-        state.coordinates.x < enabledNodes[x].data.range.ascending.x[1]
+        state.coordinates.y > ascending.y[0] &&
+        state.coordinates.y < ascending.y[1] &&
+        state.coordinates.x > ascending.x[0] &&
+        state.coordinates.x < ascending.x[1]
       ) {
         foundRange = [enabledNodes[x], "ascending"];
 
@@ -500,12 +528,12 @@ function findClosest<T>(enabledNodes: NodeRecord<T>[]) {
       }
     }
 
-    if (enabledNodes[x].data.range.descending) {
+    if (descending) {
       if (
-        state.coordinates.y > enabledNodes[x].data.range.descending.y[0] &&
-        state.coordinates.y < enabledNodes[x].data.range.descending.y[1] &&
-        state.coordinates.x > enabledNodes[x].data.range.descending.x[0] &&
-        state.coordinates.x < enabledNodes[x].data.range.descending.x[1]
+        state.coordinates.y > descending.y[0] &&
+        state.coordinates.y < descending.y[1] &&
+        state.coordinates.x > descending.x[0] &&
+        state.coordinates.x < descending.x[1]
       ) {
         foundRange = [enabledNodes[x], "descending"];
 
@@ -515,8 +543,11 @@ function findClosest<T>(enabledNodes: NodeRecord<T>[]) {
   }
 }
 
-export function handlePointeroverParent<T>(data: PointeroverParentEvent<T>) {
-  if (!state || !insertionState) return;
+export function handlePointeroverParent<T>(
+  data: PointeroverParentEvent<T>,
+  state: DragState<T>
+) {
+  if (!insertionState) return;
 
   data.detail.e.stopPropagation();
 
@@ -525,8 +556,6 @@ export function handlePointeroverParent<T>(data: PointeroverParentEvent<T>) {
   state.coordinates.y = y;
 
   state.coordinates.x = x;
-
-  handleScroll();
 
   const nestedParent = data.detail.targetData.parent.data.nestedParent;
 
@@ -545,7 +574,8 @@ export function handlePointeroverParent<T>(data: PointeroverParentEvent<T>) {
 
   if (!foundRange) return;
 
-  const position = foundRange[0].data.range[foundRange[1]];
+  const position =
+    foundRange[0].data.range![foundRange[1] as "ascending" | "descending"];
 
   positionInsertionPoint(
     position,
@@ -616,11 +646,10 @@ function positionInsertionPoint<T>(
 export function handleParentDrop<T>(_data: NodeDragEventData<T>) {}
 
 export function handleEnd<T>(
-  data: NodeDragEventData<T> | NodePointerEventData<T>
+  data: NodeDragEventData<T> | NodePointerEventData<T>,
+  state: DragState<T>
 ) {
   data.e.stopPropagation();
-
-  if (!state) return;
 
   const insertionPoint = document.getElementById("insertion-point");
 
@@ -803,5 +832,5 @@ export function handleEnd<T>(
 
   insertionState.draggedOverNodes = [];
 
-  originalHandleEnd(data);
+  originalHandleEnd(data, state);
 }

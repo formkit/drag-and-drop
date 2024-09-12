@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../../src/vue/index";
-import { place, animations } from "../../../src/index";
+import { place } from "../../../src/index";
 
 const [parent, values] = useDragAndDrop(
   ["Apple", "Banana", "Orange", "Strawberry", "Pineapple", "Grapes"],

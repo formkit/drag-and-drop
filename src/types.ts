@@ -70,6 +70,10 @@ export interface ParentConfig<T> {
    * parents to transfer nodes between each other.
    */
   group?: string;
+  handleClickNode: (data: NodeEventData<T>, state: DragState<T>) => void;
+  handleClickParent: (data: ParentEventData<T>, state: DragState<T>) => void;
+  handleKeydownNode: (data: NodeEventData<T>, state: DragState<T>) => void;
+  handleKeydownParent: (data: ParentEventData<T>, state: DragState<T>) => void;
   /**
    * Function that is called when dragend or touchend event occurs.
    */
@@ -202,6 +206,10 @@ export interface ParentConfig<T> {
    * The root element to use for the parent.
    */
   root: Document | ShadowRoot;
+  /**
+   * The configuration for the selections plugin.
+   */
+  selectionsConfig?: SelectionsConfig<T>;
   /**
    * Function that is called when a node is set up.
    */
@@ -339,7 +347,18 @@ export interface NodeData<T> {
   /**
    * Set by the insertion plugin to define the coordinates for a given node.
    */
-  range?: Record<string, Range>;
+  range?: {
+    ascending: {
+      y: number[];
+      x: number[];
+      vertical: boolean;
+    };
+    descending: {
+      y: number[];
+      x: number[];
+      vertical: boolean;
+    };
+  };
 }
 
 /**
@@ -640,14 +659,9 @@ export type EventHandlers = Record<string, (e: Event) => void>;
  * into.
  */
 
-export type SynthDragState<T> = SynthDragStateProps<T> & DragState<T>;
+export type SynthDragState<T> = SynthDragStateProps & DragState<T>;
 
-export interface SynthDragStateProps<T> {
-  /**
-   * The cloned elements of the dragged node. This is used primarily for
-   * TouchEvents or multi-drag purposes.
-   */
-  clonedDraggedEls: Array<Element>;
+export interface SynthDragStateProps {
   /**
    * Element
    */
@@ -674,8 +688,8 @@ export interface SynthDragStateProps<T> {
 export type DragState<T> = DragStateProps<T> & BaseDragState;
 
 export type BaseDragState = {
-  emit: (event: string, data: unknown) => void;
-  on: (event: string, callback: () => void) => void;
+  emit: (event: string, data: any) => void;
+  on: (event: string, callback: CallableFunction) => void;
   /**
    * The original z-index of the dragged node.
    */
@@ -697,6 +711,11 @@ export interface DragStateProps<T> {
    * or not.
    */
   ascendingDirection: boolean;
+  /**
+   * The cloned elements of the dragged node. This is used primarily for
+   * TouchEvents or multi-drag purposes.
+   */
+  clonedDraggedEls: Array<Element>;
   /**
    * The coordinates of the dragged element itself.
    */
@@ -821,7 +840,7 @@ export interface DragendEventData<T> {
   position: number;
 }
 
-export interface ScrollData<T> {
+export interface ScrollData {
   xThresh: number;
   yThresh: number;
   scrollParent: HTMLElement;
@@ -893,4 +912,15 @@ export interface MultiDragState<T> {
   selectedNodes: Array<NodeRecord<T>>;
   activeNode: NodeRecord<T> | undefined;
   isTouch: boolean;
+}
+
+export interface SelectionsParentConfig<T extends any> extends ParentConfig<T> {
+  selectionsConfig: SelectionsConfig<T>;
+}
+
+export interface SelectionsConfig<T> {
+  selectedClass?: string;
+  clickawayDeselect?: boolean;
+  handleKeydownNode?: (data: NodeEventData<T>, state: DragState<T>) => void;
+  handleClickNode?: (data: NodeEventData<T>, state: DragState<T>) => void;
 }

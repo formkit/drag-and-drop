@@ -106,7 +106,7 @@ export function resetState() {
  */
 export function setDragState<T>(
   dragStateProps:
-    | (SynthDragStateProps<T> & DragStateProps<T>)
+    | (SynthDragStateProps & DragStateProps<T>)
     | DragStateProps<T>
     | undefined
 ): DragState<T> | SynthDragState<T> {
@@ -140,6 +140,10 @@ export function dragAndDrop<T>({
     setValues,
     config: {
       deepCopyStyles: false,
+      handleClickNode,
+      handleClickParent,
+      handleKeydownNode,
+      handleKeydownParent,
       handleDragstart,
       handleDragoverNode,
       handleDragoverParent,
@@ -236,6 +240,7 @@ export function dragStateProps<T>(
   return {
     affectedNodes: [],
     ascendingDirection: false,
+    clonedDraggedEls: [],
     dynamicValues: [],
     pointerMoved: false,
     coordinates: {
@@ -559,19 +564,23 @@ export function tearDown(parent: HTMLElement) {
     parentData.abortControllers.mainParent.abort();
 }
 
-function isDragState<T>(
+export function isDragState<T>(
   state: BaseDragState
 ): state is DragState<T> | SynthDragState<T> {
   return "draggedNode" in state;
 }
 
-function isSynthDragState<T>(state: BaseDragState): state is SynthDragState<T> {
-  return "clonedDraggedNode" in state;
+export function isSynthDragState<T>(
+  state: BaseDragState
+): state is SynthDragState<T> {
+  return "pointerId" in state;
 }
 
 function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
   if (state) on("dragStarted", () => {});
   parentData.abortControllers.mainParent = addEvents(parent, {
+    click: parentEventData(parentData.config.handleClickParent),
+    keydown: parentEventData(parentData.config.handleKeydownParent),
     dragover: parentEventData(parentData.config.handleDragoverParent),
     handlePointeroverParent: parentData.config.handlePointeroverParent,
     drop: parentEventData(parentData.config.handleDropParent),
@@ -591,6 +600,8 @@ export function setupNode<T>(data: SetupNodeData<T>) {
   data.node.draggable = true;
 
   data.nodeData.abortControllers.mainNode = addEvents(data.node, {
+    click: nodeEventData(config.handleClickParent),
+    keydown: nodeEventData(config.handleKeydownNode),
     dragstart: nodeEventData(config.handleDragstart),
     dragover: nodeEventData(config.handleDragoverNode),
     dragenter: nodeEventData(config.handleDragenterNode),
@@ -919,6 +930,14 @@ export function validateDragHandle<T>(data: NodeEventData<T>): boolean {
   return false;
 }
 
+export function handleClickNode<T>(_data: NodeEventData<T>) {}
+
+export function handleClickParent<T>(_data: ParentEventData<T>) {}
+
+export function handleKeydownNode<T>(_data: NodeEventData<T>) {}
+
+export function handleKeydownParent<T>(_data: ParentEventData<T>) {}
+
 export function pointerdown<T>(
   data: NodePointerEventData<T>,
   _state: BaseDragState
@@ -1197,7 +1216,7 @@ function pointermoveClasses<T>(
 function getScrollData<T>(
   e: DragEvent | PointerEvent,
   state: DragState<T> | SynthDragState<T>
-): ScrollData<T> | undefined {
+): ScrollData | undefined {
   if (!(e.currentTarget instanceof HTMLElement)) return;
 
   const { x, y, width, height } = e.currentTarget.getBoundingClientRect();
@@ -1327,7 +1346,7 @@ function shouldScroll<T>(
 
 function shouldScrollRight<T>(
   state: DragState<T> | SynthDragState<T>,
-  data: ScrollData<T>
+  data: ScrollData
 ): DragState<T> | DragState<T> | void {
   return;
   const diff = data.scrollParent.clientWidth + data.x - state.coordinates.x;
@@ -1346,7 +1365,7 @@ function shouldScrollRight<T>(
 
 function shouldScrollLeft<T>(
   state: DragState<T>,
-  data: ScrollData<T>
+  data: ScrollData
 ): DragState<T> | void {
   return;
   const diff = data.scrollParent.clientWidth + data.x - state.coordinates.x;
@@ -1360,7 +1379,7 @@ function shouldScrollLeft<T>(
     return state;
 }
 
-function shouldScrollUp<T>(state: DragState<T>, data: ScrollData<T>): boolean {
+function shouldScrollUp<T>(state: DragState<T>, data: ScrollData): boolean {
   const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y;
 
   if (!data.scrollOutside && diff > data.scrollParent.clientHeight)
@@ -1376,10 +1395,7 @@ function shouldScrollUp<T>(state: DragState<T>, data: ScrollData<T>): boolean {
   return false;
 }
 
-function shouldScrollDown<T>(
-  state: DragState<T>,
-  data: ScrollData<T>
-): boolean {
+function shouldScrollDown<T>(state: DragState<T>, data: ScrollData): boolean {
   const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y;
 
   if (!data.scrollOutside && diff < 0) return false;

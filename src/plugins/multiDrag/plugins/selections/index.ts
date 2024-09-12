@@ -3,111 +3,118 @@ import type {
   NodeEventData,
   TearDownNodeData,
   ParentConfig,
-} from '../../../../types'
+  SelectionsConfig,
+  SelectionsParentConfig,
+} from "../../../../types";
 
-import type { SelectionsConfig } from './types'
-
-import { parents, nodeEventData } from '../../../../index'
-
-import { addEvents, removeClass, addNodeClass } from '../../../../utils'
-
-import { multiDragState } from '../../index'
+import { parents, nodeEventData } from "../../../../index";
+import { addEvents, removeClass, addNodeClass } from "../../../../utils";
+import { multiDragState } from "../../index";
 
 export function selections<T>(selectionsConfig: SelectionsConfig<T> = {}) {
   return (parent: HTMLElement) => {
-    const parentData = parents.get(parent)
+    const parentData = parents.get(parent);
 
-    if (!parentData) return
+    if (!parentData) return;
+
+    const selectionsParentConfig = {
+      ...parentData.config,
+      selectionsConfig,
+    } as SelectionsParentConfig<T>;
 
     return {
       setup() {
-        parentData.config.selectionsConfig = selectionsConfig
+        parentData.config.selectionsConfig = selectionsConfig;
 
-        parentData.config.handleClick =
-          selectionsConfig.handleClick || handleClick
+        selectionsParentConfig.handleClickNode =
+          selectionsConfig.handleClickNode || handleClickNode;
 
-        parentData.config.handleKeydown =
-          selectionsConfig.handleKeydown || handleKeydown
+        selectionsParentConfig.handleKeydownNode =
+          selectionsConfig.handleKeydownNode || handleKeydownNode;
 
         selectionsConfig.clickawayDeselect =
           selectionsConfig.clickawayDeselect === undefined
             ? true
-            : selectionsConfig.clickawayDeselect
+            : selectionsConfig.clickawayDeselect;
 
-        if (!selectionsConfig.clickawayDeselect) return
+        if (!selectionsConfig.clickawayDeselect) return;
 
         const rootAbortControllers = addEvents(parentData.config.root, {
           click: handleRootClick.bind(null, parentData.config),
-        })
+        });
 
-        parentData.abortControllers['root'] = rootAbortControllers
+        parentData.abortControllers["root"] = rootAbortControllers;
       },
 
       tearDown() {
         if (parentData.abortControllers.root) {
-          parentData.abortControllers.root.abort()
+          parentData.abortControllers.root.abort();
         }
       },
 
       tearDownNode<T>(data: TearDownNodeData<T>) {
         if (data.parentData.abortControllers.selectionsNode) {
-          data.parentData.abortControllers.selectionsNode.abort()
+          data.parentData.abortControllers.selectionsNode.abort();
         }
       },
 
       setupNode<T>(data: SetupNodeData<T>) {
-        const config = data.parentData.config
+        const config = data.parentData.config;
 
-        data.node.setAttribute('tabindex', '0')
+        data.node.setAttribute("tabindex", "0");
 
         const abortControllers = addEvents(data.node, {
-          click: nodeEventData(config.handleClick),
-          keydown: nodeEventData(config.handleKeydown),
-        })
+          click: nodeEventData(config.handleClickNode),
+          keydown: nodeEventData(config.handleKeydownNode),
+        });
 
-        data.nodeData.abortControllers['selectionsNode'] = abortControllers
+        data.nodeData.abortControllers["selectionsNode"] = abortControllers;
       },
-    }
-  }
+    };
+  };
 }
 
 function handleRootClick<T>(config: ParentConfig<T>) {
+  if (!config.selectionsConfig) return;
+
   removeClass(
     multiDragState.selectedNodes.map((x) => x.el),
     config.selectionsConfig.selectedClass
-  )
+  );
 
-  multiDragState.selectedNodes = []
+  multiDragState.selectedNodes = [];
 
-  multiDragState.activeNode = undefined
+  multiDragState.activeNode = undefined;
 }
 
-function handleKeydown<T>(data: NodeEventData<T>) {
-  keydown(data)
+function handleKeydownNode<T>(data: NodeEventData<T>) {
+  keydown(data);
 }
 
-function handleClick<T>(data: NodeEventData<T>) {
-  click(data)
+function handleClickNode<T>(data: NodeEventData<T>) {
+  click(data);
 }
 
 function click<T>(data: NodeEventData<T>) {
-  data.e.stopPropagation()
+  data.e.stopPropagation();
 
-  const selectionsConfig = data.targetData.parent.data.config.selectionsConfig
+  const selectionsConfig = data.targetData.parent.data.config.selectionsConfig;
 
-  const ctParentData = data.targetData.parent.data
+  if (!selectionsConfig) return;
 
-  const selectedClass = selectionsConfig.selectedClass
+  const ctParentData = data.targetData.parent.data;
 
-  const targetNode = data.targetData.node
+  const selectedClass = selectionsConfig.selectedClass;
 
-  let commandKey = false
+  const targetNode = data.targetData.node;
 
-  let shiftKey = false
+  let commandKey = false;
+
+  let shiftKey = false;
 
   if (data.e instanceof MouseEvent) {
-    commandKey = data.e.ctrlKey || data.e.metaKey
-    shiftKey = data.e.shiftKey
+    commandKey = data.e.ctrlKey || data.e.metaKey;
+    shiftKey = data.e.shiftKey;
   }
 
   if (shiftKey && multiDragState.isTouch === false) {
@@ -115,12 +122,12 @@ function click<T>(data: NodeEventData<T>) {
       multiDragState.activeNode = {
         el: data.targetData.node.el,
         data: data.targetData.node.data,
-      }
+      };
 
       for (let x = 0; x <= data.targetData.node.data.index; x++) {
-        multiDragState.selectedNodes.push(ctParentData.enabledNodes[x])
+        multiDragState.selectedNodes.push(ctParentData.enabledNodes[x]);
         if (selectedClass) {
-          addNodeClass([ctParentData.enabledNodes[x].el], selectedClass, true)
+          addNodeClass([ctParentData.enabledNodes[x].el], selectedClass, true);
         }
       }
     } else {
@@ -133,16 +140,16 @@ function click<T>(data: NodeEventData<T>) {
           : [
               data.targetData.node.data.index,
               multiDragState.activeNode.data.index,
-            ]
+            ];
 
       const selectedNodes = ctParentData.enabledNodes.slice(
         minIndex,
         maxIndex + 1
-      )
+      );
 
       if (selectedNodes.length === 1) {
         for (const node of multiDragState.selectedNodes) {
-          if (selectedClass) node.el.classList.remove(selectedClass)
+          if (selectedClass) node.el.classList.remove(selectedClass);
         }
 
         multiDragState.selectedNodes = [
@@ -150,15 +157,15 @@ function click<T>(data: NodeEventData<T>) {
             el: data.targetData.node.el,
             data: data.targetData.node.data,
           },
-        ]
+        ];
 
         multiDragState.activeNode = {
           el: data.targetData.node.el,
           data: data.targetData.node.data,
-        }
+        };
 
         if (selectedClass) {
-          data.targetData.node.el.classList.add(selectedClass)
+          data.targetData.node.el.classList.add(selectedClass);
         }
       }
       for (let x = minIndex - 1; x >= 0; x--) {
@@ -169,13 +176,17 @@ function click<T>(data: NodeEventData<T>) {
             ...multiDragState.selectedNodes.filter(
               (el) => el !== ctParentData.enabledNodes[x]
             ),
-          ]
+          ];
 
           if (selectedClass) {
-            addNodeClass([ctParentData.enabledNodes[x].el], selectedClass, true)
+            addNodeClass(
+              [ctParentData.enabledNodes[x].el],
+              selectedClass,
+              true
+            );
           }
         } else {
-          break
+          break;
         }
       }
       for (let x = maxIndex; x < ctParentData.enabledNodes.length; x++) {
@@ -186,21 +197,21 @@ function click<T>(data: NodeEventData<T>) {
             ...multiDragState.selectedNodes.filter(
               (el) => el !== ctParentData.enabledNodes[x]
             ),
-          ]
+          ];
           if (selectedClass) {
-            removeClass([ctParentData.enabledNodes[x].el], selectedClass)
+            removeClass([ctParentData.enabledNodes[x].el], selectedClass);
           }
         } else {
-          break
+          break;
         }
       }
       for (const node of selectedNodes) {
         if (!multiDragState.selectedNodes.map((x) => x.el).includes(node.el)) {
-          multiDragState.selectedNodes.push(node)
+          multiDragState.selectedNodes.push(node);
         }
 
         if (selectedClass) {
-          addNodeClass([node.el], selectedClass, true)
+          addNodeClass([node.el], selectedClass, true);
         }
       }
     }
@@ -208,130 +219,132 @@ function click<T>(data: NodeEventData<T>) {
     if (multiDragState.selectedNodes.map((x) => x.el).includes(targetNode.el)) {
       multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
         (el) => el.el !== targetNode.el
-      )
+      );
       if (selectedClass) {
-        removeClass([targetNode.el], selectedClass)
+        removeClass([targetNode.el], selectedClass);
       }
     } else {
-      multiDragState.activeNode = targetNode
+      multiDragState.activeNode = targetNode;
       if (selectedClass) {
-        addNodeClass([targetNode.el], selectedClass, true)
+        addNodeClass([targetNode.el], selectedClass, true);
       }
-      multiDragState.selectedNodes.push(targetNode)
+      multiDragState.selectedNodes.push(targetNode);
     }
   } else if (!commandKey && multiDragState.isTouch === false) {
     if (multiDragState.selectedNodes.map((x) => x.el).includes(targetNode.el)) {
       multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
         (el) => el.el !== targetNode.el
-      )
+      );
       if (selectedClass) {
-        removeClass([targetNode.el], selectedClass)
+        removeClass([targetNode.el], selectedClass);
       }
     } else {
       multiDragState.activeNode = {
         el: data.targetData.node.el,
         data: data.targetData.node.data,
-      }
+      };
 
       if (selectedClass) {
         for (const el of multiDragState.selectedNodes) {
-          removeClass([el.el], selectedClass)
+          removeClass([el.el], selectedClass);
         }
 
-        addNodeClass([data.targetData.node.el], selectedClass, true)
+        addNodeClass([data.targetData.node.el], selectedClass, true);
       }
       multiDragState.selectedNodes = [
         {
           el: data.targetData.node.el,
           data: data.targetData.node.data,
         },
-      ]
+      ];
     }
   } else {
     if (multiDragState.selectedNodes.map((x) => x.el).includes(targetNode.el)) {
       multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
         (el) => el.el !== targetNode.el
-      )
+      );
       if (selectedClass) {
-        removeClass([targetNode.el], selectedClass)
+        removeClass([targetNode.el], selectedClass);
       }
     } else {
-      multiDragState.activeNode = targetNode
+      multiDragState.activeNode = targetNode;
       if (selectedClass) {
-        addNodeClass([targetNode.el], selectedClass, true)
+        addNodeClass([targetNode.el], selectedClass, true);
       }
-      multiDragState.selectedNodes.push(targetNode)
+      multiDragState.selectedNodes.push(targetNode);
     }
   }
 }
 
 function keydown<T>(data: NodeEventData<T>) {
-  if (!(data.e instanceof KeyboardEvent)) return
+  if (!(data.e instanceof KeyboardEvent)) return;
 
-  const keys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']
+  const keys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
 
-  if (!keys.includes(data.e.key) || !multiDragState.activeNode) return
+  if (!keys.includes(data.e.key) || !multiDragState.activeNode) return;
 
-  const selectionsConfig = data.targetData.parent.data.config.selectionsConfig
+  const selectionsConfig = data.targetData.parent.data.config.selectionsConfig;
 
-  data.e.preventDefault()
+  data.e.preventDefault();
 
-  const parentData = data.targetData.parent.data
+  const parentData = data.targetData.parent.data;
 
-  const nodeData = data.targetData.node.data
+  const nodeData = data.targetData.node.data;
 
-  const enabledNodes = parentData.enabledNodes
+  const enabledNodes = parentData.enabledNodes;
 
-  const moveUp = data.e.key === 'ArrowUp' || data.e.key === 'ArrowLeft'
+  const moveUp = data.e.key === "ArrowUp" || data.e.key === "ArrowLeft";
 
-  const moveDown = data.e.key === 'ArrowDown' || data.e.key === 'ArrowRight'
+  const moveDown = data.e.key === "ArrowDown" || data.e.key === "ArrowRight";
 
   const invalidKeydown =
     (moveUp && nodeData.index === 0) ||
-    (moveDown && nodeData.index === enabledNodes.length - 1)
+    (moveDown && nodeData.index === enabledNodes.length - 1);
 
-  if (invalidKeydown) return
+  if (invalidKeydown) return;
 
-  const adjacentNode = enabledNodes[nodeData.index + (moveUp ? -1 : 1)]
+  const adjacentNode = enabledNodes[nodeData.index + (moveUp ? -1 : 1)];
 
-  const selectedClass = selectionsConfig.selectedClass
+  if (!selectionsConfig) return;
 
-  if (!adjacentNode) return
+  const selectedClass = selectionsConfig.selectedClass;
+
+  if (!adjacentNode) return;
 
   if (data.e.altKey) {
     if (multiDragState.selectedNodes.length > 1) {
       for (const el of multiDragState.selectedNodes) {
         if (selectedClass && multiDragState.activeNode !== el) {
-          removeClass([el.el], selectedClass)
+          removeClass([el.el], selectedClass);
         }
       }
 
       multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
         (el) => el !== multiDragState.activeNode
-      )
+      );
     }
-    const parentValues = parentData.getValues(data.targetData.parent.el)
+    const parentValues = parentData.getValues(data.targetData.parent.el);
 
-    ;[
+    [
       parentValues[nodeData.index],
       parentValues[nodeData.index + (moveUp ? -1 : 1)],
     ] = [
       parentValues[nodeData.index + (moveUp ? -1 : 1)],
       parentValues[nodeData.index],
-    ]
+    ];
 
-    parentData.setValues(parentValues, data.targetData.parent.el)
+    parentData.setValues(parentValues, data.targetData.parent.el);
   } else if (data.e.shiftKey && multiDragState.isTouch === false) {
     if (
       !multiDragState.selectedNodes.map((x) => x.el).includes(adjacentNode.el)
     ) {
-      multiDragState.selectedNodes.push(adjacentNode)
+      multiDragState.selectedNodes.push(adjacentNode);
 
       if (selectedClass) {
-        addNodeClass([adjacentNode.el], selectedClass, true)
+        addNodeClass([adjacentNode.el], selectedClass, true);
       }
 
-      multiDragState.activeNode = adjacentNode
+      multiDragState.activeNode = adjacentNode;
     } else {
       if (
         multiDragState.selectedNodes
@@ -340,34 +353,34 @@ function keydown<T>(data: NodeEventData<T>) {
       ) {
         multiDragState.selectedNodes = multiDragState.selectedNodes.filter(
           (el) => el !== multiDragState.activeNode
-        )
+        );
 
         if (selectedClass) {
-          removeClass([multiDragState.activeNode.el], selectedClass)
+          removeClass([multiDragState.activeNode.el], selectedClass);
         }
 
-        multiDragState.activeNode = adjacentNode
+        multiDragState.activeNode = adjacentNode;
       }
     }
   } else {
     for (const el of multiDragState.selectedNodes) {
       if (selectedClass && multiDragState.activeNode !== el) {
-        removeClass([el.el], selectedClass)
+        removeClass([el.el], selectedClass);
       }
     }
 
-    removeClass([multiDragState.activeNode.el], selectedClass)
+    removeClass([multiDragState.activeNode.el], selectedClass);
 
-    multiDragState.selectedNodes = [adjacentNode]
+    multiDragState.selectedNodes = [adjacentNode];
 
-    addNodeClass([adjacentNode.el], selectedClass, true)
+    addNodeClass([adjacentNode.el], selectedClass, true);
 
-    multiDragState.activeNode = adjacentNode
+    multiDragState.activeNode = adjacentNode;
   }
 
-  data.targetData.node.el.blur()
+  data.targetData.node.el.blur();
 
-  multiDragState.activeNode = adjacentNode
+  multiDragState.activeNode = adjacentNode;
 
-  multiDragState.activeNode.el.focus()
+  multiDragState.activeNode.el.focus();
 }

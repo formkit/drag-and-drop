@@ -345,15 +345,13 @@ export function getRealCoords(el: HTMLElement): Coordinates {
 export function createEmitter() {
   const callbacks = new Map<string, CallableFunction[]>();
 
-  const emit = function (eventName, ...data) {
-    //console.log("emit", eventName, data);
-    //console.log("callbacks", callbacks.get(eventName));
-    callbacks.get(eventName).forEach((cb) => {
+  const emit = function (eventName: string, ...data: unknown[]) {
+    callbacks.get(eventName)!.forEach((cb) => {
       cb(...data);
     });
   };
 
-  const on = function (eventName, callback) {
+  const on = function (eventName: string, callback: CallableFunction) {
     //console.log("on", eventName, callback);
     const cbs = callbacks.get(eventName) ?? [];
     cbs.push(callback);

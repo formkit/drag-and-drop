@@ -9,7 +9,6 @@ import type {
   PointeroverParentEvent,
 } from "../../types";
 import {
-  state,
   parents,
   handleEnd as originalHandleEnd,
   parentValues,
@@ -39,11 +38,11 @@ export function place<T>(placeConfig: Partial<PlaceConfig<T>> = {}) {
         placeParentConfig.handleDragoverNode =
           placeConfig.handleDragoverNode || handleDragoverNode;
 
-        placeParentConfig.handleTouchOverNode =
-          placeConfig.handleTouchOverNode || handleTouchOverNode;
+        placeParentConfig.handlePointeroverNode =
+          placeConfig.handlePointeroverNode || handlePointeroverNode;
 
-        placeParentConfig.handleTouchOverParent =
-          placeConfig.handleTouchOverParent || handleTouchOverParent;
+        placeParentConfig.handlePointeroverParent =
+          placeConfig.handlePointeroverParent || handlePointeroverParent;
 
         placeParentConfig.handleEnd = placeConfig.handleEnd || handleEnd;
 
@@ -53,23 +52,25 @@ export function place<T>(placeConfig: Partial<PlaceConfig<T>> = {}) {
   };
 }
 
-function handleDragoverNode<T>(data: NodeDragEventData<T>) {
-  if (!state) return;
-
+function handleDragoverNode<T>(
+  data: NodeDragEventData<T>,
+  state: DragState<T>
+) {
   dragoverNode(data, state);
 }
 
 export function handleDragoverParent<T>(_data: ParentEventData<T>) {}
 
-export function handleTouchOverParent<T>(_data: PointeroverParentEvent<T>) {}
+export function handlePointeroverParent<T>(_data: PointeroverParentEvent<T>) {}
 
-function handleTouchOverNode<T>(data: PointeroverNodeEvent<T>) {
-  if (!state) return;
-
+function handlePointeroverNode<T>(
+  data: PointeroverNodeEvent<T>,
+  state: DragState<T>
+) {
   if (data.detail.targetData.parent.el !== state.lastParent.el) return;
 
   const dropZoneClass =
-    data.detail.targetData.parent.data.config.touchDropZoneClass;
+    data.detail.targetData.parent.data.config.synthDropZoneClass;
 
   removeClass(
     placeState.draggedOverNodes.map((node) => node.el),
@@ -128,7 +129,10 @@ function dragoverNode<T>(data: NodeDragEventData<T>, state: DragState<T>) {
   state.lastParent = data.targetData.parent;
 }
 
-function handleEnd<T>(data: NodeDragEventData<T> | NodePointerEventData<T>) {
+function handleEnd<T>(
+  data: NodeDragEventData<T> | NodePointerEventData<T>,
+  state: DragState<T>
+) {
   if (!state) return;
 
   if (state.transferred || state.lastParent.el !== state.initialParent.el)
@@ -155,7 +159,7 @@ function handleEnd<T>(data: NodeDragEventData<T> | NodePointerEventData<T>) {
 
   const dropZoneClass =
     "clonedDraggedNode" in state
-      ? data.targetData.parent.data.config.touchDropZoneClass
+      ? data.targetData.parent.data.config.synthDropZoneClass
       : data.targetData.parent.data.config.dropZoneClass;
 
   removeClass(
@@ -163,5 +167,5 @@ function handleEnd<T>(data: NodeDragEventData<T> | NodePointerEventData<T>) {
     dropZoneClass
   );
 
-  originalHandleEnd(data);
+  originalHandleEnd(data, state);
 }

@@ -1,6 +1,6 @@
 import type { SetupNodeData, Node } from "../../types";
 import type { AnimationsConfig } from "./types";
-import { state, parents } from "../../index";
+import { state, parents, isDragState } from "../../index";
 
 export function animations(animationsConfig: Partial<AnimationsConfig> = {}) {
   const slideUp = [
@@ -49,7 +49,7 @@ export function animations(animationsConfig: Partial<AnimationsConfig> = {}) {
       },
 
       setupNodeRemap<T>(data: SetupNodeData<T>) {
-        if (!state) return;
+        if (!isDragState(state)) return;
 
         const duration = animationsConfig.duration || 150;
 
