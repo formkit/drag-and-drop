@@ -50,16 +50,16 @@ export function multiDrag<T>(
     return {
       setup() {
         multiDragParentConfig.handleDragstart =
-          multiDragConfig.multiHandleDragstart || multiHandleDragstart;
+          multiDragConfig.handleDragstart || handleDragstart;
 
-        multiDragParentConfig.handlePointerdown =
-          multiDragConfig.multiHandlePointerdown || multiHandlePointerdown;
+        multiDragParentConfig.handlePointerdownNode =
+          multiDragConfig.handlePointerdownNode || handlePointerdownNode;
 
         multiDragParentConfig.handleEnd =
-          multiDragConfig.multiHandleEnd || multiHandleEnd;
+          multiDragConfig.handleEnd || handleEnd;
 
         multiDragParentConfig.reapplyDragClasses =
-          multiDragConfig.multiReapplyDragClasses || multiReapplyDragClasses;
+          multiDragConfig.reapplyDragClasses || reapplyDragClasses;
 
         parentData.config = multiDragParentConfig;
 
@@ -99,10 +99,7 @@ export function multiDrag<T>(
   };
 }
 
-export function multiReapplyDragClasses<T>(
-  node: Node,
-  parentData: ParentData<T>
-) {
+export function reapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
   if (!state) return;
 
   const dropZoneClass =
@@ -117,7 +114,7 @@ export function multiReapplyDragClasses<T>(
   addNodeClass([node], dropZoneClass, true);
 }
 
-export function multiHandleEnd<T>(data: NodeEventData<T>) {
+export function handleEnd<T>(data: NodeEventData<T>) {
   if (!state) return;
 
   const isTouch = state && "touchedNode" in state;
@@ -160,7 +157,7 @@ export function selectionsEnd<T>(data: NodeEventData<T>, state: DragState<T>) {
   );
 }
 
-export function multiHandleDragstart<T>(data: NodeEventData<T>) {
+export function handleDragstart<T>(data: NodeEventData<T>) {
   if (!(data.e instanceof DragEvent)) return;
 
   multiDragstart({
@@ -228,7 +225,7 @@ export function multiDragstart<T>(data: NodeDragEventData<T>) {
   }
 }
 
-export function multiHandlePointerdown<T>(data: NodePointerEventData<T>) {
+export function handlePointerdownNode<T>(data: NodePointerEventData<T>) {
   if (!(data.e instanceof TouchEvent)) return;
 
   multiPointerdown({

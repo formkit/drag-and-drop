@@ -20,7 +20,6 @@ export interface InsertionConfig<T> {
     id?: string;
   };
 }
-
 export interface InsertionParentConfig<T> extends ParentConfig<T> {
   insertionConfig: InsertionConfig<T>;
 }

@@ -94,7 +94,6 @@ export let state: DragState<unknown> | SynthDragState<unknown> | BaseDragState =
   baseDragState;
 
 export function resetState() {
-  console.log("reset state");
   state = baseDragState;
 }
 
@@ -1461,7 +1460,7 @@ export function synthMove<T>(
   }
 }
 
-export function handleScroll<T>(e: DragEvent | PointerEvent) {
+export function handleScroll(e: DragEvent | PointerEvent) {
   if (!isSynthDragState(state)) return;
 
   let directionSet = false;
@@ -1511,7 +1510,7 @@ export function handleDragoverParent<T>(
   transfer(data, state);
 }
 
-export function handlePointeroverParent<T>(e: PointeroverNodeEvent<T>) {
+export function handlePointeroverParent<T>(e: PointeroverParentEvent<T>) {
   if (e.detail.targetData.parent.el !== e.detail.state.lastParent.el)
     transfer(e.detail, e.detail.state);
 }

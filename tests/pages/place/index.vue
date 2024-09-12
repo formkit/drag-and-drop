@@ -5,7 +5,7 @@ import { place, animations } from "../../../src/index";
 const [parent, values] = useDragAndDrop(
   ["Apple", "Banana", "Orange", "Strawberry", "Pineapple", "Grapes"],
   {
-    plugins: [place(), animations()],
+    plugins: [place()],
     dropZoneClass: "hover",
   }
 );
