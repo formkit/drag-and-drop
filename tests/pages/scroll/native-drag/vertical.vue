@@ -80,11 +80,15 @@ const [parent2, values2] = useDragAndDrop(vegetables, {
   </div>
 </template>
 
-<style scoped>
+<style>
 .item {
   padding: 10px;
   margin: 5px;
   border: 1px solid #ccc;
   border-radius: 5px;
+}
+
+body {
+  height: 4000px !important;
 }
 </style>

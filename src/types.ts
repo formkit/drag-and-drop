@@ -169,12 +169,6 @@ export interface ParentConfig<T> {
    */
   nativeDrag?: boolean;
   /**
-   * Is using native drag events, indicates whether native drag scroll should be
-   * used (the default behavior when dragging an item to the edge of a scrollable
-   * container) or if the library should handle scrolling itself
-   */
-  nativeDragScroll?: boolean;
-  /**
    * Function that is called when a sort operation is to be performed.
    */
   performSort: (
@@ -655,9 +649,18 @@ export interface SynthDragStateProps<T> {
    */
   clonedDraggedNode: HTMLElement;
   /**
+   * Direction of the synthetic drag scroll
+   */
+  syntheticScrollDirection: "up" | "down" | "left" | "right" | undefined;
+  /**
    * The display of the synthetic node.
    */
   draggedNodeDisplay: string;
+  /**
+   * Flag indcating whether a scrollable el is being scrolled via.
+   * synthetic drag.
+   */
+  synthDragScrolling: boolean;
   /**
    * Pointer id of dragged el
    */
@@ -815,10 +818,9 @@ export interface DragendEventData<T> {
 }
 
 export interface ScrollData<T> {
-  state: DragState<T>;
   xThresh: number;
   yThresh: number;
-  scrollParent: Array<[HTMLElement, AbortController]>;
+  scrollParent: HTMLElement;
   scrollOutside?: boolean;
   x: number;
   y: number;
