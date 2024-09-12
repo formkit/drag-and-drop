@@ -651,7 +651,7 @@ export interface SynthDragStateProps<T> {
   /**
    * Direction of the synthetic drag scroll
    */
-  syntheticScrollDirection: "up" | "down" | "left" | "right" | undefined;
+  synthScrollDirection: "up" | "down" | "left" | "right" | undefined;
   /**
    * The display of the synthetic node.
    */
@@ -735,7 +735,7 @@ export interface DragStateProps<T> {
   /**
    * The last value the dragged node targeted.
    */
-  lastTargetValue: T;
+  lastTargetValue: T | undefined;
   /**
    * longPress - A flag to indicate whether a long press has occurred.
    */

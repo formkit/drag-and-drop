@@ -113,7 +113,7 @@ export function setDragState<T>(
 ): DragState<T> | SynthDragState<T> {
   Object.assign(state, dragStateProps);
 
-  state.emit("dragStarted", state.clonedDraggedNode);
+  state.emit("dragStarted", state);
 
   return state as DragState<T> | SynthDragState<T>;
 }
@@ -998,7 +998,6 @@ export function handleEnd<T>(
   state: DragState<T> | SynthDragState<T>
 ) {
   if (!state) return;
-  return;
 
   data.e.preventDefault();
 
@@ -1013,7 +1012,6 @@ export function end<T>(
   _eventData: NodeEventData<T>,
   state: DragState<T> | SynthDragState<T>
 ) {
-  state.scrolling = false;
   if (documentController) {
     documentController.abort();
 
@@ -1223,8 +1221,6 @@ function getScrollData<T>(
   };
 }
 
-let interval: number | null = null;
-
 let animationFrameId: number | null = null;
 
 function setSynthScrollDirection<T>(
@@ -1232,7 +1228,7 @@ function setSynthScrollDirection<T>(
   el: HTMLElement,
   state: SynthDragState<T>
 ) {
-  if (state.syntheticScrollDirection === direction) return;
+  if (state.synthScrollDirection === direction) return;
 
   if (direction === "up" && el.scrollTop === 0) return;
 
@@ -1244,7 +1240,7 @@ function setSynthScrollDirection<T>(
   if (direction === "right" && el.scrollLeft + el.clientWidth >= el.scrollWidth)
     return;
 
-  state.syntheticScrollDirection = direction;
+  state.synthScrollDirection = direction;
 
   // Cancel any ongoing animation frame when direction changes
   if (animationFrameId !== null) {
@@ -1262,11 +1258,11 @@ function setSynthScrollDirection<T>(
     const elapsed = timestamp - lastTimestamp;
 
     // Base scroll speed in pixels per second
-    const baseSpeed = 1000; // Adjust this value as needed
+    const baseSpeed = 500; // Adjust this value as needed
 
     // Calculate how much to scroll based on time elapsed
     const distance = (baseSpeed * elapsed) / 1000; // Pixels to scroll
-    if (state.syntheticScrollDirection === undefined && animationFrameId) {
+    if (state.synthScrollDirection === undefined && animationFrameId) {
       cancelAnimationFrame(animationFrameId);
 
       animationFrameId = null;
@@ -1365,29 +1361,29 @@ function shouldScrollLeft<T>(
     return state;
 }
 
-function shouldScrollUp<T>(
-  state: DragState<T>,
-  data: ScrollData<T>
-): DragState<T> | void {
+function shouldScrollUp<T>(state: DragState<T>, data: ScrollData<T>): boolean {
   const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y;
 
-  if (!data.scrollOutside && diff > data.scrollParent.clientHeight) return;
+  if (!data.scrollOutside && diff > data.scrollParent.clientHeight)
+    return false;
 
   if (
     diff > data.yThresh * data.scrollParent.clientHeight &&
     data.scrollParent.scrollTop !== 0
   ) {
-    return data.scrollParent;
+    return true;
   }
+
+  return false;
 }
 
 function shouldScrollDown<T>(
   state: DragState<T>,
   data: ScrollData<T>
-): HTMLElement | void {
+): boolean {
   const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y;
 
-  if (!data.scrollOutside && diff < 0) return;
+  if (!data.scrollOutside && diff < 0) return false;
 
   if (
     diff < (1 - data.yThresh) * data.scrollParent.clientHeight &&
@@ -1396,8 +1392,10 @@ function shouldScrollDown<T>(
       data.scrollParent.scrollHeight
     )
   ) {
-    return data.scrollParent;
+    return true;
   }
+
+  return false;
 }
 
 function moveNode<T>(data: NodePointerEventData<T>, state: SynthDragState<T>) {
@@ -1438,8 +1436,6 @@ export function synthMove<T>(
 
   moveNode(data, state);
 
-  //handleScroll(data, state);
-
   const elFromPoint = getElFromPoint(data);
 
   if (!elFromPoint) return;
@@ -1472,7 +1468,11 @@ export function handleScroll<T>(e: DragEvent | PointerEvent) {
 
   for (const direction of Object.keys(scrollConfig)) {
     if (shouldScroll(direction, e, state)) {
-      setSynthScrollDirection(direction, e.currentTarget, state);
+      setSynthScrollDirection(
+        direction as "up" | "down" | "left" | "right" | undefined,
+        e.currentTarget as HTMLElement,
+        state
+      );
 
       directionSet = true;
 
@@ -1480,7 +1480,7 @@ export function handleScroll<T>(e: DragEvent | PointerEvent) {
     }
   }
 
-  if (!directionSet) state.syntheticScrollDirection = undefined;
+  if (!directionSet) state.synthScrollDirection = undefined;
 }
 
 export function handleDragoverNode<T>(
@@ -1508,15 +1508,12 @@ export function handleDragoverParent<T>(
 
   state.coordinates.x = x;
 
-  //if (!state.initialParent.data.config.nativeDragScroll) handleScroll(state);
-
   transfer(data, state);
 }
 
-export function handlePointeroverParent<T>(e: PointeroverParentEvent<T>) {
-  if (!state) return;
-
-  transfer(e.detail, state);
+export function handlePointeroverParent<T>(e: PointeroverNodeEvent<T>) {
+  if (e.detail.targetData.parent.el !== e.detail.state.lastParent.el)
+    transfer(e.detail, e.detail.state);
 }
 
 export function validateTransfer<T>(
@@ -1613,6 +1610,7 @@ export function validateSort<T>(
 
   if (state.draggedNodes.map((x) => x.el).includes(data.targetData.node.el)) {
     state.lastTargetValue = undefined;
+
     return false;
   }
 
