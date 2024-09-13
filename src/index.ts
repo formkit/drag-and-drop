@@ -80,18 +80,22 @@ let synthNodePointerDown = false;
 export const [emit, on] = createEmitter();
 
 const baseDragState = {
+  activeNode: undefined,
   on,
   emit,
   originalZIndex: undefined,
   preventEnter: false,
   remapJustFinished: false,
+  selectedNodes: [],
 };
 
 /**
  * The state of the drag and drop.
  */
-export let state: DragState<unknown> | SynthDragState<unknown> | BaseDragState =
-  baseDragState;
+export let state:
+  | DragState<unknown>
+  | SynthDragState<unknown>
+  | BaseDragState<unknown> = baseDragState;
 
 export function resetState() {
   state = baseDragState;
@@ -140,15 +144,13 @@ export function dragAndDrop<T>({
     setValues,
     config: {
       deepCopyStyles: false,
-      handleClickNode,
-      handleClickParent,
       handleKeydownNode,
       handleKeydownParent,
       handleDragstart,
       handleDragoverNode,
       handleDragoverParent,
       handleEnd,
-      handlePointerup,
+      handlePointerupNode,
       handleTouchstart,
       handlePointeroverNode,
       handlePointeroverParent,
@@ -580,7 +582,6 @@ export function isSynthDragState<T>(
 function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
   if (state) on("dragStarted", () => {});
   parentData.abortControllers.mainParent = addEvents(parent, {
-    click: parentEventData(parentData.config.handleClickParent),
     keydown: parentEventData(parentData.config.handleKeydownParent),
     dragover: parentEventData(parentData.config.handleDragoverParent),
     handlePointeroverParent: parentData.config.handlePointeroverParent,
@@ -601,7 +602,6 @@ export function setupNode<T>(data: SetupNodeData<T>) {
   data.node.draggable = true;
 
   data.nodeData.abortControllers.mainNode = addEvents(data.node, {
-    click: nodeEventData(config.handleClickNode),
     keydown: nodeEventData(config.handleKeydownNode),
     dragstart: nodeEventData(config.handleDragstart),
     dragover: nodeEventData(config.handleDragoverNode),
@@ -611,7 +611,7 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     touchstart: nodeEventData(config.handleTouchstart),
     pointerdown: nodeEventData(config.handlePointerdownNode),
     pointermove: nodeEventData(config.handlePointermove),
-    pointerup: nodeEventData(config.handlePointerup),
+    pointerup: nodeEventData(config.handlePointerupNode),
     handlePointeroverNode: config.handlePointeroverNode,
     mousedown: () => {
       if (!config.nativeDrag) isNative = false;
@@ -854,6 +854,7 @@ export function handlePointerdownNode<T>(
 ) {
   eventData.e.stopPropagation();
 
+  console.log("root handle pointer down node");
   pointerdown(
     {
       e: eventData.e,
@@ -1085,7 +1086,7 @@ export function handleTouchstart<T>(
   data.e.preventDefault();
 }
 
-export function handlePointerup<T>(
+export function handlePointerupNode<T>(
   data: NodePointerEventData<T>,
   state: DragState<T> | SynthDragState<T> | BaseDragState
 ) {

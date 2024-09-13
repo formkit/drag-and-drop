@@ -9,17 +9,25 @@ const [parent, values] = useDragAndDrop(
       multiDrag({
         plugins: [
           selections({
-            selectedClass: "bg-blue-500 text-white",
+            selectedClass: "blue",
           }),
         ],
       }),
     ],
   }
 );
+
+onMounted(() => {
+  const el = document.getElementById("hello-world");
+  el.addEventListener("click", () => {
+    console.log("Hello world clicked");
+  });
+});
 </script>
 
 <template>
   <h2>Place Plugin</h2>
+  <p id="hello-world">Hello world</p>
   <div>
     <ul ref="parent" class="list">
       <li v-for="value in values" :id="value" :key="value" class="item">
@@ -37,6 +45,11 @@ const [parent, values] = useDragAndDrop(
 </template>
 
 <style scoped>
+.blue {
+  background-color: lightblue !important;
+  color: white;
+}
+
 .item {
   padding: 10px;
   border: 1px solid #ccc;

@@ -5,6 +5,8 @@ import type {
   ParentConfig,
   SelectionsConfig,
   SelectionsParentConfig,
+  NodePointerEventData,
+  BaseDragState,
 } from "../../../../types";
 
 import { parents } from "../../../../index";
@@ -24,11 +26,14 @@ export function selections<T>(selectionsConfig: SelectionsConfig<T> = {}) {
 
     return {
       setup() {
-        selectionsParentConfig.handleClickNode =
-          selectionsConfig.handleClickNode || handleClickNode;
+        selectionsParentConfig.handlePointerdownNode =
+          selectionsConfig.handlePointerdownNode || handlePointerdownNode;
 
         selectionsParentConfig.handleKeydownNode =
           selectionsConfig.handleKeydownNode || handleKeydownNode;
+
+        selectionsParentConfig.handlePointerupNode =
+          selectionsConfig.handlePointerupNode || handlePointerupNode;
 
         selectionsConfig.clickawayDeselect =
           selectionsConfig.clickawayDeselect === undefined
@@ -38,7 +43,7 @@ export function selections<T>(selectionsConfig: SelectionsConfig<T> = {}) {
         if (!selectionsConfig.clickawayDeselect) return;
 
         const rootAbortControllers = addEvents(parentData.config.root, {
-          click: handleRootClick.bind(null, parentData.config),
+          pointerdown: handleRootClick.bind(null, parentData.config),
         });
 
         parentData.abortControllers["root"] = rootAbortControllers;
@@ -68,6 +73,7 @@ export function selections<T>(selectionsConfig: SelectionsConfig<T> = {}) {
 }
 
 function handleRootClick<T>(config: ParentConfig<T>) {
+  console.log("root click");
   if (!config.selectionsConfig) return;
 
   removeClass(
@@ -84,16 +90,59 @@ function handleKeydownNode<T>(data: NodeEventData<T>) {
   keydown(data);
 }
 
-function handleClickNode<T>(data: NodeEventData<T>) {
-  console.log("click node?");
-  click(data);
+function handlePointerdownNode<T>(
+  data: NodePointerEventData<T>,
+  state: BaseDragState<T>
+) {
+  data.e.stopPropagation();
+
+  const selectionsConfig = data.targetData.parent.data.config.selectionsConfig;
+
+  if (!selectionsConfig) return;
+
+  const selectedClass = selectionsConfig.selectedClass;
+
+  state.activeNode = data.targetData.node;
+
+  const idx = state.selectedNodes.findIndex(
+    (el) => el.el === data.targetData.node.el
+  );
+
+  if (idx !== -1) {
+    const el = state.selectedNodes.splice(idx, 1);
+
+    removeClass([el[0].el], selectedClass);
+  } else {
+    if (selectedClass)
+      addNodeClass([data.targetData.node.el], selectedClass, true);
+
+    state.selectedNodes.push(data.targetData.node);
+  }
+}
+
+function handlePointerupNode<T>(data: NodePointerEventData<T>) {
+  const selectionsConfig = data.targetData.parent.data.config.selectionsConfig;
+
+  if (!selectionsConfig) return;
+
+  const selectedClass = selectionsConfig.selectedClass;
+
+  //removeClass([data.targetData.node.el], selectedClass);
+
+  const [shiftKey, commandKey] = [
+    data.e.shiftKey,
+    data.e.ctrlKey || data.e.metaKey,
+  ];
+
+  if (shiftKey || commandKey) {
+    console.log("OOOOOHHHHH");
+
+    return;
+  }
 }
 
 function click<T>(data: NodeEventData<T>) {
   data.e.stopPropagation();
-  console.log("click");
-
-  return;
 
   const selectionsConfig = data.targetData.parent.data.config.selectionsConfig;
 

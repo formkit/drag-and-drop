@@ -70,8 +70,6 @@ export interface ParentConfig<T> {
    * parents to transfer nodes between each other.
    */
   group?: string;
-  handleClickNode: (data: NodeEventData<T>, state: DragState<T>) => void;
-  handleClickParent: (data: ParentEventData<T>, state: DragState<T>) => void;
   handleKeydownNode: (data: NodeEventData<T>, state: DragState<T>) => void;
   handleKeydownParent: (data: ParentEventData<T>, state: DragState<T>) => void;
   /**
@@ -85,7 +83,10 @@ export interface ParentConfig<T> {
    * Function that is called when dragstart event occurs.
    */
   handleDragstart: (data: NodeDragEventData<T>, state: DragState<T>) => void;
-  handlePointerup: (data: NodePointerEventData<T>, state: DragState<T>) => void;
+  handlePointerupNode: (
+    data: NodePointerEventData<T>,
+    state: DragState<T>
+  ) => void;
   /**
    * Function that is called when touchstart event occurs.
    */
@@ -686,9 +687,10 @@ export interface SynthDragStateProps {
   pointerId: number;
 }
 
-export type DragState<T> = DragStateProps<T> & BaseDragState;
+export type DragState<T> = DragStateProps<T> & BaseDragState<T>;
 
-export type BaseDragState = {
+export type BaseDragState<T> = {
+  activeNode: NodeRecord<T> | undefined;
   emit: (event: string, data: any) => void;
   on: (event: string, callback: CallableFunction) => void;
   /**
@@ -700,6 +702,10 @@ export type BaseDragState = {
    * Flag indicating that the remap just finished.
    */
   remapJustFinished: boolean;
+  /**
+   * For selectionis plugin.
+   */
+  selectedNodes: Array<NodeRecord<T>>;
 };
 
 export interface DragStateProps<T> {
@@ -928,5 +934,6 @@ export interface SelectionsConfig<T> {
   selectedClass?: string;
   clickawayDeselect?: boolean;
   handleKeydownNode?: (data: NodeEventData<T>, state: DragState<T>) => void;
-  handleClickNode?: (data: NodeEventData<T>, state: DragState<T>) => void;
+  handlePointerdownNode?: (data: NodeEventData<T>, state: DragState<T>) => void;
+  handlePointerupNode?: (data: NodeEventData<T>, state: DragState<T>) => void;
 }
