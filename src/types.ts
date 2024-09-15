@@ -689,9 +689,14 @@ export interface SynthDragStateProps {
 
 export type DragState<T> = DragStateProps<T> & BaseDragState<T>;
 
+type EventEmitterData<T> = {
+  data: NodeEventData<T> | ParentEventData<T>;
+  state: DragState<T>;
+};
+
 export type BaseDragState<T> = {
   activeNode: NodeRecord<T> | undefined;
-  emit: (event: string, data: any) => void;
+  emit: (event: string, data: EventEmitterData<T>) => void;
   on: (event: string, callback: CallableFunction) => void;
   /**
    * The original z-index of the dragged node.
@@ -873,6 +878,10 @@ export interface MultiDragConfig<T> {
    */
   draggingClass?: string;
   /**
+   * dragStarted
+   */
+  dragStarted: (data: EventEmitterData<T>) => void;
+  /**
    * Class added when a node is being dragged over a dropZone.
    */
   dropZoneClass?: string;
@@ -932,6 +941,7 @@ export interface SelectionsParentConfig<T extends any> extends ParentConfig<T> {
 
 export interface SelectionsConfig<T> {
   selectedClass?: string;
+  synthSelectedClass?: string;
   clickawayDeselect?: boolean;
   handleKeydownNode?: (data: NodeEventData<T>, state: DragState<T>) => void;
   handlePointerdownNode?: (data: NodeEventData<T>, state: DragState<T>) => void;

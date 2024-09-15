@@ -9,9 +9,8 @@ import type {
   BaseDragState,
 } from "../../../../types";
 
-import { parents } from "../../../../index";
+import { state, parents, nodeEventData } from "../../../../index";
 import { addEvents, removeClass, addNodeClass } from "../../../../utils";
-import { multiDragState } from "../../index";
 
 export function selections<T>(selectionsConfig: SelectionsConfig<T> = {}) {
   return (parent: HTMLElement) => {
@@ -26,9 +25,6 @@ export function selections<T>(selectionsConfig: SelectionsConfig<T> = {}) {
 
     return {
       setup() {
-        selectionsParentConfig.handlePointerdownNode =
-          selectionsConfig.handlePointerdownNode || handlePointerdownNode;
-
         selectionsParentConfig.handleKeydownNode =
           selectionsConfig.handleKeydownNode || handleKeydownNode;
 
@@ -43,7 +39,7 @@ export function selections<T>(selectionsConfig: SelectionsConfig<T> = {}) {
         if (!selectionsConfig.clickawayDeselect) return;
 
         const rootAbortControllers = addEvents(parentData.config.root, {
-          pointerdown: handleRootClick.bind(null, parentData.config),
+          pointerdown: handlePointerdownRoot.bind(null, parentData.config),
         });
 
         parentData.abortControllers["root"] = rootAbortControllers;
@@ -54,36 +50,43 @@ export function selections<T>(selectionsConfig: SelectionsConfig<T> = {}) {
       },
 
       tearDown() {
-        if (parentData.abortControllers.root) {
+        if (parentData.abortControllers.root)
           parentData.abortControllers.root.abort();
-        }
       },
 
       tearDownNode<T>(data: TearDownNodeData<T>) {
-        if (data.parentData.abortControllers.selectionsNode) {
+        if (data.parentData.abortControllers.selectionsNode)
           data.parentData.abortControllers.selectionsNode.abort();
-        }
       },
 
       setupNode<T>(data: SetupNodeData<T>) {
         data.node.setAttribute("tabindex", "0");
+
+        addEvents(data.node, {
+          pointerdown: nodeEventData(
+            selectionsConfig.handlePointerdownNode || handlePointerdownNode
+          ),
+        });
       },
     };
   };
 }
 
-function handleRootClick<T>(config: ParentConfig<T>) {
-  console.log("root click");
+function handlePointerdownRoot<T>(config: ParentConfig<T>, e: PointerEvent) {
   if (!config.selectionsConfig) return;
 
+  const isTouch = e.pointerType === "touch";
+
   removeClass(
-    multiDragState.selectedNodes.map((x) => x.el),
-    config.selectionsConfig.selectedClass
+    state.selectedNodes.map((x) => x.el),
+    !isTouch
+      ? config.selectionsConfig.selectedClass
+      : config.selectionsConfig.synthSelectedClass
   );
 
-  multiDragState.selectedNodes = [];
+  state.selectedNodes = [];
 
-  multiDragState.activeNode = undefined;
+  state.activeNode = undefined;
 }
 
 function handleKeydownNode<T>(data: NodeEventData<T>) {
@@ -94,30 +97,36 @@ function handlePointerdownNode<T>(
   data: NodePointerEventData<T>,
   state: BaseDragState<T>
 ) {
-  data.e.stopPropagation();
+  pointerdown(data);
+  //data.e.stopPropagation();
+  //const selectionsConfig = data.targetData.parent.data.config.selectionsConfig;
+  //if (!selectionsConfig) return;
+  //const selectedClass = selectionsConfig.selectedClass;
+  //state.activeNode = data.targetData.node;
+  //const idx = state.selectedNodes.findIndex(
+  //  (el) => el.el === data.targetData.node.el
+  //);
+  //if (idx !== -1) {
+  //  const el = state.selectedNodes.splice(idx, 1);
+  //  removeClass([el[0].el], selectedClass);
+  //} else {
+  //  if (selectedClass)
+  //    addNodeClass([data.targetData.node.el], selectedClass, true);
+  //  state.selectedNodes.push(data.targetData.node);
+  //}
+}
 
-  const selectionsConfig = data.targetData.parent.data.config.selectionsConfig;
+function pointerdown<T>(data: NodePointerEventData<T>) {
+  console.log("selections pointerdown");
+}
 
-  if (!selectionsConfig) return;
+function selectionsHandler<T>(
+  data: NodeEventData<T>,
+  selectionsConfig: SelectionsConfig<T>
+) {
+  const synthSelectedClass = selectionsConfig.synthSelectedClass;
 
-  const selectedClass = selectionsConfig.selectedClass;
-
-  state.activeNode = data.targetData.node;
-
-  const idx = state.selectedNodes.findIndex(
-    (el) => el.el === data.targetData.node.el
-  );
-
-  if (idx !== -1) {
-    const el = state.selectedNodes.splice(idx, 1);
-
-    removeClass([el[0].el], selectedClass);
-  } else {
-    if (selectedClass)
-      addNodeClass([data.targetData.node.el], selectedClass, true);
-
-    state.selectedNodes.push(data.targetData.node);
-  }
+  addNodeClass([data.targetData.node.el], synthSelectedClass, true);
 }
 
 function handlePointerupNode<T>(data: NodePointerEventData<T>) {
@@ -127,6 +136,12 @@ function handlePointerupNode<T>(data: NodePointerEventData<T>) {
 
   const selectedClass = selectionsConfig.selectedClass;
 
+  //if (shiftKey || commandKey) {
+  //  console.log("OOOOOHHHHH");
+
+  //  return;
+  //}
+
   //removeClass([data.targetData.node.el], selectedClass);
 
   const [shiftKey, commandKey] = [
@@ -134,8 +149,10 @@ function handlePointerupNode<T>(data: NodePointerEventData<T>) {
     data.e.ctrlKey || data.e.metaKey,
   ];
 
-  if (shiftKey || commandKey) {
-    console.log("OOOOOHHHHH");
+  const isTouch = data.e.pointerType === "touch";
+
+  if (isTouch) {
+    selectionsHandler(data, selectionsConfig);
 
     return;
   }

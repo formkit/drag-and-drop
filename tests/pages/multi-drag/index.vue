@@ -7,9 +7,12 @@ const [parent, values] = useDragAndDrop(
   {
     plugins: [
       multiDrag({
+        selections: () => {
+          return ["Apple", "Banana"];
+        },
         plugins: [
           selections({
-            selectedClass: "blue",
+            synthSelectedClass: "blue",
           }),
         ],
       }),
@@ -19,9 +22,9 @@ const [parent, values] = useDragAndDrop(
 
 onMounted(() => {
   const el = document.getElementById("hello-world");
-  el.addEventListener("click", () => {
-    console.log("Hello world clicked");
-  });
+  //el.addEventListener("click", () => {
+  //  console.log("Hello world clicked");
+  //});
 });
 </script>
 
