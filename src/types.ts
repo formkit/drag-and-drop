@@ -38,6 +38,18 @@ export interface ParentConfig<T> {
     state: DragState<T>
   ) => boolean;
   /**
+   * The data transfer effect to use for the drag operation.
+   */
+  dragEffectAllowed: "link" | "none" | "copy" | "move";
+  /**
+   * The data transfer effect to use for the drag operation.
+   */
+  dragDropEffect: "link" | "none" | "copy" | "move";
+  /**
+   * A function that returns the image to use for the drag operation.
+   */
+  dragImage: (data: NodeDragEventData<T>) => HTMLElement;
+  /**
    * A flag to disable dragability of all nodes in the parent.
    */
   disabled?: boolean;

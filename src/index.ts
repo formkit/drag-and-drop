@@ -144,6 +144,9 @@ export function dragAndDrop<T>({
     getValues,
     setValues,
     config: {
+      dragDropEffect: "move",
+      dragEffectAllowed: "move",
+      dragImage: setDragImage,
       deepCopyStyles: false,
       handleKeydownNode,
       handleKeydownParent,
@@ -209,6 +212,10 @@ export function dragAndDrop<T>({
   setup(parent, parentData);
 
   remapNodes(parent, true);
+}
+
+function setDragImage(data: NodeDragEventData<any>) {
+  return data.targetData.node.el;
 }
 
 export function dragStateProps<T>(
@@ -829,25 +836,48 @@ export function remapFinished() {
   if ("draggedNode" in state) state.affectedNodes = [];
 }
 
-export function handleDragstart<T>(
-  data: NodeEventData<T>,
-  state: BaseDragState<T>
-) {
-  if (!(data.e instanceof DragEvent)) return;
+export function validateDragstart(data: NodeEventData<any>): boolean {
+  return !!data.targetData.parent.data.config.nativeDrag;
+}
 
-  if (!data.targetData.parent.data.config.nativeDrag) {
+export function handleDragstart<T>(
+  data: NodeDragEventData<T>,
+  _state: BaseDragState<T>
+) {
+  if (!validateDragstart(data) || !validateDragHandle) {
     data.e.preventDefault();
 
     return;
   }
 
-  dragstart(
-    {
-      e: data.e,
-      targetData: data.targetData,
-    },
-    state
+  const config = data.targetData.parent.data.config;
+
+  const originalZIndex = data.targetData.node.el.style.zIndex;
+
+  console.log("dragstart");
+
+  const dragState = initDrag(data);
+
+  dragstartClasses(
+    data.targetData.node.el,
+    config.draggingClass,
+    config.dropZoneClass,
+    config.dragPlaceholderClass
   );
+
+  dragState.originalZIndex = originalZIndex;
+
+  if (config.onDragstart)
+    config.onDragstart({
+      parent: data.targetData.parent,
+      values: parentValues(
+        data.targetData.parent.el,
+        data.targetData.parent.data
+      ),
+      draggedNode: dragState.draggedNode,
+      draggedNodes: dragState.draggedNodes,
+      position: dragState.initialIndex,
+    });
 }
 
 export function handlePointerdownNode<T>(
@@ -888,15 +918,22 @@ export function initDrag<T>(data: NodeDragEventData<T>): DragState<T> {
   data.e.stopPropagation();
 
   if (data.e.dataTransfer) {
-    data.e.dataTransfer.dropEffect = "move";
+    const config = data.targetData.parent.data.config;
 
-    data.e.dataTransfer.effectAllowed = "move";
+    data.e.dataTransfer.dropEffect = config.dragDropEffect;
 
-    data.e.dataTransfer.setDragImage(
-      data.targetData.node.el,
-      data.e.offsetX,
-      data.e.offsetY
-    );
+    console.log("config", config);
+
+    data.e.dataTransfer.effectAllowed = config.dragEffectAllowed;
+
+    const dragImage = config?.dragImage;
+
+    if (dragImage)
+      data.e.dataTransfer.setDragImage(
+        dragImage(data) || data.targetData.node.el,
+        data.e.offsetX,
+        data.e.offsetY
+      );
   }
 
   return dragState;
@@ -968,43 +1005,7 @@ export function preventSortOnScroll() {
 export function dragstart<T>(
   data: NodeDragEventData<T>,
   _state: BaseDragState<T>
-) {
-  if (!validateDragHandle(data)) {
-    data.e.preventDefault();
-
-    return;
-  }
-
-  const dragState = initDrag(data);
-
-  const config = data.targetData.parent.data.config;
-
-  const originalZIndex = data.targetData.node.el.style.zIndex;
-
-  dragState.originalZIndex = originalZIndex;
-
-  // TODO: Gross
-  data.targetData.node.el.style.zIndex = "9999";
-
-  dragstartClasses(
-    dragState.draggedNode.el,
-    config.draggingClass,
-    config.dropZoneClass,
-    config.dragPlaceholderClass
-  );
-
-  if (config.onDragstart)
-    config.onDragstart({
-      parent: data.targetData.parent,
-      values: parentValues(
-        data.targetData.parent.el,
-        data.targetData.parent.data
-      ),
-      draggedNode: dragState.draggedNode,
-      draggedNodes: dragState.draggedNodes,
-      position: dragState.initialIndex,
-    });
-}
+) {}
 
 export function handlePointeroverNode<T>(e: PointeroverNodeEvent<T>) {
   if (e.detail.targetData.parent.el === e.detail.state.lastParent.el)

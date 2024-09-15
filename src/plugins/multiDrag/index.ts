@@ -21,6 +21,7 @@ import {
   state,
   resetState,
   isDragState,
+  validateDragstart,
 } from "../../index";
 import { addNodeClass, removeClass, copyNodeStyle } from "../../utils";
 
@@ -41,8 +42,8 @@ export function multiDrag<T>(
       setup() {
         state.on("dragStarted", multiDragConfig.dragStarted || dragStarted);
 
-        multiDragParentConfig.handleDragstart =
-          multiDragConfig.handleDragstart || handleDragstart;
+        //multiDragParentConfig.handleDragstart =
+        //  multiDragConfig.handleDragstart || handleDragstart;
 
         //multiDragParentConfig.handlePointerdownNode =
         //  multiDragConfig.handlePointerdownNode || handlePointerdownNode;
@@ -100,8 +101,8 @@ function reapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
 
   const dropZoneClass =
     "clonedDraggedNode" in state
-      ? parentData.config.synthDropZoneClass
-      : parentData.config.dropZoneClass;
+      ? multiDragConfig.synthDropZoneClass
+      : multiDragConfig.dropZoneClass;
 
   const draggedNodeEls = state.draggedNodes.map((x) => x.el);
 
@@ -139,12 +140,12 @@ export function selectionsEnd<T>(data: NodeEventData<T>, state: DragState<T>) {
 }
 
 export function handleDragstart<T>(
-  data: NodeEventData<T>,
+  data: NodeDragEventData<T>,
   state: DragState<T>
 ) {
-  if (!(data.e instanceof DragEvent)) return;
+  if (!validateDragstart(data)) return;
 
-  multiDragstart(
+  dragstart(
     {
       e: data.e,
       targetData: data.targetData,
@@ -153,66 +154,63 @@ export function handleDragstart<T>(
   );
 }
 
-export function multiDragstart<T>(
-  data: NodeDragEventData<T>,
-  _state: DragState<T>
-) {
+export function dragstart<T>(data: NodeDragEventData<T>, _state: DragState<T>) {
+  console.log("multi dragstart");
   const dragState = initDrag(data);
+  //const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
 
-  const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
+  //if (!multiDragConfig) return;
 
-  if (!multiDragConfig) return;
+  //const parentValues = data.targetData.parent.data.getValues(
+  //  data.targetData.parent.el
+  //);
 
-  const parentValues = data.targetData.parent.data.getValues(
-    data.targetData.parent.el
-  );
+  //let selectedValues = state.selectedNodes.length
+  //  ? state.selectedNodes.map((x) => x.data.value)
+  //  : multiDragConfig.selections &&
+  //    multiDragConfig.selections(parentValues, data.targetData.parent.el);
 
-  let selectedValues = state.selectedNodes.length
-    ? state.selectedNodes.map((x) => x.data.value)
-    : multiDragConfig.selections &&
-      multiDragConfig.selections(parentValues, data.targetData.parent.el);
+  //if (selectedValues === undefined) return;
 
-  if (selectedValues === undefined) return;
+  //if (!selectedValues.includes(data.targetData.node.data.value)) {
+  //  selectedValues = [data.targetData.node.data.value, ...selectedValues];
 
-  if (!selectedValues.includes(data.targetData.node.data.value)) {
-    selectedValues = [data.targetData.node.data.value, ...selectedValues];
+  //  const selectionConfig = data.targetData.parent.data.config.selectionsConfig;
 
-    const selectionConfig = data.targetData.parent.data.config.selectionsConfig;
+  //  addNodeClass(
+  //    [data.targetData.node.el],
+  //    selectionConfig?.selectedClass,
+  //    true
+  //  );
 
-    addNodeClass(
-      [data.targetData.node.el],
-      selectionConfig?.selectedClass,
-      true
-    );
+  //  state.selectedNodes.push(data.targetData.node);
+  //}
 
-    state.selectedNodes.push(data.targetData.node);
-  }
+  //const originalZIndex = data.targetData.node.el.style.zIndex;
 
-  const originalZIndex = data.targetData.node.el.style.zIndex;
+  //dragState.originalZIndex = originalZIndex;
 
-  dragState.originalZIndex = originalZIndex;
+  //data.targetData.node.el.style.zIndex = "9999";
 
-  data.targetData.node.el.style.zIndex = "9999";
+  //if (Array.isArray(selectedValues) && selectedValues.length) {
+  //  const targetRect = data.targetData.node.el.getBoundingClientRect();
 
-  if (Array.isArray(selectedValues) && selectedValues.length) {
-    const targetRect = data.targetData.node.el.getBoundingClientRect();
+  //  const [x, y] = [
+  //    data.e.clientX - targetRect.left,
+  //    data.e.clientY - targetRect.top,
+  //  ];
 
-    const [x, y] = [
-      data.e.clientX - targetRect.left,
-      data.e.clientY - targetRect.top,
-    ];
+  //  stackNodes(handleSelections(data, selectedValues, dragState, x, y));
+  //} else {
+  //  const config = data.targetData.parent.data.config;
 
-    stackNodes(handleSelections(data, selectedValues, dragState, x, y));
-  } else {
-    const config = data.targetData.parent.data.config;
-
-    dragstartClasses(
-      dragState.draggedNode.el,
-      config.draggingClass,
-      config.dropZoneClass,
-      config.dragPlaceholderClass
-    );
-  }
+  //  dragstartClasses(
+  //    dragState.draggedNode.el,
+  //    config.draggingClass,
+  //    config.dropZoneClass,
+  //    config.dragPlaceholderClass
+  //  );
+  //}
 }
 
 //export function handlePointerdownNode<T>(
