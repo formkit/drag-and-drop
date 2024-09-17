@@ -1,35 +1,35 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../../src/vue/index";
-import { multiDrag, selections } from "../../../src";
+import { multiDrag } from "../../../src";
 
 const selectedValues: Ref<Array<string>> = ref([]);
 
-const [parent, values] = useDragAndDrop(
-  ["Apple", "Banana", "Orange", "Strawberry", "Pineapple", "Grapes"],
-  {
-    plugins: [
-      multiDrag({
-        selectedValues: () => {
-          return selectedValues.value;
-        },
-        //  plugins: [
-        //    selections({
-        //      synthSelectedClass: "blue",
-        //    }),
-        //  ],
-      }),
-    ],
-  }
-);
+const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
+  onDragend: (event) => {
+    selectedValues.value = [];
+  },
+  plugins: [
+    multiDrag({
+      selectedValues: () => {
+        return selectedValues.value;
+      },
+    }),
+  ],
+});
 
 function selectValue(value: string) {
+  if (selectedValues.value.includes(value)) {
+    selectedValues.value = selectedValues.value.filter((x) => x !== value);
+
+    return;
+  }
+
   selectedValues.value = [...selectedValues.value, value];
 }
 </script>
 
 <template>
   <h2>Multi drag plugin</h2>
-  <p id="hello-world">Hello world</p>
   <div>
     <ul ref="parent" class="list">
       <li
@@ -37,6 +37,7 @@ function selectValue(value: string) {
         :id="value"
         :key="value"
         class="item"
+        :class="{ blue: selectedValues.includes(value) }"
         @click="selectValue(value)"
       >
         {{ value }}
@@ -49,7 +50,6 @@ function selectValue(value: string) {
       </span>
     </div>
   </div>
-  <div id="randomElement">Random element</div>
 </template>
 
 <style scoped>
