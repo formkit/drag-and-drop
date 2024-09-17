@@ -112,12 +112,11 @@ export function setDragState<T>(
   dragStateProps:
     | (SynthDragStateProps & DragStateProps<T>)
     | DragStateProps<T>
-    | undefined,
-  data: NodeDragEventData<T> | NodePointerEventData<T>
+    | undefined
 ): DragState<T> | SynthDragState<T> {
   Object.assign(state, dragStateProps);
 
-  state.emit("dragStarted", { state, data });
+  //state.emit("dragStarted", state);
 
   return state as DragState<T> | SynthDragState<T>;
 }
@@ -146,7 +145,8 @@ export function dragAndDrop<T>({
     config: {
       dragDropEffect: "move",
       dragEffectAllowed: "move",
-      dragImage: setDragImage,
+      draggedNodes,
+      dragImage,
       deepCopyStyles: false,
       handleKeydownNode,
       handleKeydownParent,
@@ -214,12 +214,17 @@ export function dragAndDrop<T>({
   remapNodes(parent, true);
 }
 
-function setDragImage(data: NodeDragEventData<any>) {
-  return data.targetData.node.el;
+function dragImage<T>(
+  _draggedNode: NodeRecord<T>,
+  draggedNodes: Array<NodeRecord<T>>,
+  _data: ParentData<T>
+) {
+  return draggedNodes[0].el;
 }
 
 export function dragStateProps<T>(
   data: NodeDragEventData<T> | NodePointerEventData<T>,
+  draggedNodes: Array<NodeRecord<T>>,
   nativeDrag = true
 ): DragStateProps<T> {
   const { x, y } = eventCoordinates(data.e);
@@ -262,12 +267,7 @@ export function dragStateProps<T>(
       el: data.targetData.node.el,
       data: data.targetData.node.data,
     },
-    draggedNodes: [
-      {
-        el: data.targetData.node.el,
-        data: data.targetData.node.data,
-      },
-    ],
+    draggedNodes,
     incomingDirection: undefined,
     initialIndex: data.targetData.node.data.index,
     initialParent: {
@@ -840,6 +840,10 @@ export function validateDragstart(data: NodeEventData<any>): boolean {
   return !!data.targetData.parent.data.config.nativeDrag;
 }
 
+function draggedNodes<T>(data: NodeEventData<T>): Array<NodeRecord<T>> {
+  return [data.targetData.node];
+}
+
 export function handleDragstart<T>(
   data: NodeDragEventData<T>,
   _state: BaseDragState<T>
@@ -852,20 +856,22 @@ export function handleDragstart<T>(
 
   const config = data.targetData.parent.data.config;
 
-  const originalZIndex = data.targetData.node.el.style.zIndex;
+  const nodes = config.draggedNodes(data);
 
-  console.log("dragstart");
+  //const originalZIndex = data.targetData.node.el.style.zIndex;
 
-  const dragState = initDrag(data);
+  const dragState = initDrag(data, nodes);
 
-  dragstartClasses(
-    data.targetData.node.el,
-    config.draggingClass,
-    config.dropZoneClass,
-    config.dragPlaceholderClass
-  );
+  for (const node of dragState.draggedNodes) {
+    dragstartClasses(
+      node.el,
+      config.draggingClass,
+      config.dropZoneClass,
+      config.dragPlaceholderClass
+    );
+  }
 
-  dragState.originalZIndex = originalZIndex;
+  //dragState.originalZIndex = originalZIndex;
 
   if (config.onDragstart)
     config.onDragstart({
@@ -912,8 +918,11 @@ export function dragstartClasses(
   });
 }
 
-export function initDrag<T>(data: NodeDragEventData<T>): DragState<T> {
-  const dragState = setDragState(dragStateProps(data), data);
+export function initDrag<T>(
+  data: NodeDragEventData<T>,
+  draggedNodes: Array<NodeRecord<T>>
+): DragState<T> {
+  const dragState = setDragState(dragStateProps(data, draggedNodes));
 
   data.e.stopPropagation();
 
@@ -922,15 +931,17 @@ export function initDrag<T>(data: NodeDragEventData<T>): DragState<T> {
 
     data.e.dataTransfer.dropEffect = config.dragDropEffect;
 
-    console.log("config", config);
-
     data.e.dataTransfer.effectAllowed = config.dragEffectAllowed;
 
     const dragImage = config?.dragImage;
 
     if (dragImage)
       data.e.dataTransfer.setDragImage(
-        dragImage(data) || data.targetData.node.el,
+        dragImage(
+          data.targetData.node,
+          draggedNodes,
+          data.targetData.parent.data
+        ) || data.targetData.node.el,
         data.e.offsetX,
         data.e.offsetY
       );
@@ -1106,7 +1117,7 @@ export function handlePointermove<T>(
   if (isNative || !synthNodePointerDown || !validateDragHandle(data)) return;
 
   if (!isSynthDragState(state)) {
-    const synthDragState = initSyntheticDrag(data, state) as SynthDragState<T>;
+    const synthDragState = initSynthDrag(data, state) as SynthDragState<T>;
 
     synthMove(data, synthDragState);
 
@@ -1132,10 +1143,13 @@ export function handlePointermove<T>(
   synthMove(data, state as SynthDragState<T>);
 }
 
-function initSyntheticDrag<T>(
+function initSynthDrag<T>(
   data: NodePointerEventData<T>,
   _state: BaseDragState<T>
 ): SynthDragState<T> {
+  // NEXT STEP HERE:
+  console.log("init synth drag");
+
   const display = data.targetData.node.el.style.display;
 
   const rect = data.targetData.node.el.getBoundingClientRect();
@@ -1171,13 +1185,10 @@ function initSyntheticDrag<T>(
     contextmenu: noDefault,
   });
 
-  const synthDragState = setDragState(
-    {
-      ...dragStateProps(data, false),
-      ...synthDragStateProps,
-    },
-    data
-  ) as SynthDragState<T>;
+  const synthDragState = setDragState({
+    ...dragStateProps(data, [data.targetData.node], false),
+    ...synthDragStateProps,
+  }) as SynthDragState<T>;
 
   return synthDragState;
 }

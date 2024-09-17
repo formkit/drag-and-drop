@@ -48,7 +48,11 @@ export interface ParentConfig<T> {
   /**
    * A function that returns the image to use for the drag operation.
    */
-  dragImage: (data: NodeDragEventData<T>) => HTMLElement;
+  dragImage: (
+    draggedNode: NodeRecord<T>,
+    draggedNodes: Array<NodeRecord<T>>,
+    data: ParentData<T>
+  ) => HTMLElement;
   /**
    * A flag to disable dragability of all nodes in the parent.
    */
@@ -61,6 +65,7 @@ export interface ParentConfig<T> {
    * A function that returns whether a given node is draggable.
    */
   draggable?: (child: HTMLElement) => boolean;
+  draggedNodes: (data: NodeEventData<T>) => Array<NodeRecord<T>>;
   /**
    * The class to add to a node when it is being dragged.
    */
@@ -927,7 +932,7 @@ export interface MultiDragConfig<T> {
    * Function to set which values of a given parent are "selected". This is
    * called on dragstart or touchstart.
    */
-  selections?: (parentValues: Array<T>, parent: HTMLElement) => Array<T>;
+  selectedValues?: (parentValues: Array<T>, parent: HTMLElement) => Array<T>;
   /**
    * Class added when a node is being (touch) dragged.
    */

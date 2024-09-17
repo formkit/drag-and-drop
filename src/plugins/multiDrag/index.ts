@@ -10,13 +10,13 @@ import type {
   SetupNodeData,
   MultiDragConfig,
   MultiDragParentConfig,
+  ParentConfig,
   BaseDragState,
 } from "../../types";
 
 import {
   parents,
   initDrag,
-  dragstartClasses,
   end,
   state,
   resetState,
@@ -40,13 +40,78 @@ export function multiDrag<T>(
 
     return {
       setup() {
-        state.on("dragStarted", multiDragConfig.dragStarted || dragStarted);
+        //state.on("dragStarted", multiDragConfig.dragStarted || dragStarted);
 
         //multiDragParentConfig.handleDragstart =
         //  multiDragConfig.handleDragstart || handleDragstart;
 
         //multiDragParentConfig.handlePointerdownNode =
         //  multiDragConfig.handlePointerdownNode || handlePointerdownNode;
+
+        multiDragParentConfig.dragImage = (
+          _draggedNode: NodeRecord<T>,
+          draggedNodes: Array<NodeRecord<T>>,
+          data: ParentData<T>
+        ) => {
+          const wrapper = document.createElement("div");
+
+          draggedNodes.map((x: NodeRecord<T>) => {
+            const el = x.el.cloneNode(true) as Node;
+
+            copyNodeStyle(x.el, el, true);
+
+            addNodeClass([el], data.config.draggingClass);
+
+            if (el instanceof HTMLElement) el.style.pointerEvents = "none";
+
+            wrapper.append(el);
+
+            const { width } = draggedNodes[0].el.getBoundingClientRect();
+
+            wrapper.style.cssText = `
+                  display: flex;
+                  flex-direction: column;
+                  width: ${width}px;
+                  position: fixed;
+                  pointer-events: none;
+                  z-index: 9999;
+                  left: -9999px
+                `;
+
+            return el;
+          });
+
+          document.body.append(wrapper);
+
+          return wrapper;
+        };
+
+        multiDragParentConfig.draggedNodes = (data: NodeEventData<T>) => {
+          const parentRecord = data.targetData.parent;
+
+          let selectedValues: Array<T> = [];
+
+          if (multiDragConfig.selectedValues) {
+            selectedValues = multiDragConfig.selectedValues(
+              parentRecord.data.getValues(parentRecord.el),
+              parentRecord.el
+            );
+          }
+
+          if (!selectedValues.length) return [data.targetData.node];
+
+          const selectedNodes = parentRecord.data.enabledNodes.filter((x) =>
+            selectedValues.includes(x.data.value)
+          );
+
+          if (
+            !selectedNodes.map((x) => x.el).includes(data.targetData.node.el)
+          ) {
+            selectedNodes.unshift(data.targetData.node);
+          }
+
+          return selectedNodes;
+        };
 
         multiDragParentConfig.handleEnd =
           multiDragConfig.handleEnd || handleEnd;
@@ -156,6 +221,7 @@ export function handleDragstart<T>(
 
 export function dragstart<T>(data: NodeDragEventData<T>, _state: DragState<T>) {
   console.log("multi dragstart");
+  return;
   const dragState = initDrag(data);
   //const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
 
@@ -320,13 +386,13 @@ export function handleSelections<T>(
   x: number,
   y: number
 ) {
-  for (const child of data.targetData.parent.data.enabledNodes) {
-    if (child.el === state.draggedNode.el) continue;
+  //for (const child of data.targetData.parent.data.enabledNodes) {
+  //  if (child.el === state.draggedNode.el) continue;
 
-    if (!selectedValues.includes(child.data.value)) continue;
+  //  if (!selectedValues.includes(child.data.value)) continue;
 
-    state.draggedNodes.push(child);
-  }
+  //  state.draggedNodes.push(child);
+  //}
 
   const config = data.targetData.parent.data.config.multiDragConfig;
 

@@ -2,38 +2,43 @@
 import { useDragAndDrop } from "../../../src/vue/index";
 import { multiDrag, selections } from "../../../src";
 
+const selectedValues: Ref<Array<string>> = ref([]);
+
 const [parent, values] = useDragAndDrop(
   ["Apple", "Banana", "Orange", "Strawberry", "Pineapple", "Grapes"],
   {
     plugins: [
       multiDrag({
-        selections: () => {
-          return ["Apple", "Banana"];
+        selectedValues: () => {
+          return selectedValues.value;
         },
-        plugins: [
-          selections({
-            synthSelectedClass: "blue",
-          }),
-        ],
+        //  plugins: [
+        //    selections({
+        //      synthSelectedClass: "blue",
+        //    }),
+        //  ],
       }),
     ],
   }
 );
 
-onMounted(() => {
-  const el = document.getElementById("hello-world");
-  //el.addEventListener("click", () => {
-  //  console.log("Hello world clicked");
-  //});
-});
+function selectValue(value: string) {
+  selectedValues.value = [...selectedValues.value, value];
+}
 </script>
 
 <template>
-  <h2>Place Plugin</h2>
+  <h2>Multi drag plugin</h2>
   <p id="hello-world">Hello world</p>
   <div>
     <ul ref="parent" class="list">
-      <li v-for="value in values" :id="value" :key="value" class="item">
+      <li
+        v-for="value in values"
+        :id="value"
+        :key="value"
+        class="item"
+        @click="selectValue(value)"
+      >
         {{ value }}
       </li>
     </ul>
