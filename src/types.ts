@@ -71,6 +71,13 @@ export interface ParentConfig<T> {
    */
   draggingClass?: string;
   /**
+   * Accepts array of "dragged nodes" and applies dragstart classes to them.
+   */
+  dragstartClasses: (
+    nodes: Array<NodeRecord<T>>,
+    config: ParentConfig<T>
+  ) => void;
+  /**
    * The class to add to the original dragged node as it is being dragged.
    */
   dragPlaceholderClass?: string;

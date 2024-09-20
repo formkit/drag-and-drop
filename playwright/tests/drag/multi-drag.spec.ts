@@ -7,7 +7,7 @@ test.beforeEach(async ({ browser }) => {
   page = await browser.newPage();
 });
 
-test.describe.only("Sorting", async () => {
+test.describe("Sorting", async () => {
   test("Drag sort", async () => {
     await page.goto("http://localhost:3001/multi-drag");
     await new Promise((r) => setTimeout(r, 1000));

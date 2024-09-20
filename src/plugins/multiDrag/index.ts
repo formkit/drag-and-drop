@@ -182,47 +182,47 @@ export function selectionsEnd<T>(data: NodeEventData<T>, state: DragState<T>) {
   state.activeNode = undefined;
 }
 
-export function handleSelections<T>(
-  data: NodeEventData<T>,
-  selectedValues: Array<T>,
-  state: DragState<T>,
-  x: number,
-  y: number
-) {
-  //for (const child of data.targetData.parent.data.enabledNodes) {
-  //  if (child.el === state.draggedNode.el) continue;
+//export function handleSelections<T>(
+//  data: NodeEventData<T>,
+//  selectedValues: Array<T>,
+//  state: DragState<T>,
+//  x: number,
+//  y: number
+//) {
+//  //for (const child of data.targetData.parent.data.enabledNodes) {
+//  //  if (child.el === state.draggedNode.el) continue;
 
-  //  if (!selectedValues.includes(child.data.value)) continue;
+//  //  if (!selectedValues.includes(child.data.value)) continue;
 
-  //  state.draggedNodes.push(child);
-  //}
-  console.log("handle selections");
-  const config = data.targetData.parent.data.config.multiDragConfig;
+//  //  state.draggedNodes.push(child);
+//  //}
+//  console.log("handle selections");
+//  const config = data.targetData.parent.data.config.multiDragConfig;
 
-  const clonedEls = state.draggedNodes.map((x: NodeRecord<T>) => {
-    const el = x.el.cloneNode(true) as Node;
+//  const clonedEls = state.draggedNodes.map((x: NodeRecord<T>) => {
+//    const el = x.el.cloneNode(true) as Node;
 
-    copyNodeStyle(x.el, el, true);
+//    copyNodeStyle(x.el, el, true);
 
-    if (data.e instanceof DragEvent && config)
-      addNodeClass([el], config.draggingClass);
+//    if (data.e instanceof DragEvent && config)
+//      addNodeClass([el], config.draggingClass);
 
-    return el;
-  });
+//    return el;
+//  });
 
-  //setTimeout(() => {
-  //  if (data.e instanceof DragEvent && config) {
-  //    addNodeClass(
-  //      state.draggedNodes.map((x) => x.el),
-  //      config.dropZoneClass
-  //    );
-  //  }
-  //});
+//  //setTimeout(() => {
+//  //  if (data.e instanceof DragEvent && config) {
+//  //    addNodeClass(
+//  //      state.draggedNodes.map((x) => x.el),
+//  //      config.dropZoneClass
+//  //    );
+//  //  }
+//  //});
 
-  state.clonedDraggedEls = clonedEls;
+//  state.clonedDraggedEls = clonedEls;
 
-  return { data, state, x, y };
-}
+//  return { data, state, x, y };
+//}
 
 export function stackNodes<T>({
   data,

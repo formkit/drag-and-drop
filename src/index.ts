@@ -157,6 +157,7 @@ export function dragAndDrop<T>({
       dragEffectAllowed: "move",
       draggedNodes,
       dragImage,
+      dragstartClasses,
       deepCopyStyles: false,
       handleKeydownNode,
       handleKeydownParent,
@@ -860,7 +861,7 @@ export function handleDragstart<T>(
   data: NodeDragEventData<T>,
   _state: BaseDragState<T>
 ) {
-  if (!validateDragstart(data) || !validateDragHandle) {
+  if (!validateDragstart(data) || !validateDragHandle(data)) {
     data.e.preventDefault();
 
     return;
@@ -870,14 +871,16 @@ export function handleDragstart<T>(
 
   const nodes = config.draggedNodes(data);
 
-  for (const node of nodes) {
-    dragstartClasses(
-      node.el,
-      config.draggingClass,
-      config.dropZoneClass,
-      config.dragPlaceholderClass
-    );
-  }
+  config.dragstartClasses(nodes, config);
+
+  //for (const node of nodes) {
+  //  dragstartClasses(
+  //    node.el,
+  //    config.draggingClass,
+  //    config.dropZoneClass,
+  //    config.dragPlaceholderClass
+  //  );
+  //}
 
   const dragState = initDrag(data, nodes);
 
@@ -909,20 +912,30 @@ export function handlePointerdownNode<T>(
   );
 }
 
-export function dragstartClasses(
-  el: HTMLElement | Node | Element,
-  draggingClass: string | undefined,
-  dropZoneClass: string | undefined,
-  dragPlaceholderClass: string | undefined
+export function dragstartClasses<T>(
+  nodes: Array<NodeRecord<T>>,
+  config: ParentConfig<T>
 ) {
-  addNodeClass([el], draggingClass);
-  console.log("dragstart called here");
+  addNodeClass(
+    nodes.map((x) => x.el),
+    config.draggingClass
+  );
+
   setTimeout(() => {
-    removeClass([el], draggingClass);
+    removeClass(
+      nodes.map((x) => x.el),
+      config.draggingClass
+    );
 
-    addNodeClass([el], dragPlaceholderClass);
+    addNodeClass(
+      nodes.map((x) => x.el),
+      config.dragPlaceholderClass
+    );
 
-    addNodeClass([el], dropZoneClass);
+    addNodeClass(
+      nodes.map((x) => x.el),
+      config.dropZoneClass
+    );
   });
 }
 
@@ -1061,15 +1074,20 @@ export function end<T>(
   if (state.originalZIndex !== undefined)
     state.draggedNode.el.style.zIndex = state.originalZIndex;
 
-  addNodeClass(
-    state.draggedNodes.map((x) => x.el),
-    dropZoneClass,
-    true
-  );
+  //addNodeClass(
+  //  state.draggedNodes.map((x) => x.el),
+  //  dropZoneClass,
+  //  true
+  //);
 
   removeClass(
     state.draggedNodes.map((x) => x.el),
     dropZoneClass
+  );
+
+  removeClass(
+    state.draggedNodes.map((x) => x.el),
+    config?.dragPlaceholderClass
   );
 
   if (config?.longPressClass) {

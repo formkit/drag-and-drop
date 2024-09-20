@@ -93,6 +93,8 @@ export function addClass(
 
   if (classNames.includes("longPress")) return;
 
+  console.log("class names", classNames);
+  console.log("el", el);
   if (!data) {
     el.classList.add(...classNames);
 

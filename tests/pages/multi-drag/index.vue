@@ -11,6 +11,7 @@ const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   draggingClass: "blue",
   plugins: [
     multiDrag({
+      draggingClass: "blue",
       selectedValues: () => {
         return selectedValues.value;
       },
