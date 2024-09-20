@@ -8,6 +8,7 @@ const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   onDragend: (event) => {
     selectedValues.value = [];
   },
+  draggingClass: "blue",
   plugins: [
     multiDrag({
       selectedValues: () => {
@@ -18,13 +19,9 @@ const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
 });
 
 function selectValue(value: string) {
-  if (selectedValues.value.includes(value)) {
-    selectedValues.value = selectedValues.value.filter((x) => x !== value);
-
-    return;
-  }
-
-  selectedValues.value = [...selectedValues.value, value];
+  selectedValues.value = selectedValues.value.includes(value)
+    ? selectedValues.value.filter((x) => x !== value)
+    : [...selectedValues.value, value];
 }
 </script>
 
@@ -38,7 +35,7 @@ function selectValue(value: string) {
         :key="value"
         class="item"
         :class="{ blue: selectedValues.includes(value) }"
-        @click="selectValue(value)"
+        @pointerup="selectValue(value)"
       >
         {{ value }}
       </li>
@@ -52,10 +49,10 @@ function selectValue(value: string) {
   </div>
 </template>
 
-<style scoped>
+<style>
 .blue {
   background-color: lightblue !important;
-  color: white;
+  color: yellow !important;
 }
 
 .item {

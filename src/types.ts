@@ -891,54 +891,48 @@ export interface Coordinates {
 
 export interface MultiDragConfig<T> {
   /**
-   * Class added when a node is being dragged.
+   * Class added when a node is being dragged. It will only be used if the
+   * number of selected nodes is greater than 1. Otherwise, the base config
+   * draggingClass will be used.
    */
   draggingClass?: string;
   /**
-   * dragStarted
+   * Class added to the original dragged node as it is being dragged. It will
+   * only be used if the number of selected nodes is greater than 1. Otherwise,
+   * the base config dragPlaceholderClass will be used.
    */
-  dragStarted: (data: EventEmitterData<T>) => void;
+  dragPlaceholderClass?: string;
   /**
-   * Class added when a node is being dragged over a dropZone.
+   * Class added when a node is being dragged over a dropZone. It will only be
+   * used if the number of selected nodes is greater than 1. Otherwise, the
+   * base config dropZoneClass will be used.
    */
   dropZoneClass?: string;
-  /**
-   * Function that is called when dragend event occurrs event occurs.
-   */
-  handleEnd: (
-    data: NodeDragEventData<T> | NodePointerEventData<T>,
-    state: DragState<T>
-  ) => void;
-  /**
-   * Function that is called when dragstart occurs.
-   */
-  handleDragstart: (data: NodeDragEventData<T>, state: DragState<T>) => void;
-  /**
-   * Function that is called when dragstart event occurs.
-   */
-  handlePointerdownNode: (
-    data: NodePointerEventData<T>,
-    state: DragState<T>
-  ) => void;
   /**
    * An array of functions to use for a given parent.
    */
   plugins?: Array<DNDPlugin>;
+  /**
+   * Function to reapply drag classes to a given node.
+   */
   reapplyDragClasses: (
     el: Node | NodePointerEventData<T>,
     parentData: ParentData<T>
   ) => void;
   /**
-   * Function to set which values of a given parent are "selected". This is
-   * called on dragstart or touchstart.
+   * Function to set which values of a given parent are "selected".
    */
   selectedValues?: (parentValues: Array<T>, parent: HTMLElement) => Array<T>;
   /**
-   * Class added when a node is being (touch) dragged.
+   * Class added when a node is being synthetically dragged. It will only be
+   * used if the number of selected nodes is greater than 1. Otherwise, the
+   * base config synthDraggingClass will be used.
    */
   synthDraggingClass?: string;
   /**
-   * Class added when a node is being (touch) dragged over a dropZone.
+   * Class added when a node is being synthetically dragged over a dropZone.
+   * It will only be used if the number of selected nodes is greater than 1.
+   * Otherwise, the base config synthDropZoneClass will be used.
    */
   synthDropZoneClass?: string;
 }
@@ -952,7 +946,8 @@ export interface MultiDragState<T> {
   activeNode: NodeRecord<T> | undefined;
 }
 
-export interface SelectionsParentConfig<T extends any> extends ParentConfig<T> {
+export interface SelectionsParentConfig<T extends unknown>
+  extends ParentConfig<T> {
   selectionsConfig: SelectionsConfig<T>;
 }
 
@@ -961,6 +956,12 @@ export interface SelectionsConfig<T> {
   synthSelectedClass?: string;
   clickawayDeselect?: boolean;
   handleKeydownNode?: (data: NodeEventData<T>, state: DragState<T>) => void;
-  handlePointerdownNode?: (data: NodeEventData<T>, state: DragState<T>) => void;
-  handlePointerupNode?: (data: NodeEventData<T>, state: DragState<T>) => void;
+  handlePointerdownNode?: (
+    data: NodePointerEventData<T>,
+    state: DragState<T>
+  ) => void;
+  handlePointerupNode?: (
+    data: NodePointerEventData<T>,
+    state: DragState<T>
+  ) => void;
 }

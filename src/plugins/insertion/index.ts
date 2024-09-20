@@ -11,7 +11,6 @@ import type {
 } from "../../types";
 
 import {
-  dragstart,
   handleEnd as originalHandleEnd,
   parents,
   parentValues,

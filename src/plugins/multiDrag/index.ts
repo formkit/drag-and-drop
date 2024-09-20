@@ -4,25 +4,13 @@ import type {
   NodeRecord,
   DragState,
   ParentData,
-  NodeDragEventData,
-  NodePointerEventData,
   TearDownNodeData,
   SetupNodeData,
   MultiDragConfig,
   MultiDragParentConfig,
-  ParentConfig,
-  BaseDragState,
 } from "../../types";
 
-import {
-  parents,
-  initDrag,
-  end,
-  state,
-  resetState,
-  isDragState,
-  validateDragstart,
-} from "../../index";
+import { parents, end, state, resetState, isDragState } from "../../index";
 import { addNodeClass, removeClass, copyNodeStyle } from "../../utils";
 
 export function multiDrag<T>(
@@ -40,14 +28,6 @@ export function multiDrag<T>(
 
     return {
       setup() {
-        //state.on("dragStarted", multiDragConfig.dragStarted || dragStarted);
-
-        //multiDragParentConfig.handleDragstart =
-        //  multiDragConfig.handleDragstart || handleDragstart;
-
-        //multiDragParentConfig.handlePointerdownNode =
-        //  multiDragConfig.handlePointerdownNode || handlePointerdownNode;
-
         multiDragParentConfig.dragImage = (
           _draggedNode: NodeRecord<T>,
           draggedNodes: Array<NodeRecord<T>>,
@@ -58,9 +38,7 @@ export function multiDrag<T>(
           draggedNodes.map((x: NodeRecord<T>) => {
             const el = x.el.cloneNode(true) as Node;
 
-            copyNodeStyle(x.el, el, true);
-
-            addNodeClass([el], data.config.draggingClass);
+            if (data.config.deepCopyStyles) copyNodeStyle(x.el, el, true);
 
             if (el instanceof HTMLElement) el.style.pointerEvents = "none";
 
@@ -68,15 +46,15 @@ export function multiDrag<T>(
 
             const { width } = draggedNodes[0].el.getBoundingClientRect();
 
-            wrapper.style.cssText = `
-                  display: flex;
-                  flex-direction: column;
-                  width: ${width}px;
-                  position: fixed;
-                  pointer-events: none;
-                  z-index: 9999;
-                  left: -9999px
-                `;
+            Object.assign(wrapper.style, {
+              display: "flex",
+              flexDirection: "column",
+              width: `${width}px`,
+              position: "absolute",
+              pointerEvents: "none",
+              zIndex: "9999",
+              left: "-9999px",
+            });
 
             return el;
           });
@@ -204,181 +182,6 @@ export function selectionsEnd<T>(data: NodeEventData<T>, state: DragState<T>) {
   state.activeNode = undefined;
 }
 
-export function handleDragstart<T>(
-  data: NodeDragEventData<T>,
-  state: DragState<T>
-) {
-  if (!validateDragstart(data)) return;
-
-  dragstart(
-    {
-      e: data.e,
-      targetData: data.targetData,
-    },
-    state
-  );
-}
-
-export function dragstart<T>(data: NodeDragEventData<T>, _state: DragState<T>) {
-  console.log("multi dragstart");
-  return;
-  const dragState = initDrag(data);
-  //const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
-
-  //if (!multiDragConfig) return;
-
-  //const parentValues = data.targetData.parent.data.getValues(
-  //  data.targetData.parent.el
-  //);
-
-  //let selectedValues = state.selectedNodes.length
-  //  ? state.selectedNodes.map((x) => x.data.value)
-  //  : multiDragConfig.selections &&
-  //    multiDragConfig.selections(parentValues, data.targetData.parent.el);
-
-  //if (selectedValues === undefined) return;
-
-  //if (!selectedValues.includes(data.targetData.node.data.value)) {
-  //  selectedValues = [data.targetData.node.data.value, ...selectedValues];
-
-  //  const selectionConfig = data.targetData.parent.data.config.selectionsConfig;
-
-  //  addNodeClass(
-  //    [data.targetData.node.el],
-  //    selectionConfig?.selectedClass,
-  //    true
-  //  );
-
-  //  state.selectedNodes.push(data.targetData.node);
-  //}
-
-  //const originalZIndex = data.targetData.node.el.style.zIndex;
-
-  //dragState.originalZIndex = originalZIndex;
-
-  //data.targetData.node.el.style.zIndex = "9999";
-
-  //if (Array.isArray(selectedValues) && selectedValues.length) {
-  //  const targetRect = data.targetData.node.el.getBoundingClientRect();
-
-  //  const [x, y] = [
-  //    data.e.clientX - targetRect.left,
-  //    data.e.clientY - targetRect.top,
-  //  ];
-
-  //  stackNodes(handleSelections(data, selectedValues, dragState, x, y));
-  //} else {
-  //  const config = data.targetData.parent.data.config;
-
-  //  dragstartClasses(
-  //    dragState.draggedNode.el,
-  //    config.draggingClass,
-  //    config.dropZoneClass,
-  //    config.dragPlaceholderClass
-  //  );
-  //}
-}
-
-//export function handlePointerdownNode<T>(
-//  data: NodePointerEventData<T>,
-//  state: DragState<T>
-//) {
-//  pointerdown(
-//    {
-//      e: data.e,
-//      targetData: data.targetData,
-//    },
-//    getSelections,
-//    state
-//  );
-//}
-
-function dragStarted<T>({
-  state,
-  data,
-}: {
-  state: DragState<T>;
-  data: NodeEventData<T>;
-}) {
-  const multiDragConfig = state.initialParent.data.config.multiDragConfig;
-
-  if (
-    !multiDragConfig ||
-    !("selections" in multiDragConfig) ||
-    !multiDragConfig.selections
-  )
-    return;
-
-  console.log(data);
-
-  const selectedValues = multiDragConfig.selections(
-    data.targetData.parent.data.getValues(data.targetData.parent.el),
-    data.targetData.parent.el
-  );
-
-  if (Array.isArray(selectedValues) && selectedValues.length) {
-    stackNodes(
-      handleSelections(
-        data,
-        selectedValues,
-        state,
-        state.startLeft,
-        state.startTop
-      )
-    );
-  }
-}
-
-export function getSelections<T>(multiDragConfig: MultiDragConfig<T>) {
-  return multiDragConfig.selections || [];
-}
-
-export function pointerdown<T>(
-  data: NodePointerEventData<T>,
-  selections: (config: MultiDragConfig<T>) => Array<T>,
-  state: BaseDragState<T>
-) {
-  console.log("multidrag pointerdown");
-
-  const multiDragConfig = data.targetData.parent.data.config.multiDragConfig;
-
-  if (!multiDragConfig) return;
-
-  const selectedNodes = selections(multiDragConfig);
-
-  console.log("selections", selectedNodes);
-
-  //if (!multiDragConfig) return;
-  //console.log("multi poinwerdown");
-  //state.activeNode = data.targetData.node;
-
-  //const parentValues = data.targetData.parent.data.getValues(
-  //  data.targetData.parent.el
-  //);
-
-  //let selectedValues = [];
-
-  //const selectionsConfig = data.targetData.parent.data.config.selectionsConfig;
-
-  //selectedValues = selectionsConfig
-  //  ? state.selectedNodes.map((x) => x.data.value)
-  //  : (multiDragConfig.selections &&
-  //      multiDragConfig.selections(parentValues, data.targetData.parent.el)) ||
-  //    [];
-
-  //const idx = selectedValues.indexOf(data.targetData.node.data.value);
-
-  //if (idx > -1) {
-  //  selectedValues.splice(idx, 1);
-
-  //  state.selectedNodes = state.selectedNodes.filter(
-  //    (x) => x.data.value !== data.targetData.node.data.value
-  //  );
-  //} else {
-  //  state.selectedNodes.push(data.targetData.node);
-  //}
-}
-
 export function handleSelections<T>(
   data: NodeEventData<T>,
   selectedValues: Array<T>,
@@ -393,7 +196,7 @@ export function handleSelections<T>(
 
   //  state.draggedNodes.push(child);
   //}
-
+  console.log("handle selections");
   const config = data.targetData.parent.data.config.multiDragConfig;
 
   const clonedEls = state.draggedNodes.map((x: NodeRecord<T>) => {
@@ -432,6 +235,7 @@ export function stackNodes<T>({
   x: number;
   y: number;
 }) {
+  console.log("stack nodes");
   const wrapper = document.createElement("div");
 
   for (const el of state.clonedDraggedEls) {
