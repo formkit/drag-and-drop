@@ -23,6 +23,7 @@ import type {
   TearDownNodeData,
   BaseDragState,
   SynthDragState,
+  ParentKeydownEventData,
   SynthDragStateProps,
 } from "./types";
 import {
@@ -80,13 +81,12 @@ let synthNodePointerDown = false;
 export const [emit, on] = createEmitter();
 
 const baseDragState = {
-  activeNode: undefined,
   on,
   emit,
   originalZIndex: undefined,
   preventEnter: false,
   remapJustFinished: false,
-  selectedNodes: [],
+  selectedDragItems: [],
 };
 
 /**
@@ -99,13 +99,14 @@ export let state:
 
 export function resetState() {
   const baseDragState = {
-    activeNode: undefined,
+    activeDescendant: undefined,
     on,
     emit,
     originalZIndex: undefined,
     preventEnter: false,
     remapJustFinished: false,
-    selectedNodes: [],
+    selectedDragItems: [],
+    selectedParent: undefined,
   };
 
   state = baseDragState;
@@ -132,6 +133,32 @@ export function setDragState<T>(
 }
 
 /**
+ *
+ */
+function handleRootPointerdown(_e: PointerEvent) {
+  const selectedClass = state.selectedParent?.data.config.selectedClass;
+
+  if (selectedClass) {
+    removeClass(
+      state.selectedDragItems.map((x) => x.el),
+      selectedClass
+    );
+  }
+
+  state.selectedDragItems = [];
+}
+
+/**
+ * If we are currently dragging, then let's prevent default on dragover to avoid
+ * the default behavior of the browser on drop.
+ */
+function handleRootDragover(e: DragEvent) {
+  if (!isDragState(state)) return;
+
+  e.preventDefault();
+}
+
+/**
  * Initializes the drag and drop functionality for a given parent.
  *
  * @param {DragAndDrop} dragAndDrop - The drag and drop configuration.
@@ -147,12 +174,19 @@ export function dragAndDrop<T>({
 }: DragAndDrop<T>): void {
   if (!isBrowser) return;
 
+  if (!documentController)
+    documentController = addEvents(document, {
+      dragover: handleRootDragover,
+      pointerdown: handleRootPointerdown,
+    });
+
   tearDown(parent);
 
   const parentData: ParentData<T> = {
     getValues,
     setValues,
     config: {
+      clickawayDeselectContainer: config.clickawayDeselectContainer ?? parent,
       dragDropEffect: "move",
       dragEffectAllowed: "move",
       draggedNodes,
@@ -165,6 +199,7 @@ export function dragAndDrop<T>({
       handleDragoverNode,
       handleDragoverParent,
       handleEnd,
+      handleFocusParent,
       handlePointerupNode,
       handleTouchstart,
       handlePointeroverNode,
@@ -177,7 +212,7 @@ export function dragAndDrop<T>({
       nativeDrag: config.nativeDrag ?? true,
       performSort,
       performTransfer,
-      root: document,
+      root: config.root ?? document,
       setupNode,
       setupNodeRemap,
       reapplyDragClasses,
@@ -243,10 +278,6 @@ export function dragStateProps<T>(
   const rect = data.targetData.node.el.getBoundingClientRect();
 
   const scrollEls: Array<[HTMLElement, AbortController]> = [];
-
-  documentController = addEvents(document, {
-    dragover: preventDefault,
-  });
 
   for (const scrollable of getScrollables()) {
     let controller;
@@ -342,6 +373,52 @@ export function performSort<T>(
       position: data.targetData.node.data.index,
     });
   }
+}
+
+/**
+ * Responsible for removing active class state and applying to new one.
+ *
+ * @param {ParentEventData} data - The parent event data.
+ * @param {NodeRecord} newActiveNode - The new active node.
+ * @param {BaseDragState} state - The current drag state.
+ */
+function setActive<T>(
+  data: ParentEventData<T>,
+  newActiveNode: NodeRecord<T>,
+  state: BaseDragState<T>
+) {
+  const activeDescendantClass =
+    data.targetData.parent.data.config.activeDescendantClass;
+
+  if (
+    state.activeParent &&
+    state.activeDescendant &&
+    state.activeParent.el !== data.targetData.parent.el &&
+    activeDescendantClass
+  )
+    removeClass([state.activeDescendant.el], activeDescendantClass);
+
+  state.activeDescendant = newActiveNode;
+
+  state.activeParent = data.targetData.parent;
+
+  addNodeClass([newActiveNode.el], activeDescendantClass, true);
+
+  state.activeParent.el.setAttribute(
+    "aria-activedescendant",
+    state.activeDescendant.el.id
+  );
+}
+
+export function handleFocusParent<T>(
+  data: ParentEventData<T>,
+  state: BaseDragState<T> | DragState<T> | SynthDragState<T>
+) {
+  const firstEnabledNode = data.targetData.parent.data.enabledNodes[0];
+
+  if (!firstEnabledNode) return;
+
+  setActive(data, firstEnabledNode, state);
 }
 
 export function performTransfer<T>(
@@ -611,7 +688,16 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
 
       parent.nestedParent = e.detail.parent;
     },
+    focus: parentEventData(parentData.config.handleFocusParent),
   });
+
+  parent.setAttribute("role", "listbox");
+
+  parent.setAttribute("tabindex", "0");
+
+  parent.setAttribute("aria-multiselectable", "false");
+
+  parent.setAttribute("aria-activeDescendant", "");
 }
 
 export function setupNode<T>(data: SetupNodeData<T>) {
@@ -636,6 +722,10 @@ export function setupNode<T>(data: SetupNodeData<T>) {
       else isNative = true;
     },
   });
+
+  data.node.setAttribute("role", "option");
+
+  data.node.setAttribute("aria-checked", "false");
 
   config.reapplyDragClasses(data.node, data.parentData);
 
@@ -871,16 +961,7 @@ export function handleDragstart<T>(
 
   const nodes = config.draggedNodes(data);
 
-  config.dragstartClasses(nodes, config);
-
-  //for (const node of nodes) {
-  //  dragstartClasses(
-  //    node.el,
-  //    config.draggingClass,
-  //    config.dropZoneClass,
-  //    config.dragPlaceholderClass
-  //  );
-  //}
+  config.dragstartClasses(data.targetData.node, nodes, config);
 
   const dragState = initDrag(data, nodes);
 
@@ -898,24 +979,29 @@ export function handleDragstart<T>(
 }
 
 export function handlePointerdownNode<T>(
-  eventData: NodePointerEventData<T>,
+  data: NodePointerEventData<T>,
   state: BaseDragState<T>
 ) {
-  eventData.e.stopPropagation();
+  data.e.stopPropagation();
+
+  data.targetData.node.el.setAttribute("aria-checked", "true");
 
   pointerdown(
     {
-      e: eventData.e,
-      targetData: eventData.targetData,
+      e: data.e,
+      targetData: data.targetData,
     },
     state
   );
 }
 
 export function dragstartClasses<T>(
+  _node: NodeRecord<T>,
   nodes: Array<NodeRecord<T>>,
   config: ParentConfig<T>
 ) {
+  console.log("config", config.draggingClass);
+
   addNodeClass(
     nodes.map((x) => x.el),
     config.draggingClass
@@ -925,11 +1011,6 @@ export function dragstartClasses<T>(
     removeClass(
       nodes.map((x) => x.el),
       config.draggingClass
-    );
-
-    addNodeClass(
-      nodes.map((x) => x.el),
-      config.dragPlaceholderClass
     );
 
     addNodeClass(
@@ -954,18 +1035,17 @@ export function initDrag<T>(
 
     data.e.dataTransfer.effectAllowed = config.dragEffectAllowed;
 
-    const dragImage = config?.dragImage;
+    const dragImage = config?.dragImage(
+      data.targetData.node,
+      draggedNodes,
+      data.targetData.parent.data
+    );
 
-    if (dragImage)
-      data.e.dataTransfer.setDragImage(
-        dragImage(
-          data.targetData.node,
-          draggedNodes,
-          data.targetData.parent.data
-        ) || data.targetData.node.el,
-        data.e.offsetX,
-        data.e.offsetY
-      );
+    data.e.dataTransfer.setDragImage(
+      dragImage || data.targetData.node.el,
+      data.e.offsetX,
+      data.e.offsetY
+    );
   }
 
   return dragState;
@@ -1006,7 +1086,71 @@ export function handleClickParent<T>(_data: ParentEventData<T>) {}
 
 export function handleKeydownNode<T>(_data: NodeEventData<T>) {}
 
-export function handleKeydownParent<T>(_data: ParentEventData<T>) {}
+export function handleKeydownParent<T>(
+  data: ParentKeydownEventData<T>,
+  state: BaseDragState<T>
+) {
+  data.e.preventDefault();
+
+  if (!state.activeDescendant)
+    state.activeDescendant = data.targetData.parent.data.enabledNodes[0];
+
+  const activeDescendant = state.activeDescendant;
+
+  const parentData = data.targetData.parent.data;
+
+  const enabledNodes = parentData.enabledNodes;
+
+  const index = enabledNodes.findIndex((x) => x.el === activeDescendant.el);
+
+  if (index === -1) return;
+
+  if (
+    ["ArrowDown", "ArrowUp", "ArrowRight", "ArrowLeft"].includes(data.e.key)
+  ) {
+    const nextIndex = data.e.key === "ArrowDown" ? index + 1 : index - 1;
+
+    if (nextIndex < 0 || nextIndex >= enabledNodes.length) return;
+
+    const nextNode = enabledNodes[nextIndex];
+
+    removeClass(
+      [state.activeDescendant.el],
+      parentData.config.activeDescendantClass
+    );
+
+    state.activeDescendant = nextNode;
+
+    data.targetData.parent.el.setAttribute(
+      "aria-activedescendant",
+      state.activeDescendant.el.id
+    );
+
+    state.activeDescendant.el.focus();
+
+    addNodeClass([nextNode.el], parentData.config.activeDescendantClass, true);
+  } else if (data.e.key === " ") {
+    removeClass(
+      [state.activeDescendant.el],
+      parentData.config.activeDescendantClass
+    );
+
+    removeClass(
+      state.selectedDragItems.map((x) => x.el),
+      parentData.config.selectedClass
+    );
+
+    const activeDescendant = state.activeDescendant;
+
+    if (!activeDescendant) return;
+
+    state.activeDescendant = activeDescendant;
+
+    state.selectedDragItems.push(activeDescendant);
+
+    addNodeClass([activeDescendant.el], parentData.config.selectedClass, true);
+  }
+}
 
 export function pointerdown<T>(
   data: NodePointerEventData<T>,
@@ -1054,12 +1198,6 @@ export function end<T>(
   _data: NodeEventData<T>,
   state: DragState<T> | SynthDragState<T>
 ) {
-  if (documentController) {
-    documentController.abort();
-
-    documentController = undefined;
-  }
-
   if ("longPressTimeout" in state && state.longPressTimeout)
     clearTimeout(state.longPressTimeout);
 
@@ -1135,14 +1273,18 @@ export function handlePointermove<T>(
   if (isNative || !synthNodePointerDown || !validateDragHandle(data)) return;
 
   if (!isSynthDragState(state)) {
-    const nodes = data.targetData.parent.data.config.draggedNodes(data);
+    const config = data.targetData.parent.data.config;
+
+    const nodes = config.draggedNodes(data);
+
+    config.dragstartClasses(data.targetData.node, nodes, config);
 
     const synthDragState = initSynthDrag(data, state, nodes);
 
     synthMove(data, synthDragState);
 
-    if (data.targetData.parent.data.config.onDragstart)
-      data.targetData.parent.data.config.onDragstart({
+    if (config.onDragstart)
+      config.onDragstart({
         parent: data.targetData.parent,
         values: parentValues(
           data.targetData.parent.el,
@@ -1169,7 +1311,6 @@ function initSynthDrag<T>(
   draggedNodes: Array<NodeRecord<T>>
 ): SynthDragState<T> {
   // NEXT STEP HERE:
-  console.log("init synth drag");
 
   const display = data.targetData.node.el.style.display;
 
@@ -1244,7 +1385,6 @@ function pointermoveClasses<T>(
       state.draggedNodes.map((x) => x.el),
       config?.longPressClass
     );
-  console.log("getting here");
 
   if (config.synthDraggingClass && state.clonedDraggedNode)
     addNodeClass([state.clonedDraggedNode], config.synthDraggingClass);
@@ -1560,11 +1700,7 @@ export function handleDragoverParent<T>(
 ) {
   if (!state) return;
 
-  const { x, y } = eventCoordinates(data.e as DragEvent);
-
-  state.coordinates.y = y;
-
-  state.coordinates.x = x;
+  Object.assign(eventCoordinates(data.e as DragEvent));
 
   transfer(data, state);
 }
@@ -1858,10 +1994,12 @@ export function parentEventData<T>(
 
     if (!targetData) return;
 
-    return callback({
-      e,
-      targetData,
-      state,
-    });
+    return callback(
+      {
+        e,
+        targetData,
+      },
+      state
+    );
   };
 }

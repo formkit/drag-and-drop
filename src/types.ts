@@ -37,6 +37,13 @@ export interface ParentConfig<T> {
     lastParentData: ParentRecord<T>,
     state: DragState<T>
   ) => boolean;
+  activeDescendantClass?: string;
+  /**
+   * Dictates the container to observer for when an item is selected. If the
+   * user "clicks away" from the container, the selected items will be
+   * deselected. By default, the parent is the container.
+   */
+  clickawayDeselectContainer: HTMLElement;
   /**
    * The data transfer effect to use for the drag operation.
    */
@@ -74,13 +81,10 @@ export interface ParentConfig<T> {
    * Accepts array of "dragged nodes" and applies dragstart classes to them.
    */
   dragstartClasses: (
+    node: NodeRecord<T>,
     nodes: Array<NodeRecord<T>>,
     config: ParentConfig<T>
   ) => void;
-  /**
-   * The class to add to the original dragged node as it is being dragged.
-   */
-  dragPlaceholderClass?: string;
   /**
    * The class to add to a node when the node is dragged over it.
    */
@@ -94,8 +98,15 @@ export interface ParentConfig<T> {
    * parents to transfer nodes between each other.
    */
   group?: string;
+  handleFocusParent: (
+    data: ParentEventData<T>,
+    state: BaseDragState<T>
+  ) => void;
   handleKeydownNode: (data: NodeEventData<T>, state: DragState<T>) => void;
-  handleKeydownParent: (data: ParentEventData<T>, state: DragState<T>) => void;
+  handleKeydownParent: (
+    data: ParentKeydownEventData<T>,
+    state: DragState<T>
+  ) => void;
   /**
    * Function that is called when dragend or touchend event occurs.
    */
@@ -232,10 +243,7 @@ export interface ParentConfig<T> {
    * The root element to use for the parent.
    */
   root: Document | ShadowRoot;
-  /**
-   * The configuration for the selections plugin.
-   */
-  selectionsConfig?: SelectionsConfig<T>;
+  selectedClass?: string;
   /**
    * Function that is called when a node is set up.
    */
@@ -291,6 +299,7 @@ export interface ParentConfig<T> {
    */
   synthDraggingClass?: string;
   synthDropZoneClass?: string;
+  synthActiveDescendantClass?: string;
   /**
    * Config option to allow recursive copying of computed styles of dragged
    * element to the cloned one that will be dragged (only for synthetic drag).
@@ -426,6 +435,17 @@ export interface ParentPointerEventData<T> extends ParentEventData<T> {
    * The event that was triggered.
    */
   e: PointerEvent;
+  /**
+   * The data of the target node.
+   */
+  targetData: ParentTargetData<T>;
+}
+
+export interface ParentKeydownEventData<T> extends ParentEventData<T> {
+  /**
+   * The event that was triggered.
+   */
+  e: KeyboardEvent;
   /**
    * The data of the target node.
    */
@@ -719,7 +739,8 @@ type EventEmitterData<T> = {
 };
 
 export type BaseDragState<T> = {
-  activeNode: NodeRecord<T> | undefined;
+  activeDescendant: NodeRecord<T> | undefined;
+  activeParent: ParentRecord<T> | undefined;
   emit: (event: string, data: EventEmitterData<T>) => void;
   on: (event: string, callback: CallableFunction) => void;
   /**
@@ -731,10 +752,8 @@ export type BaseDragState<T> = {
    * Flag indicating that the remap just finished.
    */
   remapJustFinished: boolean;
-  /**
-   * For selectionis plugin.
-   */
-  selectedNodes: Array<NodeRecord<T>>;
+  selectedDragItems: Array<NodeRecord<T>>;
+  selectedParent: ParentRecord<T> | undefined;
 };
 
 export interface DragStateProps<T> {
@@ -927,10 +946,6 @@ export interface MultiDragConfig<T> {
     parentData: ParentData<T>
   ) => void;
   /**
-   * Function to set which values of a given parent are "selected".
-   */
-  selectedValues?: (parentValues: Array<T>, parent: HTMLElement) => Array<T>;
-  /**
    * Class added when a node is being synthetically dragged. It will only be
    * used if the number of selected nodes is greater than 1. Otherwise, the
    * base config synthDraggingClass will be used.
@@ -948,27 +963,22 @@ export interface MultiDragParentConfig<T> extends ParentConfig<T> {
   multiDragConfig: MultiDragConfig<T>;
 }
 
-export interface MultiDragState<T> {
-  selectedNodes: Array<NodeRecord<T>>;
-  activeNode: NodeRecord<T> | undefined;
-}
+//export interface SelectionsParentConfig<T extends unknown>
+//  extends ParentConfig<T> {
+//  selectionsConfig: SelectionsConfig<T>;
+//}
 
-export interface SelectionsParentConfig<T extends unknown>
-  extends ParentConfig<T> {
-  selectionsConfig: SelectionsConfig<T>;
-}
-
-export interface SelectionsConfig<T> {
-  selectedClass?: string;
-  synthSelectedClass?: string;
-  clickawayDeselect?: boolean;
-  handleKeydownNode?: (data: NodeEventData<T>, state: DragState<T>) => void;
-  handlePointerdownNode?: (
-    data: NodePointerEventData<T>,
-    state: DragState<T>
-  ) => void;
-  handlePointerupNode?: (
-    data: NodePointerEventData<T>,
-    state: DragState<T>
-  ) => void;
-}
+//export interface SelectionsConfig<T> {
+//  selectedClass?: string;
+//  synthSelectedClass?: string;
+//  clickawayDeselect?: boolean;
+//  handleKeydownNode?: (data: NodeEventData<T>, state: DragState<T>) => void;
+//  handlePointerdownNode?: (
+//    data: NodePointerEventData<T>,
+//    state: DragState<T>
+//  ) => void;
+//  handlePointerupNode?: (
+//    data: NodePointerEventData<T>,
+//    state: DragState<T>
+//  ) => void;
+//}

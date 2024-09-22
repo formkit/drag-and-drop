@@ -116,9 +116,7 @@ function handlePointerdownNode<T>(
   //}
 }
 
-function pointerdown<T>(data: NodePointerEventData<T>) {
-  console.log("selections pointerdown");
-}
+function pointerdown<T>(data: NodePointerEventData<T>) {}
 
 function selectionsHandler<T>(
   data: NodeEventData<T>,

@@ -28,6 +28,15 @@ export function multiDrag<T>(
 
     return {
       setup() {
+        multiDragParentConfig.handleKeydownNode =
+          multiDragParentConfig.handleKeydownNode || handleKeydownNode;
+        //if (!selectionsConfig.clickawayDeselect) {
+        //  const rootAbortControllers = addEvents(parentData.config.root, {
+        //    pointerdown: handlePointerdownRoot.bind(null, parentData.config),
+        //  });
+
+        //  parentData.abortControllers["root"] = rootAbortControllers;
+        //}
         multiDragParentConfig.dragImage = (
           _draggedNode: NodeRecord<T>,
           draggedNodes: Array<NodeRecord<T>>,
@@ -69,13 +78,6 @@ export function multiDrag<T>(
 
           let selectedValues: Array<T> = [];
 
-          if (multiDragConfig.selectedValues) {
-            selectedValues = multiDragConfig.selectedValues(
-              parentRecord.data.getValues(parentRecord.el),
-              parentRecord.el
-            );
-          }
-
           if (!selectedValues.length) return [data.targetData.node];
 
           const selectedNodes = parentRecord.data.enabledNodes.filter((x) =>
@@ -90,9 +92,6 @@ export function multiDrag<T>(
 
           return selectedNodes;
         };
-
-        multiDragParentConfig.handleEnd =
-          multiDragConfig.handleEnd || handleEnd;
 
         multiDragParentConfig.reapplyDragClasses =
           multiDragConfig.reapplyDragClasses || reapplyDragClasses;
@@ -235,7 +234,6 @@ export function stackNodes<T>({
   x: number;
   y: number;
 }) {
-  console.log("stack nodes");
   const wrapper = document.createElement("div");
 
   for (const el of state.clonedDraggedEls) {

@@ -22,7 +22,5 @@
     "shiki": "^1.1.6",
     "twoslash-vue": "^0.2.4"
   },
-  "dependencies": {
-    "@formkit/drag-and-drop": "workspace:*"
-  }
+  "dependencies": {}
 }

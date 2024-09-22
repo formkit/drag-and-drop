@@ -8,8 +8,6 @@
   "scripts": {
     "tests": "cd tests && pnpm run dev",
     "tests-frameworks": "cd tests-frameworks && pnpm run dev",
-    "playground-nuxt": "cd playground/nuxt && pnpm run dev",
-    "playground-next": "cd playground/next && pnpm run dev",
     "docs": "cd docs && pnpm run dev",
     "build": "jiti build.ts",
     "release": "npx bumpp --no-tag --no-push --no-commit && pnpm run build && cd dist && npx publint && pnpm publish --no-git-checks",
@@ -30,6 +28,7 @@
     "jiti": "^1.21.0",
     "pathe": "^1.1.2",
     "publint": "^0.2.7",
+    "tailwind": "^4.0.0",
     "tsup": "^8.0.2",
     "typescript": "^5.4.3"
   },

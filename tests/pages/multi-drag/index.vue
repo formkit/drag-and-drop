@@ -5,39 +5,21 @@ import { multiDrag } from "../../../src";
 const selectedValues: Ref<Array<string>> = ref([]);
 
 const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
-  onDragend: (event) => {
-    selectedValues.value = [];
-  },
   draggingClass: "blue",
+  dropZoneClass: "dropZoneClass",
   plugins: [
     multiDrag({
       draggingClass: "blue",
-      selectedValues: () => {
-        return selectedValues.value;
-      },
     }),
   ],
 });
-
-function selectValue(value: string) {
-  selectedValues.value = selectedValues.value.includes(value)
-    ? selectedValues.value.filter((x) => x !== value)
-    : [...selectedValues.value, value];
-}
 </script>
 
 <template>
   <h2>Multi drag plugin</h2>
   <div>
     <ul ref="parent" class="list">
-      <li
-        v-for="value in values"
-        :id="value"
-        :key="value"
-        class="item"
-        :class="{ blue: selectedValues.includes(value) }"
-        @pointerup="selectValue(value)"
-      >
+      <li v-for="value in values" :id="value" :key="value" class="item">
         {{ value }}
       </li>
     </ul>
@@ -51,6 +33,11 @@ function selectValue(value: string) {
 </template>
 
 <style>
+.dropZoneClass {
+  background-color: green !important;
+  color: white !important;
+}
+
 .blue {
   background-color: lightblue !important;
   color: yellow !important;
