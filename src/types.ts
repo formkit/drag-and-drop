@@ -858,7 +858,10 @@ export type SortEvent = <T>(data: SortEventData<T>) => void;
 
 export type TransferEvent = <T>(data: TransferEventData<T>) => void;
 
-export type DragstartEvent = <T>(data: DragstartEventData<T>) => void;
+export type DragstartEvent = <T>(
+  data: DragstartEventData<T>,
+  state: DragState<T>
+) => void;
 
 export type DragendEvent = <T>(data: DragendEventData<T>) => void;
 

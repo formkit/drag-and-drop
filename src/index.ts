@@ -355,7 +355,7 @@ export function performSort<T>(
     ...newParentValues,
   ]);
 
-  if (data.targetData.parent.data.config.onSort) {
+  if (data.targetData.parent.data.config.onSort)
     data.targetData.parent.data.config.onSort({
       parent: {
         el: data.targetData.parent.el,
@@ -369,7 +369,6 @@ export function performSort<T>(
       previousPosition: originalIndex,
       position: data.targetData.node.data.index,
     });
-  }
 }
 
 /**
@@ -426,9 +425,8 @@ function setSelected<T>(
       selectedClass
     );
 
-    for (const node of state.selectedState.dragItems) {
+    for (const node of state.selectedState.dragItems)
       node.el.setAttribute("aria-checked", "false");
-    }
   }
 
   if (!newlySelectedNodes.length) {
@@ -450,9 +448,8 @@ function setSelected<T>(
     true
   );
 
-  for (const node of newlySelectedNodes) {
+  for (const node of newlySelectedNodes)
     node.el.setAttribute("aria-checked", "true");
-  }
 
   updateLiveRegion(parent);
 }
@@ -1067,33 +1064,34 @@ export function handleDragstart<T>(
   const dragState = initDrag(data, nodes);
 
   if (config.onDragstart)
-    config.onDragstart({
-      parent: data.targetData.parent,
-      values: parentValues(
-        data.targetData.parent.el,
-        data.targetData.parent.data
-      ),
-      draggedNode: dragState.draggedNode,
-      draggedNodes: dragState.draggedNodes,
-      position: dragState.initialIndex,
-    });
+    config.onDragstart(
+      {
+        parent: data.targetData.parent,
+        values: parentValues(
+          data.targetData.parent.el,
+          data.targetData.parent.data
+        ),
+        draggedNode: dragState.draggedNode,
+        draggedNodes: dragState.draggedNodes,
+        position: dragState.initialIndex,
+      },
+      state as DragState<T>
+    );
 }
 
 export function handlePointerdownNode<T>(
   data: NodePointerEventData<T>,
   state: BaseDragState<T>
 ) {
+  if (!validateDragHandle(data)) return;
+
   data.e.stopPropagation();
 
-  data.targetData.node.el.setAttribute("aria-checked", "true");
+  synthNodePointerDown = true;
 
-  pointerdown(
-    {
-      e: data.e,
-      targetData: data.targetData,
-    },
-    state
-  );
+  setActive(data.targetData.parent, data.targetData.node, state);
+
+  setSelected(data.targetData.parent, [data.targetData.node], state);
 }
 
 export function dragstartClasses<T>(
@@ -1150,10 +1148,9 @@ export function initDrag<T>(
   return dragState;
 }
 
-export function validateDragHandle<T>(data: NodeEventData<T>): boolean {
-  if (!(data.e instanceof DragEvent) && !(data.e instanceof PointerEvent))
-    return false;
-
+export function validateDragHandle<T>(
+  data: NodeDragEventData<T> | NodePointerEventData<T>
+): boolean {
   const config = data.targetData.parent.data.config;
 
   if (!config.dragHandle) return true;
@@ -1189,8 +1186,6 @@ export function handleKeydownParent<T>(
   data: ParentKeydownEventData<T>,
   state: BaseDragState<T>
 ) {
-  data.e.preventDefault();
-
   const activeDescendant = state.activeState?.dragItem;
 
   if (!activeDescendant) return;
@@ -1206,6 +1201,8 @@ export function handleKeydownParent<T>(
   if (
     ["ArrowDown", "ArrowUp", "ArrowRight", "ArrowLeft"].includes(data.e.key)
   ) {
+    data.e.preventDefault();
+
     const nextIndex =
       data.e.key === "ArrowDown" || data.e.key === "ArrowRight"
         ? index + 1
@@ -1217,6 +1214,8 @@ export function handleKeydownParent<T>(
 
     setActive(data.targetData.parent, nextNode, state);
   } else if (data.e.key === " ") {
+    data.e.preventDefault();
+
     setActive(data.targetData.parent, activeDescendant, state);
 
     state.selectedState &&
@@ -1229,16 +1228,59 @@ export function handleKeydownParent<T>(
           state
         )
       : setSelected(data.targetData.parent, [activeDescendant], state);
+  } else if (data.e.key === "Enter") {
+    console.log("enter key pressed");
+    if (!state.selectedState) return;
+
+    console.log(
+      "boom ",
+      state.selectedState.parent,
+      data.targetData.parent,
+      state.activeState
+    );
+    if (
+      state.selectedState.parent.el === data.targetData.parent.el &&
+      state.activeState
+    ) {
+      console.log("parent match");
+      const selectedValues = state.selectedState.dragItems.map(
+        (x) => x.data.value
+      );
+
+      const values = parentValues(
+        data.targetData.parent.el,
+        data.targetData.parent.data
+      );
+
+      const newValues = values.filter((x) => !selectedValues.includes(x));
+
+      newValues.splice(
+        state.activeState.dragItem.data.index,
+        0,
+        ...selectedValues
+      );
+
+      data.targetData.parent.data.setValues(
+        newValues,
+        data.targetData.parent.el
+      );
+
+      console.log("show me the drag item", state.activeState.dragItem);
+
+      setActive(
+        data.targetData.parent,
+        state.selectedState.dragItems[0],
+        state
+      );
+
+      return;
+    }
+    //if (state.selectedState.parent !== data.targetData.parent) {
+    //  console.log("parent mismatch");
+    //  performTransfer*()
+    //  return;
+    //}
   }
-}
-
-export function pointerdown<T>(
-  data: NodePointerEventData<T>,
-  _state: BaseDragState<T>
-) {
-  if (!validateDragHandle(data)) return;
-
-  synthNodePointerDown = true;
 }
 
 export function preventSortOnScroll() {
@@ -1268,6 +1310,10 @@ export function handleEnd<T>(
   data.e.preventDefault();
 
   end(data, state);
+
+  setActive(data.targetData.parent, undefined, state);
+
+  setSelected(data.targetData.parent, [], state);
 
   resetState();
 

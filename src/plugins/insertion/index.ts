@@ -17,7 +17,6 @@ import {
   setParentValues,
   state,
   addParentClass,
-  pointerdown,
   isDragState,
 } from "../../index";
 import { eventCoordinates, removeClass, getRealCoords } from "../../utils";
@@ -143,8 +142,6 @@ export function handleDragstart<T>(
   data: NodeDragEventData<T>,
   state: DragState<T>
 ) {
-  if (!(data.e instanceof DragEvent)) return;
-
   dragstart(
     {
       e: data.e,
