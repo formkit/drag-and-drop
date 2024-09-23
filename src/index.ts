@@ -25,6 +25,7 @@ import type {
   SynthDragState,
   ParentKeydownEventData,
   SynthDragStateProps,
+  ParentRecord,
 } from "./types";
 import {
   addEvents,
@@ -38,7 +39,6 @@ import {
   noDefault,
   removeClass,
   createEmitter,
-  preventDefault,
 } from "./utils";
 
 export * from "./types";
@@ -136,16 +136,13 @@ export function setDragState<T>(
  *
  */
 function handleRootPointerdown(_e: PointerEvent) {
-  const selectedClass = state.selectedParent?.data.config.selectedClass;
+  if (!state.activeState) return;
 
-  if (selectedClass) {
-    removeClass(
-      state.selectedDragItems.map((x) => x.el),
-      selectedClass
-    );
-  }
+  setActive(state.activeState.parent, undefined, state);
 
-  state.selectedDragItems = [];
+  if (!state.selectedState) return;
+
+  setSelected(state.selectedState.parent, [], state);
 }
 
 /**
@@ -162,7 +159,6 @@ function handleRootDragover(e: DragEvent) {
  * Initializes the drag and drop functionality for a given parent.
  *
  * @param {DragAndDrop} dragAndDrop - The drag and drop configuration.
- * @param {HTMLElement} dragAndDrop.parent - The parent element.
  *
  * @returns void
  */
@@ -186,13 +182,14 @@ export function dragAndDrop<T>({
     getValues,
     setValues,
     config: {
+      ariaLabel: config.ariaLabel ?? "Please select an item",
       clickawayDeselectContainer: config.clickawayDeselectContainer ?? parent,
       dragDropEffect: "move",
       dragEffectAllowed: "move",
       draggedNodes,
       dragImage,
       dragstartClasses,
-      deepCopyStyles: false,
+      deepCopyStyles: config.deepCopyStyles ?? false,
       handleKeydownNode,
       handleKeydownParent,
       handleDragstart,
@@ -376,38 +373,103 @@ export function performSort<T>(
 }
 
 /**
- * Responsible for removing active class state and applying to new one.
+ * This function sets the active node. This will clean the prior active state
+ * as well as removing any classes or attribute set.
  *
  * @param {ParentEventData} data - The parent event data.
  * @param {NodeRecord} newActiveNode - The new active node.
  * @param {BaseDragState} state - The current drag state.
  */
 function setActive<T>(
-  data: ParentEventData<T>,
-  newActiveNode: NodeRecord<T>,
+  parent: ParentRecord<T>,
+  newActiveNode: NodeRecord<T> | undefined,
   state: BaseDragState<T>
 ) {
-  const activeDescendantClass =
-    data.targetData.parent.data.config.activeDescendantClass;
+  const activeDescendantClass = parent.data.config.activeDescendantClass;
 
-  if (
-    state.activeParent &&
-    state.activeDescendant &&
-    state.activeParent.el !== data.targetData.parent.el &&
-    activeDescendantClass
-  )
-    removeClass([state.activeDescendant.el], activeDescendantClass);
+  if (state.activeState) {
+    removeClass([state.activeState.dragItem.el], activeDescendantClass);
 
-  state.activeDescendant = newActiveNode;
+    if (state.activeState.parent.el !== parent.el)
+      state.activeState.parent.el.setAttribute("aria-activedescendant", "");
+  }
 
-  state.activeParent = data.targetData.parent;
+  if (!newActiveNode) return;
+
+  state.activeState = {
+    dragItem: newActiveNode,
+    parent,
+  };
 
   addNodeClass([newActiveNode.el], activeDescendantClass, true);
 
-  state.activeParent.el.setAttribute(
+  state.activeState.parent.el.setAttribute(
     "aria-activedescendant",
-    state.activeDescendant.el.id
+    state.activeState.dragItem.el.id
   );
+}
+
+/**
+ * This function sets the selected nodes. This will clean the prior selected state
+ * as well as removing any classes or attributes set.
+ */
+function setSelected<T>(
+  parent: ParentRecord<T>,
+  newlySelectedNodes: Array<NodeRecord<T>>,
+  state: BaseDragState<T>
+) {
+  const selectedClass = parent.data.config.selectedClass;
+
+  if (state.selectedState) {
+    removeClass(
+      state.selectedState.dragItems.map((x) => x.el),
+      selectedClass
+    );
+
+    for (const node of state.selectedState.dragItems) {
+      node.el.setAttribute("aria-checked", "false");
+    }
+  }
+
+  if (!newlySelectedNodes.length) {
+    state.selectedState = undefined;
+
+    updateLiveRegion(parent);
+
+    return;
+  }
+
+  state.selectedState = {
+    dragItems: newlySelectedNodes,
+    parent: parent,
+  };
+
+  addNodeClass(
+    newlySelectedNodes.map((x) => x.el),
+    selectedClass,
+    true
+  );
+
+  for (const node of newlySelectedNodes) {
+    node.el.setAttribute("aria-checked", "true");
+  }
+
+  updateLiveRegion(parent);
+}
+
+function updateLiveRegion<T>(parent: ParentRecord<T>) {
+  const parentId = parent.el.id;
+
+  const liveRegion = document.getElementById(parentId + "-live-region");
+
+  if (!liveRegion) return;
+
+  const numberOfSelectedItems = state.selectedState?.dragItems.length || 0;
+
+  liveRegion.textContent =
+    numberOfSelectedItems === 0
+      ? "No items selected"
+      : `${numberOfSelectedItems} items selected`;
 }
 
 export function handleFocusParent<T>(
@@ -418,7 +480,9 @@ export function handleFocusParent<T>(
 
   if (!firstEnabledNode) return;
 
-  setActive(data, firstEnabledNode, state);
+  setActive(data.targetData.parent, firstEnabledNode, state);
+
+  updateLiveRegion(data.targetData.parent);
 }
 
 export function performTransfer<T>(
@@ -698,6 +762,43 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
   parent.setAttribute("aria-multiselectable", "false");
 
   parent.setAttribute("aria-activeDescendant", "");
+
+  parent.setAttribute("aria-label", parentData.config.ariaLabel);
+
+  parent.setAttribute("aria-describedby", parent.id + "-live-region");
+
+  const liveRegion = document.createElement("div");
+
+  //liveRegion.setAttribute("aria-live", "polite");
+
+  //liveRegion.setAttribute("aria-atomic", "true");
+
+  //liveRegion.setAttribute("id", parent.id.toString() + "-live-region");
+
+  setAttrs(liveRegion, {
+    "aria-live": "polite",
+    "aria-atomic": "true",
+    id: parent.id.toString() + "-live-region",
+  });
+
+  //Object.assign(liveRegion.style, {
+  //  position: "absolute",
+  //  width: "1px",
+  //  height: "1px",
+  //  padding: "0",
+  //  overflow: "hidden",
+  //  clip: "rect(0, 0, 0, 0)",
+  //  whiteSpace: "nowrap",
+  //  border: "0",
+  //});
+
+  document.body.appendChild(liveRegion);
+}
+
+export function setAttrs(el: HTMLElement, attrs: Record<string, string>) {
+  for (const key in attrs) {
+    el.setAttribute(key, attrs[key]);
+  }
 }
 
 export function setupNode<T>(data: SetupNodeData<T>) {
@@ -1000,8 +1101,6 @@ export function dragstartClasses<T>(
   nodes: Array<NodeRecord<T>>,
   config: ParentConfig<T>
 ) {
-  console.log("config", config.draggingClass);
-
   addNodeClass(
     nodes.map((x) => x.el),
     config.draggingClass
@@ -1092,10 +1191,9 @@ export function handleKeydownParent<T>(
 ) {
   data.e.preventDefault();
 
-  if (!state.activeDescendant)
-    state.activeDescendant = data.targetData.parent.data.enabledNodes[0];
+  const activeDescendant = state.activeState?.dragItem;
 
-  const activeDescendant = state.activeDescendant;
+  if (!activeDescendant) return;
 
   const parentData = data.targetData.parent.data;
 
@@ -1108,47 +1206,29 @@ export function handleKeydownParent<T>(
   if (
     ["ArrowDown", "ArrowUp", "ArrowRight", "ArrowLeft"].includes(data.e.key)
   ) {
-    const nextIndex = data.e.key === "ArrowDown" ? index + 1 : index - 1;
+    const nextIndex =
+      data.e.key === "ArrowDown" || data.e.key === "ArrowRight"
+        ? index + 1
+        : index - 1;
 
     if (nextIndex < 0 || nextIndex >= enabledNodes.length) return;
 
     const nextNode = enabledNodes[nextIndex];
 
-    removeClass(
-      [state.activeDescendant.el],
-      parentData.config.activeDescendantClass
-    );
-
-    state.activeDescendant = nextNode;
-
-    data.targetData.parent.el.setAttribute(
-      "aria-activedescendant",
-      state.activeDescendant.el.id
-    );
-
-    state.activeDescendant.el.focus();
-
-    addNodeClass([nextNode.el], parentData.config.activeDescendantClass, true);
+    setActive(data.targetData.parent, nextNode, state);
   } else if (data.e.key === " ") {
-    removeClass(
-      [state.activeDescendant.el],
-      parentData.config.activeDescendantClass
-    );
+    setActive(data.targetData.parent, activeDescendant, state);
 
-    removeClass(
-      state.selectedDragItems.map((x) => x.el),
-      parentData.config.selectedClass
-    );
-
-    const activeDescendant = state.activeDescendant;
-
-    if (!activeDescendant) return;
-
-    state.activeDescendant = activeDescendant;
-
-    state.selectedDragItems.push(activeDescendant);
-
-    addNodeClass([activeDescendant.el], parentData.config.selectedClass, true);
+    state.selectedState &&
+    state.selectedState.dragItems.includes(activeDescendant)
+      ? setSelected(
+          data.targetData.parent,
+          state.selectedState.dragItems.filter(
+            (x) => x.el !== activeDescendant.el
+          ),
+          state
+        )
+      : setSelected(data.targetData.parent, [activeDescendant], state);
   }
 }
 

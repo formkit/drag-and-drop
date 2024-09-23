@@ -24,6 +24,8 @@ export interface ParentDragEventData<T> extends ParentEventData<T> {
   e: DragEvent;
 }
 
+export type NativeDragEffects = "link" | "none" | "copy" | "move";
+
 /**
  * The configuration object for a given parent.
  */
@@ -39,6 +41,10 @@ export interface ParentConfig<T> {
   ) => boolean;
   activeDescendantClass?: string;
   /**
+   * The aria label to use for the parent.
+   */
+  ariaLabel: string;
+  /**
    * Dictates the container to observer for when an item is selected. If the
    * user "clicks away" from the container, the selected items will be
    * deselected. By default, the parent is the container.
@@ -47,11 +53,11 @@ export interface ParentConfig<T> {
   /**
    * The data transfer effect to use for the drag operation.
    */
-  dragEffectAllowed: "link" | "none" | "copy" | "move";
+  dragEffectAllowed: NativeDragEffects;
   /**
    * The data transfer effect to use for the drag operation.
    */
-  dragDropEffect: "link" | "none" | "copy" | "move";
+  dragDropEffect: NativeDragEffects;
   /**
    * A function that returns the image to use for the drag operation.
    */
@@ -739,8 +745,10 @@ type EventEmitterData<T> = {
 };
 
 export type BaseDragState<T> = {
-  activeDescendant: NodeRecord<T> | undefined;
-  activeParent: ParentRecord<T> | undefined;
+  activeState?: {
+    dragItem: NodeRecord<T>;
+    parent: ParentRecord<T>;
+  };
   emit: (event: string, data: EventEmitterData<T>) => void;
   on: (event: string, callback: CallableFunction) => void;
   /**
@@ -752,8 +760,10 @@ export type BaseDragState<T> = {
    * Flag indicating that the remap just finished.
    */
   remapJustFinished: boolean;
-  selectedDragItems: Array<NodeRecord<T>>;
-  selectedParent: ParentRecord<T> | undefined;
+  selectedState?: {
+    dragItems: Array<NodeRecord<T>>;
+    parent: ParentRecord<T>;
+  };
 };
 
 export interface DragStateProps<T> {

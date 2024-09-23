@@ -13,13 +13,15 @@ dragAndDrop({
   },
   activeDescendantClass: "activeDescendantClass",
   selectedClass: "selectedClass",
+  nativeDragCursor: "grab",
+  synthDragCursor: "grab",
 });
 </script>
 
 <template>
   <h1>Accessibility</h1>
   <h3></h3>
-  <ul ref="parent" class="list">
+  <ul ref="parent" class="list" id="list">
     <li v-for="value in values" :id="value" :key="value" class="item">
       {{ value }}
     </li>
@@ -34,7 +36,7 @@ dragAndDrop({
 
 <style>
 .activeDescendantClass {
-  background-color: lightblue;
+  border-color: red !important;
 }
 
 .selectedClass {
