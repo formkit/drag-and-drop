@@ -13,8 +13,9 @@ import {
   handleEnd as originalHandleEnd,
   parentValues,
   setParentValues,
+  addNodeClass,
+  removeClass,
 } from "../../index";
-import { addNodeClass, removeClass } from "../../utils";
 
 export const placeState = {
   draggedOverNodes: Array<NodeRecord<any>>(),

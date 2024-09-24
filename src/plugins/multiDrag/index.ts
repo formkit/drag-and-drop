@@ -10,8 +10,15 @@ import type {
   MultiDragParentConfig,
 } from "../../types";
 
-import { parents, end, state, resetState, isDragState } from "../../index";
-import { addNodeClass, removeClass, copyNodeStyle } from "../../utils";
+import {
+  parents,
+  state,
+  resetState,
+  isDragState,
+  addNodeClass,
+  removeClass,
+  copyNodeStyle,
+} from "../../index";
 
 export function multiDrag<T>(
   multiDragConfig: Partial<MultiDragConfig<T>> = {}

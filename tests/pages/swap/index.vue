@@ -9,9 +9,7 @@ const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   },
   plugins: [swap()],
   dropZoneClass: "yellow",
-  touchDropZoneClass: "yellow",
   draggingClass: "teal",
-  touchDraggingClass: "teal",
 });
 </script>
 

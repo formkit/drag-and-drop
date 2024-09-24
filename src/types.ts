@@ -45,12 +45,6 @@ export interface ParentConfig<T> {
    */
   ariaLabel: string;
   /**
-   * Dictates the container to observer for when an item is selected. If the
-   * user "clicks away" from the container, the selected items will be
-   * deselected. By default, the parent is the container.
-   */
-  clickawayDeselectContainer: HTMLElement;
-  /**
    * The data transfer effect to use for the drag operation.
    */
   dragEffectAllowed: NativeDragEffects;
@@ -222,10 +216,15 @@ export interface ParentConfig<T> {
   /**
    * Function that is called when a sort operation is to be performed.
    */
-  performSort: (
-    state: DragState<T>,
-    data: NodeDragEventData<T> | NodePointerEventData<T>
-  ) => void;
+  performSort: ({
+    parent,
+    draggedNodes,
+    targetNode,
+  }: {
+    parent: ParentRecord<T>;
+    draggedNodes: Array<NodeRecord<T>>;
+    targetNode: NodeRecord<T>;
+  }) => void;
   /**
    * Function that is called when a transfer operation is to be performed.
    */

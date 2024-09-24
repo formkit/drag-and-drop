@@ -26,30 +26,26 @@ import type {
   ParentKeydownEventData,
   SynthDragStateProps,
   ParentRecord,
+  EventHandlers,
+  NodeFromPoint,
+  ParentFromPoint,
+  Coordinates,
 } from "./types";
-import {
-  addEvents,
-  addNodeClass,
-  copyNodeStyle,
-  eventCoordinates,
-  getElFromPoint,
-  getScrollables,
-  isBrowser,
-  isNode,
-  noDefault,
-  removeClass,
-  createEmitter,
-} from "./utils";
 
 export * from "./types";
-export * from "./utils";
 export { animations } from "./plugins/animations";
 export { insertion } from "./plugins/insertion";
-export { isBrowser };
 export { multiDrag } from "./plugins/multiDrag";
 export { place } from "./plugins/place";
 export { selections } from "./plugins/multiDrag/plugins/selections";
 export { swap } from "./plugins/swap";
+
+/**
+ * Check to see if code is running in a browser.
+ *
+ * @internal
+ */
+export const isBrowser = typeof window !== "undefined";
 
 /**
  * Abort controller for the document.
@@ -81,12 +77,14 @@ let synthNodePointerDown = false;
 export const [emit, on] = createEmitter();
 
 const baseDragState = {
+  activeDescendant: undefined,
   on,
   emit,
   originalZIndex: undefined,
   preventEnter: false,
   remapJustFinished: false,
   selectedDragItems: [],
+  selectedParent: undefined,
 };
 
 /**
@@ -109,7 +107,7 @@ export function resetState() {
     selectedParent: undefined,
   };
 
-  state = baseDragState;
+  state = { ...baseDragState };
 }
 
 /**
@@ -183,7 +181,6 @@ export function dragAndDrop<T>({
     setValues,
     config: {
       ariaLabel: config.ariaLabel ?? "Please select an item",
-      clickawayDeselectContainer: config.clickawayDeselectContainer ?? parent,
       dragDropEffect: "move",
       dragEffectAllowed: "move",
       draggedNodes,
@@ -279,6 +276,8 @@ export function dragStateProps<T>(
   for (const scrollable of getScrollables()) {
     let controller;
 
+    console.log("native drag", scrollable);
+    console.log("native drag", nativeDrag);
     if (nativeDrag) {
       controller = addEvents(scrollable, {
         scroll: preventSortOnScroll(),
@@ -287,6 +286,7 @@ export function dragStateProps<T>(
       controller = addEvents(scrollable, {
         pointermove: handleScroll,
       });
+      console.log("scrollable", scrollable);
     }
 
     scrollEls.push([scrollable, controller]);
@@ -328,46 +328,46 @@ export function dragStateProps<T>(
   };
 }
 
-export function performSort<T>(
-  state: DragState<T>,
-  data: NodeDragEventData<T> | NodePointerEventData<T>
-) {
-  const draggedValues = dragValues(state);
+export function performSort<T>({
+  parent,
+  draggedNodes,
+  targetNode,
+}: {
+  parent: ParentRecord<T>;
+  draggedNodes: Array<NodeRecord<T>>;
+  targetNode: NodeRecord<T>;
+}) {
+  const draggedValues = draggedNodes.map((x) => x.data.value);
 
-  const targetParentValues = parentValues(
-    data.targetData.parent.el,
-    data.targetData.parent.data
-  );
+  const targetParentValues = parentValues(parent.el, parent.data);
 
-  const originalIndex = state.draggedNode.data.index;
+  const originalIndex = draggedNodes[0].data.index;
 
-  const enabledNodes = [...data.targetData.parent.data.enabledNodes];
+  const enabledNodes = [...parent.data.enabledNodes];
 
   const newParentValues = [
     ...targetParentValues.filter((x) => !draggedValues.includes(x)),
   ];
 
-  newParentValues.splice(data.targetData.node.data.index, 0, ...draggedValues);
+  newParentValues.splice(targetNode.data.index, 0, ...draggedValues);
 
-  state.lastTargetValue = data.targetData.node.data.value;
+  if ("draggedNode" in state) state.lastTargetValue = targetNode.data.value;
 
-  setParentValues(data.targetData.parent.el, data.targetData.parent.data, [
-    ...newParentValues,
-  ]);
+  setParentValues(parent.el, parent.data, [...newParentValues]);
 
-  if (data.targetData.parent.data.config.onSort)
-    data.targetData.parent.data.config.onSort({
+  if (parent.data.config.onSort)
+    parent.data.config.onSort({
       parent: {
-        el: data.targetData.parent.el,
-        data: data.targetData.parent.data,
+        el: parent.el,
+        data: parent.data,
       },
       previousValues: [...targetParentValues],
       previousNodes: [...enabledNodes],
-      nodes: [...data.targetData.parent.data.enabledNodes],
+      nodes: [...parent.data.enabledNodes],
       values: [...newParentValues],
-      draggedNode: state.draggedNode,
+      draggedNode: draggedNodes[0],
       previousPosition: originalIndex,
-      position: data.targetData.node.data.index,
+      position: targetNode.data.index,
     });
 }
 
@@ -818,6 +818,7 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     mousedown: () => {
       if (!config.nativeDrag) isNative = false;
       else isNative = true;
+      console.log("mousedown", isNative);
     },
   });
 
@@ -984,11 +985,7 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
       }
     );
 
-    if (
-      isDragState(state) &&
-      state.draggedNode &&
-      nodeData.value === state.draggedNode.data.value
-    ) {
+    if (isDragState(state) && nodeData.value === state.draggedNode.data.value) {
       state.draggedNode.data = nodeData;
 
       state.draggedNode.el = node;
@@ -1228,23 +1225,45 @@ export function handleKeydownParent<T>(
           state
         )
       : setSelected(data.targetData.parent, [activeDescendant], state);
-  } else if (data.e.key === "Enter") {
-    console.log("enter key pressed");
-    if (!state.selectedState) return;
-
-    console.log(
-      "boom ",
-      state.selectedState.parent,
-      data.targetData.parent,
-      state.activeState
-    );
+  } else if (data.e.key === "Enter" && state.selectedState) {
     if (
       state.selectedState.parent.el === data.targetData.parent.el &&
       state.activeState
     ) {
-      console.log("parent match");
+      parentData.config.performSort({
+        parent: data.targetData.parent,
+        draggedNodes: state.selectedState.dragItems,
+        targetNode: state.activeState.dragItem,
+      });
+
+      console.log("active state drag aitem", state.activeState.dragItem);
+
+      setActive(
+        data.targetData.parent,
+        state.selectedState.dragItems[0],
+        state
+      );
+    } else if (
+      state.activeState &&
+      state.selectedState.parent.el !== data.targetData.parent.el
+    ) {
       const selectedValues = state.selectedState.dragItems.map(
         (x) => x.data.value
+      );
+
+      const selectedParentValues = parentValues(
+        state.selectedState.parent.el,
+        state.selectedState.parent.data
+      );
+
+      const newValues = selectedParentValues.filter(
+        (x) => !selectedValues.includes(x)
+      );
+
+      setParentValues(
+        state.selectedState.parent.el,
+        state.selectedState.parent.data,
+        newValues
       );
 
       const values = parentValues(
@@ -1252,34 +1271,18 @@ export function handleKeydownParent<T>(
         data.targetData.parent.data
       );
 
-      const newValues = values.filter((x) => !selectedValues.includes(x));
-
-      newValues.splice(
-        state.activeState.dragItem.data.index,
+      values.splice(
+        state.activeState.dragItem.data.index + 1,
         0,
         ...selectedValues
       );
 
-      data.targetData.parent.data.setValues(
-        newValues,
-        data.targetData.parent.el
-      );
+      setParentValues(data.targetData.parent.el, data.targetData.parent.data, [
+        ...values,
+      ]);
 
-      console.log("show me the drag item", state.activeState.dragItem);
-
-      setActive(
-        data.targetData.parent,
-        state.selectedState.dragItems[0],
-        state
-      );
-
-      return;
+      setSelected(data.targetData.parent, state.selectedState.dragItems, state);
     }
-    //if (state.selectedState.parent !== data.targetData.parent) {
-    //  console.log("parent mismatch");
-    //  performTransfer*()
-    //  return;
-    //}
   }
 }
 
@@ -1309,21 +1312,10 @@ export function handleEnd<T>(
 ) {
   data.e.preventDefault();
 
-  end(data, state);
+  cancelSynthScroll();
 
-  setActive(data.targetData.parent, undefined, state);
+  for (const [_el, controller] of state.scrollEls) controller.abort();
 
-  setSelected(data.targetData.parent, [], state);
-
-  resetState();
-
-  synthNodePointerDown = false;
-}
-
-export function end<T>(
-  _data: NodeEventData<T>,
-  state: DragState<T> | SynthDragState<T>
-) {
   if ("longPressTimeout" in state && state.longPressTimeout)
     clearTimeout(state.longPressTimeout);
 
@@ -1349,10 +1341,11 @@ export function end<T>(
     dropZoneClass
   );
 
-  removeClass(
-    state.draggedNodes.map((x) => x.el),
-    config?.dragPlaceholderClass
-  );
+  // TODO:
+  //removeClass(
+  //  state.draggedNodes.map((x) => x.el),
+  //  config?.dragPlaceholderClass
+  //);
 
   if (config?.longPressClass) {
     removeClass(
@@ -1361,8 +1354,7 @@ export function end<T>(
     );
   }
 
-  if ("clonedDraggedNode" in state && state.clonedDraggedNode)
-    state.clonedDraggedNode.remove();
+  if (isSynth) state.clonedDraggedNode.remove();
 
   if (config?.onDragend)
     config.onDragend({
@@ -1372,6 +1364,14 @@ export function end<T>(
       draggedNodes: state.draggedNodes,
       position: state.initialIndex,
     });
+
+  setActive(data.targetData.parent, undefined, state);
+
+  setSelected(data.targetData.parent, [], state);
+
+  resetState();
+
+  synthNodePointerDown = false;
 }
 
 export function handleTouchstart<T>(
@@ -1394,7 +1394,8 @@ export function handlePointermove<T>(
   data: NodePointerEventData<T>,
   state: SynthDragState<T> | BaseDragState<T>
 ) {
-  data.e.stopPropagation();
+  // TODO: I think this is OK but not sure.
+  //data.e.stopPropagation();
 
   if (isNative || !synthNodePointerDown || !validateDragHandle(data)) return;
 
@@ -1407,19 +1408,23 @@ export function handlePointermove<T>(
 
     const synthDragState = initSynthDrag(data, state, nodes);
 
+    //console.log("synth drag state", synthDragState);
     synthMove(data, synthDragState);
 
     if (config.onDragstart)
-      config.onDragstart({
-        parent: data.targetData.parent,
-        values: parentValues(
-          data.targetData.parent.el,
-          data.targetData.parent.data
-        ),
-        draggedNode: synthDragState.draggedNode,
-        draggedNodes: synthDragState.draggedNodes,
-        position: synthDragState.initialIndex,
-      });
+      config.onDragstart(
+        {
+          parent: data.targetData.parent,
+          values: parentValues(
+            data.targetData.parent.el,
+            data.targetData.parent.data
+          ),
+          draggedNode: synthDragState.draggedNode,
+          draggedNodes: synthDragState.draggedNodes,
+          position: synthDragState.initialIndex,
+        },
+        synthDragState
+      );
 
     synthDragState.draggedNode.el.setPointerCapture(data.e.pointerId);
 
@@ -1436,8 +1441,6 @@ function initSynthDrag<T>(
   _state: BaseDragState<T>,
   draggedNodes: Array<NodeRecord<T>>
 ): SynthDragState<T> {
-  // NEXT STEP HERE:
-
   const display = data.targetData.node.el.style.display;
 
   const rect = data.targetData.node.el.getBoundingClientRect();
@@ -1550,6 +1553,14 @@ function getScrollData<T>(
 
 let animationFrameId: number | null = null;
 
+function cancelSynthScroll() {
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId);
+
+    animationFrameId = null;
+  }
+}
+
 function setSynthScrollDirection<T>(
   direction: "up" | "down" | "left" | "right" | undefined,
   el: HTMLElement,
@@ -1589,6 +1600,9 @@ function setSynthScrollDirection<T>(
 
     // Calculate how much to scroll based on time elapsed
     const distance = (baseSpeed * elapsed) / 1000; // Pixels to scroll
+
+    //console.log("animation frame id", state);
+    console.log("scrolling");
     if (state.synthScrollDirection === undefined && animationFrameId) {
       cancelAnimationFrame(animationFrameId);
 
@@ -1787,7 +1801,6 @@ export function synthMove<T>(
 
 export function handleScroll(e: DragEvent | PointerEvent) {
   if (!isSynthDragState(state)) return;
-
   let directionSet = false;
 
   for (const direction of Object.keys(scrollConfig)) {
@@ -1817,7 +1830,13 @@ export function handleDragoverNode<T>(
 
   state.coordinates.x = x;
 
-  dragoverNode(data, state);
+  data.e.preventDefault();
+
+  data.e.stopPropagation();
+
+  data.targetData.parent.el === state.lastParent?.el
+    ? sort(data, state)
+    : transfer(data, state);
 }
 
 export function handleDragoverParent<T>(
@@ -1886,25 +1905,13 @@ function handleDragleaveNode<T>(
   data.e.preventDefault();
 }
 
-function dragoverNode<T>(
-  eventData: NodeDragEventData<T>,
-  dragState: DragState<T>
-) {
-  eventData.e.preventDefault();
-
-  eventData.e.stopPropagation();
-
-  eventData.targetData.parent.el === dragState.lastParent?.el
-    ? sort(eventData, dragState)
-    : transfer(eventData, dragState);
-}
-
 export function validateSort<T>(
   data: NodeDragEventData<T> | NodePointerEventData<T>,
   state: DragState<T>,
   x: number,
   y: number
 ): boolean {
+  // TODO:
   if (
     state.affectedNodes
       .map((x) => x.data.value)
@@ -2025,7 +2032,11 @@ export function sort<T>(
     }
   );
 
-  data.targetData.parent.data.config.performSort(state, data);
+  data.targetData.parent.data.config.performSort({
+    parent: data.targetData.parent,
+    draggedNodes: state.draggedNodes,
+    targetNode: data.targetData.node,
+  });
 }
 
 /**
@@ -2075,14 +2086,6 @@ export function nodeEventData<T>(
 
 /**
  * Used when the dragged element enters into a parent other than its own.
- *
- * @param eventData
- *
- * @param state
- *
- * @internal
- *
- * @returns void
  */
 export function transfer<T>(
   data: NodeEventData<T> | ParentEventData<T>,
@@ -2128,4 +2131,347 @@ export function parentEventData<T>(
       state
     );
   };
+}
+
+export function noDefault(e: Event) {
+  e.preventDefault();
+}
+
+export function throttle(callback: any, limit: number) {
+  var wait = false;
+  return function (...args: any[]) {
+    if (!wait) {
+      callback.call(null, ...args);
+      wait = true;
+      setTimeout(function () {
+        wait = false;
+      }, limit);
+    }
+  };
+}
+
+function splitClass(className: string): Array<string> {
+  return className.split(" ").filter((x) => x);
+}
+
+export function addNodeClass<T>(
+  els: Array<Node | HTMLElement | Element>,
+  className: string | undefined,
+  omitAppendPrivateClass = false
+) {
+  function nodeSetter<T>(node: Node, nodeData: NodeData<T>) {
+    nodes.set(node, nodeData);
+  }
+
+  for (const el of els) {
+    const nodeData = nodes.get(el as Node);
+
+    const newData = addClass(el, className, nodeData, omitAppendPrivateClass);
+
+    if (!newData) continue;
+
+    nodeSetter(el as Node, newData as NodeData<T>);
+  }
+}
+
+export function addParentClass<T>(
+  els: Array<HTMLElement>,
+  className: string | undefined,
+  omitAppendPrivateClass = false
+) {
+  function parentSetter<T>(parent: HTMLElement, parentData: ParentData<T>) {
+    parents.set(parent, parentData);
+  }
+
+  for (const el of els) {
+    const parentData = parents.get(el);
+
+    const newData = addClass(el, className, parentData, omitAppendPrivateClass);
+
+    if (!newData) continue;
+
+    parentSetter(el, newData as ParentData<T>);
+  }
+}
+
+export function addClass(
+  el: Node | HTMLElement | Element,
+  className: string | undefined,
+  data: NodeData<any> | ParentData<any> | undefined,
+  omitAppendPrivateClass = false
+) {
+  if (!className) return;
+
+  const classNames = splitClass(className);
+
+  if (!classNames.length) return;
+
+  if (classNames.includes("longPress")) return;
+
+  if (!data) {
+    el.classList.add(...classNames);
+
+    return;
+  }
+
+  const privateClasses = [];
+
+  for (const className of classNames) {
+    if (!el.classList.contains(className)) {
+      el.classList.add(className);
+    } else if (
+      el.classList.contains(className) &&
+      omitAppendPrivateClass === false
+    ) {
+      privateClasses.push(className);
+    }
+  }
+
+  data.privateClasses = privateClasses;
+
+  return data;
+}
+
+export function removeClass(
+  els: Array<Node | HTMLElement | Element>,
+  className: string | undefined
+) {
+  if (!className) return;
+
+  const classNames = splitClass(className);
+
+  if (!classNames.length) return;
+
+  for (const node of els) {
+    if (!isNode(node)) {
+      node.classList.remove(...classNames);
+      continue;
+    }
+
+    const nodeData = nodes.get(node) || parents.get(node);
+
+    if (!nodeData) continue;
+
+    for (const className of classNames) {
+      if (!nodeData.privateClasses.includes(className)) {
+        node.classList.remove(className);
+      }
+    }
+  }
+}
+
+// Function to check if an element is scrollable
+function isScrollable(element: HTMLElement) {
+  const style = window.getComputedStyle(element);
+
+  return (
+    ((style.overflowY === "auto" || style.overflowY === "scroll") &&
+      element.scrollHeight > element.clientHeight) ||
+    ((style.overflowX === "auto" || style.overflowX === "scroll") &&
+      element.scrollWidth > element.clientWidth)
+  );
+}
+
+/**
+ * Used for getting the closest scrollable parent of a given element.
+ *
+ * @param node - The parent element to start the search from.
+ *
+ * @returns The closest scrollable parent or the document's root element.
+ *
+ * @internal
+ */
+export function getScrollables(): Array<HTMLElement> {
+  return Array.from(document.querySelectorAll("*")).filter(
+    (el) => el instanceof HTMLElement && isScrollable(el)
+  ) as Array<HTMLElement>;
+}
+
+export function getElFromPoint<T>(
+  eventData: NodeEventData<T>
+): NodeFromPoint<T> | ParentFromPoint<T> | undefined {
+  if (!(eventData.e instanceof PointerEvent)) return;
+
+  const newX = eventData.e.clientX;
+
+  const newY = eventData.e.clientY;
+
+  let target = document.elementFromPoint(newX, newY);
+
+  if (!isNode(target)) return;
+
+  let isParent;
+
+  let invalidEl = true;
+
+  while (target && invalidEl) {
+    if (nodes.has(target as Node) || parents.has(target as HTMLElement)) {
+      invalidEl = false;
+
+      isParent = parents.has(target as HTMLElement);
+
+      break;
+    }
+
+    target = target.parentNode as Node;
+  }
+
+  if (!isParent) {
+    const targetNodeData = nodes.get(target as Node);
+
+    if (!targetNodeData) return;
+
+    const targetParentData = parents.get(target.parentNode as Node);
+
+    if (!targetParentData) return;
+
+    return {
+      node: {
+        el: target as Node,
+        data: targetNodeData,
+      },
+      parent: {
+        el: target.parentNode as Node,
+        data: targetParentData as ParentData<T>,
+      },
+    };
+  } else {
+    const parentData = parents.get(target as HTMLElement);
+
+    if (!parentData) return;
+
+    return {
+      parent: {
+        el: target as HTMLElement,
+        data: parentData as ParentData<T>,
+      },
+    };
+  }
+}
+
+/**
+ * Checks to see that a given element and its parent node are instances of
+ * HTML Elements.
+ *
+ * @param {unknown} el - The element to check.
+ *
+ * @returns {boolean} - Whether or not provided element is of type Node.
+ */
+export function isNode(el: unknown): el is Node {
+  return el instanceof HTMLElement && el.parentNode instanceof HTMLElement;
+}
+
+export function preventDefault(e: Event) {
+  e.preventDefault();
+}
+
+/**
+ * Takes a given el and event handlers, assigns them, and returns the used abort
+ * controller.
+ *
+ * @param el - The element to add the event listeners to.
+ * @param events - The events to add to the element.
+ * @returns - The abort controller used for the event listeners.
+ */
+export function addEvents(
+  el: Document | ShadowRoot | Node | HTMLElement,
+  events: EventHandlers | any
+): AbortController {
+  const abortController = new AbortController();
+
+  for (const eventName in events) {
+    const handler = events[eventName];
+
+    el.addEventListener(eventName, handler, {
+      signal: abortController.signal,
+      passive: false,
+    });
+  }
+
+  return abortController;
+}
+
+export function copyNodeStyle(
+  sourceNode: HTMLElement,
+  targetNode: HTMLElement,
+  omitKeys = false
+) {
+  const computedStyle = window.getComputedStyle(sourceNode);
+
+  const omittedKeys = [
+    "position",
+    "z-index",
+    "top",
+    "left",
+    "x",
+    "pointer-events",
+    "y",
+    "transform-origin",
+    "filter",
+    "-webkit-text-fill-color",
+  ];
+
+  for (const key of Array.from(computedStyle)) {
+    if (omitKeys === false && key && omittedKeys.includes(key)) continue;
+
+    targetNode.style.setProperty(
+      key,
+      computedStyle.getPropertyValue(key),
+      computedStyle.getPropertyPriority(key)
+    );
+  }
+
+  for (const child of Array.from(sourceNode.children)) {
+    if (!isNode(child)) continue;
+
+    const targetChild = targetNode.children[
+      Array.from(sourceNode.children).indexOf(child)
+    ] as Node;
+
+    copyNodeStyle(child, targetChild, omitKeys);
+  }
+}
+
+export function eventCoordinates(data: DragEvent | PointerEvent) {
+  return { x: data.clientX, y: data.clientY };
+}
+
+export function getRealCoords(el: HTMLElement): Coordinates {
+  const { top, bottom, left, right, height, width } =
+    el.getBoundingClientRect();
+
+  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+
+  const adjustedTop = top + scrollTop;
+  const adjustedBottom = bottom + scrollTop;
+  const adjustedLeft = left + scrollLeft;
+  const adjustedRight = right + scrollLeft;
+
+  return {
+    top: adjustedTop,
+    bottom: adjustedBottom,
+    left: adjustedLeft,
+    right: adjustedRight,
+    height,
+    width,
+  };
+}
+
+export function createEmitter() {
+  const callbacks = new Map<string, CallableFunction[]>();
+
+  const emit = function (eventName: string, ...data: unknown[]) {
+    callbacks.get(eventName)!.forEach((cb) => {
+      cb(...data);
+    });
+  };
+
+  const on = function (eventName: string, callback: CallableFunction) {
+    //console.log("on", eventName, callback);
+    const cbs = callbacks.get(eventName) ?? [];
+    cbs.push(callback);
+    callbacks.set(eventName, cbs);
+  };
+  return [emit, on];
 }

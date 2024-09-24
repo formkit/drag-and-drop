@@ -14,8 +14,9 @@ import {
   handleEnd as originalHandleEnd,
   parentValues,
   setParentValues,
+  addNodeClass,
+  removeClass,
 } from "../../index";
-import { addNodeClass, removeClass } from "../../utils";
 
 export const swapState = {
   draggedOverNodes: Array<NodeRecord<any>>(),
@@ -57,7 +58,7 @@ export function swap<T>(swapConfig: Partial<SwapConfig<T>> = {}) {
 }
 
 function handleDragoverNode<T>(data: NodeDragEventData<T>) {
-  if (!state) return;
+  if (!isDragState(state)) return;
 
   dragoverNode(data, state);
 }

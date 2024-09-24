@@ -3,14 +3,18 @@ import type {
   NodeEventData,
   TearDownNodeData,
   ParentConfig,
-  SelectionsConfig,
-  SelectionsParentConfig,
   NodePointerEventData,
   BaseDragState,
 } from "../../../../types";
 
-import { state, parents, nodeEventData } from "../../../../index";
-import { addEvents, removeClass, addNodeClass } from "../../../../utils";
+import {
+  state,
+  parents,
+  nodeEventData,
+  addEvents,
+  removeClass,
+  addNodeClass,
+} from "../../../../index";
 
 export function selections<T>(selectionsConfig: SelectionsConfig<T> = {}) {
   return (parent: HTMLElement) => {

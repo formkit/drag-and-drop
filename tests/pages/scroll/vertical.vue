@@ -42,7 +42,7 @@ const [parent, values] = useDragAndDrop(fruits, {
 <template>
   <div class="container">
     <div class="scroll" style="height: 500px; overflow-y: scroll">
-      <div style="height: 200px" ref="parent">
+      <div style="height: 200px" ref="parent" class="parent">
         <div v-for="i in values" :key="i" class="item">{{ i }}</div>
       </div>
     </div>

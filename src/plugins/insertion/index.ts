@@ -18,8 +18,10 @@ import {
   state,
   addParentClass,
   isDragState,
+  eventCoordinates,
+  removeClass,
+  getRealCoords,
 } from "../../index";
-import { eventCoordinates, removeClass, getRealCoords } from "../../utils";
 
 export const insertionState = {
   draggedOverNodes: Array<NodeRecord<any>>(),
