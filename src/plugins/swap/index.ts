@@ -16,6 +16,7 @@ import {
   setParentValues,
   addNodeClass,
   removeClass,
+  isDragState,
 } from "../../index";
 
 export const swapState = {
@@ -60,7 +61,37 @@ export function swap<T>(swapConfig: Partial<SwapConfig<T>> = {}) {
 function handleDragoverNode<T>(data: NodeDragEventData<T>) {
   if (!isDragState(state)) return;
 
-  dragoverNode(data, state);
+  //data.e.preventDefault();
+
+  //data.e.stopPropagation();
+
+  //if (data.targetData.parent.el !== state.lastParent.el) return;
+
+  //const dropZoneClass = data.targetData.parent.data.config.dropZoneClass;
+
+  //removeClass(
+  //  swapState.draggedOverNodes.map((node) => node.el),
+  //  dropZoneClass
+  //);
+
+  //const enabledNodes = data.targetData.parent.data.enabledNodes;
+
+  //if (!enabledNodes) return;
+
+  //swapState.draggedOverNodes = enabledNodes.slice(
+  //  data.targetData.node.data.index,
+  //  data.targetData.node.data.index + state.draggedNodes.length
+  //);
+
+  //addNodeClass(
+  //  swapState.draggedOverNodes.map((node) => node.el),
+  //  dropZoneClass,
+  //  true
+  //);
+
+  //state.lastTargetValue = data.targetData.node.data.value;
+
+  //state.lastParent = data.targetData.parent;
 }
 
 export function handleDragoverParent<T>(_data: ParentEventData<T>) {}
@@ -68,12 +99,12 @@ export function handleDragoverParent<T>(_data: ParentEventData<T>) {}
 export function handlePointeroverParent<T>(_data: PointeroverParentEvent<T>) {}
 
 function handlePointeroverNode<T>(data: PointeroverNodeEvent<T>) {
-  if (!state) return;
+  if (!isDragState(state)) return;
 
   if (data.detail.targetData.parent.el !== state.lastParent.el) return;
 
   const dropZoneClass =
-    data.detail.targetData.parent.data.config.touchDropZoneClass;
+    data.detail.targetData.parent.data.config.synthDropZoneClass;
 
   removeClass(
     swapState.draggedOverNodes.map((node) => node.el),
@@ -99,37 +130,27 @@ function handlePointeroverNode<T>(data: PointeroverNodeEvent<T>) {
 }
 
 function dragoverNode<T>(data: NodeDragEventData<T>, state: DragState<T>) {
-  data.e.preventDefault();
-
-  data.e.stopPropagation();
-
-  if (data.targetData.parent.el !== state.lastParent.el) return;
-
-  const dropZoneClass = data.targetData.parent.data.config.dropZoneClass;
-
-  removeClass(
-    swapState.draggedOverNodes.map((node) => node.el),
-    dropZoneClass
-  );
-
-  const enabledNodes = data.targetData.parent.data.enabledNodes;
-
-  if (!enabledNodes) return;
-
-  swapState.draggedOverNodes = enabledNodes.slice(
-    data.targetData.node.data.index,
-    data.targetData.node.data.index + state.draggedNodes.length
-  );
-
-  addNodeClass(
-    swapState.draggedOverNodes.map((node) => node.el),
-    dropZoneClass,
-    true
-  );
-
-  state.lastTargetValue = data.targetData.node.data.value;
-
-  state.lastParent = data.targetData.parent;
+  //data.e.preventDefault();
+  //data.e.stopPropagation();
+  //if (data.targetData.parent.el !== state.lastParent.el) return;
+  //const dropZoneClass = data.targetData.parent.data.config.dropZoneClass;
+  //removeClass(
+  //  swapState.draggedOverNodes.map((node) => node.el),
+  //  dropZoneClass
+  //);
+  //const enabledNodes = data.targetData.parent.data.enabledNodes;
+  //if (!enabledNodes) return;
+  //swapState.draggedOverNodes = enabledNodes.slice(
+  //  data.targetData.node.data.index,
+  //  data.targetData.node.data.index + state.draggedNodes.length
+  //);
+  //addNodeClass(
+  //  swapState.draggedOverNodes.map((node) => node.el),
+  //  dropZoneClass,
+  //  true
+  //);
+  //state.lastTargetValue = data.targetData.node.data.value;
+  //state.lastParent = data.targetData.parent;
 }
 
 function handleEnd<T>(data: NodeDragEventData<T> | NodePointerEventData<T>) {

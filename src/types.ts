@@ -788,10 +788,6 @@ export interface DragStateProps<T> {
     y: number;
   };
   /**
-   * A flag to indicate whether the dragged node is moving.
-   */
-  pointerMoved: boolean;
-  /**
    * The node that is being dragged.
    */
   draggedNode: NodeRecord<T>;

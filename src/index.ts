@@ -54,6 +54,8 @@ let documentController: AbortController | undefined;
 
 let isNative = false;
 
+let animationFrameId: number | null = null;
+
 const scrollConfig: {
   [key: string]: [number, number];
 } = {
@@ -274,22 +276,19 @@ export function dragStateProps<T>(
   const scrollEls: Array<[HTMLElement, AbortController]> = [];
 
   for (const scrollable of getScrollables()) {
-    let controller;
+    console.log(scrollable);
 
-    console.log("native drag", scrollable);
-    console.log("native drag", nativeDrag);
-    if (nativeDrag) {
-      controller = addEvents(scrollable, {
-        scroll: preventSortOnScroll(),
-      });
-    } else {
-      controller = addEvents(scrollable, {
-        pointermove: handleScroll,
-      });
-      console.log("scrollable", scrollable);
-    }
-
-    scrollEls.push([scrollable, controller]);
+    // TODO: Fix this
+    scrollEls.push([
+      scrollable,
+      nativeDrag
+        ? addEvents(scrollable, {
+            scroll: preventSortOnScroll(),
+          })
+        : addEvents(scrollable, {
+            pointermove: handleScroll,
+          }),
+    ]);
   }
 
   return {
@@ -297,7 +296,6 @@ export function dragStateProps<T>(
     ascendingDirection: false,
     clonedDraggedEls: [],
     dynamicValues: [],
-    pointerMoved: false,
     coordinates: {
       x,
       y,
@@ -599,6 +597,7 @@ function findArrayCoordinates(
 
   if (Array.isArray(obj)) {
     const index = obj.findIndex((el) => el === targetArray);
+
     if (index !== -1) {
       result.push([...path, index]);
     } else {
@@ -672,7 +671,7 @@ export function setParentValues<T>(
     );
 
     if (!updatedValues) {
-      console.warn("No updated value found");
+      console.warn("@formkit/drag-and-drop: No updated value found");
 
       return;
     }
@@ -752,25 +751,16 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
     focus: parentEventData(parentData.config.handleFocusParent),
   });
 
-  parent.setAttribute("role", "listbox");
-
-  parent.setAttribute("tabindex", "0");
-
-  parent.setAttribute("aria-multiselectable", "false");
-
-  parent.setAttribute("aria-activeDescendant", "");
-
-  parent.setAttribute("aria-label", parentData.config.ariaLabel);
-
-  parent.setAttribute("aria-describedby", parent.id + "-live-region");
+  setAttrs(parent, {
+    role: "listbox",
+    tabindex: "0",
+    "aria-multiselectable": "false",
+    "aria-activedescendant": "",
+    "aria-label": parentData.config.ariaLabel,
+    "aria-describedby": parent.id + "-live-region",
+  });
 
   const liveRegion = document.createElement("div");
-
-  //liveRegion.setAttribute("aria-live", "polite");
-
-  //liveRegion.setAttribute("aria-atomic", "true");
-
-  //liveRegion.setAttribute("id", parent.id.toString() + "-live-region");
 
   setAttrs(liveRegion, {
     "aria-live": "polite",
@@ -778,6 +768,7 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
     id: parent.id.toString() + "-live-region",
   });
 
+  // TODO:
   //Object.assign(liveRegion.style, {
   //  position: "absolute",
   //  width: "1px",
@@ -818,7 +809,6 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     mousedown: () => {
       if (!config.nativeDrag) isNative = false;
       else isNative = true;
-      console.log("mousedown", isNative);
     },
   });
 
@@ -931,7 +921,7 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     !config.disabled
   ) {
     console.warn(
-      "The number of enabled nodes does not match the number of values."
+      "@formkit/drag-and-drop: The number of draggable items defined in the parent element does not match the number of values. This may cause unexpected behavior."
     );
 
     return;
@@ -1236,8 +1226,6 @@ export function handleKeydownParent<T>(
         targetNode: state.activeState.dragItem,
       });
 
-      console.log("active state drag aitem", state.activeState.dragItem);
-
       setActive(
         data.targetData.parent,
         state.selectedState.dragItems[0],
@@ -1408,7 +1396,9 @@ export function handlePointermove<T>(
 
     const synthDragState = initSynthDrag(data, state, nodes);
 
-    //console.log("synth drag state", synthDragState);
+    synthDragState.clonedDraggedNode.style.display =
+      synthDragState.draggedNodeDisplay || "";
+
     synthMove(data, synthDragState);
 
     if (config.onDragstart)
@@ -1551,8 +1541,6 @@ function getScrollData<T>(
   };
 }
 
-let animationFrameId: number | null = null;
-
 function cancelSynthScroll() {
   if (animationFrameId !== null) {
     cancelAnimationFrame(animationFrameId);
@@ -1568,6 +1556,11 @@ function setSynthScrollDirection<T>(
 ) {
   if (state.synthScrollDirection === direction) return;
 
+  state.synthScrollDirection = direction;
+
+  // Cancel any ongoing animation frame when direction changes
+  cancelSynthScroll();
+
   if (direction === "up" && el.scrollTop === 0) return;
 
   if (direction === "down" && el.scrollTop + el.clientHeight >= el.scrollHeight)
@@ -1578,15 +1571,6 @@ function setSynthScrollDirection<T>(
   if (direction === "right" && el.scrollLeft + el.clientWidth >= el.scrollWidth)
     return;
 
-  state.synthScrollDirection = direction;
-
-  // Cancel any ongoing animation frame when direction changes
-  if (animationFrameId !== null) {
-    cancelAnimationFrame(animationFrameId);
-
-    animationFrameId = null;
-  }
-
   let lastTimestamp: number | null = null;
 
   // Function to perform the scrolling based on the current direction
@@ -1596,13 +1580,10 @@ function setSynthScrollDirection<T>(
     const elapsed = timestamp - lastTimestamp;
 
     // Base scroll speed in pixels per second
-    const baseSpeed = 500; // Adjust this value as needed
+    const baseSpeed = 500;
 
-    // Calculate how much to scroll based on time elapsed
     const distance = (baseSpeed * elapsed) / 1000; // Pixels to scroll
 
-    //console.log("animation frame id", state);
-    console.log("scrolling");
     if (state.synthScrollDirection === undefined && animationFrameId) {
       cancelAnimationFrame(animationFrameId);
 
@@ -1737,10 +1718,6 @@ function shouldScrollDown<T>(state: DragState<T>, data: ScrollData): boolean {
 }
 
 function moveNode<T>(data: NodePointerEventData<T>, state: SynthDragState<T>) {
-  state.pointerMoved = true;
-
-  state.clonedDraggedNode.style.display = state.draggedNodeDisplay || "";
-
   const { x, y } = eventCoordinates(data.e);
 
   state.coordinates.y = y;
@@ -1774,7 +1751,7 @@ export function synthMove<T>(
 
   moveNode(data, state);
 
-  const elFromPoint = getElFromPoint(data);
+  const elFromPoint = getElFromPoint(eventCoordinates(data.e));
 
   if (!elFromPoint) return;
 
@@ -1801,6 +1778,7 @@ export function synthMove<T>(
 
 export function handleScroll(e: DragEvent | PointerEvent) {
   if (!isSynthDragState(state)) return;
+
   let directionSet = false;
 
   for (const direction of Object.keys(scrollConfig)) {
@@ -2287,16 +2265,11 @@ export function getScrollables(): Array<HTMLElement> {
   ) as Array<HTMLElement>;
 }
 
-export function getElFromPoint<T>(
-  eventData: NodeEventData<T>
-): NodeFromPoint<T> | ParentFromPoint<T> | undefined {
-  if (!(eventData.e instanceof PointerEvent)) return;
-
-  const newX = eventData.e.clientX;
-
-  const newY = eventData.e.clientY;
-
-  let target = document.elementFromPoint(newX, newY);
+export function getElFromPoint<T>(coordinates: {
+  x: number;
+  y: number;
+}): NodeFromPoint<T> | ParentFromPoint<T> | undefined {
+  let target = document.elementFromPoint(coordinates.x, coordinates.y);
 
   if (!isNode(target)) return;
 
@@ -2468,9 +2441,10 @@ export function createEmitter() {
   };
 
   const on = function (eventName: string, callback: CallableFunction) {
-    //console.log("on", eventName, callback);
     const cbs = callbacks.get(eventName) ?? [];
+
     cbs.push(callback);
+
     callbacks.set(eventName, cbs);
   };
   return [emit, on];
