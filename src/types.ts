@@ -36,14 +36,14 @@ export interface ParentConfig<T> {
   accepts?: (
     targetParentData: ParentRecord<T>,
     initialParentData: ParentRecord<T>,
-    lastParentData: ParentRecord<T>,
-    state: DragState<T>
+    currentParentData: ParentRecord<T>,
+    state: BaseDragState<T>
   ) => boolean;
   activeDescendantClass?: string;
   /**
    * The aria label to use for the parent.
    */
-  ariaLabel: string;
+  ariaLabel: (parent: ParentRecord<T>) => string;
   /**
    * The data transfer effect to use for the drag operation.
    */
@@ -98,6 +98,7 @@ export interface ParentConfig<T> {
    * parents to transfer nodes between each other.
    */
   group?: string;
+  handleBlurParent: (data: ParentEventData<T>, state: BaseDragState<T>) => void;
   handleFocusParent: (
     data: ParentEventData<T>,
     state: BaseDragState<T>
@@ -698,7 +699,7 @@ export type EventHandlers = Record<string, (e: Event) => void>;
  * @param incomingDirection - The direction that the dragged node is moving into
  * a dragover node.
  * @param initialParent - The parent that the dragged node was initially in.
- * @param lastParent - The parent that the dragged node was most recently in.
+ * @param currentParent - The parent that the dragged node was most recently in.
  * @param lastValue - The last value of the dragged node.
  * @param originalZIndex - The original z-index of the dragged node.
  * @param preventEnter - A flag to prevent a sort operation from firing until
@@ -788,6 +789,10 @@ export interface DragStateProps<T> {
     y: number;
   };
   /**
+   * The parent that the dragged node was most recently in.
+   */
+  currentParent: ParentRecord<T>;
+  /**
    * The node that is being dragged.
    */
   draggedNode: NodeRecord<T>;
@@ -812,13 +817,9 @@ export interface DragStateProps<T> {
    */
   initialParent: ParentRecord<T>;
   /**
-   * The parent that the dragged node was most recently in.
-   */
-  lastParent: ParentRecord<T>;
-  /**
    * The last value the dragged node targeted.
    */
-  lastTargetValue: T | undefined;
+  currentTargetValue: T | undefined;
   /**
    * longPress - A flag to indicate whether a long press has occurred.
    */

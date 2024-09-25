@@ -139,7 +139,6 @@ function handlePointerupNode<T>(data: NodePointerEventData<T>) {
   const selectedClass = selectionsConfig.selectedClass;
 
   //if (shiftKey || commandKey) {
-  //  console.log("OOOOOHHHHH");
 
   //  return;
   //}

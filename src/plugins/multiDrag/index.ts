@@ -202,7 +202,6 @@ export function selectionsEnd<T>(data: NodeEventData<T>, state: DragState<T>) {
 
 //  //  state.draggedNodes.push(child);
 //  //}
-//  console.log("handle selections");
 //  const config = data.targetData.parent.data.config.multiDragConfig;
 
 //  const clonedEls = state.draggedNodes.map((x: NodeRecord<T>) => {

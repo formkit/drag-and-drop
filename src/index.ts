@@ -155,6 +155,14 @@ function handleRootDragover(e: DragEvent) {
   e.preventDefault();
 }
 
+function ariaLabel<T>(parent: ParentRecord<T>) {
+  const listName = parent.data.config.name;
+
+  return `Entering ${
+    listName ?? ""
+  } listbox. Press space to select an item. To drop the item, press enter.`;
+}
+
 /**
  * Initializes the drag and drop functionality for a given parent.
  *
@@ -182,7 +190,7 @@ export function dragAndDrop<T>({
     getValues,
     setValues,
     config: {
-      ariaLabel: config.ariaLabel ?? "Please select an item",
+      ariaLabel,
       dragDropEffect: "move",
       dragEffectAllowed: "move",
       draggedNodes,
@@ -195,6 +203,7 @@ export function dragAndDrop<T>({
       handleDragoverNode,
       handleDragoverParent,
       handleEnd,
+      handleBlurParent,
       handleFocusParent,
       handlePointerupNode,
       handleTouchstart,
@@ -276,9 +285,6 @@ export function dragStateProps<T>(
   const scrollEls: Array<[HTMLElement, AbortController]> = [];
 
   for (const scrollable of getScrollables()) {
-    console.log(scrollable);
-
-    // TODO: Fix this
     scrollEls.push([
       scrollable,
       nativeDrag
@@ -311,13 +317,13 @@ export function dragStateProps<T>(
       el: data.targetData.parent.el,
       data: data.targetData.parent.data,
     },
-    lastParent: {
+    currentParent: {
       el: data.targetData.parent.el,
       data: data.targetData.parent.data,
     },
     longPress: data.targetData.parent.data.config.longPress ?? false,
     longPressTimeout: 0,
-    lastTargetValue: data.targetData.node.data.value,
+    currentTargetValue: data.targetData.node.data.value,
     scrollEls,
     startLeft: x - rect.left,
     startTop: y - rect.top,
@@ -349,7 +355,7 @@ export function performSort<T>({
 
   newParentValues.splice(targetNode.data.index, 0, ...draggedValues);
 
-  if ("draggedNode" in state) state.lastTargetValue = targetNode.data.value;
+  if ("draggedNode" in state) state.currentTargetValue = targetNode.data.value;
 
   setParentValues(parent.el, parent.data, [...newParentValues]);
 
@@ -393,6 +399,7 @@ function setActive<T>(
 
   if (!newActiveNode) return;
 
+  console.log("setting active");
   state.activeState = {
     dragItem: newActiveNode,
     parent,
@@ -452,7 +459,15 @@ function setSelected<T>(
   updateLiveRegion(parent);
 }
 
-function updateLiveRegion<T>(parent: ParentRecord<T>) {
+function updateLiveRegion<T>(parent: ParentRecord<T>, remove = false) {
+  if (remove) {
+    const liveRegion = document.getElementById(parent.el.id + "-live-region");
+
+    if (liveRegion) liveRegion.remove();
+
+    return;
+  }
+
   const parentId = parent.el.id;
 
   const liveRegion = document.getElementById(parentId + "-live-region");
@@ -461,10 +476,41 @@ function updateLiveRegion<T>(parent: ParentRecord<T>) {
 
   const numberOfSelectedItems = state.selectedState?.dragItems.length || 0;
 
+  if (state.selectedState) {
+    console.log(
+      "dkfkdlf",
+      state.selectedState.parent.el.getAttribute("aria-label")
+    );
+  }
+
+  //if (state.selectedState) {
+  //  const isSameParent = state.selectedState.parent.el === parent.el;
+
+  //  if (state.selectedState.parent.el !== parent.el) {
+  //    liveRegion.textContent = `Leaving `;
+  //  } else {
+  //    liveRegion.textContent = `${numberOfSelectedItems} items selected. Press enter to sort.`;
+  //  }
+
+  //  console.log(isSameParent);
+  //  console.log(state.selectedState.dragItems);
+  //}
+
   liveRegion.textContent =
     numberOfSelectedItems === 0
       ? "No items selected"
       : `${numberOfSelectedItems} items selected`;
+}
+
+export function handleBlurParent<T>(
+  data: ParentEventData<T>,
+  state: BaseDragState<T> | DragState<T> | SynthDragState<T>
+) {
+  if (!state.activeState) return;
+
+  setActive(data.targetData.parent, undefined, state);
+
+  updateLiveRegion(data.targetData.parent, true);
 }
 
 export function handleFocusParent<T>(
@@ -474,6 +520,8 @@ export function handleFocusParent<T>(
   const firstEnabledNode = data.targetData.parent.data.enabledNodes[0];
 
   if (!firstEnabledNode) return;
+
+  console.log("handle focus parent");
 
   setActive(data.targetData.parent, firstEnabledNode, state);
 
@@ -486,9 +534,9 @@ export function performTransfer<T>(
 ) {
   const draggedValues = dragValues(state);
 
-  const lastParentValues = parentValues(
-    state.lastParent.el,
-    state.lastParent.data
+  const currentParentValues = parentValues(
+    state.currentParent.el,
+    state.currentParent.data
   ).filter((x: any) => !draggedValues.includes(x));
 
   const targetParentValues = parentValues(
@@ -520,7 +568,11 @@ export function performTransfer<T>(
     targetParentValues.splice(targetIndex, 0, ...draggedValues);
   }
 
-  setParentValues(state.lastParent.el, state.lastParent.data, lastParentValues);
+  setParentValues(
+    state.currentParent.el,
+    state.currentParent.data,
+    currentParentValues
+  );
 
   setParentValues(
     data.targetData.parent.el,
@@ -531,21 +583,23 @@ export function performTransfer<T>(
   function createTransferEventData(
     state: DragState<T>,
     data: NodeEventData<T> | ParentEventData<T>,
-    lastParentValues: Array<T>,
+    currentParentValues: Array<T>,
     targetParentValues: Array<T>,
     targetIndex: number
   ) {
     return {
-      sourceParent: state.lastParent,
+      sourceParent: state.currentParent,
       targetParent: data.targetData.parent,
-      previousSourceValues: [...lastParentValues],
-      sourceValues: [...state.lastParent.data.getValues(state.lastParent.el)],
+      previousSourceValues: [...currentParentValues],
+      sourceValues: [
+        ...state.currentParent.data.getValues(state.currentParent.el),
+      ],
       previousTargetValues: [...targetParentValues],
       targetValues: [
         ...data.targetData.parent.data.getValues(data.targetData.parent.el),
       ],
-      previousSourceNodes: [...state.lastParent.data.enabledNodes],
-      sourceNodes: [...state.lastParent.data.enabledNodes],
+      previousSourceNodes: [...state.currentParent.data.enabledNodes],
+      sourceNodes: [...state.currentParent.data.enabledNodes],
       previousTargetNodes: [...data.targetData.parent.data.enabledNodes],
       targetNodes: [...data.targetData.parent.data.enabledNodes],
       draggedNode: state.draggedNode,
@@ -558,7 +612,7 @@ export function performTransfer<T>(
     const transferEventData = createTransferEventData(
       state,
       data,
-      lastParentValues,
+      currentParentValues,
       targetParentValues,
       targetIndex
     );
@@ -566,16 +620,16 @@ export function performTransfer<T>(
     data.targetData.parent.data.config.onTransfer(transferEventData);
   }
 
-  if (state.lastParent.data.config.onTransfer) {
+  if (state.currentParent.data.config.onTransfer) {
     const transferEventData = createTransferEventData(
       state,
       data,
-      lastParentValues,
+      currentParentValues,
       targetParentValues,
       targetIndex
     );
 
-    state.lastParent.data.config.onTransfer(transferEventData);
+    state.currentParent.data.config.onTransfer(transferEventData);
   }
 }
 
@@ -748,6 +802,7 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
 
       parent.nestedParent = e.detail.parent;
     },
+    blur: parentEventData(parentData.config.handleBlurParent),
     focus: parentEventData(parentData.config.handleFocusParent),
   });
 
@@ -756,7 +811,10 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
     tabindex: "0",
     "aria-multiselectable": "false",
     "aria-activedescendant": "",
-    "aria-label": parentData.config.ariaLabel,
+    "aria-label": parentData.config.ariaLabel({
+      el: parent,
+      data: parentData,
+    }),
     "aria-describedby": parent.id + "-live-region",
   });
 
@@ -765,6 +823,7 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
   setAttrs(liveRegion, {
     "aria-live": "polite",
     "aria-atomic": "true",
+    "data-drag-and-drop-live-region": "true",
     id: parent.id.toString() + "-live-region",
   });
 
@@ -1233,7 +1292,14 @@ export function handleKeydownParent<T>(
       );
     } else if (
       state.activeState &&
-      state.selectedState.parent.el !== data.targetData.parent.el
+      state.selectedState.parent.el !== data.targetData.parent.el &&
+      validateTransfer({
+        currentParent: data.targetData.parent,
+        targetParent: state.selectedState.parent,
+        initialParent: state.selectedState.parent,
+        draggedNodes: state.selectedState.dragItems,
+        state,
+      })
     ) {
       const selectedValues = state.selectedState.dragItems.map(
         (x) => x.data.value
@@ -1289,7 +1355,7 @@ export function preventSortOnScroll() {
 }
 
 export function handlePointeroverNode<T>(e: PointeroverNodeEvent<T>) {
-  if (e.detail.targetData.parent.el === e.detail.state.lastParent.el)
+  if (e.detail.targetData.parent.el === e.detail.state.currentParent.el)
     sort(e.detail, e.detail.state);
   else transfer(e.detail, e.detail.state);
 }
@@ -1346,8 +1412,8 @@ export function handleEnd<T>(
 
   if (config?.onDragend)
     config.onDragend({
-      parent: state.lastParent,
-      values: parentValues(state.lastParent.el, state.lastParent.data),
+      parent: state.currentParent,
+      values: parentValues(state.currentParent.el, state.currentParent.data),
       draggedNode: state.draggedNode,
       draggedNodes: state.draggedNodes,
       position: state.initialIndex,
@@ -1812,7 +1878,7 @@ export function handleDragoverNode<T>(
 
   data.e.stopPropagation();
 
-  data.targetData.parent.el === state.lastParent?.el
+  data.targetData.parent.el === state.currentParent?.el
     ? sort(data, state)
     : transfer(data, state);
 }
@@ -1829,34 +1895,40 @@ export function handleDragoverParent<T>(
 }
 
 export function handlePointeroverParent<T>(e: PointeroverParentEvent<T>) {
-  if (e.detail.targetData.parent.el !== e.detail.state.lastParent.el)
+  if (e.detail.targetData.parent.el !== e.detail.state.currentParent.el)
     transfer(e.detail, e.detail.state);
 }
 
-export function validateTransfer<T>(
-  data: ParentEventData<T>,
-  state: DragState<T>
-) {
-  if (data.targetData.parent.el === state.lastParent.el) return false;
+export function validateTransfer<T>({
+  currentParent,
+  targetParent,
+  initialParent,
+  draggedNodes,
+  state,
+}: {
+  currentParent: ParentRecord<T>;
+  targetParent: ParentRecord<T>;
+  initialParent: ParentRecord<T>;
+  draggedNodes: Array<NodeRecord<T>>;
+  state: BaseDragState<T>;
+}) {
+  if (targetParent.el === currentParent.el) return false;
 
-  const targetConfig = data.targetData.parent.data.config;
+  const targetConfig = targetParent.data.config;
 
-  if (
-    targetConfig.treeGroup &&
-    state.draggedNode.el.contains(data.targetData.parent.el)
-  ) {
+  // Not checking for contains among all dragged nodes, should do this.
+  if (targetConfig.treeGroup && draggedNodes[0].el.contains(targetParent.el))
     return false;
-  }
 
   if (targetConfig.dropZone === false) return false;
 
-  const initialParentConfig = state.initialParent.data.config;
+  const initialParentConfig = initialParent.data.config;
 
   if (targetConfig.accepts) {
     return targetConfig.accepts(
-      data.targetData.parent,
-      state.initialParent,
-      state.lastParent,
+      targetParent,
+      initialParent,
+      currentParent,
       state
     );
   } else if (
@@ -1889,7 +1961,6 @@ export function validateSort<T>(
   x: number,
   y: number
 ): boolean {
-  // TODO:
   if (
     state.affectedNodes
       .map((x) => x.data.value)
@@ -1902,10 +1973,10 @@ export function validateSort<T>(
     state.remapJustFinished = false;
 
     if (
-      data.targetData.node.data.value === state.lastTargetValue ||
+      data.targetData.node.data.value === state.currentTargetValue ||
       state.draggedNodes.map((x) => x.el).includes(data.targetData.node.el)
     ) {
-      state.lastTargetValue = data.targetData.node.data.value;
+      state.currentTargetValue = data.targetData.node.data.value;
     }
 
     return false;
@@ -1914,15 +1985,16 @@ export function validateSort<T>(
   if (state.preventEnter) return false;
 
   if (state.draggedNodes.map((x) => x.el).includes(data.targetData.node.el)) {
-    state.lastTargetValue = undefined;
+    state.currentTargetValue = undefined;
 
     return false;
   }
 
-  if (data.targetData.node.data.value === state.lastTargetValue) return false;
+  if (data.targetData.node.data.value === state.currentTargetValue)
+    return false;
 
   if (
-    data.targetData.parent.el !== state.lastParent?.el ||
+    data.targetData.parent.el !== state.currentParent?.el ||
     data.targetData.parent.data.config.sortable === false
   )
     return false;
@@ -1943,7 +2015,7 @@ export function validateSort<T>(
     incomingDirection = xDiff > 0 ? "left" : "right";
   }
 
-  const threshold = state.lastParent.data.config.threshold;
+  const threshold = state.currentParent.data.config.threshold;
 
   switch (incomingDirection) {
     case "left":
@@ -2042,7 +2114,7 @@ export function nodeEventData<T>(
       },
       parent: {
         el: node.parentNode,
-        data: parentData as ParentData<T>,
+        data: parentData,
       },
     };
   }
@@ -2069,11 +2141,20 @@ export function transfer<T>(
   data: NodeEventData<T> | ParentEventData<T>,
   state: DragState<T>
 ): void {
-  if (!validateTransfer(data, state)) return;
+  if (
+    !validateTransfer({
+      currentParent: state.currentParent,
+      targetParent: data.targetData.parent,
+      initialParent: state.initialParent,
+      draggedNodes: state.draggedNodes,
+      state,
+    })
+  )
+    return;
 
   data.targetData.parent.data.config.performTransfer(state, data);
 
-  state.lastParent = data.targetData.parent;
+  state.currentParent = data.targetData.parent;
 
   state.transferred = true;
 }
@@ -2334,10 +2415,6 @@ export function isNode(el: unknown): el is Node {
   return el instanceof HTMLElement && el.parentNode instanceof HTMLElement;
 }
 
-export function preventDefault(e: Event) {
-  e.preventDefault();
-}
-
 /**
  * Takes a given el and event handlers, assigns them, and returns the used abort
  * controller.
@@ -2447,5 +2524,6 @@ export function createEmitter() {
 
     callbacks.set(eventName, cbs);
   };
+
   return [emit, on];
 }
