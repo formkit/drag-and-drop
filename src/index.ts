@@ -499,8 +499,6 @@ export function handleFocusParent<T>(
 
   if (!firstEnabledNode) return;
 
-  console.log("handle focus parent");
-
   setActive(data.targetData.parent, firstEnabledNode, state);
 
   updateLiveRegion(data.targetData.parent);
@@ -701,7 +699,7 @@ export function setParentValues<T>(
     );
 
     if (!updatedValues) {
-      console.warn("@formkit/drag-and-drop: No updated value found");
+      console.warn("No updated value found");
 
       return;
     }
@@ -799,17 +797,16 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
     id: parent.id.toString() + "-live-region",
   });
 
-  // TODO:
-  //Object.assign(liveRegion.style, {
-  //  position: "absolute",
-  //  width: "1px",
-  //  height: "1px",
-  //  padding: "0",
-  //  overflow: "hidden",
-  //  clip: "rect(0, 0, 0, 0)",
-  //  whiteSpace: "nowrap",
-  //  border: "0",
-  //});
+  Object.assign(liveRegion.style, {
+    position: "absolute",
+    width: "1px",
+    height: "1px",
+    padding: "0",
+    overflow: "hidden",
+    clip: "rect(0, 0, 0, 0)",
+    whiteSpace: "nowrap",
+    border: "0",
+  });
 
   document.body.appendChild(liveRegion);
 }
@@ -952,7 +949,7 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     !config.disabled
   ) {
     console.warn(
-      "@formkit/drag-and-drop: The number of draggable items defined in the parent element does not match the number of values. This may cause unexpected behavior."
+      "The number of draggable items defined in the parent element does not match the number of values. This may cause unexpected behavior."
     );
 
     return;
