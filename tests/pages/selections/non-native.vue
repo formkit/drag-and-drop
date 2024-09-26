@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useDragAndDrop } from "../../src/vue/index";
+import { useDragAndDrop } from "../../../src/vue/index";
 
 const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   group: "transfer",
@@ -23,7 +23,7 @@ const [parent2, values2] = useDragAndDrop(["Carrot", "Broccoli", "Potato"], {
 </script>
 
 <template>
-  <h1>Transfer</h1>
+  <h1 id="title">Non native selections</h1>
   <div class="flex-wrap">
     <div>
       <ul id="transfer_1" ref="parent1" class="list" aria-label="fruits">

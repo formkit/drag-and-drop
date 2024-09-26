@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useDragAndDrop } from "../../src/vue/index";
+import { useDragAndDrop } from "../../../src/vue/index";
 
 const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   group: "transfer",
@@ -8,7 +8,6 @@ const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   draggable: (el) => {
     return el.tagName === "LI";
   },
-  multiDrag: true,
 });
 
 const [parent2, values2] = useDragAndDrop(["Carrot", "Broccoli", "Potato"], {
@@ -18,12 +17,11 @@ const [parent2, values2] = useDragAndDrop(["Carrot", "Broccoli", "Potato"], {
   draggable: (el) => {
     return el.tagName === "LI";
   },
-  multiDrag: true,
 });
 </script>
 
 <template>
-  <h1>Transfer</h1>
+  <h1 id="title">Native selections</h1>
   <div class="flex-wrap">
     <div>
       <ul id="transfer_1" ref="parent1" class="list" aria-label="fruits">
@@ -61,6 +59,7 @@ const [parent2, values2] = useDragAndDrop(["Carrot", "Broccoli", "Potato"], {
 
 .red {
   background-color: red !important;
+  border: 5px solid red !important;
 }
 
 .flex-wrap {

@@ -14,44 +14,41 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "Desktop Chrome Drag Tests",
+      name: "Desktop Chrome",
       testMatch: "tests/drag/**/*.spec.ts",
       use: {
         ...devices["Desktop Chrome"],
       },
     },
     {
-      name: "Desktop Firefox Drag Tests",
+      name: "Desktop Firefox",
       testMatch: "tests/drag/**/*.spec.ts",
       use: {
         ...devices["Desktop Firefox"],
       },
     },
     {
-      name: "Mobile Chrome Synthetic Drag Tests",
-      testMatch: "tests/synthetic-drag/**/*.spec.ts",
+      name: "Desktop Webkit",
+      testMatch: "tests/drag/**/*.spec.ts",
       use: {
-        ...devices["Mobile Chrome"],
+        ...devices["Desktop Webkit"],
       },
     },
     {
-      name: "Mobile Safari Synthetic Drag Tests",
+      name: "iPhone 13 Chromium",
       testMatch: "tests/synthetic-drag/**/*.spec.ts",
       use: {
-        ...devices["Mobile Safari"],
+        ...devices["iPhone 13"],
+        browserName: "chromium",
       },
     },
     {
-      name: "Mobile Firefox Synthtic Drag Tests",
+      name: "iPhone 13 webkit",
       testMatch: "tests/synthetic-drag/**/*.spec.ts",
       use: {
-        ...devices["Mobile Firefox"],
+        ...devices["iPhone 13"],
+        browserName: "webkit",
       },
-    },
-    {
-      name: "Framework Tests",
-      testMatch: "tests-frameworks/**/*.spec.ts",
-      use: { ...devices["Desktop Chrome"] },
     },
   ],
 });

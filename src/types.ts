@@ -202,10 +202,7 @@ export interface ParentConfig<T> {
    * The name of the parent (used for accepts function for increased specificity).
    */
   name?: string;
-  /**
-   * The configuration for the multi-drag plugin.
-   */
-  multiDragConfig?: MultiDragConfig<T>;
+  multiDrag?: boolean;
   /**
    * If set to false, the library will not use the native drag and drop API.
    */
@@ -231,6 +228,7 @@ export interface ParentConfig<T> {
     initialParent,
     draggedNodes,
     initialIndex,
+    state,
     targetNode,
   }: {
     currentParent: ParentRecord<T>;
@@ -238,6 +236,7 @@ export interface ParentConfig<T> {
     initialParent: ParentRecord<T>;
     draggedNodes: Array<NodeRecord<T>>;
     initialIndex: number;
+    state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
     targetNode?: NodeRecord<T>;
   }) => void;
   /**
@@ -642,50 +641,29 @@ export type SetupNode = <T>(data: SetupNodeData<T>) => void;
 
 export type TearDownNode = <T>(data: TearDownNodeData<T>) => void;
 
-export type RemapFinished = <T>(data: ParentData<T>) => void;
+export type RemapFinished = <T>(data: RemapFinishedData<T>) => void;
+
+export interface RemapFinishedData<T> {
+  parent: ParentRecord<T>;
+}
 
 /**
  * The payload of when the setupNode function is called in a given plugin.
  */
 export interface SetupNodeData<T> {
-  /**
-   * The node that is being set up.
-   */
-  node: Node;
-  /**
-   * The data of the node that is being set up.
-   */
-  nodeData: NodeData<T>;
-  /**
-   * The parent of the node that is being set up.
-   */
-  parent: HTMLElement;
-  /**
-   * The data of the parent of the node that is being set up.
-   */
-  parentData: ParentData<T>;
+  node: NodeRecord<T>;
+  parent: ParentRecord<T>;
 }
 
 /**
  * The payload of when the tearDownNode function is called in a given plugin.
  */
 export interface TearDownNodeData<T> {
-  /**
-   * The node that is being torn down.
-   */
-  node: Node;
-  /**
-   * The data of the node that is being torn down.
-   */
-  nodeData?: NodeData<T>;
-  /**
-   * The parent of the node that is being torn down.
-   */
-  parent: HTMLElement;
-  /**
-   * The data of the parent of the node that is being torn down.
-   */
-  parentData: ParentData<T>;
+  node: {
+    el: Node;
+    data?: NodeData<T>;
+  };
+  parent: ParentRecord<T>;
 }
 
 export type EventHandlers = Record<string, (e: Event) => void>;
@@ -753,7 +731,7 @@ type EventEmitterData<T> = {
 
 export type BaseDragState<T> = {
   activeState?: {
-    dragItem: NodeRecord<T>;
+    node: NodeRecord<T>;
     parent: ParentRecord<T>;
   };
   emit: (event: string, data: EventEmitterData<T>) => void;
@@ -768,7 +746,7 @@ export type BaseDragState<T> = {
    */
   remapJustFinished: boolean;
   selectedState?: {
-    dragItems: Array<NodeRecord<T>>;
+    nodes: Array<NodeRecord<T>>;
     parent: ParentRecord<T>;
   };
 };
@@ -880,19 +858,13 @@ export interface SortEventData<T> {
 }
 
 export interface TransferEventData<T> {
-  sourceParent: ParentRecord<T>;
-  targetParent: ParentRecord<T>;
-  previousSourceValues: Array<T>;
-  sourceValues: Array<T>;
-  previousTargetValues: Array<T>;
-  targetValues: Array<T>;
-  previousSourceNodes: Array<NodeRecord<T>>;
-  sourceNodes: Array<NodeRecord<T>>;
-  previousTargetNodes: Array<NodeRecord<T>>;
-  targetNodes: Array<NodeRecord<T>>;
-  draggedNode: NodeRecord<T>;
-  sourcePreviousPosition: number;
-  targetPosition: number;
+  lastParent: ParentRecord<T>;
+  newParent: ParentRecord<T>;
+  initialParent: ParentRecord<T>;
+  draggedNodes: Array<NodeRecord<T>>;
+  targetIndex: number;
+  state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
+  targetNode?: NodeRecord<T>;
 }
 
 export interface DragstartEventData<T> {
@@ -974,27 +946,3 @@ export interface MultiDragConfig<T> {
    */
   synthDropZoneClass?: string;
 }
-
-export interface MultiDragParentConfig<T> extends ParentConfig<T> {
-  multiDragConfig: MultiDragConfig<T>;
-}
-
-//export interface SelectionsParentConfig<T extends unknown>
-//  extends ParentConfig<T> {
-//  selectionsConfig: SelectionsConfig<T>;
-//}
-
-//export interface SelectionsConfig<T> {
-//  selectedClass?: string;
-//  synthSelectedClass?: string;
-//  clickawayDeselect?: boolean;
-//  handleKeydownNode?: (data: NodeEventData<T>, state: DragState<T>) => void;
-//  handlePointerdownNode?: (
-//    data: NodePointerEventData<T>,
-//    state: DragState<T>
-//  ) => void;
-//  handlePointerupNode?: (
-//    data: NodePointerEventData<T>,
-//    state: DragState<T>
-//  ) => void;
-//}
