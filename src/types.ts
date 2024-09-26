@@ -41,10 +41,6 @@ export interface ParentConfig<T> {
   ) => boolean;
   activeDescendantClass?: string;
   /**
-   * The aria label to use for the parent.
-   */
-  ariaLabel: (parent: ParentRecord<T>) => string;
-  /**
    * The data transfer effect to use for the drag operation.
    */
   dragEffectAllowed: NativeDragEffects;
@@ -229,10 +225,21 @@ export interface ParentConfig<T> {
   /**
    * Function that is called when a transfer operation is to be performed.
    */
-  performTransfer: (
-    state: DragState<T>,
-    data: NodeEventData<T> | ParentEventData<T>
-  ) => void;
+  performTransfer: ({
+    currentParent,
+    targetParent,
+    initialParent,
+    draggedNodes,
+    initialIndex,
+    targetNode,
+  }: {
+    currentParent: ParentRecord<T>;
+    targetParent: ParentRecord<T>;
+    initialParent: ParentRecord<T>;
+    draggedNodes: Array<NodeRecord<T>>;
+    initialIndex: number;
+    targetNode?: NodeRecord<T>;
+  }) => void;
   /**
    * An array of functions to use for a given parent.
    */

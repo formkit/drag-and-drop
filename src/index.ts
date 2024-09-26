@@ -155,14 +155,6 @@ function handleRootDragover(e: DragEvent) {
   e.preventDefault();
 }
 
-function ariaLabel<T>(parent: ParentRecord<T>) {
-  const listName = parent.data.config.name;
-
-  return `Entering ${
-    listName ?? ""
-  } listbox. Press space to select an item. To drop the item, press enter.`;
-}
-
 /**
  * Initializes the drag and drop functionality for a given parent.
  *
@@ -190,7 +182,6 @@ export function dragAndDrop<T>({
     getValues,
     setValues,
     config: {
-      ariaLabel,
       dragDropEffect: "move",
       dragEffectAllowed: "move",
       draggedNodes,
@@ -388,6 +379,8 @@ function setActive<T>(
   newActiveNode: NodeRecord<T> | undefined,
   state: BaseDragState<T>
 ) {
+  updateLiveRegion(parent, "", true);
+
   const activeDescendantClass = parent.data.config.activeDescendantClass;
 
   if (state.activeState) {
@@ -399,7 +392,6 @@ function setActive<T>(
 
   if (!newActiveNode) return;
 
-  console.log("setting active");
   state.activeState = {
     dragItem: newActiveNode,
     parent,
@@ -431,13 +423,11 @@ function setSelected<T>(
     );
 
     for (const node of state.selectedState.dragItems)
-      node.el.setAttribute("aria-checked", "false");
+      node.el.setAttribute("aria-selected", "false");
   }
 
   if (!newlySelectedNodes.length) {
     state.selectedState = undefined;
-
-    updateLiveRegion(parent);
 
     return;
   }
@@ -454,52 +444,40 @@ function setSelected<T>(
   );
 
   for (const node of newlySelectedNodes)
-    node.el.setAttribute("aria-checked", "true");
+    node.el.setAttribute("aria-selected", "true");
 
-  updateLiveRegion(parent);
+  const selectedItems = newlySelectedNodes.map((x) =>
+    x.el.getAttribute("aria-label")
+  );
+
+  updateLiveRegion(
+    parent,
+    `${selectedItems.join(
+      ", "
+    )} ready for dragging. Use arrow keys to navigate. Press enter to drop ${selectedItems.join(
+      ", "
+    )}`
+  );
 }
 
-function updateLiveRegion<T>(parent: ParentRecord<T>, remove = false) {
-  if (remove) {
-    const liveRegion = document.getElementById(parent.el.id + "-live-region");
-
-    if (liveRegion) liveRegion.remove();
-
-    return;
-  }
-
+function updateLiveRegion<T>(
+  parent: ParentRecord<T>,
+  message?: string,
+  remove = false
+) {
   const parentId = parent.el.id;
 
   const liveRegion = document.getElementById(parentId + "-live-region");
 
   if (!liveRegion) return;
 
-  const numberOfSelectedItems = state.selectedState?.dragItems.length || 0;
+  if (remove) {
+    liveRegion.textContent = "";
 
-  if (state.selectedState) {
-    console.log(
-      "dkfkdlf",
-      state.selectedState.parent.el.getAttribute("aria-label")
-    );
+    return;
   }
 
-  //if (state.selectedState) {
-  //  const isSameParent = state.selectedState.parent.el === parent.el;
-
-  //  if (state.selectedState.parent.el !== parent.el) {
-  //    liveRegion.textContent = `Leaving `;
-  //  } else {
-  //    liveRegion.textContent = `${numberOfSelectedItems} items selected. Press enter to sort.`;
-  //  }
-
-  //  console.log(isSameParent);
-  //  console.log(state.selectedState.dragItems);
-  //}
-
-  liveRegion.textContent =
-    numberOfSelectedItems === 0
-      ? "No items selected"
-      : `${numberOfSelectedItems} items selected`;
+  if (message) liveRegion.textContent = message;
 }
 
 export function handleBlurParent<T>(
@@ -510,7 +488,7 @@ export function handleBlurParent<T>(
 
   setActive(data.targetData.parent, undefined, state);
 
-  updateLiveRegion(data.targetData.parent, true);
+  updateLiveRegion(data.targetData.parent, undefined, true);
 }
 
 export function handleFocusParent<T>(
@@ -528,57 +506,55 @@ export function handleFocusParent<T>(
   updateLiveRegion(data.targetData.parent);
 }
 
-export function performTransfer<T>(
-  state: DragState<T>,
-  data: NodeEventData<T> | ParentEventData<T>
-) {
-  const draggedValues = dragValues(state);
+export function performTransfer<T>({
+  currentParent,
+  targetParent,
+  initialParent,
+  draggedNodes,
+  initialIndex,
+  targetNode,
+}: {
+  currentParent: ParentRecord<T>;
+  targetParent: ParentRecord<T>;
+  initialParent: ParentRecord<T>;
+  draggedNodes: Array<NodeRecord<T>>;
+  initialIndex: number;
+  targetNode?: NodeRecord<T>;
+}) {
+  const draggedValues = draggedNodes.map((x) => x.data.value);
 
   const currentParentValues = parentValues(
-    state.currentParent.el,
-    state.currentParent.data
+    currentParent.el,
+    currentParent.data
   ).filter((x: any) => !draggedValues.includes(x));
 
-  const targetParentValues = parentValues(
-    data.targetData.parent.el,
-    data.targetData.parent.data
-  );
+  const targetParentValues = parentValues(targetParent.el, targetParent.data);
 
   const reset =
-    state.initialParent.el === data.targetData.parent.el &&
-    data.targetData.parent.data.config.sortable === false;
+    initialParent.el === targetParent.el &&
+    targetParent.data.config.sortable === false;
 
   let targetIndex: number;
 
-  if ("node" in data.targetData) {
+  if (targetNode) {
     if (reset) {
-      targetIndex = state.initialIndex;
-    } else if (data.targetData.parent.data.config.sortable === false) {
-      targetIndex = data.targetData.parent.data.enabledNodes.length;
+      targetIndex = initialIndex;
+    } else if (targetParent.data.config.sortable === false) {
+      targetIndex = targetParent.data.enabledNodes.length;
     } else {
-      targetIndex = data.targetData.node.data.index;
+      targetIndex = targetNode.data.index;
     }
 
     targetParentValues.splice(targetIndex, 0, ...draggedValues);
   } else {
-    targetIndex = reset
-      ? state.initialIndex
-      : data.targetData.parent.data.enabledNodes.length;
+    targetIndex = reset ? initialIndex : targetParent.data.enabledNodes.length;
 
     targetParentValues.splice(targetIndex, 0, ...draggedValues);
   }
 
-  setParentValues(
-    state.currentParent.el,
-    state.currentParent.data,
-    currentParentValues
-  );
+  setParentValues(currentParent.el, currentParent.data, currentParentValues);
 
-  setParentValues(
-    data.targetData.parent.el,
-    data.targetData.parent.data,
-    targetParentValues
-  );
+  setParentValues(targetParent.el, targetParent.data, targetParentValues);
 
   function createTransferEventData(
     state: DragState<T>,
@@ -608,29 +584,29 @@ export function performTransfer<T>(
     };
   }
 
-  if (data.targetData.parent.data.config.onTransfer) {
-    const transferEventData = createTransferEventData(
-      state,
-      data,
-      currentParentValues,
-      targetParentValues,
-      targetIndex
-    );
+  //if (targetParent.data.config.onTransfer) {
+  //  const transferEventData = createTransferEventData(
+  //    state,
+  //    data,
+  //    currentParentValues,
+  //    targetParentValues,
+  //    targetIndex
+  //  );
 
-    data.targetData.parent.data.config.onTransfer(transferEventData);
-  }
+  //  targetParent.data.config.onTransfer(transferEventData);
+  //}
 
-  if (state.currentParent.data.config.onTransfer) {
-    const transferEventData = createTransferEventData(
-      state,
-      data,
-      currentParentValues,
-      targetParentValues,
-      targetIndex
-    );
+  //if (currentParent.data.config.onTransfer) {
+  //  const transferEventData = createTransferEventData(
+  //    state,
+  //    data,
+  //    currentParentValues,
+  //    targetParentValues,
+  //    targetIndex
+  //  );
 
-    state.currentParent.data.config.onTransfer(transferEventData);
-  }
+  //  currentParent.data.config.onTransfer(transferEventData);
+  //}
 }
 
 export function parentValues<T>(
@@ -811,10 +787,6 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
     tabindex: "0",
     "aria-multiselectable": "false",
     "aria-activedescendant": "",
-    "aria-label": parentData.config.ariaLabel({
-      el: parent,
-      data: parentData,
-    }),
     "aria-describedby": parent.id + "-live-region",
   });
 
@@ -873,7 +845,7 @@ export function setupNode<T>(data: SetupNodeData<T>) {
 
   data.node.setAttribute("role", "option");
 
-  data.node.setAttribute("aria-checked", "false");
+  data.node.setAttribute("aria-selected", "false");
 
   config.reapplyDragClasses(data.node, data.parentData);
 
@@ -1274,22 +1246,32 @@ export function handleKeydownParent<T>(
           state
         )
       : setSelected(data.targetData.parent, [activeDescendant], state);
+
+    if (!state.selectedState)
+      updateLiveRegion(data.targetData.parent, "", true);
   } else if (data.e.key === "Enter" && state.selectedState) {
     if (
       state.selectedState.parent.el === data.targetData.parent.el &&
       state.activeState
     ) {
+      if (
+        state.selectedState.dragItems[0].el === state.activeState.dragItem.el
+      ) {
+        updateLiveRegion(data.targetData.parent, "Cannot drop item on itself");
+
+        return;
+      }
       parentData.config.performSort({
         parent: data.targetData.parent,
         draggedNodes: state.selectedState.dragItems,
         targetNode: state.activeState.dragItem,
       });
 
-      setActive(
-        data.targetData.parent,
-        state.selectedState.dragItems[0],
-        state
-      );
+      setActive(data.targetData.parent, undefined, state);
+
+      setSelected(data.targetData.parent, [], state);
+
+      updateLiveRegion(data.targetData.parent, "Drop successful");
     } else if (
       state.activeState &&
       state.selectedState.parent.el !== data.targetData.parent.el &&
@@ -1301,41 +1283,20 @@ export function handleKeydownParent<T>(
         state,
       })
     ) {
-      const selectedValues = state.selectedState.dragItems.map(
-        (x) => x.data.value
-      );
+      parentData.config.performTransfer({
+        currentParent: state.selectedState.parent,
+        targetParent: data.targetData.parent,
+        initialParent: state.selectedState.parent,
+        draggedNodes: state.selectedState.dragItems,
+        initialIndex: state.selectedState.dragItems[0].data.index,
+        targetNode: state.activeState.dragItem,
+      });
 
-      const selectedParentValues = parentValues(
-        state.selectedState.parent.el,
-        state.selectedState.parent.data
-      );
+      setActive(data.targetData.parent, undefined, state);
 
-      const newValues = selectedParentValues.filter(
-        (x) => !selectedValues.includes(x)
-      );
+      setSelected(data.targetData.parent, [], state);
 
-      setParentValues(
-        state.selectedState.parent.el,
-        state.selectedState.parent.data,
-        newValues
-      );
-
-      const values = parentValues(
-        data.targetData.parent.el,
-        data.targetData.parent.data
-      );
-
-      values.splice(
-        state.activeState.dragItem.data.index + 1,
-        0,
-        ...selectedValues
-      );
-
-      setParentValues(data.targetData.parent.el, data.targetData.parent.data, [
-        ...values,
-      ]);
-
-      setSelected(data.targetData.parent, state.selectedState.dragItems, state);
+      updateLiveRegion(data.targetData.parent, "Drop successful");
     }
   }
 }
@@ -2152,7 +2113,14 @@ export function transfer<T>(
   )
     return;
 
-  data.targetData.parent.data.config.performTransfer(state, data);
+  data.targetData.parent.data.config.performTransfer({
+    currentParent: state.currentParent,
+    targetParent: data.targetData.parent,
+    initialParent: state.initialParent,
+    draggedNodes: state.draggedNodes,
+    initialIndex: state.initialIndex,
+    targetNode: "node" in data.targetData ? data.targetData.node : undefined,
+  });
 
   state.currentParent = data.targetData.parent;
 

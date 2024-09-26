@@ -10,7 +10,7 @@ const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   },
 });
 
-const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
+const [parent2, values2] = useDragAndDrop(["Carrot", "Broccoli", "Potato"], {
   group: "transfer",
   selectedClass: "red",
   activeDescendantClass: "border",
@@ -18,26 +18,20 @@ const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
     return el.tagName === "LI";
   },
 });
-
-const [parent3, values3] = useDragAndDrop(
-  ["Strawberry", "Watermelon", "Kiwi"],
-  {
-    group: "transfer",
-    selectedClass: "red",
-    activeDescendantClass: "border",
-    draggable: (el) => {
-      return el.tagName === "LI";
-    },
-  }
-);
 </script>
 
 <template>
   <h1>Transfer</h1>
   <div class="flex-wrap">
     <div>
-      <ul id="transfer_1" ref="parent1" class="list">
-        <li v-for="value in values1" :id="value" :key="value" class="item">
+      <ul id="transfer_1" ref="parent1" class="list" aria-label="fruits">
+        <li
+          v-for="value in values1"
+          :id="value"
+          :key="value"
+          class="item"
+          :aria-label="value"
+        >
           {{ value }}
         </li>
         <span id="values_1" class="text-xs">
@@ -46,22 +40,12 @@ const [parent3, values3] = useDragAndDrop(
       </ul>
     </div>
     <div>
-      <ul id="2" ref="parent2" class="list">
+      <ul id="2" ref="parent2" class="list" aria-label="vegetables">
         <li v-for="value in values2" :id="value" :key="value" class="item">
           {{ value }}
         </li>
         <span id="values_2" class="text-xs">
           {{ values2.map((x) => x).join(" ") }}
-        </span>
-      </ul>
-    </div>
-    <div>
-      <ul id="3" ref="parent3" class="list">
-        <li v-for="value in values3" :id="value" :key="value" class="item">
-          {{ value }}
-        </li>
-        <span id="values_3" class="text-xs">
-          {{ values3.map((x) => x).join(" ") }}
         </span>
       </ul>
     </div>
@@ -74,8 +58,9 @@ const [parent3, values3] = useDragAndDrop(
 }
 
 .red {
-  background-color: purple !important;
+  background-color: red !important;
 }
+
 .flex-wrap {
   display: flex;
 }
