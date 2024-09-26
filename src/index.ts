@@ -1207,6 +1207,8 @@ export function handlePointerdownNode<T>(
       (x) => x.el === data.targetData.node.el
     );
 
+    console.log(idx);
+
     if (idx === -1) {
       if (
         state.selectedState &&
@@ -1220,9 +1222,13 @@ export function handlePointerdownNode<T>(
       }
       setSelected(data.targetData.parent, selectedNodes, state);
     } else {
-      if (!touchDevice || isNative) {
-        deselect(state.selectedState.nodes, data.targetData.parent, state);
-      }
+      deselect(
+        state.selectedState.nodes.filter(
+          (x) => x.el === data.targetData.node.el
+        ),
+        data.targetData.parent,
+        state
+      );
     }
   } else {
     setSelected(data.targetData.parent, [data.targetData.node], state);
