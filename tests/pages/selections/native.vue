@@ -3,8 +3,8 @@ import { useDragAndDrop } from "../../../src/vue/index";
 
 const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   group: "transfer",
-  selectedClass: "red",
-  activeDescendantClass: "border",
+  selectedClass: "selected",
+  activeDescendantClass: "active",
   draggable: (el) => {
     return el.tagName === "LI";
   },
@@ -12,8 +12,8 @@ const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
 
 const [parent2, values2] = useDragAndDrop(["Carrot", "Broccoli", "Potato"], {
   group: "transfer",
-  selectedClass: "red",
-  activeDescendantClass: "border",
+  selectedClass: "selected",
+  activeDescendantClass: "active",
   draggable: (el) => {
     return el.tagName === "LI";
   },
@@ -24,7 +24,7 @@ const [parent2, values2] = useDragAndDrop(["Carrot", "Broccoli", "Potato"], {
   <h1 id="title">Native selections</h1>
   <div class="flex-wrap">
     <div>
-      <ul id="transfer_1" ref="parent1" class="list" aria-label="fruits">
+      <ul id="fruits" ref="parent1" class="list" aria-label="fruits">
         <li
           v-for="value in values1"
           :id="value"
@@ -40,7 +40,7 @@ const [parent2, values2] = useDragAndDrop(["Carrot", "Broccoli", "Potato"], {
       </ul>
     </div>
     <div>
-      <ul id="2" ref="parent2" class="list" aria-label="vegetables">
+      <ul id="vegetables" ref="parent2" class="list" aria-label="vegetables">
         <li v-for="value in values2" :id="value" :key="value" class="item">
           {{ value }}
         </li>
@@ -53,11 +53,11 @@ const [parent2, values2] = useDragAndDrop(["Carrot", "Broccoli", "Potato"], {
 </template>
 
 <style scoped>
-.border {
+.active {
   border: 5px solid red !important;
 }
 
-.red {
+.selected {
   background-color: red !important;
   border: 5px solid red !important;
 }
@@ -76,6 +76,7 @@ h1 {
   margin: 0;
   margin-bottom: 2em;
   padding: 2em;
+  width: 100%;
   background-color: grey;
 }
 

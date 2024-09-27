@@ -736,6 +736,7 @@ export type BaseDragState<T> = {
   };
   emit: (event: string, data: EventEmitterData<T>) => void;
   on: (event: string, callback: CallableFunction) => void;
+  newActiveDescendant?: NodeRecord<T>;
   /**
    * The original z-index of the dragged node.
    */

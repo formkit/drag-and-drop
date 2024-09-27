@@ -84,6 +84,7 @@ const baseDragState = {
   activeDescendant: undefined,
   on,
   emit,
+  newActiveDescendant: undefined,
   originalZIndex: undefined,
   preventEnter: false,
   remapJustFinished: false,
@@ -168,10 +169,6 @@ export function dragAndDrop<T>({
   config = {},
 }: DragAndDrop<T>): void {
   if (!isBrowser) return;
-
-  const div = document.createElement("div");
-  div.textContent = touchDevice;
-  document.body.appendChild(div);
 
   if (!documentController)
     documentController = addEvents(document, {
@@ -415,9 +412,7 @@ function setActive<T>(
   newActiveNode: NodeRecord<T> | undefined,
   state: BaseDragState<T>
 ) {
-  return;
-  updateLiveRegion(parent, "", true);
-
+  //clearLiveRegion(parent);
   const activeDescendantClass = parent.data.config.activeDescendantClass;
 
   if (state.activeState) {
@@ -428,7 +423,7 @@ function setActive<T>(
   }
 
   if (!newActiveNode) {
-    state.activeState = undefined;
+    state.activeState?.parent.el.setAttribute("aria-activedescendant", "");
 
     return;
   }
@@ -438,7 +433,7 @@ function setActive<T>(
     parent,
   };
 
-  addNodeClass([newActiveNode.el], activeDescendantClass, true);
+  addNodeClass([newActiveNode.el], activeDescendantClass);
 
   state.activeState.parent.el.setAttribute(
     "aria-activedescendant",
@@ -471,6 +466,9 @@ function deselect<T>(
 
     state.selectedState.nodes.splice(index, 1);
   }
+  state.selectedState = undefined;
+
+  clearLiveRegion(parent);
 }
 
 /**
@@ -485,7 +483,7 @@ function setSelected<T>(
   for (const node of selectedNodes) {
     node.el.setAttribute("aria-selected", "true");
 
-    addNodeClass([node.el], parent.data.config.selectedClass, true);
+    addNodeClass([node.el], parent.data.config.selectedClass);
   }
 
   state.selectedState = {
@@ -497,13 +495,23 @@ function setSelected<T>(
     x.el.getAttribute("aria-label")
   );
 
+  if (selectedItems.length === 0) {
+    state.selectedState = undefined;
+
+    clearLiveRegion(parent);
+
+    return;
+  }
+
+  setActive(parent, selectedNodes[0], state);
+
   updateLiveRegion(
     parent,
     `${selectedItems.join(
       ", "
     )} ready for dragging. Use arrow keys to navigate. Press enter to drop ${selectedItems.join(
       ", "
-    )}`
+    )}.`
   );
 
   //state.selectedState = {
@@ -534,25 +542,22 @@ function setSelected<T>(
   //);
 }
 
-function updateLiveRegion<T>(
-  parent: ParentRecord<T>,
-  message?: string,
-  remove = false
-) {
-  return;
+function updateLiveRegion<T>(parent: ParentRecord<T>, message: string) {
   const parentId = parent.el.id;
 
   const liveRegion = document.getElementById(parentId + "-live-region");
 
   if (!liveRegion) return;
 
-  if (remove) {
-    liveRegion.textContent = "";
+  liveRegion.textContent = message;
+}
 
-    return;
-  }
+function clearLiveRegion<T>(parent: ParentRecord<T>) {
+  const liveRegion = document.getElementById(parent.el.id + "-live-region");
 
-  if (message) liveRegion.textContent = message;
+  if (!liveRegion) return;
+
+  liveRegion.textContent = "";
 }
 
 export function handleBlurParent<T>(
@@ -561,9 +566,9 @@ export function handleBlurParent<T>(
 ) {
   if (!state.activeState) return;
 
-  setActive(data.targetData.parent, undefined, state);
+  //setActive(data.targetData.parent, undefined, state);
 
-  updateLiveRegion(data.targetData.parent, undefined, true);
+  //updateLiveRegion(data.targetData.parent, undefined, true);
 }
 
 export function handleFocusParent<T>(
@@ -574,10 +579,9 @@ export function handleFocusParent<T>(
 
   if (!firstEnabledNode) return;
 
-  if (!state.selectedState)
-    setActive(data.targetData.parent, firstEnabledNode, state);
+  setActive(data.targetData.parent, firstEnabledNode, state);
 
-  updateLiveRegion(data.targetData.parent);
+  //updateLiveRegion(data.targetData.parent);
 }
 
 export function performTransfer<T>({
@@ -972,6 +976,22 @@ function nodesMutated(mutationList: MutationRecord[]) {
 
   if (!(parentEl instanceof HTMLElement)) return;
 
+  const allSelectedAndActiveNodes = document.querySelectorAll(
+    `[aria-selected="true"]`
+  );
+
+  const parentData = parents.get(parentEl);
+
+  if (!parentData) return;
+
+  for (let x = 0; x < allSelectedAndActiveNodes.length; x++) {
+    const node = allSelectedAndActiveNodes[x];
+
+    node.setAttribute("aria-selected", "false");
+
+    removeClass([node], parentData.config.selectedClass);
+  }
+
   remapNodes(parentEl);
 }
 
@@ -1080,6 +1100,40 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
         index: x,
       }
     );
+
+    if (
+      state.newActiveDescendant &&
+      state.newActiveDescendant.data.value === nodeData.value
+    ) {
+      setActive(
+        {
+          data: parentData,
+          el: parent,
+        },
+        {
+          el: node,
+          data: nodeData,
+        },
+        state
+      );
+    }
+
+    //if (
+    //  state.activeState &&
+    //  state.activeState.node.data.value === nodeData.value
+    //) {
+    //  setActive(
+    //    {
+    //      data: parentData,
+    //      el: parent,
+    //    },
+    //    {
+    //      el: node,
+    //      data: nodeData,
+    //    },
+    //    state
+    //  );
+    //}
 
     if (isDragState(state) && nodeData.value === state.draggedNode.data.value) {
       state.draggedNode.data = nodeData;
@@ -1198,28 +1252,42 @@ export function handlePointerdownNode<T>(
 
   synthNodePointerDown = true;
 
-  setActive(data.targetData.parent, data.targetData.node, state);
-
   const selectedNodes = [data.targetData.node];
+
+  const commandKey = data.e.ctrlKey || data.e.metaKey;
+  const shiftKey = data.e.shiftKey;
+
+  if (shiftKey) {
+    const nodes = data.targetData.parent.data.enabledNodes;
+
+    const start = nodes.findIndex((x) => x.el === state.activeState?.node.el);
+
+    const end = nodes.findIndex((x) => x.el === data.targetData.node.el);
+
+    if (start === -1 || end === -1) return;
+
+    const selected = nodes.slice(
+      Math.min(start, end),
+      Math.max(start, end) + 1
+    );
+
+    selectedNodes.push(...selected);
+  }
 
   if (state.selectedState?.nodes?.length) {
     const idx = state.selectedState.nodes.findIndex(
       (x) => x.el === data.targetData.node.el
     );
 
-    console.log(idx);
-
     if (idx === -1) {
-      if (
-        state.selectedState &&
-        state.selectedState.parent.el !== data.targetData.parent.el
-      ) {
+      if (state.selectedState.parent.el !== data.targetData.parent.el) {
         deselect(state.selectedState.nodes, data.targetData.parent, state);
       } else if (touchDevice || !isNative) {
         selectedNodes.push(...state.selectedState.nodes);
       } else {
         deselect(state.selectedState.nodes, data.targetData.parent, state);
       }
+
       setSelected(data.targetData.parent, selectedNodes, state);
     } else {
       deselect(
@@ -1357,8 +1425,6 @@ export function handleKeydownParent<T>(
   } else if (data.e.key === " ") {
     data.e.preventDefault();
 
-    setActive(data.targetData.parent, activeDescendant, state);
-
     state.selectedState && state.selectedState.nodes.includes(activeDescendant)
       ? setSelected(
           data.targetData.parent,
@@ -1367,8 +1433,8 @@ export function handleKeydownParent<T>(
         )
       : setSelected(data.targetData.parent, [activeDescendant], state);
 
-    if (!state.selectedState)
-      updateLiveRegion(data.targetData.parent, "", true);
+    //if (!state.selectedState)
+    //  updateLiveRegion(data.targetData.parent, "", true);
   } else if (data.e.key === "Enter" && state.selectedState) {
     if (
       state.selectedState.parent.el === data.targetData.parent.el &&
@@ -1379,13 +1445,14 @@ export function handleKeydownParent<T>(
 
         return;
       }
+
+      state.newActiveDescendant = state.selectedState.nodes[0];
+
       parentData.config.performSort({
         parent: data.targetData.parent,
         draggedNodes: state.selectedState.nodes,
         targetNode: state.activeState.node,
       });
-
-      setActive(data.targetData.parent, undefined, state);
 
       deselect([], data.targetData.parent, state);
 
@@ -1411,7 +1478,7 @@ export function handleKeydownParent<T>(
         targetNode: state.activeState.node,
       });
 
-      setActive(data.targetData.parent, undefined, state);
+      //setActive(data.targetData.parent, undefined, state);
 
       setSelected(data.targetData.parent, [], state);
 

@@ -77,6 +77,7 @@ h1 {
   margin: 0;
   margin-bottom: 2em;
   padding: 2em;
+  width: 100%;
   background-color: grey;
 }
 
