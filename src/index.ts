@@ -412,6 +412,7 @@ function setActive<T>(
   newActiveNode: NodeRecord<T> | undefined,
   state: BaseDragState<T>
 ) {
+  console.trace();
   //clearLiveRegion(parent);
   const activeDescendantClass = parent.data.config.activeDescendantClass;
 
@@ -579,7 +580,15 @@ export function handleFocusParent<T>(
 
   if (!firstEnabledNode) return;
 
-  setActive(data.targetData.parent, firstEnabledNode, state);
+  if (
+    state.selectedState &&
+    state.selectedState.parent.el !== data.targetData.parent.el
+  ) {
+    console.log("deselecting");
+    setActive(data.targetData.parent, firstEnabledNode, state);
+  } else if (!state.selectedState) {
+    setActive(data.targetData.parent, firstEnabledNode, state);
+  }
 
   //updateLiveRegion(data.targetData.parent);
 }
@@ -1118,22 +1127,23 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
       );
     }
 
-    //if (
-    //  state.activeState &&
-    //  state.activeState.node.data.value === nodeData.value
-    //) {
-    //  setActive(
-    //    {
-    //      data: parentData,
-    //      el: parent,
-    //    },
-    //    {
-    //      el: node,
-    //      data: nodeData,
-    //    },
-    //    state
-    //  );
-    //}
+    if (
+      state.activeState &&
+      state.activeState.node.data.value === nodeData.value
+    ) {
+      console.log("setting active state", state.activeState.node.data.value);
+      setActive(
+        {
+          data: parentData,
+          el: parent,
+        },
+        {
+          el: node,
+          data: nodeData,
+        },
+        state
+      );
+    }
 
     if (isDragState(state) && nodeData.value === state.draggedNode.data.value) {
       state.draggedNode.data = nodeData;
@@ -1252,26 +1262,38 @@ export function handlePointerdownNode<T>(
 
   synthNodePointerDown = true;
 
-  const selectedNodes = [data.targetData.node];
+  const parentData = data.targetData.parent.data;
+
+  let selectedNodes = [data.targetData.node];
 
   const commandKey = data.e.ctrlKey || data.e.metaKey;
   const shiftKey = data.e.shiftKey;
 
-  if (shiftKey) {
+  const targetNode = data.targetData.node;
+
+  if (shiftKey && parentData.config.multiDrag) {
     const nodes = data.targetData.parent.data.enabledNodes;
 
-    const start = nodes.findIndex((x) => x.el === state.activeState?.node.el);
+    if (state.selectedState && state.activeState) {
+      const [minIndex, maxIndex] =
+        state.activeState.node.data.index < data.targetData.node.data.index
+          ? [state.activeState.node.data.index, data.targetData.node.data.index]
+          : [
+              data.targetData.node.data.index,
+              state.activeState.node.data.index,
+            ];
 
-    const end = nodes.findIndex((x) => x.el === data.targetData.node.el);
+      selectedNodes = nodes.slice(minIndex, maxIndex + 1);
+    } else {
+      for (let x = 0; x <= targetNode.data.index; x++) {
+        selectedNodes.push(nodes[x]);
+      }
+    }
 
-    if (start === -1 || end === -1) return;
+    console.log(selectedNodes);
+    setSelected(data.targetData.parent, selectedNodes, state);
 
-    const selected = nodes.slice(
-      Math.min(start, end),
-      Math.max(start, end) + 1
-    );
-
-    selectedNodes.push(...selected);
+    return;
   }
 
   if (state.selectedState?.nodes?.length) {
@@ -1478,7 +1500,7 @@ export function handleKeydownParent<T>(
         targetNode: state.activeState.node,
       });
 
-      //setActive(data.targetData.parent, undefined, state);
+      state.newActiveDescendant = state.selectedState.nodes[0];
 
       setSelected(data.targetData.parent, [], state);
 

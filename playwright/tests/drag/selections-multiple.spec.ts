@@ -9,7 +9,7 @@ test.beforeEach(async ({ browser }) => {
 
 test.describe.only("Native selections", async () => {
   test.only("Selections", async () => {
-    await page.goto("http://localhost:3001/selections/native");
+    await page.goto("http://localhost:3001/selections/native-multiple");
     await new Promise((r) => setTimeout(r, 1000));
     // When the parent is focused, the first item should get the active class
     // and the aria-activedescendant should be set to the id of the first item
@@ -41,8 +41,8 @@ test.describe.only("Native selections", async () => {
       "Banana"
     );
 
-    // Pressing arrow down again should set the active descendant to the next
-    // item
+    //  Pressing arrow down again should set the active descendant to the next
+    // item;
     await page.keyboard.press("ArrowDown");
     await expect(page.locator("#Banana")).toHaveAttribute(
       "aria-selected",
@@ -59,8 +59,8 @@ test.describe.only("Native selections", async () => {
       "Orange"
     );
 
-    // Pressing the arrow down when at the end of the list should not change the
-    // active descendant
+    //  Pressing the arrow down when at the end of the list should not change the
+    //  active descendant
     await page.keyboard.press("ArrowDown");
     await expect(page.locator("#Orange")).toHaveAttribute(
       "aria-selected",
@@ -90,8 +90,8 @@ test.describe.only("Native selections", async () => {
       "Banana"
     );
 
-    // Pressing the arrow up again should set the active descendant to the
-    // previous item
+    //  Pressing the arrow up again should set the active descendant to the
+    //  previous item
     await page.keyboard.press("ArrowUp");
     await expect(page.locator("#Banana")).toHaveAttribute(
       "aria-selected",
@@ -108,8 +108,8 @@ test.describe.only("Native selections", async () => {
       "Apple"
     );
 
-    // Pressing the arrow up when at the beginning of the list should not change
-    // the active descendant
+    //   Pressing the arrow up when at the beginning of the list should not change
+    //   the active descendant
     await page.keyboard.press("ArrowUp");
     await expect(page.locator("#Apple")).toHaveAttribute(
       "aria-selected",
@@ -233,7 +233,7 @@ test.describe.only("Native selections", async () => {
       "aria-selected",
       "true"
     );
-    await expect(page.locator("#Banana")).toHaveClass("item active selected");
+    await expect(page.locator("#Banana")).toHaveClass("item selected active");
     await expect(page.locator("#fruits")).toHaveAttribute(
       "aria-activedescendant",
       "Banana"
@@ -278,7 +278,7 @@ test.describe.only("Native selections", async () => {
       "aria-selected",
       "true"
     );
-    await expect(page.locator("#Apple")).toHaveClass("item active selected");
+    await expect(page.locator("#Apple")).toHaveClass("item selected active");
     await expect(page.locator("#fruits")).toHaveAttribute(
       "aria-activedescendant",
       "Apple"
@@ -286,5 +286,49 @@ test.describe.only("Native selections", async () => {
     await expect(page.locator("#fruits-live-region")).toHaveText(
       "Apple ready for dragging. Use arrow keys to navigate. Press enter to drop Apple."
     );
+    await page.locator("#title").click();
+
+    // When holding shift key and selecting an item (orange), we should expect
+    // to see all items between the active descendant and the selected item
+    //  become selected because multi is enabled.
+    await page.keyboard.down("Shift");
+    await page.locator("#Orange").click();
+    await expect(page.locator("#Apple")).toHaveAttribute(
+      "aria-selected",
+      "false"
+    );
+    await expect(page.locator("#Apple")).toHaveClass("item selected active");
+    await expect(page.locator("#Banana")).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    await expect(page.locator("#Banana")).toHaveClass("item selected active");
+    await expect(page.locator("#Orange")).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    await expect(page.locator("#Orange")).toHaveClass("item selected active");
+    await page.locator("#title").click();
+
+    //  // When selecting an item (apple) from the first list, targeting the first
+    //  // item of the second list should place "apple" in the second list
+    //  await page.locator("#fruits").focus();
+    //  await page.keyboard.press("Space");
+    //  await page.locator("#vegetables").focus();
+    //  await page.keyboard.press("Enter");
+    //  await expect(page.locator("#Apple")).toHaveAttribute(
+    //    "aria-selected",
+    //    "false"
+    //  );
+    //  await expect(page.locator("#Apple")).toHaveClass("item active");
+    //  await expect(page.locator("#vegetables")).toHaveAttribute(
+    //    "aria-activedescendant",
+    //    "Apple"
+    //  );
+    //  await expect(page.locator("#Carrot")).toHaveAttribute(
+    //    "aria-selected",
+    //    "false"
+    //  );
+    //  await expect(page.locator("#Carrot")).toHaveClass("item");
   });
 });
