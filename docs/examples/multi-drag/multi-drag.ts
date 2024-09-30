@@ -1,6 +1,5 @@
 import { reactive, html } from "@arrow-js/core";
 import { dragAndDrop } from "@formkit/drag-and-drop";
-import { multiDrag, selections } from "@formkit/drag-and-drop";
 
 const state = reactive({
   files1: [
@@ -23,15 +22,8 @@ dragAndDrop<string>({
   },
   config: {
     group: "A",
-    plugins: [
-      multiDrag({
-        plugins: [
-          selections({
-            selectedClass: "bg-blue-500 text-white",
-          }),
-        ],
-      }),
-    ],
+    multiDrag: true,
+    selectedClass: "bg-blue-500 text-white",
   },
 });
 
@@ -43,15 +35,8 @@ dragAndDrop<string>({
   },
   config: {
     group: "A",
-    plugins: [
-      multiDrag({
-        plugins: [
-          selections({
-            selectedClass: "bg-blue-500 text-white",
-          }),
-        ],
-      }),
-    ],
+    multiDrag: true,
+    selectedClass: "bg-blue-500 text-white",
   },
 });
 

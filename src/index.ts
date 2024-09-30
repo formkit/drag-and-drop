@@ -80,6 +80,7 @@ export function createEmitter() {
   const callbacks = new Map<string, CallableFunction[]>();
 
   const emit = function (eventName: string, data: any) {
+    if (!callbacks.get(eventName)) return;
     callbacks.get(eventName)!.forEach((cb) => {
       cb(data);
     });
@@ -1380,6 +1381,10 @@ export function initDrag<T>(
     } else {
       if (!config.multiDrag) {
         dragImage = data.targetData.node.el.cloneNode(true) as HTMLElement;
+
+        dragImage.style.width = `${
+          data.targetData.node.el.getBoundingClientRect().width
+        }px`;
       } else {
         const wrapper = document.createElement("div");
 

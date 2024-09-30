@@ -771,6 +771,7 @@ var synthNodePointerDown = false;
 function createEmitter() {
   const callbacks = /* @__PURE__ */ new Map();
   const emit2 = function(eventName, data) {
+    if (!callbacks.get(eventName)) return;
     callbacks.get(eventName).forEach((cb) => {
       cb(data);
     });
@@ -1660,6 +1661,7 @@ function initDrag(data, draggedNodes2) {
     } else {
       if (!config.multiDrag) {
         dragImage = data.targetData.node.el.cloneNode(true);
+        dragImage.style.width = `${data.targetData.node.el.getBoundingClientRect().width}px`;
       } else {
         const wrapper = document.createElement("div");
         for (const node of draggedNodes2) {

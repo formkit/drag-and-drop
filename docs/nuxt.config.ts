@@ -17,28 +17,34 @@ const storageConfig = process.env.KV_DRIVER
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   css: ["@/assets/css/main.css"],
+
   experimental: {
     componentIslands: true,
   },
+
   runtimeConfig: {
     public: {
       includeStars: !!process.env.KV_DRIVER,
     },
   },
+
   components: [
     {
       path: "~/components",
     },
   ],
+
   modules: [
     "@nuxtjs/tailwindcss",
     "@vueuse/nuxt",
     "@nuxtjs/color-mode",
     "nuxt-fathom",
   ],
+
   fathom: {
     siteId: "KRFNTIEB",
   },
+
   app: {
     head: {
       title,
@@ -94,17 +100,22 @@ export default defineNuxtConfig({
       ],
     },
   },
+
   tailwindcss: {
     config: {
       darkMode: "class",
     },
   },
+
   colorMode: {
     classSuffix: "",
     storageKey: "dnd-color-mode",
   },
+
   routeRules: {
     "/": { prerender: true },
   },
+
   nitro: storageConfig,
+  compatibilityDate: "2024-09-30",
 });
