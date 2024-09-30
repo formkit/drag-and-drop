@@ -1380,6 +1380,7 @@ export function initDrag<T>(
     } else {
       if (!config.multiDrag) {
         dragImage = data.targetData.node.el.cloneNode(true) as HTMLElement;
+        copyNodeStyle(data.targetData.node.el, dragImage);
         dragImage.style.width = `${
           data.targetData.node.el.getBoundingClientRect().width
         }px`;
@@ -1391,6 +1392,8 @@ export function initDrag<T>(
           const clonedNode = node.el.cloneNode(true) as HTMLElement;
 
           clonedNode.style.pointerEvents = "none";
+
+          copyNodeStyle(node.el, clonedNode);
 
           wrapper.append(clonedNode);
         }

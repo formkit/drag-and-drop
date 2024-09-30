@@ -1758,6 +1758,7 @@ function initDrag(data, draggedNodes2) {
     } else {
       if (!config.multiDrag) {
         dragImage = data.targetData.node.el.cloneNode(true);
+        copyNodeStyle(data.targetData.node.el, dragImage);
         dragImage.style.width = `${data.targetData.node.el.getBoundingClientRect().width}px`;
         dragImage.style.zIndex = "9999";
       } else {
@@ -1765,6 +1766,7 @@ function initDrag(data, draggedNodes2) {
         for (const node of draggedNodes2) {
           const clonedNode = node.el.cloneNode(true);
           clonedNode.style.pointerEvents = "none";
+          copyNodeStyle(node.el, clonedNode);
           wrapper.append(clonedNode);
         }
         const { width } = draggedNodes2[0].el.getBoundingClientRect();
