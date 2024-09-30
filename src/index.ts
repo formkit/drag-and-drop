@@ -442,6 +442,11 @@ function deselect<T>(
     state.selectedState.nodes.splice(index, 1);
   }
 
+  removeClass(
+    nodes.map((x) => x.el),
+    selectedClass
+  );
+
   clearLiveRegion(parent);
 }
 
@@ -1642,9 +1647,12 @@ export function handleEnd<T>(
       position: state.initialIndex,
     });
 
+  console.log(state.draggedNodes.map((x) => x.el));
   deselect(state.draggedNodes, state.currentParent, state);
 
   setActive(data.targetData.parent, undefined, state);
+
+  console.log("set active here");
 
   resetState();
 
