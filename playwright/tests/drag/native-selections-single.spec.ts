@@ -8,7 +8,7 @@ test.beforeEach(async ({ browser }) => {
 });
 
 test.describe("Native selections single select", async () => {
-  test.only("Selections single select", async () => {
+  test("Selections single select", async () => {
     await page.goto("http://localhost:3001/selections/native-single");
     await new Promise((r) => setTimeout(r, 1000));
     // When the parent is focused, the first item should get the active class
@@ -330,5 +330,24 @@ test.describe("Native selections single select", async () => {
       "false"
     );
     await expect(page.locator("#Carrot")).toHaveClass("item");
+  });
+
+  test("Native Selections drag", async () => {
+    await page.goto("http://localhost:3001/selections/native-single");
+    await new Promise((r) => setTimeout(r, 1000));
+
+    // Dragging apple should
+    await page.locator("#Apple").click();
+    await drag(page, {
+      originEl: { id: "Apple", position: "center" },
+      destinationEl: { id: "Banana", position: "center" },
+      dragStart: true,
+    });
+    await expect(page.locator("#values_1")).toHaveText("Banana Apple Orange");
+    await expect(page.locator("#Apple")).toHaveClass("item");
+    await drag(page, {
+      originEl: { id: "Banana", position: "center" },
+      destinationEl: { id: "Banana", position: "center" },
+    });
   });
 });

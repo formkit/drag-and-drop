@@ -35,7 +35,6 @@ import type {
 export * from "./types";
 export { animations } from "./plugins/animations";
 export { insertion } from "./plugins/insertion";
-export { multiDrag } from "./plugins/multiDrag";
 export { place } from "./plugins/place";
 export { swap } from "./plugins/swap";
 
@@ -77,14 +76,37 @@ export const treeAncestors: Record<string, HTMLElement> = {};
 
 let synthNodePointerDown = false;
 
+export function createEmitter() {
+  const callbacks = new Map<string, CallableFunction[]>();
+
+  const emit = function (eventName: string, data: any) {
+    callbacks.get(eventName)!.forEach((cb) => {
+      cb(...data);
+    });
+  };
+
+  const on = function (eventName: string, callback: any) {
+    const cbs = callbacks.get(eventName) ?? [];
+
+    cbs.push(callback);
+
+    callbacks.set(eventName, cbs);
+  };
+
+  return [emit, on];
+}
+
 export const [emit, on] = createEmitter();
 
 const baseDragState = {
   activeDescendant: undefined,
+  affectedNodes: [],
+  currentTargetValue: undefined,
   on,
   emit,
   newActiveDescendant: undefined,
   originalZIndex: undefined,
+  pointerSelection: false,
   preventEnter: false,
   remapJustFinished: false,
   selectednodes: [],
@@ -94,25 +116,28 @@ const baseDragState = {
 /**
  * The state of the drag and drop.
  */
-export let state:
-  | DragState<unknown>
-  | SynthDragState<unknown>
-  | BaseDragState<unknown> = baseDragState;
+export let state: BaseDragState<unknown> = baseDragState;
 
 export function resetState() {
   const baseDragState = {
     activeDescendant: undefined,
+    affectedNodes: [],
     on,
     emit,
+    currentTargetValue: undefined,
     originalZIndex: undefined,
+    pointerId: undefined,
     preventEnter: false,
     remapJustFinished: false,
     selectednodes: [],
     selectedParent: undefined,
     pointerSelection: false,
+    synthScrollDirection: undefined,
+    draggedNodeDisplay: undefined,
+    synthDragScrolling: false,
   };
 
-  state = { ...baseDragState };
+  state = { ...baseDragState } as BaseDragState<unknown>;
 }
 
 /**
@@ -1065,6 +1090,7 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     );
 
     if (
+      !isDragState(state) &&
       state.newActiveDescendant &&
       state.newActiveDescendant.data.value === nodeData.value
     ) {
@@ -1082,6 +1108,7 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     }
 
     if (
+      !isDragState(state) &&
       state.activeState &&
       state.activeState.node.data.value === nodeData.value
     ) {
@@ -1160,15 +1187,15 @@ export function validateDragstart(data: NodeEventData<any>): boolean {
   return !!data.targetData.parent.data.config.nativeDrag;
 }
 
-function draggedNodes<T>(data: NodeEventData<T>): Array<NodeRecord<unknown>> {
+function draggedNodes<T>(data: NodeEventData<T>): Array<NodeRecord<T>> {
   if (!data.targetData.parent.data.config.multiDrag) {
     return [data.targetData.node];
   } else if (state.selectedState) {
     return [
       data.targetData.node,
-      ...state.selectedState?.nodes.filter(
+      ...(state.selectedState?.nodes.filter(
         (x) => x.el !== data.targetData.node.el
-      ),
+      ) as Array<NodeRecord<T>>),
     ];
   }
 
@@ -1338,6 +1365,16 @@ export function dragstartClasses<T>(
       nodes.map((x) => x.el),
       config.dropZoneClass
     );
+
+    removeClass(
+      nodes.map((x) => x.el),
+      config.activeDescendantClass
+    );
+
+    removeClass(
+      nodes.map((x) => x.el),
+      config.selectedClass
+    );
   });
 }
 
@@ -1348,35 +1385,67 @@ export function synthDragImage<T>(
 ) {
   const config = data.targetData.parent.data.config;
 
-  const wrapper = document.createElement("div");
+  let dragImage: HTMLElement | undefined;
 
-  const dragImage = config?.dragImage(
-    data.targetData.node,
-    draggedNodes,
-    data.targetData.parent.data
-  );
+  if (config.dragImage) {
+    dragImage = config.dragImage(data, draggedNodes);
+  } else {
+    if (!config.multiDrag) {
+      dragImage = data.targetData.node.el.cloneNode(true) as HTMLElement;
+    } else {
+      const wrapper = document.createElement("div");
 
-  if (dragImage) {
-    wrapper.append(dragImage);
+      for (const node of draggedNodes) {
+        const clonedNode = node.el.cloneNode(true) as HTMLElement;
 
-    const { width } = draggedNodes[0].el.getBoundingClientRect();
+        clonedNode.style.pointerEvents = "none";
 
-    Object.assign(wrapper.style, {
-      display: "flex",
-      flexDirection: "column",
-      width: `${width}px`,
-      position: "absolute",
-      pointerEvents: "none",
-      zIndex: "9999",
-      left: "-9999px",
-    });
+        wrapper.append(clonedNode);
+      }
 
-    document.body.appendChild(wrapper);
+      const { width } = draggedNodes[0].el.getBoundingClientRect();
 
-    return wrapper;
+      Object.assign(wrapper.style, {
+        display: "flex",
+        flexDirection: "column",
+        width: `${width}px`,
+        position: "absolute",
+        pointerEvents: "none",
+        zIndex: "9999",
+        left: "-9999px",
+      });
+
+      dragImage = wrapper;
+    }
   }
 
-  return draggedNodes[0].el;
+  //  const dragImage = config?.dragImage(
+  //    data.targetData.node,
+  //    draggedNodes,
+  //    data.targetData.parent.data
+  //  );
+
+  //  if (dragImage) {
+  //    wrapper.append(dragImage);
+
+  //    const { width } = draggedNodes[0].el.getBoundingClientRect();
+
+  //    Object.assign(wrapper.style, {
+  //      display: "flex",
+  //      flexDirection: "column",
+  //      width: `${width}px`,
+  //      position: "absolute",
+  //      pointerEvents: "none",
+  //      zIndex: "9999",
+  //      left: "-9999px",
+  //    });
+
+  //    document.body.appendChild(wrapper);
+
+  //    return wrapper;
+  //  }
+
+  //  return draggedNodes[0].el;
 }
 
 export function initDrag<T>(
@@ -1736,31 +1805,56 @@ function initSynthDrag<T>(
   _state: BaseDragState<T>,
   draggedNodes: Array<NodeRecord<T>>
 ): SynthDragState<T> {
-  const display = data.targetData.node.el.style.display;
+  const config = data.targetData.parent.data.config;
 
   const rect = data.targetData.node.el.getBoundingClientRect();
 
-  const clonedDraggedNode = data.targetData.node.el.cloneNode(
-    true
-  ) as HTMLElement;
+  let dragImage: HTMLElement | undefined;
 
-  Object.assign(clonedDraggedNode.style, {
-    width: `${rect.width}px`,
-    position: "absolute",
-    pointerEvents: "none",
-    zIndex: "99999",
-  });
+  if (config.synthDragImage) {
+    dragImage = config.synthDragImage(data, draggedNodes);
+  } else {
+    if (!config.multiDrag || draggedNodes.length === 1) {
+      dragImage = data.targetData.node.el.cloneNode(true) as HTMLElement;
 
-  document.body.append(clonedDraggedNode);
+      if (data.targetData.parent.data.config.deepCopyStyles)
+        copyNodeStyle(data.targetData.node.el, dragImage);
+    } else {
+      const wrapper = document.createElement("div");
 
-  if (data.targetData.parent.data.config.deepCopyStyles)
-    copyNodeStyle(data.targetData.node.el, clonedDraggedNode);
+      for (const node of draggedNodes) {
+        const clonedNode = node.el.cloneNode(true) as HTMLElement;
 
-  clonedDraggedNode.style.display = "none";
+        clonedNode.style.pointerEvents = "none";
+
+        wrapper.append(clonedNode);
+      }
+
+      const { width } = draggedNodes[0].el.getBoundingClientRect();
+
+      Object.assign(wrapper.style, {
+        display: "flex",
+        flexDirection: "column",
+        width: `${width}px`,
+        position: "absolute",
+        pointerEvents: "none",
+        zIndex: "9999",
+        left: "-9999px",
+      });
+
+      dragImage = wrapper;
+    }
+  }
+
+  const display = dragImage.style.display;
+
+  dragImage.style.display = "none";
+
+  document.body.append(dragImage);
 
   const synthDragStateProps = {
     clonedDraggedEls: [],
-    clonedDraggedNode,
+    clonedDraggedNode: dragImage,
     draggedNodeDisplay: display,
     synthDragScrolling: false,
   };
@@ -2753,24 +2847,4 @@ export function getRealCoords(el: HTMLElement): Coordinates {
     height,
     width,
   };
-}
-
-export function createEmitter() {
-  const callbacks = new Map<string, CallableFunction[]>();
-
-  const emit = function (eventName: string, ...data: unknown[]) {
-    callbacks.get(eventName)!.forEach((cb) => {
-      cb(...data);
-    });
-  };
-
-  const on = function (eventName: string, callback: CallableFunction) {
-    const cbs = callbacks.get(eventName) ?? [];
-
-    cbs.push(callback);
-
-    callbacks.set(eventName, cbs);
-  };
-
-  return [emit, on];
 }

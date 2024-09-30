@@ -734,17 +734,20 @@ export interface SynthDragStateProps {
 
 export type DragState<T> = DragStateProps<T> & BaseDragState<T>;
 
-type EventEmitterData<T> = {
-  data: NodeEventData<T> | ParentEventData<T>;
-  state: DragState<T>;
-};
-
 export type BaseDragState<T> = {
   activeState?: {
     node: NodeRecord<T>;
     parent: ParentRecord<T>;
   };
-  emit: (event: string, data: EventEmitterData<T>) => void;
+  /**
+   * The nodes that will be updated by a drag action (sorted).
+   */
+  affectedNodes: Array<NodeRecord<T>>;
+  /**
+   * The last value the dragged node targeted.
+   */
+  currentTargetValue: T | undefined;
+  emit: (event: string, data: unknown[]) => void;
   on: (event: string, callback: CallableFunction) => void;
   newActiveDescendant?: NodeRecord<T>;
   /**
@@ -789,6 +792,7 @@ export interface DragStateProps<T> {
    * The parent that the dragged node was most recently in.
    */
   currentParent: ParentRecord<T>;
+  currentTargetValue: T | undefined;
   /**
    * The node that is being dragged.
    */
@@ -813,10 +817,6 @@ export interface DragStateProps<T> {
    * The parent that the dragged node was initially in.
    */
   initialParent: ParentRecord<T>;
-  /**
-   * The last value the dragged node targeted.
-   */
-  currentTargetValue: T | undefined;
   /**
    * longPress - A flag to indicate whether a long press has occurred.
    */

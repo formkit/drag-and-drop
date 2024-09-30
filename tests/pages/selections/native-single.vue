@@ -21,7 +21,7 @@ const [parent2, values2] = useDragAndDrop(["Carrot", "Broccoli", "Potato"], {
 </script>
 
 <template>
-  <h1 id="title">Native selections</h1>
+  <h1 id="title">Native selections single select</h1>
   <div class="flex-wrap">
     <div>
       <ul id="fruits" ref="parent1" class="list" aria-label="fruits">
