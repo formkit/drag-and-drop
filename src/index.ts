@@ -1083,41 +1083,41 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
       }
     );
 
-    //if (
-    //  !isDragState(state) &&
-    //  state.newActiveDescendant &&
-    //  state.newActiveDescendant.data.value === nodeData.value
-    //) {
-    //  setActive(
-    //    {
-    //      data: parentData,
-    //      el: parent,
-    //    },
-    //    {
-    //      el: node,
-    //      data: nodeData,
-    //    },
-    //    state
-    //  );
-    //}
+    if (
+      !isDragState(state) &&
+      state.newActiveDescendant &&
+      state.newActiveDescendant.data.value === nodeData.value
+    ) {
+      setActive(
+        {
+          data: parentData,
+          el: parent,
+        },
+        {
+          el: node,
+          data: nodeData,
+        },
+        state
+      );
+    }
 
-    //if (
-    //  !isDragState(state) &&
-    //  state.activeState &&
-    //  state.activeState.node.data.value === nodeData.value
-    //) {
-    //  setActive(
-    //    {
-    //      data: parentData,
-    //      el: parent,
-    //    },
-    //    {
-    //      el: node,
-    //      data: nodeData,
-    //    },
-    //    state
-    //  );
-    //}
+    if (
+      !isDragState(state) &&
+      state.activeState &&
+      state.activeState.node.data.value === nodeData.value
+    ) {
+      setActive(
+        {
+          data: parentData,
+          el: parent,
+        },
+        {
+          el: node,
+          data: nodeData,
+        },
+        state
+      );
+    }
 
     if (isDragState(state) && nodeData.value === state.draggedNode.data.value) {
       state.draggedNode.data = nodeData;

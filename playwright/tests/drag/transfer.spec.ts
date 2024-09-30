@@ -11,7 +11,7 @@ test.beforeAll(async ({ browser }) => {
   await page.goto("http://localhost:3001/transfer");
 });
 
-test.describe.only("Transferring", async () => {
+test.describe("Transferring", async () => {
   test("Drag transferring works as expected. Testing dropZone class as well.", async () => {
     await new Promise((r) => setTimeout(r, 1000));
 
