@@ -2041,22 +2041,6 @@ function shouldScrollUp<T>(state: DragState<T>, data: ScrollData): boolean {
 
 function shouldScrollDown<T>(state: DragState<T>, data: ScrollData): boolean {
   return state.coordinates.y > data.clientHeight * data.yThresh;
-  return;
-  const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y;
-
-  if (!data.scrollOutside && diff < 0) return false;
-
-  if (
-    diff < (1 - data.yThresh) * data.scrollParent.clientHeight &&
-    !(
-      data.scrollParent.scrollTop + data.scrollParent.clientHeight >=
-      data.scrollParent.scrollHeight
-    )
-  ) {
-    return true;
-  }
-
-  return false;
 }
 
 function moveNode<T>(data: NodePointerEventData<T>, state: SynthDragState<T>) {
