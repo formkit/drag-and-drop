@@ -1,17 +1,10 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../../src/vue/index";
-import { multiDrag } from "../../../src";
-
-const selectedValues: Ref<Array<string>> = ref([]);
 
 const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   draggingClass: "blue",
   dropZoneClass: "dropZoneClass",
-  plugins: [
-    multiDrag({
-      draggingClass: "blue",
-    }),
-  ],
+  multiDrag: true,
 });
 </script>
 

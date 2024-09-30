@@ -8,7 +8,7 @@ test.beforeEach(async ({ browser }) => {
 });
 
 test.describe("Non native selections single", async () => {
-  test("Selections", async () => {
+  test("Non native selections single select", async () => {
     page.goto("http://localhost:3001/selections/non-native-single");
     await new Promise((r) => setTimeout(r, 1000));
 

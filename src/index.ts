@@ -81,7 +81,7 @@ export function createEmitter() {
 
   const emit = function (eventName: string, data: any) {
     callbacks.get(eventName)!.forEach((cb) => {
-      cb(...data);
+      cb(data);
     });
   };
 
@@ -155,7 +155,7 @@ export function setDragState<T>(
 ): DragState<T> | SynthDragState<T> {
   Object.assign(state, dragStateProps);
 
-  //state.emit("dragStarted", state);
+  state.emit("dragStarted", state);
 
   return state as DragState<T> | SynthDragState<T>;
 }
@@ -544,15 +544,9 @@ function clearLiveRegion<T>(parent: ParentRecord<T>) {
 }
 
 export function handleBlurParent<T>(
-  data: ParentEventData<T>,
-  state: BaseDragState<T> | DragState<T> | SynthDragState<T>
-) {
-  if (!state.activeState) return;
-
-  //setActive(data.targetData.parent, undefined, state);
-
-  //updateLiveRegion(data.targetData.parent, undefined, true);
-}
+  _data: ParentEventData<T>,
+  _state: BaseDragState<T> | DragState<T> | SynthDragState<T>
+) {}
 
 export function handleFocusParent<T>(
   data: ParentEventData<T>,
@@ -624,50 +618,26 @@ export function performTransfer<T>({
 
   setParentValues(targetParent.el, targetParent.data, targetParentValues);
 
-  function createTransferEventData(
-    lastParent: ParentRecord<T>,
-    newParent: ParentRecord<T>,
-    initialParent: ParentRecord<T>,
-    draggedNodes: Array<NodeRecord<T>>,
-    targetIndex: number,
-    state: BaseDragState<T> | DragState<T> | SynthDragState<T>,
-    targetNode?: NodeRecord<T>
-  ) {
-    return {
-      lastParent,
-      newParent,
+  if (targetParent.data.config.onTransfer) {
+    targetParent.data.config.onTransfer({
+      sourceParent: currentParent,
+      targetParent,
       initialParent,
       draggedNodes,
       targetIndex,
       state,
-      targetNode,
-    };
-  }
-
-  if (targetParent.data.config.onTransfer) {
-    const transferEventData = createTransferEventData(
-      currentParent,
-      targetParent,
-      initialParent,
-      draggedNodes,
-      targetIndex,
-      state
-    );
-
-    targetParent.data.config.onTransfer(transferEventData);
+    });
   }
 
   if (currentParent.data.config.onTransfer) {
-    const transferEventData = createTransferEventData(
-      currentParent,
+    currentParent.data.config.onTransfer({
+      sourceParent: currentParent,
       targetParent,
       initialParent,
       draggedNodes,
       targetIndex,
-      state
-    );
-
-    currentParent.data.config.onTransfer(transferEventData);
+      state,
+    });
   }
 }
 
@@ -1289,19 +1259,29 @@ export function handlePointerdownNode<T>(
   if (shiftKey && parentData.config.multiDrag) {
     const nodes = data.targetData.parent.data.enabledNodes;
     if (state.selectedState && state.activeState) {
-      const [minIndex, maxIndex] =
-        state.activeState.node.data.index < data.targetData.node.data.index
-          ? [state.activeState.node.data.index, data.targetData.node.data.index]
-          : [
-              data.targetData.node.data.index,
-              state.activeState.node.data.index,
-            ];
-
-      selectedNodes = nodes.slice(minIndex, maxIndex + 1);
+      if (state.selectedState.parent.el !== data.targetData.parent.el) {
+        deselect(state.selectedState.nodes, state.selectedState.parent, state);
+        state.selectedState = undefined;
+        for (let x = 0; x <= targetNode.data.index; x++)
+          selectedNodes.push(nodes[x]);
+      } else {
+        const [minIndex, maxIndex] =
+          state.activeState.node.data.index < data.targetData.node.data.index
+            ? [
+                state.activeState.node.data.index,
+                data.targetData.node.data.index,
+              ]
+            : [
+                data.targetData.node.data.index,
+                state.activeState.node.data.index,
+              ];
+        selectedNodes = nodes.slice(minIndex, maxIndex + 1);
+      }
     } else {
       for (let x = 0; x <= targetNode.data.index; x++)
         selectedNodes.push(nodes[x]);
     }
+    console.log(selectedNodes);
     setSelected(
       data.targetData.parent,
       selectedNodes,
@@ -1376,76 +1356,6 @@ export function dragstartClasses<T>(
       config.selectedClass
     );
   });
-}
-
-export function synthDragImage<T>(
-  data: NodePointerEventData<T>,
-  draggedNodes: Array<NodeRecord<T>>,
-  state: SynthDragState<T>
-) {
-  const config = data.targetData.parent.data.config;
-
-  let dragImage: HTMLElement | undefined;
-
-  if (config.dragImage) {
-    dragImage = config.dragImage(data, draggedNodes);
-  } else {
-    if (!config.multiDrag) {
-      dragImage = data.targetData.node.el.cloneNode(true) as HTMLElement;
-    } else {
-      const wrapper = document.createElement("div");
-
-      for (const node of draggedNodes) {
-        const clonedNode = node.el.cloneNode(true) as HTMLElement;
-
-        clonedNode.style.pointerEvents = "none";
-
-        wrapper.append(clonedNode);
-      }
-
-      const { width } = draggedNodes[0].el.getBoundingClientRect();
-
-      Object.assign(wrapper.style, {
-        display: "flex",
-        flexDirection: "column",
-        width: `${width}px`,
-        position: "absolute",
-        pointerEvents: "none",
-        zIndex: "9999",
-        left: "-9999px",
-      });
-
-      dragImage = wrapper;
-    }
-  }
-
-  //  const dragImage = config?.dragImage(
-  //    data.targetData.node,
-  //    draggedNodes,
-  //    data.targetData.parent.data
-  //  );
-
-  //  if (dragImage) {
-  //    wrapper.append(dragImage);
-
-  //    const { width } = draggedNodes[0].el.getBoundingClientRect();
-
-  //    Object.assign(wrapper.style, {
-  //      display: "flex",
-  //      flexDirection: "column",
-  //      width: `${width}px`,
-  //      position: "absolute",
-  //      pointerEvents: "none",
-  //      zIndex: "9999",
-  //      left: "-9999px",
-  //    });
-
-  //    document.body.appendChild(wrapper);
-
-  //    return wrapper;
-  //  }
-
-  //  return draggedNodes[0].el;
 }
 
 export function initDrag<T>(
@@ -1806,8 +1716,6 @@ function initSynthDrag<T>(
   draggedNodes: Array<NodeRecord<T>>
 ): SynthDragState<T> {
   const config = data.targetData.parent.data.config;
-
-  const rect = data.targetData.node.el.getBoundingClientRect();
 
   let dragImage: HTMLElement | undefined;
 

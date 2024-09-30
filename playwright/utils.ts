@@ -52,7 +52,7 @@ export async function drag(page: Page, data: DragDropData): Promise<void> {
       );
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
     // Dragover the origin element
     originElement.dispatchEvent(

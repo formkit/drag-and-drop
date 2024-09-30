@@ -51,9 +51,6 @@ export function insertion<T>(
         }
       },
       setup() {
-        insertionParentConfig.handleDragstart =
-          insertionConfig.handleDragstart || handleDragstart;
-
         insertionParentConfig.handleDragoverNode =
           insertionConfig.handleDragoverNode || handleDragoverNode;
 
@@ -81,7 +78,10 @@ export function insertion<T>(
 
         parentData.config = insertionParentConfig;
 
-        if (parentData.config.sortable === false) return;
+        state.on("dragStarted", () => {
+          console.log("drag started");
+          defineRanges(parent);
+        });
 
         const insertionPointConfig = insertionConfig.insertionPoint || {};
 
@@ -136,48 +136,8 @@ function checkPosition(e: DragEvent | PointerEvent) {
 
     insertionState.draggedOverParent = null;
 
-    state.lastParent = state.initialParent;
+    state.currentParent = state.initialParent;
   }
-}
-
-export function handleDragstart<T>(
-  data: NodeDragEventData<T>,
-  state: DragState<T>
-) {
-  dragstart(
-    {
-      e: data.e,
-      targetData: data.targetData,
-    },
-    state
-  );
-
-  setTimeout(() => {
-    if (data.targetData.parent.data.config.sortable === false) return;
-
-    defineRanges(data.targetData.parent.el);
-  });
-}
-
-export function handlePointerdown<T>(
-  data: NodePointerEventData<T>,
-  state: DragState<T>
-) {
-  if (!(data.e instanceof PointerEvent)) return;
-
-  pointerdown(
-    {
-      e: data.e,
-      targetData: data.targetData,
-    },
-    state
-  );
-
-  setTimeout(() => {
-    if (data.targetData.parent.data.config.sortable === false) return;
-
-    defineRanges(data.targetData.parent.el);
-  });
 }
 
 function ascendingVertical(
@@ -404,11 +364,11 @@ export function handleDragoverParent<T>(
       realTargetParent = nestedParent;
   }
 
-  realTargetParent.el === state.lastParent?.el
+  realTargetParent.el === state.currentParent?.el
     ? moveBetween(realTargetParent)
     : moveOutside(realTargetParent, state);
 
-  state.lastParent = realTargetParent;
+  state.currentParent = realTargetParent;
 }
 
 export function moveBetween<T>(data: ParentRecord<T>) {
@@ -444,7 +404,7 @@ export function moveBetween<T>(data: ParentRecord<T>) {
 }
 
 function moveOutside<T>(data: ParentRecord<T>, state: DragState<T>) {
-  if (data.el === state.lastParent.el) return false;
+  if (data.el === state.currentParent.el) return false;
 
   const targetConfig = data.data.config;
 
@@ -459,7 +419,7 @@ function moveOutside<T>(data: ParentRecord<T>, state: DragState<T>) {
     return targetConfig.accepts(
       data,
       state.initialParent,
-      state.lastParent,
+      state.currentParent,
       state
     );
   } else if (
@@ -480,7 +440,7 @@ function moveOutside<T>(data: ParentRecord<T>, state: DragState<T>) {
 
     if (insertionPoint) insertionPoint.style.display = "none";
   } else {
-    removeClass([state.lastParent.el], targetConfig.dropZoneClass);
+    removeClass([state.currentParent.el], targetConfig.dropZoneClass);
 
     const enabledNodes = data.data.enabledNodes;
 
@@ -581,7 +541,7 @@ export function handlePointeroverParent<T>(
     foundRange[0]
   );
 
-  data.detail.targetData.parent.el === state.lastParent?.el
+  data.detail.targetData.parent.el === state.currentParent?.el
     ? moveBetween(realTargetParent)
     : moveOutside(realTargetParent, state);
 }
@@ -657,7 +617,7 @@ export function handleEnd<T>(
       state.initialParent.data
     );
 
-    const transferred = state.initialParent.el !== state.lastParent.el;
+    const transferred = state.initialParent.el !== state.currentParent.el;
 
     const draggedValues = state.draggedNodes.map((node) => node.data.value);
 
@@ -713,8 +673,8 @@ export function handleEnd<T>(
       }
     } else if (transferred && insertionState.draggedOverNodes.length) {
       const targetParentValues = parentValues(
-        state.lastParent.el,
-        state.lastParent.data
+        state.currentParent.el,
+        state.currentParent.data
       );
       const draggedParentValues = parentValues(
         state.initialParent.el,
@@ -730,7 +690,7 @@ export function handleEnd<T>(
         ? state.dynamicValues
         : draggedValues;
       targetParentValues.splice(index, 0, ...insertValues);
-      setParentValues(state.lastParent.el, state.lastParent.data, [
+      setParentValues(state.currentParent.el, state.currentParent.data, [
         ...targetParentValues,
       ]);
       draggedParentValues.splice(state.initialIndex, draggedValues.length);
@@ -739,26 +699,17 @@ export function handleEnd<T>(
       ]);
 
       const transferEventData = {
-        sourceParent: state.lastParent,
+        sourceParent: state.currentParent,
         targetParent: data.targetData.parent,
-        previousSourceValues: [...targetParentValues],
-        sourceValues: [...state.lastParent.data.getValues(state.lastParent.el)],
-        previousTargetValues: [...targetParentValues],
-        targetValues: [
-          ...data.targetData.parent.data.getValues(data.targetData.parent.el),
-        ],
-        previousSourceNodes: [...state.lastParent.data.enabledNodes],
-        sourceNodes: [...state.lastParent.data.enabledNodes],
-        previousTargetNodes: [...data.targetData.parent.data.enabledNodes],
-        targetNodes: [...data.targetData.parent.data.enabledNodes],
-        draggedNode: state.draggedNode,
-        sourcePreviousPosition: state.initialIndex,
-        targetPosition: index,
+        initialParent: state.initialParent,
+        draggedNodes: state.draggedNodes,
+        targetIndex: index,
+        state,
       };
       if (data.targetData.parent.data.config.onTransfer)
         data.targetData.parent.data.config.onTransfer(transferEventData);
-      if (state.lastParent.data.config.onTransfer)
-        state.lastParent.data.config.onTransfer(transferEventData);
+      if (state.currentParent.data.config.onTransfer)
+        state.currentParent.data.config.onTransfer(transferEventData);
     }
   } else if (insertionState.draggedOverParent) {
     const draggedOverParentValues = parentValues(
@@ -781,26 +732,17 @@ export function handleEnd<T>(
     );
 
     const transferEventData = {
-      sourceParent: state.lastParent,
-      targetParent: data.targetData.parent,
-      previousSourceValues: [...draggedOverParentValues],
-      sourceValues: [...state.lastParent.data.getValues(state.lastParent.el)],
-      previousTargetValues: [...draggedOverParentValues],
-      targetValues: [
-        ...data.targetData.parent.data.getValues(data.targetData.parent.el),
-      ],
-      previousSourceNodes: [...state.lastParent.data.enabledNodes],
-      sourceNodes: [...state.lastParent.data.enabledNodes],
-      previousTargetNodes: [...data.targetData.parent.data.enabledNodes],
-      targetNodes: [...data.targetData.parent.data.enabledNodes],
-      draggedNode: state.draggedNode,
-      sourcePreviousPosition: state.initialIndex,
-      targetPosition: 0,
+      sourceParent: state.currentParent,
+      targetParent: insertionState.draggedOverParent,
+      initialParent: state.initialParent,
+      draggedNodes: state.draggedNodes,
+      targetIndex: draggedOverParentValues.length - 1,
+      state,
     };
     if (data.targetData.parent.data.config.onTransfer)
       data.targetData.parent.data.config.onTransfer(transferEventData);
-    if (state.lastParent.data.config.onTransfer)
-      state.lastParent.data.config.onTransfer(transferEventData);
+    if (state.currentParent.data.config.onTransfer)
+      state.currentParent.data.config.onTransfer(transferEventData);
 
     removeClass(
       [insertionState.draggedOverParent.el],

@@ -7,10 +7,11 @@ test.beforeEach(async ({ browser }) => {
   page = await browser.newPage();
 });
 
-test.describe("Sorting", async () => {
-  test("Drag sort", async () => {
+test.describe("Multi drag sorting", async () => {
+  test("Multi drag sort", async () => {
     await page.goto("http://localhost:3001/multi-drag");
     await new Promise((r) => setTimeout(r, 1000));
+    await page.locator("#Apple").click();
     await drag(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
@@ -27,6 +28,7 @@ test.describe("Sorting", async () => {
     await expect(page.locator("#sort_values")).toHaveText(
       "Banana Orange Apple"
     );
+    await page.locator("#Banana").click();
     await drag(page, {
       originEl: { id: "Banana", position: "center" },
       destinationEl: { id: "Orange", position: "center" },

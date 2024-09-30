@@ -122,7 +122,6 @@ function handleParent<T>(
       setValues,
       config: {
         ...config,
-        dropZones: [],
       },
     });
   };

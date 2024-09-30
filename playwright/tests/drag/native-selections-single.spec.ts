@@ -336,18 +336,34 @@ test.describe("Native selections single select", async () => {
     await page.goto("http://localhost:3001/selections/native-single");
     await new Promise((r) => setTimeout(r, 1000));
 
-    // Dragging apple should
+    // Dragging to apple to banana
     await page.locator("#Apple").click();
     await drag(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
       dragStart: true,
+      drop: true,
     });
     await expect(page.locator("#values_1")).toHaveText("Banana Apple Orange");
     await expect(page.locator("#Apple")).toHaveClass("item");
+    await expect(page.locator("#Banana")).toHaveClass("item");
+
+    // Clicking banana to select it
+    await page.locator("#Banana").click();
+    await expect(page.locator("#Banana")).toHaveClass("item selected active");
+    await expect(page.locator("#fruits-live-region")).toHaveText(
+      "Banana ready for dragging. Use arrow keys to navigate. Press enter to drop Banana."
+    );
+
+    // Dragging banana to orange
     await drag(page, {
       originEl: { id: "Banana", position: "center" },
-      destinationEl: { id: "Banana", position: "center" },
+      destinationEl: { id: "Orange", position: "center" },
+      dragStart: true,
+      drop: true,
     });
+    await expect(page.locator("#values_1")).toHaveText("Apple Orange Banana");
+    await expect(page.locator("#Banana")).toHaveClass("item");
+    await expect(page.locator("#Orange")).toHaveClass("item");
   });
 });

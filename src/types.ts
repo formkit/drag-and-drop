@@ -82,6 +82,7 @@ export interface ParentConfig<T> {
     nodes: Array<NodeRecord<T>>,
     config: ParentConfig<T>
   ) => void;
+  dragPlaceholderClass?: string;
   /**
    * The class to add to a node when the node is dragged over it.
    */
@@ -747,7 +748,7 @@ export type BaseDragState<T> = {
    * The last value the dragged node targeted.
    */
   currentTargetValue: T | undefined;
-  emit: (event: string, data: unknown[]) => void;
+  emit: (event: string, data: unknown) => void;
   on: (event: string, callback: CallableFunction) => void;
   newActiveDescendant?: NodeRecord<T>;
   /**
@@ -870,8 +871,8 @@ export interface SortEventData<T> {
 }
 
 export interface TransferEventData<T> {
-  lastParent: ParentRecord<T>;
-  newParent: ParentRecord<T>;
+  sourceParent: ParentRecord<T>;
+  targetParent: ParentRecord<T>;
   initialParent: ParentRecord<T>;
   draggedNodes: Array<NodeRecord<T>>;
   targetIndex: number;
@@ -913,48 +914,4 @@ export interface Coordinates {
   right: number;
   height: number;
   width: number;
-}
-
-export interface MultiDragConfig<T> {
-  /**
-   * Class added when a node is being dragged. It will only be used if the
-   * number of selected nodes is greater than 1. Otherwise, the base config
-   * draggingClass will be used.
-   */
-  draggingClass?: string;
-  /**
-   * Class added to the original dragged node as it is being dragged. It will
-   * only be used if the number of selected nodes is greater than 1. Otherwise,
-   * the base config dragPlaceholderClass will be used.
-   */
-  dragPlaceholderClass?: string;
-  /**
-   * Class added when a node is being dragged over a dropZone. It will only be
-   * used if the number of selected nodes is greater than 1. Otherwise, the
-   * base config dropZoneClass will be used.
-   */
-  dropZoneClass?: string;
-  /**
-   * An array of functions to use for a given parent.
-   */
-  plugins?: Array<DNDPlugin>;
-  /**
-   * Function to reapply drag classes to a given node.
-   */
-  reapplyDragClasses: (
-    el: Node | NodePointerEventData<T>,
-    parentData: ParentData<T>
-  ) => void;
-  /**
-   * Class added when a node is being synthetically dragged. It will only be
-   * used if the number of selected nodes is greater than 1. Otherwise, the
-   * base config synthDraggingClass will be used.
-   */
-  synthDraggingClass?: string;
-  /**
-   * Class added when a node is being synthetically dragged over a dropZone.
-   * It will only be used if the number of selected nodes is greater than 1.
-   * Otherwise, the base config synthDropZoneClass will be used.
-   */
-  synthDropZoneClass?: string;
 }

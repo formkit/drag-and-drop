@@ -413,4 +413,31 @@ test.describe("Native selections mulitple", async () => {
     );
     await expect(page.locator("#Banana")).toHaveClass("item selected active");
   });
+
+  test("Dragging multiple items", async () => {
+    await page.goto("http://localhost:3001/selections/native-multiple");
+    await new Promise((r) => setTimeout(r, 1000));
+    await page.locator("#fruits").focus();
+    await page.locator("#Apple").click();
+    await page.locator("#Banana").click({
+      modifiers: ["Shift"],
+    });
+    await drag(page, {
+      originEl: { id: "Apple", position: "center" },
+      destinationEl: { id: "Orange", position: "center" },
+      dragStart: true,
+      drop: true,
+    });
+    await expect(page.locator("#values_1")).toHaveText("Orange Apple Banana");
+    await expect(page.locator("#Apple")).toHaveAttribute(
+      "aria-selected",
+      "false"
+    );
+    await expect(page.locator("#Apple")).toHaveClass("item");
+    await expect(page.locator("#Banana")).toHaveAttribute(
+      "aria-selected",
+      "false"
+    );
+    await expect(page.locator("#Banana")).toHaveClass("item");
+  });
 });

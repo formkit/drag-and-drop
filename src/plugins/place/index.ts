@@ -68,7 +68,7 @@ function handlePointeroverNode<T>(
   data: PointeroverNodeEvent<T>,
   state: DragState<T>
 ) {
-  if (data.detail.targetData.parent.el !== state.lastParent.el) return;
+  if (data.detail.targetData.parent.el !== state.currentParent.el) return;
 
   const dropZoneClass =
     data.detail.targetData.parent.data.config.synthDropZoneClass;
@@ -91,9 +91,9 @@ function handlePointeroverNode<T>(
     true
   );
 
-  state.lastTargetValue = data.detail.targetData.node.data.value;
+  state.currentTargetValue = data.detail.targetData.node.data.value;
 
-  state.lastParent = data.detail.targetData.parent;
+  state.currentParent = data.detail.targetData.parent;
 }
 
 function dragoverNode<T>(data: NodeDragEventData<T>, state: DragState<T>) {
@@ -101,7 +101,7 @@ function dragoverNode<T>(data: NodeDragEventData<T>, state: DragState<T>) {
 
   data.e.stopPropagation();
 
-  if (data.targetData.parent.el !== state.lastParent.el) return;
+  if (data.targetData.parent.el !== state.currentParent.el) return;
 
   const dropZoneClass = data.targetData.parent.data.config.dropZoneClass;
 
@@ -125,9 +125,9 @@ function dragoverNode<T>(data: NodeDragEventData<T>, state: DragState<T>) {
     true
   );
 
-  state.lastTargetValue = data.targetData.node.data.value;
+  state.currentTargetValue = data.targetData.node.data.value;
 
-  state.lastParent = data.targetData.parent;
+  state.currentParent = data.targetData.parent;
 }
 
 function handleEnd<T>(
@@ -136,7 +136,7 @@ function handleEnd<T>(
 ) {
   if (!state) return;
 
-  if (state.transferred || state.lastParent.el !== state.initialParent.el)
+  if (state.transferred || state.currentParent.el !== state.initialParent.el)
     return;
 
   const draggedParentValues = parentValues(
