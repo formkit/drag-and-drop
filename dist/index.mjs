@@ -967,8 +967,8 @@ function dragStateProps(data, draggedNodes2, nativeDrag = true) {
     longPressTimeout: 0,
     currentTargetValue: data.targetData.node.data.value,
     scrollEls,
-    startLeft: x - rect.left,
-    startTop: y - rect.top,
+    startLeft: x - rect.left - window.scrollX,
+    startTop: y - rect.top - window.scrollY,
     targetIndex: data.targetData.node.data.index,
     transferred: false
   };
@@ -1634,10 +1634,6 @@ function dragstartClasses(_node, nodes2, config) {
       nodes2.map((x) => x.el),
       config.draggingClass
     );
-    addNodeClass(
-      nodes2.map((x) => x.el),
-      config.dropZoneClass
-    );
     removeClass(
       nodes2.map((x) => x.el),
       config.activeDescendantClass
@@ -1802,6 +1798,8 @@ function handleEnd(data, state2) {
   const dropZoneClass = isSynth ? config?.synthDropZoneClass : config?.dropZoneClass;
   if (state2.originalZIndex !== void 0)
     state2.draggedNode.el.style.zIndex = state2.originalZIndex;
+  console.log(state2.draggedNodes);
+  console.log("dorpzone class", dropZoneClass);
   removeClass(
     state2.draggedNodes.map((x) => x.el),
     dropZoneClass
@@ -1875,9 +1873,9 @@ function initSynthDrag(data, _state, draggedNodes2) {
   } else {
     if (!config.multiDrag || draggedNodes2.length === 1) {
       dragImage = data.targetData.node.el.cloneNode(true);
-      dragImage.style.width = `${data.targetData.node.el.getBoundingClientRect().width}px`;
       if (data.targetData.parent.data.config.deepCopyStyles)
         copyNodeStyle(data.targetData.node.el, dragImage);
+      dragImage.style.width = `${data.targetData.node.el.getBoundingClientRect().width}px`;
       document.body.appendChild(dragImage);
     } else {
       const wrapper = document.createElement("div");
@@ -1938,12 +1936,11 @@ function pointermoveClasses(state2, config) {
       state2.draggedNodes.map((x) => x.el),
       config?.longPressClass
     );
-  if (config.synthDraggingClass && state2.clonedDraggedNode)
-    addNodeClass([state2.clonedDraggedNode], config.synthDraggingClass);
   if (config.synthDropZoneClass)
     addNodeClass(
       state2.draggedNodes.map((x) => x.el),
-      config.synthDropZoneClass
+      config.synthDropZoneClass,
+      true
     );
 }
 function getScrollData(e, state2) {
@@ -2064,6 +2061,8 @@ function moveNode(data, state2) {
   state2.coordinates.x = x;
   const startLeft = state2.startLeft ?? 0;
   const startTop = state2.startTop ?? 0;
+  console.log("start top", startTop);
+  console.log("start left", startLeft);
   state2.clonedDraggedNode.style.left = `${x - startLeft}px`;
   state2.clonedDraggedNode.style.top = `${y - startTop}px`;
   if (data.e.cancelable) data.e.preventDefault();
@@ -2383,7 +2382,9 @@ function removeClass(els, className) {
     const nodeData = nodes.get(node) || parents.get(node);
     if (!nodeData) continue;
     for (const className2 of classNames) {
+      console.log("class name", nodeData.privateClasses);
       if (!nodeData.privateClasses.includes(className2)) {
+        console.log("is removing");
         node.classList.remove(className2);
       }
     }

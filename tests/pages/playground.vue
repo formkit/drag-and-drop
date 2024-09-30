@@ -1,16 +1,8 @@
 <script setup lang="ts">
-import { dragAndDrop } from "@formkit/drag-and-drop/vue";
+import { dragAndDrop } from "../../src/vue/index";
 
 const dragList = ref(undefined);
-const showHand = ref(true);
-const showTitle = ref(false);
-const openHand = ref(false);
-const exitHand = ref(false);
-const showHeadline = ref(false);
 const showDemo = ref(false);
-const showFrameworkList = ref(false);
-const framework = useState("exampleLang", () => "react");
-let closeTimeout = setTimeout(() => {});
 
 const features = ref([
   {
@@ -44,16 +36,8 @@ dragAndDrop({
   values: features,
   draggingClass: "[&>.card]:-rotate-2 before:-rotate-2",
   dropZoneClass: "blur-[2px] opacity-60",
+  synthDropZoneClass: "blur-[2px] opacity-60",
 });
-
-function handleFrameworkSelect(selection: string) {
-  showFrameworkList.value = false;
-  framework.value = selection;
-  const el = document.getElementById("introduction");
-  if (el) {
-    el.scrollIntoView({ behavior: "smooth" });
-  }
-}
 
 onMounted(() => {
   showDemo.value = true;

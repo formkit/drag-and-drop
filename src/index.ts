@@ -354,8 +354,8 @@ export function dragStateProps<T>(
     longPressTimeout: 0,
     currentTargetValue: data.targetData.node.data.value,
     scrollEls,
-    startLeft: x - rect.left,
-    startTop: y - rect.top,
+    startLeft: x - rect.left - window.scrollX,
+    startTop: y - rect.top - window.scrollY,
     targetIndex: data.targetData.node.data.index,
     transferred: false,
   };
@@ -1342,10 +1342,10 @@ export function dragstartClasses<T>(
       config.draggingClass
     );
 
-    addNodeClass(
-      nodes.map((x) => x.el),
-      config.dropZoneClass
-    );
+    //addNodeClass(
+    //  nodes.map((x) => x.el),
+    //  config.dropZoneClass
+    //);
 
     removeClass(
       nodes.map((x) => x.el),
@@ -1585,7 +1585,6 @@ export function handleEnd<T>(
   data: NodeEventData<T>,
   state: DragState<T> | SynthDragState<T>
 ) {
-  console.log("handle end called");
   data.e.preventDefault();
 
   cancelSynthScroll();
@@ -1606,6 +1605,8 @@ export function handleEnd<T>(
   if (state.originalZIndex !== undefined)
     state.draggedNode.el.style.zIndex = state.originalZIndex;
 
+  console.log(state.draggedNodes);
+  console.log("dorpzone class", dropZoneClass);
   removeClass(
     state.draggedNodes.map((x) => x.el),
     dropZoneClass
@@ -1732,13 +1733,12 @@ function initSynthDrag<T>(
     if (!config.multiDrag || draggedNodes.length === 1) {
       dragImage = data.targetData.node.el.cloneNode(true) as HTMLElement;
 
-      dragImage.style.width = `${
-        data.targetData.node.el.getBoundingClientRect().width
-      }px`;
-
       if (data.targetData.parent.data.config.deepCopyStyles)
         copyNodeStyle(data.targetData.node.el, dragImage);
 
+      dragImage.style.width = `${
+        data.targetData.node.el.getBoundingClientRect().width
+      }px`;
       document.body.appendChild(dragImage);
     } else {
       const wrapper = document.createElement("div");
@@ -1827,13 +1827,14 @@ function pointermoveClasses<T>(
       config?.longPressClass
     );
 
-  if (config.synthDraggingClass && state.clonedDraggedNode)
-    addNodeClass([state.clonedDraggedNode], config.synthDraggingClass);
+  //if (config.synthDraggingClass && state.clonedDraggedNode)
+  //  addNodeClass([state.clonedDraggedNode], config.synthDraggingClass);
 
   if (config.synthDropZoneClass)
     addNodeClass(
       state.draggedNodes.map((x) => x.el),
-      config.synthDropZoneClass
+      config.synthDropZoneClass,
+      true
     );
 }
 
@@ -2050,6 +2051,9 @@ function moveNode<T>(data: NodePointerEventData<T>, state: SynthDragState<T>) {
 
   const startTop = state.startTop ?? 0;
 
+  console.log("start top", startTop);
+
+  console.log("start left", startLeft);
   state.clonedDraggedNode.style.left = `${x - startLeft}px`;
 
   state.clonedDraggedNode.style.top = `${y - startTop}px`;
@@ -2576,7 +2580,9 @@ export function removeClass(
     if (!nodeData) continue;
 
     for (const className of classNames) {
+      console.log("class name", nodeData.privateClasses);
       if (!nodeData.privateClasses.includes(className)) {
+        console.log("is removing");
         node.classList.remove(className);
       }
     }
