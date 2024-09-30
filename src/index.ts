@@ -498,8 +498,11 @@ function setSelected<T>(
   parent: ParentRecord<T>,
   selectedNodes: Array<NodeRecord<T>>,
   newActiveNode: NodeRecord<T> | undefined,
-  state: BaseDragState<T>
+  state: BaseDragState<T>,
+  pointerdown = false
 ) {
+  state.pointerSelection = pointerdown;
+
   for (const node of selectedNodes) {
     node.el.setAttribute("aria-selected", "true");
 
@@ -903,8 +906,8 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     dragend: nodeEventData(config.handleEnd),
     touchstart: nodeEventData(config.handleTouchstart),
     pointerdown: nodeEventData(config.handlePointerdownNode),
-    pointermove: nodeEventData(config.handlePointermove),
     pointerup: nodeEventData(config.handlePointerupNode),
+    pointermove: nodeEventData(config.handlePointermove),
     handlePointeroverNode: config.handlePointeroverNode,
     mousedown: () => {
       if (!config.nativeDrag) isNative = false;
@@ -1250,14 +1253,15 @@ export function handlePointerdownNode<T>(
 
   synthNodePointerDown = true;
 
-  if (
-    state.selectedState &&
-    state.selectedState.parent.el !== data.targetData.parent.el
-  ) {
-    deselect(state.selectedState.nodes, state.selectedState.parent, state);
+  //if (
+  //  state.selectedState &&
+  //  state.selectedState.parent.el !== data.targetData.parent.el &&
+  //  !synthPointerdown
+  //) {
+  //  deselect(state.selectedState.nodes, state.selectedState.parent, state);
 
-    setActive(data.targetData.parent, undefined, state);
-  }
+  //  setActive(data.targetData.parent, undefined, state);
+  //}
 
   const parentData = data.targetData.parent.data;
 
@@ -1289,7 +1293,8 @@ export function handlePointerdownNode<T>(
       data.targetData.parent,
       selectedNodes,
       data.targetData.node,
-      state
+      state,
+      true
     );
 
     return;
@@ -1315,7 +1320,8 @@ export function handlePointerdownNode<T>(
       data.targetData.parent,
       selectedNodes,
       data.targetData.node,
-      state
+      state,
+      true
     );
 
     return;
@@ -1334,28 +1340,31 @@ export function handlePointerdownNode<T>(
       } else {
         deselect(state.selectedState.nodes, data.targetData.parent, state);
       }
-
+      console.log("dskjfkldsjf");
       setSelected(
         data.targetData.parent,
         selectedNodes,
         data.targetData.node,
-        state
+        state,
+        true
       );
     } else {
-      deselect(
-        state.selectedState.nodes.filter(
-          (x) => x.el === data.targetData.node.el
-        ),
-        data.targetData.parent,
-        state
-      );
+      console.log("dklfjlsdkjfkds");
+      //deselect(
+      //  state.selectedState.nodes.filter(
+      //    (x) => x.el === data.targetData.node.el
+      //  ),
+      //  data.targetData.parent,
+      //  state
+      //);
     }
   } else {
     setSelected(
       data.targetData.parent,
       [data.targetData.node],
       data.targetData.node,
-      state
+      state,
+      true
     );
   }
 }
@@ -1404,13 +1413,14 @@ export function initDrag<T>(
       data.targetData.parent.data
     );
 
-    //console.log("dragImage", dragImage);
     const cloneNode = dragImage?.cloneNode(true) as HTMLElement;
-    console.log("cloneNode", cloneNode);
+
     document.body.appendChild(cloneNode);
+
     setTimeout(() => {
       cloneNode.remove();
     });
+
     data.e.dataTransfer.setDragImage(cloneNode, data.e.offsetX, data.e.offsetY);
   }
 
@@ -1577,7 +1587,6 @@ export function handleEnd<T>(
   data: NodeEventData<T>,
   state: DragState<T> | SynthDragState<T>
 ) {
-  return;
   data.e.preventDefault();
 
   cancelSynthScroll();
@@ -1627,10 +1636,9 @@ export function handleEnd<T>(
       position: state.initialIndex,
     });
 
-  setActive(data.targetData.parent, undefined, state);
+  deselect(state.draggedNodes, state.currentParent, state);
 
-  if (state.selectedState)
-    deselect(state.selectedState?.nodes, data.targetData.parent, state);
+  setActive(data.targetData.parent, undefined, state);
 
   resetState();
 
@@ -1648,6 +1656,13 @@ export function handlePointerupNode<T>(
   data: NodePointerEventData<T>,
   state: DragState<T> | SynthDragState<T> | BaseDragState<T>
 ) {
+  if (!state.pointerSelection && state.selectedState)
+    deselect(state.selectedState.nodes, data.targetData.parent, state);
+
+  state.pointerSelection = false;
+
+  synthNodePointerDown = false;
+
   if (!isDragState(state)) return;
 
   handleEnd(data, state as DragState<T> | SynthDragState<T>);

@@ -49,7 +49,9 @@ export interface ParentConfig<T> {
    */
   dragDropEffect: NativeDragEffects;
   /**
-   * A function that returns the image to use for the drag operation.
+   * A function that returns the image to use for the drag operation. This is
+   * invoked for native and synthetic drag operations. For native drag
+   * operations, this will be set ad the drag image data.
    */
   dragImage: (
     draggedNode: NodeRecord<T>,
@@ -741,6 +743,7 @@ export type BaseDragState<T> = {
    * The original z-index of the dragged node.
    */
   originalZIndex?: string;
+  pointerSelection: boolean;
   preventEnter: boolean;
   /**
    * Flag indicating that the remap just finished.
