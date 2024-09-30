@@ -13,9 +13,9 @@
       class="docs-content min-w-0 px-4 w-full max-w-[1000px] lg:pl-8 xl:pl-12"
     >
       <SectionIntroduction />
-      <!--<SectionGettingStarted />
+      <SectionGettingStarted />
       <SectionFeatures />
-      <SectionPlugins />
+      <!--<SectionPlugins />
       <SectionEvents />
       <SectionConfiguration />
       <SectionSupport />-->

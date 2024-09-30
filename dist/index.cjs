@@ -1759,6 +1759,7 @@ function initDrag(data, draggedNodes2) {
       if (!config.multiDrag) {
         dragImage = data.targetData.node.el.cloneNode(true);
         dragImage.style.width = `${data.targetData.node.el.getBoundingClientRect().width}px`;
+        dragImage.style.zIndex = "9999";
       } else {
         const wrapper = document.createElement("div");
         for (const node of draggedNodes2) {
@@ -1974,6 +1975,7 @@ function initSynthDrag(data, _state, draggedNodes2) {
       if (data.targetData.parent.data.config.deepCopyStyles)
         copyNodeStyle(data.targetData.node.el, dragImage);
       dragImage.style.width = `${data.targetData.node.el.getBoundingClientRect().width}px`;
+      dragImage.style.zIndex = "9999";
       dragImage.style.pointerEvents = "none";
       document.body.appendChild(dragImage);
     } else {
@@ -2090,7 +2092,6 @@ function setSynthScrollDirection(direction, el, state2) {
       animationFrameId = null;
       return;
     }
-    console.log("show direction", direction);
     switch (direction) {
       case "up":
         el.scrollBy(0, -distance);
@@ -2099,7 +2100,6 @@ function setSynthScrollDirection(direction, el, state2) {
       case "down":
         el.scrollBy(0, distance);
         state2.clonedDraggedNode.style.top = `${state2.coordinates.y + el.scrollTop - state2.startTop}px`;
-        console.log("top", state2.clonedDraggedNode.style.top);
         break;
       case "left":
         el.scrollBy(-distance, 0);
@@ -2110,7 +2110,6 @@ function setSynthScrollDirection(direction, el, state2) {
         el.scrollBy(distance, 0);
     }
     lastTimestamp = timestamp;
-    console.log("next animation");
     animationFrameId = requestAnimationFrame(scroll);
   };
   animationFrameId = requestAnimationFrame(scroll);
@@ -2146,18 +2145,10 @@ function shouldScrollLeft(state2, data) {
     return state2;
 }
 function shouldScrollUp(state2, data) {
-  return state2.coordinates.y <= 100;
-  return false;
-  const diff = data.scrollParent.clientHeight + data.y - state2.coordinates.y;
-  if (!data.scrollOutside && diff > data.scrollParent.clientHeight)
-    return false;
-  if (diff > data.yThresh * data.scrollParent.clientHeight && data.scrollParent.scrollTop !== 0) {
-    return true;
-  }
-  return false;
+  return state2.coordinates.y <= 0.1 * data.scrollParent.clientHeight && data.scrollParent.scrollTop !== 0;
 }
 function shouldScrollDown(state2, data) {
-  return state2.coordinates.y > data.clientHeight * data.yThresh;
+  return state2.coordinates.y > data.clientHeight * data.yThresh && data.scrollParent.scrollTop !== data.scrollParent.clientHeight;
 }
 function moveNode(data, state2) {
   const { x, y } = eventCoordinates(data.e);

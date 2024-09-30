@@ -1383,6 +1383,7 @@ export function initDrag<T>(
         dragImage.style.width = `${
           data.targetData.node.el.getBoundingClientRect().width
         }px`;
+        dragImage.style.zIndex = "9999";
       } else {
         const wrapper = document.createElement("div");
 
@@ -1734,6 +1735,8 @@ function initSynthDrag<T>(
       dragImage.style.width = `${
         data.targetData.node.el.getBoundingClientRect().width
       }px`;
+
+      dragImage.style.zIndex = "9999";
       dragImage.style.pointerEvents = "none";
       document.body.appendChild(dragImage);
     } else {
@@ -1913,7 +1916,6 @@ function setSynthScrollDirection<T>(
       return;
     }
 
-    console.log("show direction", direction);
     switch (direction) {
       case "up":
         el.scrollBy(0, -distance);
@@ -1927,8 +1929,6 @@ function setSynthScrollDirection<T>(
         state.clonedDraggedNode.style.top = `${
           state.coordinates.y + el.scrollTop - state.startTop
         }px`;
-
-        console.log("top", state.clonedDraggedNode.style.top);
 
         break;
       case "left":
@@ -1947,15 +1947,11 @@ function setSynthScrollDirection<T>(
         el.scrollBy(distance, 0);
     }
 
-    //state.clonedDraggedNode.style.top = `${
-    //  state.coordinates.y - el.scrollTop
-    //}px`;
-
     lastTimestamp = timestamp;
-    console.log("next animation");
+
     animationFrameId = requestAnimationFrame(scroll);
   };
-  // Start the scrolling loop
+
   animationFrameId = requestAnimationFrame(scroll);
 }
 
@@ -2022,26 +2018,17 @@ function shouldScrollLeft<T>(
 }
 
 function shouldScrollUp<T>(state: DragState<T>, data: ScrollData): boolean {
-  return state.coordinates.y <= 100;
-  return false;
-  //return state.coordinates.y <= data.y + data.clientHeight;
-  const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y;
-
-  if (!data.scrollOutside && diff > data.scrollParent.clientHeight)
-    return false;
-
-  if (
-    diff > data.yThresh * data.scrollParent.clientHeight &&
+  return (
+    state.coordinates.y <= 0.1 * data.scrollParent.clientHeight &&
     data.scrollParent.scrollTop !== 0
-  ) {
-    return true;
-  }
-
-  return false;
+  );
 }
 
 function shouldScrollDown<T>(state: DragState<T>, data: ScrollData): boolean {
-  return state.coordinates.y > data.clientHeight * data.yThresh;
+  return (
+    state.coordinates.y > data.clientHeight * data.yThresh &&
+    data.scrollParent.scrollTop !== data.scrollParent.clientHeight
+  );
 }
 
 function moveNode<T>(data: NodePointerEventData<T>, state: SynthDragState<T>) {
