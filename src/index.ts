@@ -1951,6 +1951,7 @@ function setSynthScrollDirection<T>(
     lastTimestamp = timestamp;
 
     // Continue the loop by requesting the next animation frame
+    console.log("next animation");
     animationFrameId = requestAnimationFrame(scroll);
   };
 
@@ -2053,10 +2054,6 @@ function moveNode<T>(data: NodePointerEventData<T>, state: SynthDragState<T>) {
   const startLeft = state.startLeft ?? 0;
 
   const startTop = state.startTop ?? 0;
-
-  //state.clonedDraggedNode.style.left = `${
-  //  x - startLeft + document.documentElement.scroll
-  //}px`;
 
   state.clonedDraggedNode.style.top = `${y - startTop + window.scrollY}px`;
 
