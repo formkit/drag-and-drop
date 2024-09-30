@@ -1901,7 +1901,7 @@ function setSynthScrollDirection<T>(
     const elapsed = timestamp - lastTimestamp;
 
     // Base scroll speed in pixels per second
-    const baseSpeed = 1000;
+    const baseSpeed = 500;
 
     const distance = (baseSpeed * elapsed) / 1000; // Pixels to scroll
 
@@ -1923,11 +1923,12 @@ function setSynthScrollDirection<T>(
 
         break;
       case "down":
-        console.log("distance", distance);
         el.scrollBy(0, distance);
         state.clonedDraggedNode.style.top = `${
           state.coordinates.y + el.scrollTop - state.startTop
         }px`;
+
+        console.log("top", state.clonedDraggedNode.style.top);
 
         break;
       case "left":
@@ -1951,12 +1952,9 @@ function setSynthScrollDirection<T>(
     //}px`;
 
     lastTimestamp = timestamp;
-
-    // Continue the loop by requesting the next animation frame
     console.log("next animation");
     animationFrameId = requestAnimationFrame(scroll);
   };
-
   // Start the scrolling loop
   animationFrameId = requestAnimationFrame(scroll);
 }

@@ -1069,8 +1069,8 @@ function dragStateProps(data, draggedNodes2, nativeDrag = true) {
     longPressTimeout: 0,
     currentTargetValue: data.targetData.node.data.value,
     scrollEls,
-    startLeft: x - rect.left - window.scrollX,
-    startTop: y - rect.top - window.scrollY,
+    startLeft: x - rect.left,
+    startTop: y - rect.top,
     targetIndex: data.targetData.node.data.index,
     transferred: false
   };
@@ -2090,6 +2090,7 @@ function setSynthScrollDirection(direction, el, state2) {
       animationFrameId = null;
       return;
     }
+    console.log("show direction", direction);
     switch (direction) {
       case "up":
         el.scrollBy(0, -distance);
@@ -2098,6 +2099,7 @@ function setSynthScrollDirection(direction, el, state2) {
       case "down":
         el.scrollBy(0, distance);
         state2.clonedDraggedNode.style.top = `${state2.coordinates.y + el.scrollTop - state2.startTop}px`;
+        console.log("top", state2.clonedDraggedNode.style.top);
         break;
       case "left":
         el.scrollBy(-distance, 0);
@@ -2108,6 +2110,7 @@ function setSynthScrollDirection(direction, el, state2) {
         el.scrollBy(distance, 0);
     }
     lastTimestamp = timestamp;
+    console.log("next animation");
     animationFrameId = requestAnimationFrame(scroll);
   };
   animationFrameId = requestAnimationFrame(scroll);
@@ -2162,8 +2165,8 @@ function moveNode(data, state2) {
   state2.coordinates.x = x;
   const startLeft = state2.startLeft ?? 0;
   const startTop = state2.startTop ?? 0;
-  state2.clonedDraggedNode.style.left = `${x - startLeft + document.documentElement.scrollLeft}px`;
-  state2.clonedDraggedNode.style.top = `${y - startTop + document.documentElement.scrollTop}px`;
+  state2.clonedDraggedNode.style.top = `${y - startTop + window.scrollY}px`;
+  state2.clonedDraggedNode.style.left = `${x - startLeft + window.scrollX}px`;
   if (data.e.cancelable) data.e.preventDefault();
   pointermoveClasses(state2, data.targetData.parent.data.config);
 }
