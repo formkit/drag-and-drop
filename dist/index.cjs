@@ -997,7 +997,7 @@ function dragAndDrop({
       tearDownNodeRemap,
       remapFinished,
       scrollBehavior: {
-        x: 0.8,
+        x: 0.9,
         y: 0.8
       },
       threshold: {
@@ -1759,14 +1759,32 @@ function initDrag(data, draggedNodes2) {
       if (!config.multiDrag) {
         dragImage = data.targetData.node.el.cloneNode(true);
         copyNodeStyle(data.targetData.node.el, dragImage);
-        dragImage.style.width = `${data.targetData.node.el.getBoundingClientRect().width}px`;
-        dragImage.style.zIndex = "9999";
+        const clonedNode = data.targetData.node.el.cloneNode(
+          true
+        );
+        copyNodeStyle(data.targetData.node.el, clonedNode, true);
+        Object.assign(clonedNode.style, {
+          pointerEvents: "none",
+          zIndex: "99999",
+          position: "absolute",
+          left: "-9999px"
+        });
+        document.body.appendChild(clonedNode);
+        data.e.dataTransfer.setDragImage(
+          clonedNode,
+          data.e.offsetX,
+          data.e.offsetY
+        );
+        setTimeout(() => {
+          document.body.removeChild(clonedNode);
+        });
+        return dragState;
       } else {
         const wrapper = document.createElement("div");
         for (const node of draggedNodes2) {
           const clonedNode = node.el.cloneNode(true);
           clonedNode.style.pointerEvents = "none";
-          copyNodeStyle(node.el, clonedNode);
+          copyNodeStyle(node.el, clonedNode, true);
           wrapper.append(clonedNode);
         }
         const { width } = draggedNodes2[0].el.getBoundingClientRect();
@@ -1781,12 +1799,13 @@ function initDrag(data, draggedNodes2) {
         });
         dragImage = wrapper;
       }
+      console.log("append drag iamge", dragImage);
       document.body.appendChild(dragImage);
-      setTimeout(() => {
-        dragImage?.remove();
-      });
     }
     data.e.dataTransfer.setDragImage(dragImage, data.e.offsetX, data.e.offsetY);
+    setTimeout(() => {
+      dragImage?.remove();
+    });
   }
   return dragState;
 }
@@ -1969,6 +1988,7 @@ function handlePointermove(data, state2) {
 function initSynthDrag(data, _state, draggedNodes2) {
   const config = data.targetData.parent.data.config;
   let dragImage;
+  console.log("init synth drag");
   if (config.synthDragImage) {
     dragImage = config.synthDragImage(data, draggedNodes2);
   } else {

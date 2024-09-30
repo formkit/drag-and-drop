@@ -262,7 +262,7 @@ export function dragAndDrop<T>({
       tearDownNodeRemap,
       remapFinished,
       scrollBehavior: {
-        x: 0.8,
+        x: 0.9,
         y: 0.8,
       },
       threshold: {
@@ -1380,11 +1380,35 @@ export function initDrag<T>(
     } else {
       if (!config.multiDrag) {
         dragImage = data.targetData.node.el.cloneNode(true) as HTMLElement;
+
         copyNodeStyle(data.targetData.node.el, dragImage);
-        dragImage.style.width = `${
-          data.targetData.node.el.getBoundingClientRect().width
-        }px`;
-        dragImage.style.zIndex = "9999";
+
+        const clonedNode = data.targetData.node.el.cloneNode(
+          true
+        ) as HTMLElement;
+
+        copyNodeStyle(data.targetData.node.el, clonedNode, true);
+
+        Object.assign(clonedNode.style, {
+          pointerEvents: "none",
+          zIndex: "99999",
+          position: "absolute",
+          left: "-9999px",
+        });
+
+        document.body.appendChild(clonedNode);
+
+        data.e.dataTransfer.setDragImage(
+          clonedNode,
+          data.e.offsetX,
+          data.e.offsetY
+        );
+
+        setTimeout(() => {
+          document.body.removeChild(clonedNode);
+        });
+
+        return dragState;
       } else {
         const wrapper = document.createElement("div");
 
@@ -1393,7 +1417,7 @@ export function initDrag<T>(
 
           clonedNode.style.pointerEvents = "none";
 
-          copyNodeStyle(node.el, clonedNode);
+          copyNodeStyle(node.el, clonedNode, true);
 
           wrapper.append(clonedNode);
         }
@@ -1413,14 +1437,16 @@ export function initDrag<T>(
         dragImage = wrapper;
       }
 
-      document.body.appendChild(dragImage);
+      console.log("append drag iamge", dragImage);
 
-      setTimeout(() => {
-        dragImage?.remove();
-      });
+      document.body.appendChild(dragImage);
     }
 
     data.e.dataTransfer.setDragImage(dragImage, data.e.offsetX, data.e.offsetY);
+
+    setTimeout(() => {
+      dragImage?.remove();
+    });
   }
 
   return dragState;
@@ -1726,6 +1752,7 @@ function initSynthDrag<T>(
 
   let dragImage: HTMLElement | undefined;
 
+  console.log("init synth drag");
   if (config.synthDragImage) {
     dragImage = config.synthDragImage(data, draggedNodes);
   } else {
