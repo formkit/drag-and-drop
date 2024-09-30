@@ -1870,8 +1870,7 @@ function initSynthDrag(data, _state, draggedNodes2) {
   } else {
     if (!config.multiDrag || draggedNodes2.length === 1) {
       dragImage = data.targetData.node.el.cloneNode(true);
-      if (data.targetData.parent.data.config.deepCopyStyles)
-        copyNodeStyle(data.targetData.node.el, dragImage);
+      copyNodeStyle(data.targetData.node.el, dragImage);
       dragImage.style.width = `${data.targetData.node.el.getBoundingClientRect().width}px`;
       dragImage.style.zIndex = "9999";
       dragImage.style.pointerEvents = "none";
@@ -1880,6 +1879,7 @@ function initSynthDrag(data, _state, draggedNodes2) {
       const wrapper = document.createElement("div");
       for (const node of draggedNodes2) {
         const clonedNode = node.el.cloneNode(true);
+        copyNodeStyle(node.el, clonedNode);
         clonedNode.style.pointerEvents = "none";
         wrapper.append(clonedNode);
       }

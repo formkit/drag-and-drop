@@ -1729,21 +1729,22 @@ function initSynthDrag<T>(
     if (!config.multiDrag || draggedNodes.length === 1) {
       dragImage = data.targetData.node.el.cloneNode(true) as HTMLElement;
 
-      if (data.targetData.parent.data.config.deepCopyStyles)
-        copyNodeStyle(data.targetData.node.el, dragImage);
+      copyNodeStyle(data.targetData.node.el, dragImage);
 
-      dragImage.style.width = `${
-        data.targetData.node.el.getBoundingClientRect().width
-      }px`;
+      Object.assign(dragImage.style, {
+        width: data.targetData.node.el.getBoundingClientRect().width,
+        zIndex: 9999,
+        pointerEvents: "none",
+      });
 
-      dragImage.style.zIndex = "9999";
-      dragImage.style.pointerEvents = "none";
       document.body.appendChild(dragImage);
     } else {
       const wrapper = document.createElement("div");
 
       for (const node of draggedNodes) {
         const clonedNode = node.el.cloneNode(true) as HTMLElement;
+
+        copyNodeStyle(node.el, clonedNode);
 
         clonedNode.style.pointerEvents = "none";
 

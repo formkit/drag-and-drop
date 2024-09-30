@@ -15,9 +15,10 @@
       <SectionIntroduction />
       <SectionGettingStarted />
       <SectionFeatures />
-      <!--<SectionPlugins />
-      <SectionEvents />
-      <SectionConfiguration />
+      <!--<SectionFeatures />
+      <SectionPlugins />-->
+      <!--<SectionEvents />-->
+      <!--<SectionConfiguration />
       <SectionSupport />-->
     </div>
   </main>

@@ -3,12 +3,12 @@
 <template>
   <SectionWrapper>
     <h2 id="features">Features</h2>
-    <p>
+    <!--<p>
       Drag and drop ships out of the box with the ability to sort and transfer
       individual items between lists. Further customization is also available
       via <a href="#plugins">first-party plugins</a>, and of course you can
       always <a href="#custom-plugins">write your own</a>.
-    </p>
+    </p>-->
     <h3 id="sortability">Sortability</h3>
     <p>
       Using <code>useDragAndDrop</code> or
