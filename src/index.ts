@@ -249,20 +249,20 @@ export function dragAndDrop<T>({
       handleParentKeydown,
       handleDragstart,
       handleNodeDragover,
-      handlePaqrentDragover,
+      handleParentDragover,
       handleNodeDrop,
       handleDragend,
-      handleBlurParent,
-      handleFocusParent,
-      handlePointerupNode,
-      handleTouchstart,
+      handleParentBlur,
+      handleParentFocus,
+      handleNodePointerup,
+      handleNodeTouchstart,
       handleNodePointerover,
       handleParentPointerover,
-      handlePointerdownNode,
-      handlePointermove,
+      handleNodePointerdown,
+      handleNodePointermove,
       handleNodeDragenter,
       handleNodeDragleave,
-      handleDropParent,
+      handleParentDrop,
       multiDrag: config.multiDrag ?? false,
       nativeDrag: config.nativeDrag ?? true,
       performSort,
@@ -557,12 +557,12 @@ function clearLiveRegion<T>(parent: ParentRecord<T>) {
   liveRegion.textContent = "";
 }
 
-export function handleBlurParent<T>(
+export function handleParentBlur<T>(
   _data: ParentEventData<T>,
   _state: BaseDragState<T> | DragState<T> | SynthDragState<T>
 ) {}
 
-export function handleFocusParent<T>(
+export function handleParentFocus<T>(
   data: ParentEventData<T>,
   state: BaseDragState<T> | DragState<T> | SynthDragState<T>
 ) {
@@ -788,7 +788,7 @@ export function updateConfig<T>(
   });
 }
 
-export function handleDropParent<T>(_data: ParentEventData<T>) {}
+export function handleParentDrop<T>(_data: ParentEventData<T>) {}
 
 export function tearDown(parent: HTMLElement) {
   const parentData = parents.get(parent);
@@ -1225,7 +1225,7 @@ export function handleDragstart<T>(
     );
 }
 
-export function handlePointerdownNode<T>(
+export function handleNodePointerdown<T>(
   data: NodePointerEventData<T>,
   state: BaseDragState<T>
 ) {
@@ -1671,14 +1671,14 @@ export function handleEnd<T>(
   synthNodePointerDown = false;
 }
 
-export function handleTouchstart<T>(
+export function handleNodeTouchstart<T>(
   data: NodeEventData<T>,
   _state: BaseDragState<T>
 ) {
   if (data.e.cancelable) data.e.preventDefault();
 }
 
-export function handlePointerupNode<T>(
+export function handleNodePointerup<T>(
   data: NodePointerEventData<T>,
   state: DragState<T> | SynthDragState<T> | BaseDragState<T>
 ) {
@@ -1694,7 +1694,7 @@ export function handlePointerupNode<T>(
   handleEnd(data, state as DragState<T> | SynthDragState<T>);
 }
 
-export function handlePointermove<T>(
+export function handleNodePointermove<T>(
   data: NodePointerEventData<T>,
   state: SynthDragState<T> | BaseDragState<T>
 ) {
