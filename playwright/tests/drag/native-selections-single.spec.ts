@@ -7,9 +7,9 @@ test.beforeEach(async ({ browser }) => {
   page = await browser.newPage();
 });
 
-test.describe.only("Native selections", async () => {
-  test.only("Selections", async () => {
-    await page.goto("http://localhost:3001/selections/native-multiple");
+test.describe("Native selections single select", async () => {
+  test.only("Selections single select", async () => {
+    await page.goto("http://localhost:3001/selections/native-single");
     await new Promise((r) => setTimeout(r, 1000));
     // When the parent is focused, the first item should get the active class
     // and the aria-activedescendant should be set to the id of the first item
@@ -41,8 +41,8 @@ test.describe.only("Native selections", async () => {
       "Banana"
     );
 
-    //  Pressing arrow down again should set the active descendant to the next
-    // item;
+    // Pressing arrow down again should set the active descendant to the next
+    // item
     await page.keyboard.press("ArrowDown");
     await expect(page.locator("#Banana")).toHaveAttribute(
       "aria-selected",
@@ -59,8 +59,8 @@ test.describe.only("Native selections", async () => {
       "Orange"
     );
 
-    //  Pressing the arrow down when at the end of the list should not change the
-    //  active descendant
+    // Pressing the arrow down when at the end of the list should not change the
+    // active descendant
     await page.keyboard.press("ArrowDown");
     await expect(page.locator("#Orange")).toHaveAttribute(
       "aria-selected",
@@ -90,8 +90,8 @@ test.describe.only("Native selections", async () => {
       "Banana"
     );
 
-    //  Pressing the arrow up again should set the active descendant to the
-    //  previous item
+    // Pressing the arrow up again should set the active descendant to the
+    // previous item
     await page.keyboard.press("ArrowUp");
     await expect(page.locator("#Banana")).toHaveAttribute(
       "aria-selected",
@@ -108,8 +108,8 @@ test.describe.only("Native selections", async () => {
       "Apple"
     );
 
-    //   Pressing the arrow up when at the beginning of the list should not change
-    //   the active descendant
+    // Pressing the arrow up when at the beginning of the list should not change
+    // the active descendant
     await page.keyboard.press("ArrowUp");
     await expect(page.locator("#Apple")).toHaveAttribute(
       "aria-selected",
@@ -290,54 +290,9 @@ test.describe.only("Native selections", async () => {
 
     // When holding shift key and selecting an item (orange), we should expect
     // to see all items between the active descendant and the selected item
-    //  become selected because multi is enabled.
-    await page.locator("#Orange").click({
-      modifiers: ["Shift"],
-    });
-    await expect(page.locator("#Apple")).toHaveAttribute(
-      "aria-selected",
-      "true"
-    );
-    await expect(page.locator("#Apple")).toHaveClass("item selected");
-    await expect(page.locator("#Banana")).toHaveAttribute(
-      "aria-selected",
-      "true"
-    );
-    await expect(page.locator("#Banana")).toHaveClass("item selected");
-    await expect(page.locator("#Orange")).toHaveAttribute(
-      "aria-selected",
-      "true"
-    );
-    await expect(page.locator("#Orange")).toHaveClass("item selected active");
-    await page.locator("#title").click();
-
-    // When holding shift and selecting the same item, we should expect the
-    // selected class to remain.
-    await page.locator("#Orange").click({
-      modifiers: ["Shift"],
-    });
-    await expect(page.locator("#Apple")).toHaveAttribute(
-      "aria-selected",
-      "true"
-    );
-    await expect(page.locator("#Apple")).toHaveClass("item selected");
-    await expect(page.locator("#Banana")).toHaveAttribute(
-      "aria-selected",
-      "true"
-    );
-    await expect(page.locator("#Banana")).toHaveClass("item selected");
-    await expect(page.locator("#Orange")).toHaveAttribute(
-      "aria-selected",
-      "true"
-    );
-    await expect(page.locator("#Orange")).toHaveClass("item selected active");
-
-    // Holding shift and clicking "Potato" in the vegetables list should select
-    // all items in that list. The selected class should be removed from the
-    // fruits list
-    await page.locator("#Potato").click({
-      modifiers: ["Shift"],
-    });
+    // not become selected because multi is not enabled.
+    await page.keyboard.down("Shift");
+    await page.locator("#Orange").click();
     await expect(page.locator("#Apple")).toHaveAttribute(
       "aria-selected",
       "false"
@@ -350,67 +305,30 @@ test.describe.only("Native selections", async () => {
     await expect(page.locator("#Banana")).toHaveClass("item");
     await expect(page.locator("#Orange")).toHaveAttribute(
       "aria-selected",
+      "true"
+    );
+    await expect(page.locator("#Orange")).toHaveClass("item selected active");
+    await page.locator("#title").click();
+
+    // When selecting an item (apple) from the first list, targeting the first
+    // item of the second list should place "apple" in the second list
+    await page.locator("#fruits").focus();
+    await page.keyboard.press("Space");
+    await page.locator("#vegetables").focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#Apple")).toHaveAttribute(
+      "aria-selected",
       "false"
     );
-    await expect(page.locator("#Orange")).toHaveClass("item");
-    await expect(page.locator("#Carrot")).toHaveAttribute(
-      "aria-selected",
-      "true"
+    await expect(page.locator("#Apple")).toHaveClass("item active");
+    await expect(page.locator("#vegetables")).toHaveAttribute(
+      "aria-activedescendant",
+      "Apple"
     );
-    await expect(page.locator("#Carrot")).toHaveClass("item selected");
-    await expect(page.locator("#Broccoli")).toHaveAttribute(
-      "aria-selected",
-      "true"
-    );
-    await expect(page.locator("#Broccoli")).toHaveAttribute(
-      "aria-selected",
-      "true"
-    );
-    await expect(page.locator("#Potato")).toHaveAttribute(
-      "aria-selected",
-      "true"
-    );
-    await expect(page.locator("#Potato")).toHaveClass("item selected active");
-
-    // Clicking the document should remove the active descendant and the
-    // selected class
-    await page.locator("#title").click();
     await expect(page.locator("#Carrot")).toHaveAttribute(
       "aria-selected",
       "false"
     );
     await expect(page.locator("#Carrot")).toHaveClass("item");
-    await expect(page.locator("#Broccoli")).toHaveAttribute(
-      "aria-selected",
-      "false"
-    );
-    await expect(page.locator("#Broccoli")).toHaveClass("item");
-    await expect(page.locator("#Potato")).toHaveAttribute(
-      "aria-selected",
-      "false"
-    );
-    await expect(page.locator("#Potato")).toHaveClass("item");
-
-    // Clicking Apple, then holding ctrl/cmd and clicking Banana should select
-    // both items
-    await page.locator("#Apple").click();
-    await expect(page.locator("#Apple")).toHaveAttribute(
-      "aria-selected",
-      "true"
-    );
-    await expect(page.locator("#Apple")).toHaveClass("item selected active");
-    await page.locator("#Banana").click({
-      modifiers: ["Meta"],
-    });
-    await expect(page.locator("#Apple")).toHaveAttribute(
-      "aria-selected",
-      "true"
-    );
-    await expect(page.locator("#Apple")).toHaveClass("item selected");
-    await expect(page.locator("#Banana")).toHaveAttribute(
-      "aria-selected",
-      "true"
-    );
-    await expect(page.locator("#Banana")).toHaveClass("item selected active");
   });
 });

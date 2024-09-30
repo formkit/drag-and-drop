@@ -8,7 +8,7 @@ test.beforeEach(async ({ browser }) => {
 });
 
 test.describe("Non native selections multiple", async () => {
-  test.only("Selections", async () => {
+  test("Selections", async () => {
     page.goto("http://localhost:3001/selections/non-native-multiple");
     await new Promise((r) => setTimeout(r, 1000));
 

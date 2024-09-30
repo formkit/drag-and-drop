@@ -394,10 +394,12 @@ function setActive<T>(
   const activeDescendantClass = parent.data.config.activeDescendantClass;
 
   if (state.activeState) {
-    removeClass([state.activeState.node.el], activeDescendantClass);
+    {
+      removeClass([state.activeState.node.el], activeDescendantClass);
 
-    if (state.activeState.parent.el !== parent.el)
-      state.activeState.parent.el.setAttribute("aria-activedescendant", "");
+      if (state.activeState.parent.el !== parent.el)
+        state.activeState.parent.el.setAttribute("aria-activedescendant", "");
+    }
   }
 
   if (!newActiveNode) {
@@ -432,6 +434,11 @@ function deselect<T>(
 
   const iterativeNodes = Array.from(nodes);
 
+  removeClass(
+    nodes.map((x) => x.el),
+    selectedClass
+  );
+
   for (const node of iterativeNodes) {
     node.el.setAttribute("aria-selected", "false");
 
@@ -441,11 +448,6 @@ function deselect<T>(
 
     state.selectedState.nodes.splice(index, 1);
   }
-
-  removeClass(
-    nodes.map((x) => x.el),
-    selectedClass
-  );
 
   clearLiveRegion(parent);
 }
@@ -1647,12 +1649,9 @@ export function handleEnd<T>(
       position: state.initialIndex,
     });
 
-  console.log(state.draggedNodes.map((x) => x.el));
   deselect(state.draggedNodes, state.currentParent, state);
 
   setActive(data.targetData.parent, undefined, state);
-
-  console.log("set active here");
 
   resetState();
 

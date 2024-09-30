@@ -1,48 +1,69 @@
 <script setup lang="ts">
-import { dragAndDrop } from "../../../src/vue/index";
+import { useDragAndDrop } from "../../../src/vue/index";
 
-const parent1: Ref<HTMLElement | undefined> = ref(undefined);
+const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
+  group: "transfer",
+  selectedClass: "selected",
+  activeDescendantClass: "active",
+  draggable: (el) => {
+    return el.tagName === "LI";
+  },
+});
 
-const values1 = ref(["Apple", "Banana", "Orange"]);
-
-dragAndDrop({
-  parent: parent1,
-  values: values1,
-  activeDescendantClass: "activeDescendantClass",
-  selectedClass: "selectedClass",
+const [parent2, values2] = useDragAndDrop(["Carrot", "Broccoli", "Potato"], {
+  group: "transfer",
+  selectedClass: "selected",
+  activeDescendantClass: "active",
+  draggable: (el) => {
+    return el.tagName === "LI";
+  },
 });
 </script>
 
 <template>
-  <h1>Selections</h1>
-  <p>Change this</p>
-  <div class="outside-container">
-    <ul ref="parent1" class="list" id="list-1">
-      <li v-for="value in values1" :id="value" :key="value" class="item">
-        {{ value }}
-      </li>
-    </ul>
+  <h1 id="title">Native selections</h1>
+  <div class="flex-wrap">
+    <div>
+      <ul id="fruits" ref="parent1" class="list" aria-label="fruits">
+        <li
+          v-for="value in values1"
+          :id="value"
+          :key="value"
+          class="item"
+          :aria-label="value"
+        >
+          {{ value }}
+        </li>
+        <span id="values_1" class="text-xs">
+          {{ values1.map((x) => x).join(" ") }}
+        </span>
+      </ul>
+    </div>
+    <div>
+      <ul id="vegetables" ref="parent2" class="list" aria-label="vegetables">
+        <li v-for="value in values2" :id="value" :key="value" class="item">
+          {{ value }}
+        </li>
+        <span id="values_2" class="text-xs">
+          {{ values2.map((x) => x).join(" ") }}
+        </span>
+      </ul>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.outside-container {
-  padding: 20px;
-  background-color: purple;
-  position: absolute;
-  left: 20px;
+.active {
+  border: 5px solid red !important;
 }
 
-.activeDescendantClass {
-  border-color: red !important;
+.selected {
+  background-color: red !important;
+  border: 5px solid red !important;
 }
 
-.selectedClass {
-  background-color: red;
-}
-
-body {
-  height: 10000px !important;
+.flex-wrap {
+  display: flex;
 }
 
 h1 {
@@ -54,13 +75,23 @@ h1 {
   padding: 0;
   margin: 0;
   margin-bottom: 2em;
-  background-color: yellow;
+  padding: 2em;
+  width: 100%;
+  background-color: grey;
 }
 
 .item {
+  background-color: white;
   padding: 10px;
   margin: 5px;
   border: 1px solid #ccc;
+  width: 200px;
   border-radius: 5px;
+  height: 200px;
+  width: 300px;
+}
+
+.item-small {
+  height: 50px;
 }
 </style>
