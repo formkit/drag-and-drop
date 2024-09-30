@@ -165,3 +165,9 @@ onMounted(() => {
     </div>
   </div>
 </template>
+
+<style>
+body {
+  height: 10000px !important;
+}
+</style>

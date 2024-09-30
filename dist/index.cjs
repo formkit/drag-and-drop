@@ -1783,6 +1783,7 @@ function initDrag(data, draggedNodes2) {
         });
         dragImage = wrapper;
       }
+      console.log("not multi drag", dragImage);
       document.body.appendChild(dragImage);
       setTimeout(() => {
         dragImage?.remove();
@@ -1976,8 +1977,10 @@ function initSynthDrag(data, _state, draggedNodes2) {
   } else {
     if (!config.multiDrag || draggedNodes2.length === 1) {
       dragImage = data.targetData.node.el.cloneNode(true);
+      dragImage.style.width = `${data.targetData.node.el.getBoundingClientRect().width}px`;
       if (data.targetData.parent.data.config.deepCopyStyles)
         copyNodeStyle(data.targetData.node.el, dragImage);
+      document.body.appendChild(dragImage);
     } else {
       const wrapper = document.createElement("div");
       for (const node of draggedNodes2) {
@@ -2001,6 +2004,7 @@ function initSynthDrag(data, _state, draggedNodes2) {
   const display = dragImage.style.display;
   dragImage.style.display = "none";
   document.body.append(dragImage);
+  dragImage.style.position = "absolute";
   const synthDragStateProps = {
     clonedDraggedEls: [],
     clonedDraggedNode: dragImage,
