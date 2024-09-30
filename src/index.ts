@@ -1585,6 +1585,7 @@ export function handleEnd<T>(
   data: NodeEventData<T>,
   state: DragState<T> | SynthDragState<T>
 ) {
+  console.log("handle end called");
   data.e.preventDefault();
 
   cancelSynthScroll();
