@@ -1973,9 +1973,11 @@ function initSynthDrag(data, _state, draggedNodes2) {
     if (!config.multiDrag || draggedNodes2.length === 1) {
       dragImage = data.targetData.node.el.cloneNode(true);
       copyNodeStyle(data.targetData.node.el, dragImage);
-      dragImage.style.width = `${data.targetData.node.el.getBoundingClientRect().width}px`;
-      dragImage.style.zIndex = "9999";
-      dragImage.style.pointerEvents = "none";
+      Object.assign(dragImage.style, {
+        width: data.targetData.node.el.getBoundingClientRect().width,
+        zIndex: 9999,
+        pointerEvents: "none"
+      });
       document.body.appendChild(dragImage);
     } else {
       const wrapper = document.createElement("div");
