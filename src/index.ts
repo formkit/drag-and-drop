@@ -1739,6 +1739,7 @@ function initSynthDrag<T>(
       dragImage.style.width = `${
         data.targetData.node.el.getBoundingClientRect().width
       }px`;
+      dragImage.style.pointerEvents = "none";
       document.body.appendChild(dragImage);
     } else {
       const wrapper = document.createElement("div");
@@ -2053,7 +2054,6 @@ function moveNode<T>(data: NodePointerEventData<T>, state: SynthDragState<T>) {
 
   console.log("start top", startTop);
 
-  console.log("start left", startLeft);
   state.clonedDraggedNode.style.left = `${x - startLeft}px`;
 
   state.clonedDraggedNode.style.top = `${y - startTop}px`;
