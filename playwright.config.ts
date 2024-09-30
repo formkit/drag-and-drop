@@ -20,36 +20,35 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
       },
     },
-    //},
-    ////{
-    ////  name: "Desktop Firefox",
-    ////  testMatch: "tests/drag/**/*.spec.ts",
-    ////  use: {
-    ////    ...devices["Desktop Firefox"],
-    ////  },
-    ////},
-    ////{
-    ////  name: "Desktop Webkit",
-    ////  testMatch: "tests/drag/**/*.spec.ts",
-    ////  use: {
-    ////    ...devices["Desktop Webkit"],
-    ////  },
-    ////},
-    ////{
-    ////  name: "iPhone 13 Chromium",
-    ////  testMatch: "tests/synthetic-drag/**/*.spec.ts",
-    ////  use: {
-    ////    ...devices["iPhone 13"],
-    ////    browserName: "chromium",
-    ////  },
-    ////},
-    //{
-    //  name: "iPhone 13 webkit",
-    //  testMatch: "tests/synthetic-drag/**/*.spec.ts",
-    //  use: {
-    //    ...devices["iPhone 13"],
-    //    browserName: "webkit",
-    //  },
-    //},
+    {
+      name: "Desktop Firefox",
+      testMatch: "tests/drag/**/*.spec.ts",
+      use: {
+        ...devices["Desktop Firefox"],
+      },
+    },
+    {
+      name: "Desktop Webkit",
+      testMatch: "tests/drag/**/*.spec.ts",
+      use: {
+        ...devices["Desktop Webkit"],
+      },
+    },
+    {
+      name: "iPhone 13 Chromium",
+      testMatch: "tests/synthetic-drag/**/*.spec.ts",
+      use: {
+        ...devices["iPhone 13"],
+        browserName: "chromium",
+      },
+    },
+    {
+      name: "iPhone 13 webkit",
+      testMatch: "tests/synthetic-drag/**/*.spec.ts",
+      use: {
+        ...devices["iPhone 13"],
+        browserName: "webkit",
+      },
+    },
   ],
 });
