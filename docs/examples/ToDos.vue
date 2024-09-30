@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { swap } from "@formkit/drag-and-drop";
-import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
+import { useDragAndDrop } from "../../src/vue/index";
 
 const props = defineProps({
   dragHandles: {
@@ -36,7 +36,6 @@ const [todoList, todos] = useDragAndDrop(
     sortable: props.sortable,
     plugins: props.swap ? [swap()] : undefined,
     dropZoneClass: "!bg-lime-200",
-    touchDropZoneClass: "!bg-lime-200",
   }
 );
 const [doneList, dones] = useDragAndDrop(["Pickup new mix-tape from Beth"], {
@@ -45,7 +44,6 @@ const [doneList, dones] = useDragAndDrop(["Pickup new mix-tape from Beth"], {
   sortable: props.sortable,
   plugins: props.swap ? [swap()] : undefined,
   dropZoneClass: "!bg-lime-200",
-  touchDropZoneClass: "!bg-lime-200",
 });
 
 if (props.dragHandles) {

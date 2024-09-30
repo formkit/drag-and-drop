@@ -936,7 +936,7 @@ declare function handleKeydownNode<T>(_data: NodeEventData<T>): void;
 declare function handleKeydownParent<T>(data: ParentKeydownEventData<T>, state: BaseDragState<T>): void;
 declare function preventSortOnScroll(): () => void;
 declare function handlePointeroverNode<T>(e: PointeroverNodeEvent<T>): void;
-declare function handleEnd<T>(data: NodeEventData<T>, state: DragState<T> | SynthDragState<T>): void;
+declare function handleEnd<T>(_data: NodeEventData<T>, state: DragState<T> | SynthDragState<T>): void;
 declare function handleTouchstart<T>(data: NodeEventData<T>, _state: BaseDragState<T>): void;
 declare function handlePointerupNode<T>(data: NodePointerEventData<T>, state: DragState<T> | SynthDragState<T> | BaseDragState<T>): void;
 declare function handlePointermove<T>(data: NodePointerEventData<T>, state: SynthDragState<T> | BaseDragState<T>): void;

@@ -1381,8 +1381,6 @@ export function initDrag<T>(
       if (!config.multiDrag) {
         dragImage = data.targetData.node.el.cloneNode(true) as HTMLElement;
 
-        copyNodeStyle(data.targetData.node.el, dragImage);
-
         const clonedNode = data.targetData.node.el.cloneNode(
           true
         ) as HTMLElement;
@@ -1609,67 +1607,70 @@ export function handlePointeroverNode<T>(e: PointeroverNodeEvent<T>) {
 }
 
 export function handleEnd<T>(
-  data: NodeEventData<T>,
+  _data: NodeEventData<T>,
   state: DragState<T> | SynthDragState<T>
 ) {
-  data.e.preventDefault();
+  console.log("hello world", state);
+  //console.log(state.dragged)
+  return;
+  //data.e.preventDefault();
 
-  cancelSynthScroll();
+  //cancelSynthScroll();
 
-  for (const [_el, controller] of state.scrollEls) controller.abort();
+  //for (const [_el, controller] of state.scrollEls) controller.abort();
 
-  if ("longPressTimeout" in state && state.longPressTimeout)
-    clearTimeout(state.longPressTimeout);
+  //if ("longPressTimeout" in state && state.longPressTimeout)
+  //  clearTimeout(state.longPressTimeout);
 
-  const config = parents.get(state.initialParent.el)?.config;
+  //const config = parents.get(state.initialParent.el)?.config;
 
-  const isSynth = "clonedDraggedNode" in state && state.clonedDraggedNode;
+  //const isSynth = "clonedDraggedNode" in state && state.clonedDraggedNode;
 
-  const dropZoneClass = isSynth
-    ? config?.synthDropZoneClass
-    : config?.dropZoneClass;
+  //const dropZoneClass = isSynth
+  //  ? config?.synthDropZoneClass
+  //  : config?.dropZoneClass;
 
-  if (state.originalZIndex !== undefined)
-    state.draggedNode.el.style.zIndex = state.originalZIndex;
+  //if (state.originalZIndex !== undefined)
+  //  state.draggedNode.el.style.zIndex = state.originalZIndex;
 
-  removeClass(
-    state.draggedNodes.map((x) => x.el),
-    dropZoneClass
-  );
-
-  // TODO:
   //removeClass(
   //  state.draggedNodes.map((x) => x.el),
-  //  config?.dragPlaceholderClass
+  //  dropZoneClass
   //);
 
-  if (config?.longPressClass) {
-    removeClass(
-      state.draggedNodes.map((x) => x.el),
-      state.initialParent.data?.config?.longPressClass
-    );
-  }
+  //// TODO:
+  ////removeClass(
+  ////  state.draggedNodes.map((x) => x.el),
+  ////  config?.dragPlaceholderClass
+  ////);
 
-  if (isSynth) state.clonedDraggedNode.remove();
+  //if (config?.longPressClass) {
+  //  removeClass(
+  //    state.draggedNodes.map((x) => x.el),
+  //    state.initialParent.data?.config?.longPressClass
+  //  );
+  //}
 
-  if (config?.onDragend)
-    config.onDragend({
-      parent: state.currentParent,
-      values: parentValues(state.currentParent.el, state.currentParent.data),
-      draggedNode: state.draggedNode,
-      draggedNodes: state.draggedNodes,
-      position: state.initialIndex,
-    });
+  //if (isSynth) state.clonedDraggedNode.remove();
 
-  deselect(state.draggedNodes, state.currentParent, state);
+  //if (config?.onDragend)
+  //  config.onDragend({
+  //    parent: state.currentParent,
+  //    values: parentValues(state.currentParent.el, state.currentParent.data),
+  //    draggedNode: state.draggedNode,
+  //    draggedNodes: state.draggedNodes,
+  //    position: state.initialIndex,
+  //  });
 
-  setActive(data.targetData.parent, undefined, state);
+  //deselect(state.draggedNodes, state.currentParent, state);
 
-  resetState();
+  //setActive(data.targetData.parent, undefined, state);
 
-  state.selectedState = undefined;
+  //resetState();
 
-  synthNodePointerDown = false;
+  //state.selectedState = undefined;
+
+  //synthNodePointerDown = false;
 }
 
 export function handleTouchstart<T>(

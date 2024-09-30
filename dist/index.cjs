@@ -1758,7 +1758,6 @@ function initDrag(data, draggedNodes2) {
     } else {
       if (!config.multiDrag) {
         dragImage = data.targetData.node.el.cloneNode(true);
-        copyNodeStyle(data.targetData.node.el, dragImage);
         const clonedNode = data.targetData.node.el.cloneNode(
           true
         );
@@ -1909,41 +1908,9 @@ function handlePointeroverNode3(e) {
     sort(e.detail, e.detail.state);
   else transfer(e.detail, e.detail.state);
 }
-function handleEnd(data, state2) {
-  data.e.preventDefault();
-  cancelSynthScroll();
-  for (const [_el, controller] of state2.scrollEls) controller.abort();
-  if ("longPressTimeout" in state2 && state2.longPressTimeout)
-    clearTimeout(state2.longPressTimeout);
-  const config = parents.get(state2.initialParent.el)?.config;
-  const isSynth = "clonedDraggedNode" in state2 && state2.clonedDraggedNode;
-  const dropZoneClass = isSynth ? config?.synthDropZoneClass : config?.dropZoneClass;
-  if (state2.originalZIndex !== void 0)
-    state2.draggedNode.el.style.zIndex = state2.originalZIndex;
-  removeClass(
-    state2.draggedNodes.map((x) => x.el),
-    dropZoneClass
-  );
-  if (config?.longPressClass) {
-    removeClass(
-      state2.draggedNodes.map((x) => x.el),
-      state2.initialParent.data?.config?.longPressClass
-    );
-  }
-  if (isSynth) state2.clonedDraggedNode.remove();
-  if (config?.onDragend)
-    config.onDragend({
-      parent: state2.currentParent,
-      values: parentValues(state2.currentParent.el, state2.currentParent.data),
-      draggedNode: state2.draggedNode,
-      draggedNodes: state2.draggedNodes,
-      position: state2.initialIndex
-    });
-  deselect(state2.draggedNodes, state2.currentParent, state2);
-  setActive(data.targetData.parent, void 0, state2);
-  resetState();
-  state2.selectedState = void 0;
-  synthNodePointerDown = false;
+function handleEnd(_data, state2) {
+  console.log("hello world", state2);
+  return;
 }
 function handleTouchstart(data, _state) {
   if (data.e.cancelable) data.e.preventDefault();
