@@ -1901,7 +1901,7 @@ function setSynthScrollDirection<T>(
     const elapsed = timestamp - lastTimestamp;
 
     // Base scroll speed in pixels per second
-    const baseSpeed = 500;
+    const baseSpeed = 1000;
 
     const distance = (baseSpeed * elapsed) / 1000; // Pixels to scroll
 
@@ -1922,6 +1922,7 @@ function setSynthScrollDirection<T>(
 
         break;
       case "down":
+        console.log("distance", distance);
         el.scrollBy(0, distance);
         state.clonedDraggedNode.style.top = `${
           state.coordinates.y + el.scrollTop - state.startTop
