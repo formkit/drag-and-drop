@@ -37,7 +37,6 @@ export { animations } from "./plugins/animations";
 export { insertion } from "./plugins/insertion";
 export { multiDrag } from "./plugins/multiDrag";
 export { place } from "./plugins/place";
-export { selections } from "./plugins/multiDrag/plugins/selections";
 export { swap } from "./plugins/swap";
 
 /**
@@ -138,11 +137,30 @@ export function setDragState<T>(
 /**
  *
  */
-function handleRootPointerdown(_e: PointerEvent) {
+function handlePointerdownRoot(_e: PointerEvent) {
   if (state.activeState) setActive(state.activeState.parent, undefined, state);
 
   if (state.selectedState)
     deselect(state.selectedState.nodes, state.selectedState.parent, state);
+
+  state.selectedState = state.activeState = undefined;
+}
+
+/**
+ * Handles the keydown event on the root element.
+ *
+ * @param {KeyboardEvent} e - The keyboard event.
+ */
+function handleRootKeydown(e: KeyboardEvent) {
+  if (e.key === "Escape") {
+    if (state.selectedState)
+      deselect(state.selectedState.nodes, state.selectedState.parent, state);
+
+    if (state.activeState)
+      setActive(state.activeState.parent, undefined, state);
+
+    state.selectedState = state.activeState = undefined;
+  }
 }
 
 /**
@@ -173,7 +191,8 @@ export function dragAndDrop<T>({
   if (!documentController)
     documentController = addEvents(document, {
       dragover: handleRootDragover,
-      pointerdown: handleRootPointerdown,
+      pointerdown: handlePointerdownRoot,
+      keydown: handleRootKeydown,
     });
 
   tearDown(parent);
@@ -400,8 +419,8 @@ export function performSort<T>({
 }
 
 /**
- * This function sets the active node. This will clean the prior active state
- * as well as removing any classes or attribute set.
+ * This function sets the active node as well as removing any classes or
+ * attribute set.
  *
  * @param {ParentEventData} data - The parent event data.
  * @param {NodeRecord} newActiveNode - The new active node.
@@ -412,8 +431,6 @@ function setActive<T>(
   newActiveNode: NodeRecord<T> | undefined,
   state: BaseDragState<T>
 ) {
-  console.trace();
-  //clearLiveRegion(parent);
   const activeDescendantClass = parent.data.config.activeDescendantClass;
 
   if (state.activeState) {
@@ -425,6 +442,8 @@ function setActive<T>(
 
   if (!newActiveNode) {
     state.activeState?.parent.el.setAttribute("aria-activedescendant", "");
+
+    state.activeState = undefined;
 
     return;
   }
@@ -467,7 +486,6 @@ function deselect<T>(
 
     state.selectedState.nodes.splice(index, 1);
   }
-  state.selectedState = undefined;
 
   clearLiveRegion(parent);
 }
@@ -479,12 +497,13 @@ function deselect<T>(
 function setSelected<T>(
   parent: ParentRecord<T>,
   selectedNodes: Array<NodeRecord<T>>,
+  newActiveNode: NodeRecord<T> | undefined,
   state: BaseDragState<T>
 ) {
   for (const node of selectedNodes) {
     node.el.setAttribute("aria-selected", "true");
 
-    addNodeClass([node.el], parent.data.config.selectedClass);
+    addNodeClass([node.el], parent.data.config.selectedClass, true);
   }
 
   state.selectedState = {
@@ -504,7 +523,7 @@ function setSelected<T>(
     return;
   }
 
-  setActive(parent, selectedNodes[0], state);
+  setActive(parent, newActiveNode, state);
 
   updateLiveRegion(
     parent,
@@ -514,33 +533,6 @@ function setSelected<T>(
       ", "
     )}.`
   );
-
-  //state.selectedState = {
-  //  nodes: newlySelectedNodes,
-  //  parent: parent,
-  //};
-
-  //addNodeClass(
-  //  newlySelectedNodes.map((x) => x.el),
-  //  selectedClass,
-  //  true
-  //);
-
-  //for (const node of newlySelectedNodes)
-  //  node.el.setAttribute("aria-selected", "true");
-
-  //const selectedItems = newlySelectedNodes.map((x) =>
-  //  x.el.getAttribute("aria-label")
-  //);
-
-  //updateLiveRegion(
-  //  parent,
-  //  `${selectedItems.join(
-  //    ", "
-  //  )} ready for dragging. Use arrow keys to navigate. Press enter to drop ${selectedItems.join(
-  //    ", "
-  //  )}`
-  //);
 }
 
 function updateLiveRegion<T>(parent: ParentRecord<T>, message: string) {
@@ -584,13 +576,10 @@ export function handleFocusParent<T>(
     state.selectedState &&
     state.selectedState.parent.el !== data.targetData.parent.el
   ) {
-    console.log("deselecting");
     setActive(data.targetData.parent, firstEnabledNode, state);
   } else if (!state.selectedState) {
     setActive(data.targetData.parent, firstEnabledNode, state);
   }
-
-  //updateLiveRegion(data.targetData.parent);
 }
 
 export function performTransfer<T>({
@@ -1131,7 +1120,6 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
       state.activeState &&
       state.activeState.node.data.value === nodeData.value
     ) {
-      console.log("setting active state", state.activeState.node.data.value);
       setActive(
         {
           data: parentData,
@@ -1262,6 +1250,15 @@ export function handlePointerdownNode<T>(
 
   synthNodePointerDown = true;
 
+  if (
+    state.selectedState &&
+    state.selectedState.parent.el !== data.targetData.parent.el
+  ) {
+    deselect(state.selectedState.nodes, state.selectedState.parent, state);
+
+    setActive(data.targetData.parent, undefined, state);
+  }
+
   const parentData = data.targetData.parent.data;
 
   let selectedNodes = [data.targetData.node];
@@ -1271,9 +1268,35 @@ export function handlePointerdownNode<T>(
 
   const targetNode = data.targetData.node;
 
+  if (commandKey && parentData.config.multiDrag) {
+    if (state.selectedState) {
+      const idx = state.selectedState.nodes.findIndex(
+        (x) => x.el === targetNode.el
+      );
+
+      if (idx === -1) {
+        selectedNodes = [...state.selectedState.nodes, targetNode];
+      } else {
+        selectedNodes = state.selectedState.nodes.filter(
+          (x) => x.el !== targetNode.el
+        );
+      }
+    } else {
+      selectedNodes = [targetNode];
+    }
+
+    setSelected(
+      data.targetData.parent,
+      selectedNodes,
+      data.targetData.node,
+      state
+    );
+
+    return;
+  }
+
   if (shiftKey && parentData.config.multiDrag) {
     const nodes = data.targetData.parent.data.enabledNodes;
-
     if (state.selectedState && state.activeState) {
       const [minIndex, maxIndex] =
         state.activeState.node.data.index < data.targetData.node.data.index
@@ -1285,13 +1308,15 @@ export function handlePointerdownNode<T>(
 
       selectedNodes = nodes.slice(minIndex, maxIndex + 1);
     } else {
-      for (let x = 0; x <= targetNode.data.index; x++) {
+      for (let x = 0; x <= targetNode.data.index; x++)
         selectedNodes.push(nodes[x]);
-      }
     }
-
-    console.log(selectedNodes);
-    setSelected(data.targetData.parent, selectedNodes, state);
+    setSelected(
+      data.targetData.parent,
+      selectedNodes,
+      data.targetData.node,
+      state
+    );
 
     return;
   }
@@ -1304,13 +1329,18 @@ export function handlePointerdownNode<T>(
     if (idx === -1) {
       if (state.selectedState.parent.el !== data.targetData.parent.el) {
         deselect(state.selectedState.nodes, data.targetData.parent, state);
-      } else if (touchDevice || !isNative) {
+      } else if (parentData.config.multiDrag && (touchDevice || !isNative)) {
         selectedNodes.push(...state.selectedState.nodes);
       } else {
         deselect(state.selectedState.nodes, data.targetData.parent, state);
       }
 
-      setSelected(data.targetData.parent, selectedNodes, state);
+      setSelected(
+        data.targetData.parent,
+        selectedNodes,
+        data.targetData.node,
+        state
+      );
     } else {
       deselect(
         state.selectedState.nodes.filter(
@@ -1321,7 +1351,12 @@ export function handlePointerdownNode<T>(
       );
     }
   } else {
-    setSelected(data.targetData.parent, [data.targetData.node], state);
+    setSelected(
+      data.targetData.parent,
+      [data.targetData.node],
+      data.targetData.node,
+      state
+    );
   }
 }
 
@@ -1369,11 +1404,14 @@ export function initDrag<T>(
       data.targetData.parent.data
     );
 
-    data.e.dataTransfer.setDragImage(
-      dragImage || data.targetData.node.el,
-      data.e.offsetX,
-      data.e.offsetY
-    );
+    //console.log("dragImage", dragImage);
+    const cloneNode = dragImage?.cloneNode(true) as HTMLElement;
+    console.log("cloneNode", cloneNode);
+    document.body.appendChild(cloneNode);
+    setTimeout(() => {
+      cloneNode.remove();
+    });
+    data.e.dataTransfer.setDragImage(cloneNode, data.e.offsetX, data.e.offsetY);
   }
 
   return dragState;
@@ -1451,9 +1489,15 @@ export function handleKeydownParent<T>(
       ? setSelected(
           data.targetData.parent,
           state.selectedState.nodes.filter((x) => x.el !== activeDescendant.el),
+          activeDescendant,
           state
         )
-      : setSelected(data.targetData.parent, [activeDescendant], state);
+      : setSelected(
+          data.targetData.parent,
+          [activeDescendant],
+          activeDescendant,
+          state
+        );
 
     //if (!state.selectedState)
     //  updateLiveRegion(data.targetData.parent, "", true);
@@ -1502,7 +1546,7 @@ export function handleKeydownParent<T>(
 
       state.newActiveDescendant = state.selectedState.nodes[0];
 
-      setSelected(data.targetData.parent, [], state);
+      setSelected(data.targetData.parent, [], undefined, state);
 
       updateLiveRegion(data.targetData.parent, "Drop successful");
     }
@@ -1533,6 +1577,7 @@ export function handleEnd<T>(
   data: NodeEventData<T>,
   state: DragState<T> | SynthDragState<T>
 ) {
+  return;
   data.e.preventDefault();
 
   cancelSynthScroll();

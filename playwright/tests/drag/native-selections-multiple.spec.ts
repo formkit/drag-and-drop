@@ -8,7 +8,7 @@ test.beforeEach(async ({ browser }) => {
 });
 
 test.describe("Native selections", async () => {
-  test("Selections", async () => {
+  test.only("Selections", async () => {
     await page.goto("http://localhost:3001/selections/native-single");
     await new Promise((r) => setTimeout(r, 1000));
     // When the parent is focused, the first item should get the active class

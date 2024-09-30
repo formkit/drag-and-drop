@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useDragAndDrop } from "../../src/vue/index";
+import { useDragAndDrop } from "../../../src/vue/index";
 
 const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   group: "transfer",
@@ -21,7 +21,7 @@ const [parent2, values2] = useDragAndDrop(["Carrot", "Broccoli", "Potato"], {
 </script>
 
 <template>
-  <h1 id="title">Native selections</h1>
+  <h1 id="title">Non native selections, single-select</h1>
   <div class="flex-wrap">
     <div>
       <ul id="fruits" ref="parent1" class="list" aria-label="fruits">
@@ -88,7 +88,6 @@ h1 {
   width: 200px;
   border-radius: 5px;
   height: 200px;
-  width: 300px;
 }
 
 .item-small {
