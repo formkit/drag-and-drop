@@ -1351,22 +1351,23 @@ export function handleNodePointerdown<T>(
 export function dragstartClasses<T>(
   _node: NodeRecord<T>,
   nodes: Array<NodeRecord<T>>,
-  config: ParentConfig<T>
+  config: ParentConfig<T>,
+  isSynth = false
 ) {
   addNodeClass(
     nodes.map((x) => x.el),
-    config.draggingClass
+    isSynth ? config.synthDraggingClass : config.draggingClass
   );
 
   setTimeout(() => {
     removeClass(
       nodes.map((x) => x.el),
-      config.draggingClass
+      isSynth ? config.synthDraggingClass : config.draggingClass
     );
 
     addNodeClass(
       nodes.map((x) => x.el),
-      config.dropZoneClass
+      isSynth ? config.synthDropZoneClass : config.dropZoneClass
     );
 
     removeClass(
@@ -1416,6 +1417,8 @@ export function initDrag<T>(
           const clonedNode = node.el.cloneNode(true) as HTMLElement;
 
           clonedNode.style.pointerEvents = "none";
+
+          clonedNode.id = node.el.id + "-clone";
 
           copyNodeStyle(node.el, clonedNode, true);
 
@@ -1610,7 +1613,6 @@ export function handleNodeDrop<T>(
   data: NodeDragEventData<T>,
   state: DragState<T> | SynthDragState<T>
 ) {
-  console.log("node drop");
   data.e.stopPropagation();
 
   dropped = true;
@@ -1645,7 +1647,6 @@ export function handleDragend<T>(
 }
 
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
-  console.log("handle end");
   cancelSynthScroll();
 
   for (const [_el, controller] of state.scrollEls) controller.abort();
@@ -1664,6 +1665,7 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   if (state.originalZIndex !== undefined)
     state.draggedNode.el.style.zIndex = state.originalZIndex;
 
+  console.log("dropZoneClass", dropZoneClass);
   removeClass(
     state.draggedNodes.map((x) => x.el),
     dropZoneClass
@@ -1726,7 +1728,7 @@ export function handleNodePointermove<T>(
 
     const nodes = config.draggedNodes(data);
 
-    config.dragstartClasses(data.targetData.node, nodes, config);
+    config.dragstartClasses(data.targetData.node, nodes, config, true);
 
     const synthDragState = initSynthDrag(data, state, nodes);
 
@@ -1775,6 +1777,8 @@ function initSynthDrag<T>(
     if (!config.multiDrag || draggedNodes.length === 1) {
       dragImage = data.targetData.node.el.cloneNode(true) as HTMLElement;
 
+      dragImage.id = data.targetData.node.el.id + "-clone";
+
       copyNodeStyle(data.targetData.node.el, dragImage);
 
       Object.assign(dragImage.style, {
@@ -1793,6 +1797,8 @@ function initSynthDrag<T>(
         copyNodeStyle(node.el, clonedNode);
 
         clonedNode.style.pointerEvents = "none";
+
+        clonedNode.id = node.el.id + "-clone";
 
         wrapper.append(clonedNode);
       }

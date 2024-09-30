@@ -7,6 +7,7 @@ const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
     return el.tagName === "LI";
   },
   dropZoneClass: "dropZone",
+  synthDropZoneClass: "synthDropZone",
 });
 
 const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
@@ -15,6 +16,7 @@ const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
     return el.tagName === "LI";
   },
   dropZoneClass: "dropZone",
+  synthDropZoneClass: "synthDropZone",
 });
 
 const [parent3, values3] = useDragAndDrop(
@@ -66,6 +68,9 @@ const [parent3, values3] = useDragAndDrop(
 </template>
 
 <style scoped>
+.dragging {
+  background-color: blue;
+}
 .dropZone {
   background-color: red;
 }
