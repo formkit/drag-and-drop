@@ -263,7 +263,7 @@ export function dragAndDrop<T>({
       remapFinished,
       scrollBehavior: {
         x: 0.9,
-        y: 0.8,
+        y: 0.9,
       },
       threshold: {
         horizontal: 0,
@@ -1379,32 +1379,11 @@ export function initDrag<T>(
       dragImage = config.dragImage(data, draggedNodes);
     } else {
       if (!config.multiDrag) {
-        dragImage = data.targetData.node.el.cloneNode(true) as HTMLElement;
-
-        const clonedNode = data.targetData.node.el.cloneNode(
-          true
-        ) as HTMLElement;
-
-        copyNodeStyle(data.targetData.node.el, clonedNode, true);
-
-        Object.assign(clonedNode.style, {
-          pointerEvents: "none",
-          zIndex: "99999",
-          position: "absolute",
-          left: "-9999px",
-        });
-
-        document.body.appendChild(clonedNode);
-
         data.e.dataTransfer.setDragImage(
-          clonedNode,
+          data.targetData.node.el,
           data.e.offsetX,
           data.e.offsetY
         );
-
-        setTimeout(() => {
-          document.body.removeChild(clonedNode);
-        });
 
         return dragState;
       } else {
@@ -1434,8 +1413,6 @@ export function initDrag<T>(
 
         dragImage = wrapper;
       }
-
-      console.log("append drag iamge", dragImage);
 
       document.body.appendChild(dragImage);
     }
@@ -1607,70 +1584,72 @@ export function handlePointeroverNode<T>(e: PointeroverNodeEvent<T>) {
 }
 
 export function handleEnd<T>(
-  _data: NodeEventData<T>,
+  data: NodeEventData<T>,
   state: DragState<T> | SynthDragState<T>
 ) {
-  console.log("hello world", state);
-  //console.log(state.dragged)
-  return;
-  //data.e.preventDefault();
+  data.e.preventDefault();
 
-  //cancelSynthScroll();
+  cancelSynthScroll();
 
-  //for (const [_el, controller] of state.scrollEls) controller.abort();
+  for (const [_el, controller] of state.scrollEls) controller.abort();
 
-  //if ("longPressTimeout" in state && state.longPressTimeout)
-  //  clearTimeout(state.longPressTimeout);
+  if ("longPressTimeout" in state && state.longPressTimeout)
+    clearTimeout(state.longPressTimeout);
 
-  //const config = parents.get(state.initialParent.el)?.config;
+  const config = parents.get(state.initialParent.el)?.config;
 
-  //const isSynth = "clonedDraggedNode" in state && state.clonedDraggedNode;
+  const isSynth = "clonedDraggedNode" in state && state.clonedDraggedNode;
 
-  //const dropZoneClass = isSynth
-  //  ? config?.synthDropZoneClass
-  //  : config?.dropZoneClass;
+  const dropZoneClass = isSynth
+    ? config?.synthDropZoneClass
+    : config?.dropZoneClass;
 
-  //if (state.originalZIndex !== undefined)
-  //  state.draggedNode.el.style.zIndex = state.originalZIndex;
+  if (state.originalZIndex !== undefined)
+    state.draggedNode.el.style.zIndex = state.originalZIndex;
 
+  removeClass(
+    state.draggedNodes.map((x) => x.el),
+    dropZoneClass
+  );
+
+  removeClass(
+    state.draggedNodes.map((x) => x.el),
+    config?.dropZoneClass
+  );
+
+  // TODO:
   //removeClass(
   //  state.draggedNodes.map((x) => x.el),
-  //  dropZoneClass
+  //  config?.dragPlaceholderClass
   //);
 
-  //// TODO:
-  ////removeClass(
-  ////  state.draggedNodes.map((x) => x.el),
-  ////  config?.dragPlaceholderClass
-  ////);
+  if (config?.longPressClass) {
+    removeClass(
+      state.draggedNodes.map((x) => x.el),
+      state.initialParent.data?.config?.longPressClass
+    );
+  }
 
-  //if (config?.longPressClass) {
-  //  removeClass(
-  //    state.draggedNodes.map((x) => x.el),
-  //    state.initialParent.data?.config?.longPressClass
-  //  );
-  //}
+  if (isSynth) state.clonedDraggedNode.remove();
 
-  //if (isSynth) state.clonedDraggedNode.remove();
+  if (config?.onDragend)
+    config.onDragend({
+      parent: state.currentParent,
+      values: parentValues(state.currentParent.el, state.currentParent.data),
+      draggedNode: state.draggedNode,
+      draggedNodes: state.draggedNodes,
+      position: state.initialIndex,
+    });
 
-  //if (config?.onDragend)
-  //  config.onDragend({
-  //    parent: state.currentParent,
-  //    values: parentValues(state.currentParent.el, state.currentParent.data),
-  //    draggedNode: state.draggedNode,
-  //    draggedNodes: state.draggedNodes,
-  //    position: state.initialIndex,
-  //  });
+  deselect(state.draggedNodes, state.currentParent, state);
 
-  //deselect(state.draggedNodes, state.currentParent, state);
+  setActive(data.targetData.parent, undefined, state);
 
-  //setActive(data.targetData.parent, undefined, state);
+  resetState();
 
-  //resetState();
+  state.selectedState = undefined;
 
-  //state.selectedState = undefined;
-
-  //synthNodePointerDown = false;
+  synthNodePointerDown = false;
 }
 
 export function handleTouchstart<T>(

@@ -998,7 +998,7 @@ function dragAndDrop({
       remapFinished,
       scrollBehavior: {
         x: 0.9,
-        y: 0.8
+        y: 0.9
       },
       threshold: {
         horizontal: 0,
@@ -1757,26 +1757,11 @@ function initDrag(data, draggedNodes2) {
       dragImage = config.dragImage(data, draggedNodes2);
     } else {
       if (!config.multiDrag) {
-        dragImage = data.targetData.node.el.cloneNode(true);
-        const clonedNode = data.targetData.node.el.cloneNode(
-          true
-        );
-        copyNodeStyle(data.targetData.node.el, clonedNode, true);
-        Object.assign(clonedNode.style, {
-          pointerEvents: "none",
-          zIndex: "99999",
-          position: "absolute",
-          left: "-9999px"
-        });
-        document.body.appendChild(clonedNode);
         data.e.dataTransfer.setDragImage(
-          clonedNode,
+          data.targetData.node.el,
           data.e.offsetX,
           data.e.offsetY
         );
-        setTimeout(() => {
-          document.body.removeChild(clonedNode);
-        });
         return dragState;
       } else {
         const wrapper = document.createElement("div");
