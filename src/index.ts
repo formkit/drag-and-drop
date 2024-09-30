@@ -354,8 +354,8 @@ export function dragStateProps<T>(
     longPressTimeout: 0,
     currentTargetValue: data.targetData.node.data.value,
     scrollEls,
-    startLeft: x - rect.left - window.scrollX,
-    startTop: y - rect.top - window.scrollY,
+    startLeft: x - rect.left,
+    startTop: y - rect.top,
     targetIndex: data.targetData.node.data.index,
     transferred: false,
   };
@@ -2041,6 +2041,22 @@ function shouldScrollUp<T>(state: DragState<T>, data: ScrollData): boolean {
 
 function shouldScrollDown<T>(state: DragState<T>, data: ScrollData): boolean {
   return state.coordinates.y > data.clientHeight * data.yThresh;
+  return;
+  const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y;
+
+  if (!data.scrollOutside && diff < 0) return false;
+
+  if (
+    diff < (1 - data.yThresh) * data.scrollParent.clientHeight &&
+    !(
+      data.scrollParent.scrollTop + data.scrollParent.clientHeight >=
+      data.scrollParent.scrollHeight
+    )
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 function moveNode<T>(data: NodePointerEventData<T>, state: SynthDragState<T>) {
@@ -2054,13 +2070,13 @@ function moveNode<T>(data: NodePointerEventData<T>, state: SynthDragState<T>) {
 
   const startTop = state.startTop ?? 0;
 
-  state.clonedDraggedNode.style.left = `${
-    x - startLeft + document.documentElement.scrollLeft
-  }px`;
+  //state.clonedDraggedNode.style.left = `${
+  //  x - startLeft + document.documentElement.scroll
+  //}px`;
 
-  state.clonedDraggedNode.style.top = `${
-    y - startTop + document.documentElement.scrollTop
-  }px`;
+  state.clonedDraggedNode.style.top = `${y - startTop + window.scrollY}px`;
+
+  state.clonedDraggedNode.style.left = `${x - startLeft + window.scrollX}px`;
 
   if (data.e.cancelable) data.e.preventDefault();
 
