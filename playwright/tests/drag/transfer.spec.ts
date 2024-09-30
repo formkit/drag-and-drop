@@ -66,9 +66,9 @@ test.describe.only("Transferring", async () => {
       "Strawberry Watermelon Kiwi Apple"
     );
 
-    // Dragging the same item apple to the second list will remove the item from
-    // the third list and add it to the second list. The drop zone class will
-    // persist to the second list.
+    // Dragging strawberry from the third list to the second list will remove it
+    // from the third list and add it to the second list. The drop zone class
+    // will be in the second list.
     await drag(page, {
       originEl: {
         id: "Strawberry",
@@ -83,16 +83,15 @@ test.describe.only("Transferring", async () => {
     });
     count = await page.locator(".dropZone").count();
     await expect(count).toBe(1);
-    await expect(page.locator("#Apple")).toHaveClass("item dropZone");
+    await expect(page.locator("#Strawberry")).toHaveClass("item dropZone");
     await expect(page.locator("#values_2")).toHaveText(
       "Cherry Grape Pineapple Strawberry"
     );
     await expect(page.locator("#values_3")).toHaveText("Watermelon Kiwi Apple");
 
-    // Dragging the same item apple from the second list to the first list will
-    // remove the item from the second list and add it to the first list. The
-    // drop zone class will persist to the first list. This time though, we wil
-    // drop the item and the drop zone class should be removed.
+    // Dragging strawberry from the second list to the first list will remove it
+    // from the second list and add it to the first list. The drop zone class
+    // will be removd since we're dropping
     await drag(page, {
       originEl: {
         id: "Strawberry",
@@ -110,5 +109,6 @@ test.describe.only("Transferring", async () => {
     await expect(page.locator("#values_2")).toHaveText(
       "Cherry Grape Pineapple"
     );
+    await expect(page.locator("#Strawberry")).toHaveClass("item");
   });
 });

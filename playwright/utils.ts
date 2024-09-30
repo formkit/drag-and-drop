@@ -79,7 +79,7 @@ export async function drag(page: Page, data: DragDropData): Promise<void> {
 
     if (data.drop) {
       destinationElement.dispatchEvent(
-        new DragEvent("dragend", getEventProps(destinationElement))
+        new DragEvent("drop", getEventProps(destinationElement))
       );
 
       await new Promise((resolve) => setTimeout(resolve, 200));

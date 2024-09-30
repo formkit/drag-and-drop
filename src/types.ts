@@ -918,3 +918,11 @@ export interface Coordinates {
   height: number;
   width: number;
 }
+
+export type StateEvents =
+  | "start"
+  | "dragstart"
+  | "synthdragstart"
+  | "end"
+  | "dragend"
+  | "synthdragend";
