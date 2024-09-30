@@ -96,20 +96,20 @@ export interface ParentConfig<T> {
    * parents to transfer nodes between each other.
    */
   group?: string;
-  handleBlurParent: (data: ParentEventData<T>, state: BaseDragState<T>) => void;
-  handleFocusParent: (
+  handleParentBlur: (data: ParentEventData<T>, state: BaseDragState<T>) => void;
+  handleParentFocus: (
     data: ParentEventData<T>,
     state: BaseDragState<T>
   ) => void;
-  handleKeydownNode: (data: NodeEventData<T>, state: DragState<T>) => void;
-  handleKeydownParent: (
+  handleNodeKeydown: (data: NodeEventData<T>, state: DragState<T>) => void;
+  handleParentKeydown: (
     data: ParentKeydownEventData<T>,
     state: DragState<T>
   ) => void;
   /**
    * Function that is called when dragend or touchend event occurs.
    */
-  handleEnd: (
+  handleDragend: (
     data: NodeDragEventData<T> | NodePointerEventData<T>,
     state: DragState<T>
   ) => void;
@@ -117,50 +117,51 @@ export interface ParentConfig<T> {
    * Function that is called when dragstart event occurs.
    */
   handleDragstart: (data: NodeDragEventData<T>, state: DragState<T>) => void;
-  handlePointerupNode: (
+  handleNodeDrop: (data: NodeDragEventData<T>, state: DragState<T>) => void;
+  handleNodePointerup: (
     data: NodePointerEventData<T>,
     state: DragState<T>
   ) => void;
   /**
    * Function that is called when touchstart event occurs.
    */
-  handleTouchstart: (
+  handleNodeTouchstart: (
     data: NodePointerEventData<T>,
     state: DragState<T>
   ) => void;
   /**
    * Function that is called when a dragenter event is triggered on the node.
    */
-  handleDragenterNode: (
+  handleNodeDragenter: (
     data: NodeDragEventData<T>,
     state: DragState<T>
   ) => void;
   /**
    * Dragleave event on node
    */
-  handleDragleaveNode: (
+  handleNodeDragleave: (
     data: NodeDragEventData<T>,
     state: DragState<T>
   ) => void;
   /**
    * Function that is called when a dragover event is triggered on the parent.
    */
-  handleDragoverParent: (
+  handleParentDragover: (
     data: ParentDragEventData<T>,
     state: DragState<T>
   ) => void;
   /**
    * Drop event on parent
    */
-  handleDropParent: (data: ParentDragEventData<T>, state: DragState<T>) => void;
+  handleParentDrop: (data: ParentDragEventData<T>, state: DragState<T>) => void;
   /**
    * Function that is called when a dragover event is triggered on a node.
    */
-  handleDragoverNode: (data: NodeDragEventData<T>, state: DragState<T>) => void;
+  handleNodeDragover: (data: NodeDragEventData<T>, state: DragState<T>) => void;
   /*
    * Function that is called when a pointerdown is triggered on node.
    */
-  handlePointerdownNode: (
+  handleNodePointerdown: (
     data: NodePointerEventData<T>,
     state: DragState<T>
   ) => void;
@@ -168,7 +169,7 @@ export interface ParentConfig<T> {
    * Function that is called when either a pointermove or touchmove event is fired
    * where now the "dragged" node is being moved programatically.
    */
-  handlePointermove: (
+  handleNodePointermove: (
     data: NodePointerEventData<T>,
     state: DragState<T>
   ) => void;
@@ -176,7 +177,7 @@ export interface ParentConfig<T> {
    * Function that is called when a node that is being moved by touchmove event
    * is over a given node (similar to dragover).
    */
-  handlePointeroverNode: (
+  handleNodePointerover: (
     data: PointeroverNodeEvent<T>,
     state: DragState<T>
   ) => void;
@@ -184,7 +185,7 @@ export interface ParentConfig<T> {
    * Function that is called when a node that is being moved by touchmove event
    * is over the parent (similar to dragover).
    */
-  handlePointeroverParent: (
+  handleParentPointerover: (
     e: PointeroverParentEvent<T>,
     state: DragState<T>
   ) => void;

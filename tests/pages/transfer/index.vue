@@ -6,6 +6,7 @@ const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   draggable: (el) => {
     return el.tagName === "LI";
   },
+  dropZoneClass: "dropZone",
 });
 
 const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
@@ -13,6 +14,7 @@ const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
   draggable: (el) => {
     return el.tagName === "LI";
   },
+  dropZoneClass: "dropZone",
 });
 
 const [parent3, values3] = useDragAndDrop(
@@ -22,6 +24,7 @@ const [parent3, values3] = useDragAndDrop(
     draggable: (el) => {
       return el.tagName === "LI";
     },
+    dropZoneClass: "dropZone",
   }
 );
 </script>
@@ -63,6 +66,9 @@ const [parent3, values3] = useDragAndDrop(
 </template>
 
 <style scoped>
+.dropZone {
+  background-color: red;
+}
 .flex-wrap {
   display: flex;
 }

@@ -8,7 +8,6 @@ const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   draggable: (el) => {
     return el.tagName === "LI";
   },
-  multiDrag: true,
 });
 
 const [parent2, values2] = useDragAndDrop(["Carrot", "Broccoli", "Potato"], {
@@ -18,7 +17,6 @@ const [parent2, values2] = useDragAndDrop(["Carrot", "Broccoli", "Potato"], {
   draggable: (el) => {
     return el.tagName === "LI";
   },
-  multiDrag: true,
 });
 </script>
 

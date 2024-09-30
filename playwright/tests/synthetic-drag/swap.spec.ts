@@ -7,7 +7,7 @@ test.beforeEach(async ({ browser }) => {
   page = await browser.newPage();
 });
 
-test.describe.skip("Touch swap", async () => {
+test.describe("Touch swap", async () => {
   test("Touch swap", async () => {
     await page.goto("http://localhost:3001/swap");
     await new Promise((r) => setTimeout(r, 1000));
