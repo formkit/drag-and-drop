@@ -1913,6 +1913,7 @@ function setSynthScrollDirection<T>(
       return;
     }
 
+    console.log("show direction", direction);
     switch (direction) {
       case "up":
         el.scrollBy(0, -distance);
