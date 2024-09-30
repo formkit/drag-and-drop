@@ -50,13 +50,12 @@ export interface ParentConfig<T> {
   dragDropEffect: NativeDragEffects;
   /**
    * A function that returns the image to use for the drag operation. This is
-   * invoked for native and synthetic drag operations. For native drag
-   * operations, this will be set ad the drag image data.
+   * invoked for native operations. The clonedNode is what will be set as the drag
+   * image, but this can be updated.
    */
-  dragImage: (
-    draggedNode: NodeRecord<T>,
-    draggedNodes: Array<NodeRecord<T>>,
-    data: ParentData<T>
+  dragImage?: (
+    data: NodeDragEventData<T>,
+    draggedNodes: Array<NodeRecord<T>>
   ) => HTMLElement;
   /**
    * A flag to disable dragability of all nodes in the parent.
@@ -284,6 +283,15 @@ export interface ParentConfig<T> {
    * Flag for whether or not to allow sorting within a given parent.
    */
   sortable?: boolean;
+  /**
+   * A function that returns the image to use for the drag operation. This is
+   * invoked for synth drag operations operations. The clonedNode is what will
+   * be set as the drag image, but this can be updated.
+   */
+  synthDragImage?: (
+    data: NodePointerEventData<T>,
+    draggedNodes: Array<NodeRecord<T>>
+  ) => HTMLElement;
   /**
    * Function that is called when a node is torn down.
    */

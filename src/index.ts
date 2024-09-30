@@ -109,6 +109,7 @@ export function resetState() {
     remapJustFinished: false,
     selectednodes: [],
     selectedParent: undefined,
+    pointerSelection: false,
   };
 
   state = { ...baseDragState };
@@ -204,7 +205,6 @@ export function dragAndDrop<T>({
       dragDropEffect: config.dragDropEffect ?? "move",
       dragEffectAllowed: config.dragEffectAllowed ?? "move",
       draggedNodes,
-      dragImage,
       dragstartClasses,
       deepCopyStyles: config.deepCopyStyles ?? false,
       handleKeydownNode,
@@ -274,46 +274,6 @@ export function dragAndDrop<T>({
   setup(parent, parentData);
 
   remapNodes(parent, true);
-}
-
-function dragImage<T>(
-  _draggedNode: NodeRecord<T>,
-  draggedNodes: Array<NodeRecord<T>>,
-  data: ParentData<T>
-) {
-  if (data.config.multiDrag) {
-    const wrapper = document.createElement("div");
-
-    draggedNodes.map((x: NodeRecord<T>) => {
-      const el = x.el.cloneNode(true) as Node;
-
-      if (data.config.deepCopyStyles) copyNodeStyle(x.el, el, true);
-
-      if (el instanceof HTMLElement) el.style.pointerEvents = "none";
-
-      wrapper.append(el);
-
-      const { width } = draggedNodes[0].el.getBoundingClientRect();
-
-      Object.assign(wrapper.style, {
-        display: "flex",
-        flexDirection: "column",
-        width: `${width}px`,
-        position: "absolute",
-        pointerEvents: "none",
-        zIndex: "9999",
-        left: "-9999px",
-      });
-
-      return el;
-    });
-
-    document.body.append(wrapper);
-
-    return wrapper;
-  }
-
-  return draggedNodes[0].el;
 }
 
 export function dragStateProps<T>(
@@ -469,11 +429,6 @@ function deselect<T>(
   const selectedClass = parent.data.config.selectedClass;
 
   if (!state.selectedState) return;
-
-  removeClass(
-    nodes.map((x) => x.el),
-    selectedClass
-  );
 
   const iterativeNodes = Array.from(nodes);
 
@@ -1198,12 +1153,19 @@ export function validateDragstart(data: NodeEventData<any>): boolean {
   return !!data.targetData.parent.data.config.nativeDrag;
 }
 
-function draggedNodes<T>(data: NodeEventData<T>): Array<NodeRecord<T>> {
-  if (!data.targetData.parent.data.config.multiDrag)
+function draggedNodes<T>(data: NodeEventData<T>): Array<NodeRecord<unknown>> {
+  if (!data.targetData.parent.data.config.multiDrag) {
     return [data.targetData.node];
-  else {
-    return [];
+  } else if (state.selectedState) {
+    return [
+      data.targetData.node,
+      ...state.selectedState?.nodes.filter(
+        (x) => x.el !== data.targetData.node.el
+      ),
+    ];
   }
+
+  return [];
 }
 
 /**
@@ -1211,7 +1173,7 @@ function draggedNodes<T>(data: NodeEventData<T>): Array<NodeRecord<T>> {
  */
 export function handleDragstart<T>(
   data: NodeDragEventData<T>,
-  _state: BaseDragState<T>
+  state: BaseDragState<T>
 ) {
   if (!validateDragstart(data) || !validateDragHandle(data)) {
     data.e.preventDefault();
@@ -1252,16 +1214,6 @@ export function handlePointerdownNode<T>(
   data.e.stopPropagation();
 
   synthNodePointerDown = true;
-
-  //if (
-  //  state.selectedState &&
-  //  state.selectedState.parent.el !== data.targetData.parent.el &&
-  //  !synthPointerdown
-  //) {
-  //  deselect(state.selectedState.nodes, state.selectedState.parent, state);
-
-  //  setActive(data.targetData.parent, undefined, state);
-  //}
 
   const parentData = data.targetData.parent.data;
 
@@ -1340,7 +1292,6 @@ export function handlePointerdownNode<T>(
       } else {
         deselect(state.selectedState.nodes, data.targetData.parent, state);
       }
-      console.log("dskjfkldsjf");
       setSelected(
         data.targetData.parent,
         selectedNodes,
@@ -1348,15 +1299,6 @@ export function handlePointerdownNode<T>(
         state,
         true
       );
-    } else {
-      console.log("dklfjlsdkjfkds");
-      //deselect(
-      //  state.selectedState.nodes.filter(
-      //    (x) => x.el === data.targetData.node.el
-      //  ),
-      //  data.targetData.parent,
-      //  state
-      //);
     }
   } else {
     setSelected(
@@ -1392,6 +1334,44 @@ export function dragstartClasses<T>(
   });
 }
 
+export function synthDragImage<T>(
+  data: NodePointerEventData<T>,
+  draggedNodes: Array<NodeRecord<T>>,
+  state: SynthDragState<T>
+) {
+  const config = data.targetData.parent.data.config;
+
+  const wrapper = document.createElement("div");
+
+  const dragImage = config?.dragImage(
+    data.targetData.node,
+    draggedNodes,
+    data.targetData.parent.data
+  );
+
+  if (dragImage) {
+    wrapper.append(dragImage);
+
+    const { width } = draggedNodes[0].el.getBoundingClientRect();
+
+    Object.assign(wrapper.style, {
+      display: "flex",
+      flexDirection: "column",
+      width: `${width}px`,
+      position: "absolute",
+      pointerEvents: "none",
+      zIndex: "9999",
+      left: "-9999px",
+    });
+
+    document.body.appendChild(wrapper);
+
+    return wrapper;
+  }
+
+  return draggedNodes[0].el;
+}
+
 export function initDrag<T>(
   data: NodeDragEventData<T>,
   draggedNodes: Array<NodeRecord<T>>
@@ -1407,21 +1387,47 @@ export function initDrag<T>(
 
     data.e.dataTransfer.effectAllowed = config.dragEffectAllowed;
 
-    const dragImage = config?.dragImage(
-      data.targetData.node,
-      draggedNodes,
-      data.targetData.parent.data
-    );
+    let dragImage: HTMLElement | undefined;
 
-    const cloneNode = dragImage?.cloneNode(true) as HTMLElement;
+    if (config.dragImage) {
+      dragImage = config.dragImage(data, draggedNodes);
+    } else {
+      if (!config.multiDrag) {
+        dragImage = data.targetData.node.el.cloneNode(true) as HTMLElement;
+      } else {
+        const wrapper = document.createElement("div");
 
-    document.body.appendChild(cloneNode);
+        for (const node of draggedNodes) {
+          const clonedNode = node.el.cloneNode(true) as HTMLElement;
 
-    setTimeout(() => {
-      cloneNode.remove();
-    });
+          clonedNode.style.pointerEvents = "none";
 
-    data.e.dataTransfer.setDragImage(cloneNode, data.e.offsetX, data.e.offsetY);
+          wrapper.append(clonedNode);
+        }
+
+        const { width } = draggedNodes[0].el.getBoundingClientRect();
+
+        Object.assign(wrapper.style, {
+          display: "flex",
+          flexDirection: "column",
+          width: `${width}px`,
+          position: "absolute",
+          pointerEvents: "none",
+          zIndex: "9999",
+          left: "-9999px",
+        });
+
+        dragImage = wrapper;
+      }
+
+      document.body.appendChild(dragImage);
+
+      setTimeout(() => {
+        dragImage?.remove();
+      });
+    }
+
+    data.e.dataTransfer.setDragImage(dragImage, data.e.offsetX, data.e.offsetY);
   }
 
   return dragState;
@@ -1641,6 +1647,8 @@ export function handleEnd<T>(
   setActive(data.targetData.parent, undefined, state);
 
   resetState();
+
+  state.selectedState = undefined;
 
   synthNodePointerDown = false;
 }

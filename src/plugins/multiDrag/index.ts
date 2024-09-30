@@ -239,38 +239,4 @@ export function stackNodes<T>({
   state: DragState<T>;
   x: number;
   y: number;
-}) {
-  const wrapper = document.createElement("div");
-
-  for (const el of state.clonedDraggedEls) {
-    if (el instanceof HTMLElement) el.style.pointerEvents = "none";
-
-    wrapper.append(el);
-  }
-
-  const { width } = state.draggedNode.el.getBoundingClientRect();
-
-  wrapper.style.cssText = `
-        display: flex;
-        flex-direction: column;
-        width: ${width}px;
-        position: fixed;
-        pointer-events: none;
-        z-index: 9999;
-        left: -9999px
-      `;
-
-  document.body.append(wrapper);
-
-  state.clonedDraggedNode = wrapper;
-
-  //if (data.e instanceof DragEvent) {
-  //  data.e.dataTransfer?.setDragImage(wrapper, x, y);
-
-  //  setTimeout(() => {
-  //    wrapper.remove();
-  //  });
-  //} else {
-  //  state.clonedDraggedNOde = wrapper;
-  //}
-}
+}) {}
