@@ -1584,7 +1584,6 @@ function handlePointerdownNode(data, state2) {
       for (let x = 0; x <= targetNode.data.index; x++)
         selectedNodes.push(nodes2[x]);
     }
-    console.log(selectedNodes);
     setSelected(
       data.targetData.parent,
       selectedNodes,
@@ -1677,7 +1676,6 @@ function initDrag(data, draggedNodes2) {
         });
         dragImage = wrapper;
       }
-      console.log("not multi drag", dragImage);
       document.body.appendChild(dragImage);
       setTimeout(() => {
         dragImage?.remove();
@@ -1798,8 +1796,6 @@ function handleEnd(data, state2) {
   const dropZoneClass = isSynth ? config?.synthDropZoneClass : config?.dropZoneClass;
   if (state2.originalZIndex !== void 0)
     state2.draggedNode.el.style.zIndex = state2.originalZIndex;
-  console.log(state2.draggedNodes);
-  console.log("dorpzone class", dropZoneClass);
   removeClass(
     state2.draggedNodes.map((x) => x.el),
     dropZoneClass
@@ -1876,6 +1872,7 @@ function initSynthDrag(data, _state, draggedNodes2) {
       if (data.targetData.parent.data.config.deepCopyStyles)
         copyNodeStyle(data.targetData.node.el, dragImage);
       dragImage.style.width = `${data.targetData.node.el.getBoundingClientRect().width}px`;
+      dragImage.style.pointerEvents = "none";
       document.body.appendChild(dragImage);
     } else {
       const wrapper = document.createElement("div");
@@ -1889,7 +1886,7 @@ function initSynthDrag(data, _state, draggedNodes2) {
         display: "flex",
         flexDirection: "column",
         width: `${width}px`,
-        position: "absolute",
+        position: "fixed",
         pointerEvents: "none",
         zIndex: "9999",
         left: "-9999px"
@@ -1945,21 +1942,23 @@ function pointermoveClasses(state2, config) {
 }
 function getScrollData(e, state2) {
   if (!(e.currentTarget instanceof HTMLElement)) return;
-  const { x, y, width, height } = e.currentTarget.getBoundingClientRect();
   const {
     x: xThresh,
     y: yThresh,
     scrollOutside
   } = state2.initialParent.data.config.scrollBehavior;
+  const coordinates = getRealCoords(e.currentTarget);
   return {
     xThresh,
     yThresh,
     scrollOutside,
     scrollParent: e.currentTarget,
-    x,
-    y,
-    width,
-    height
+    x: coordinates.left,
+    y: coordinates.top,
+    clientWidth: e.currentTarget.clientWidth,
+    clientHeight: e.currentTarget.clientHeight,
+    scrollWidth: e.currentTarget.scrollWidth,
+    scrollHeight: e.currentTarget.scrollHeight
   };
 }
 function cancelSynthScroll() {
@@ -1992,16 +1991,19 @@ function setSynthScrollDirection(direction, el, state2) {
     switch (direction) {
       case "up":
         el.scrollBy(0, -distance);
+        state2.clonedDraggedNode.style.top = `${state2.coordinates.y + el.scrollTop}px`;
         break;
       case "down":
         el.scrollBy(0, distance);
+        state2.clonedDraggedNode.style.top = `${state2.coordinates.y + el.scrollTop - state2.startTop}px`;
         break;
       case "left":
         el.scrollBy(-distance, 0);
+        state2.clonedDraggedNode.style.left = `${state2.coordinates.x + el.scrollLeft}px`;
         break;
       case "right":
+        state2.clonedDraggedNode.style.left = `${state2.coordinates.x + el.scrollLeft}px`;
         el.scrollBy(distance, 0);
-        break;
     }
     lastTimestamp = timestamp;
     animationFrameId = requestAnimationFrame(scroll);
@@ -2039,6 +2041,8 @@ function shouldScrollLeft(state2, data) {
     return state2;
 }
 function shouldScrollUp(state2, data) {
+  return state2.coordinates.y <= 100;
+  return false;
   const diff = data.scrollParent.clientHeight + data.y - state2.coordinates.y;
   if (!data.scrollOutside && diff > data.scrollParent.clientHeight)
     return false;
@@ -2048,12 +2052,7 @@ function shouldScrollUp(state2, data) {
   return false;
 }
 function shouldScrollDown(state2, data) {
-  const diff = data.scrollParent.clientHeight + data.y - state2.coordinates.y;
-  if (!data.scrollOutside && diff < 0) return false;
-  if (diff < (1 - data.yThresh) * data.scrollParent.clientHeight && !(data.scrollParent.scrollTop + data.scrollParent.clientHeight >= data.scrollParent.scrollHeight)) {
-    return true;
-  }
-  return false;
+  return state2.coordinates.y > data.clientHeight * data.yThresh;
 }
 function moveNode(data, state2) {
   const { x, y } = eventCoordinates(data.e);
@@ -2061,10 +2060,8 @@ function moveNode(data, state2) {
   state2.coordinates.x = x;
   const startLeft = state2.startLeft ?? 0;
   const startTop = state2.startTop ?? 0;
-  console.log("start top", startTop);
-  console.log("start left", startLeft);
-  state2.clonedDraggedNode.style.left = `${x - startLeft}px`;
-  state2.clonedDraggedNode.style.top = `${y - startTop}px`;
+  state2.clonedDraggedNode.style.left = `${x - startLeft + document.documentElement.scrollLeft}px`;
+  state2.clonedDraggedNode.style.top = `${y - startTop + document.documentElement.scrollTop}px`;
   if (data.e.cancelable) data.e.preventDefault();
   pointermoveClasses(state2, data.targetData.parent.data.config);
 }
@@ -2097,6 +2094,7 @@ function synthMove(data, state2) {
   }
 }
 function handleScroll(e) {
+  e.stopPropagation();
   if (!isSynthDragState(state)) return;
   let directionSet = false;
   for (const direction of Object.keys(scrollConfig)) {
@@ -2382,15 +2380,16 @@ function removeClass(els, className) {
     const nodeData = nodes.get(node) || parents.get(node);
     if (!nodeData) continue;
     for (const className2 of classNames) {
-      console.log("class name", nodeData.privateClasses);
       if (!nodeData.privateClasses.includes(className2)) {
-        console.log("is removing");
         node.classList.remove(className2);
       }
     }
   }
 }
 function isScrollable(element) {
+  if (element === document.documentElement) {
+    return element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth;
+  }
   const style = window.getComputedStyle(element);
   return (style.overflowY === "auto" || style.overflowY === "scroll") && element.scrollHeight > element.clientHeight || (style.overflowX === "auto" || style.overflowX === "scroll") && element.scrollWidth > element.clientWidth;
 }

@@ -785,8 +785,10 @@ interface ScrollData {
     scrollOutside?: boolean;
     x: number;
     y: number;
-    width: number;
-    height: number;
+    clientWidth: number;
+    clientHeight: number;
+    scrollHeight: number;
+    scrollWidth: number;
 }
 interface Coordinates {
     top: number;

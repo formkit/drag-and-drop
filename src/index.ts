@@ -1282,7 +1282,6 @@ export function handlePointerdownNode<T>(
       for (let x = 0; x <= targetNode.data.index; x++)
         selectedNodes.push(nodes[x]);
     }
-    console.log(selectedNodes);
     setSelected(
       data.targetData.parent,
       selectedNodes,
@@ -1409,8 +1408,6 @@ export function initDrag<T>(
 
         dragImage = wrapper;
       }
-
-      console.log("not multi drag", dragImage);
 
       document.body.appendChild(dragImage);
 
@@ -1605,8 +1602,6 @@ export function handleEnd<T>(
   if (state.originalZIndex !== undefined)
     state.draggedNode.el.style.zIndex = state.originalZIndex;
 
-  console.log(state.draggedNodes);
-  console.log("dorpzone class", dropZoneClass);
   removeClass(
     state.draggedNodes.map((x) => x.el),
     dropZoneClass
@@ -1758,7 +1753,7 @@ function initSynthDrag<T>(
         display: "flex",
         flexDirection: "column",
         width: `${width}px`,
-        position: "absolute",
+        position: "fixed",
         pointerEvents: "none",
         zIndex: "9999",
         left: "-9999px",
@@ -1845,23 +1840,25 @@ function getScrollData<T>(
 ): ScrollData | undefined {
   if (!(e.currentTarget instanceof HTMLElement)) return;
 
-  const { x, y, width, height } = e.currentTarget.getBoundingClientRect();
-
   const {
     x: xThresh,
     y: yThresh,
     scrollOutside,
   } = state.initialParent.data.config.scrollBehavior;
 
+  const coordinates = getRealCoords(e.currentTarget);
+
   return {
     xThresh,
     yThresh,
     scrollOutside,
     scrollParent: e.currentTarget,
-    x,
-    y,
-    width,
-    height,
+    x: coordinates.left,
+    y: coordinates.top,
+    clientWidth: e.currentTarget.clientWidth,
+    clientHeight: e.currentTarget.clientHeight,
+    scrollWidth: e.currentTarget.scrollWidth,
+    scrollHeight: e.currentTarget.scrollHeight,
   };
 }
 
@@ -1919,21 +1916,37 @@ function setSynthScrollDirection<T>(
     switch (direction) {
       case "up":
         el.scrollBy(0, -distance);
+        state.clonedDraggedNode.style.top = `${
+          state.coordinates.y + el.scrollTop
+        }px`;
 
         break;
       case "down":
         el.scrollBy(0, distance);
+        state.clonedDraggedNode.style.top = `${
+          state.coordinates.y + el.scrollTop - state.startTop
+        }px`;
 
         break;
       case "left":
         el.scrollBy(-distance, 0);
 
-        break;
-      case "right":
-        el.scrollBy(distance, 0);
+        state.clonedDraggedNode.style.left = `${
+          state.coordinates.x + el.scrollLeft
+        }px`;
 
         break;
+      case "right":
+        state.clonedDraggedNode.style.left = `${
+          state.coordinates.x + el.scrollLeft
+        }px`;
+
+        el.scrollBy(distance, 0);
     }
+
+    //state.clonedDraggedNode.style.top = `${
+    //  state.coordinates.y - el.scrollTop
+    //}px`;
 
     lastTimestamp = timestamp;
 
@@ -2008,6 +2021,9 @@ function shouldScrollLeft<T>(
 }
 
 function shouldScrollUp<T>(state: DragState<T>, data: ScrollData): boolean {
+  return state.coordinates.y <= 100;
+  return false;
+  //return state.coordinates.y <= data.y + data.clientHeight;
   const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y;
 
   if (!data.scrollOutside && diff > data.scrollParent.clientHeight)
@@ -2024,21 +2040,7 @@ function shouldScrollUp<T>(state: DragState<T>, data: ScrollData): boolean {
 }
 
 function shouldScrollDown<T>(state: DragState<T>, data: ScrollData): boolean {
-  const diff = data.scrollParent.clientHeight + data.y - state.coordinates.y;
-
-  if (!data.scrollOutside && diff < 0) return false;
-
-  if (
-    diff < (1 - data.yThresh) * data.scrollParent.clientHeight &&
-    !(
-      data.scrollParent.scrollTop + data.scrollParent.clientHeight >=
-      data.scrollParent.scrollHeight
-    )
-  ) {
-    return true;
-  }
-
-  return false;
+  return state.coordinates.y > data.clientHeight * data.yThresh;
 }
 
 function moveNode<T>(data: NodePointerEventData<T>, state: SynthDragState<T>) {
@@ -2052,11 +2054,13 @@ function moveNode<T>(data: NodePointerEventData<T>, state: SynthDragState<T>) {
 
   const startTop = state.startTop ?? 0;
 
-  console.log("start top", startTop);
+  state.clonedDraggedNode.style.left = `${
+    x - startLeft + document.documentElement.scrollLeft
+  }px`;
 
-  state.clonedDraggedNode.style.left = `${x - startLeft}px`;
-
-  state.clonedDraggedNode.style.top = `${y - startTop}px`;
+  state.clonedDraggedNode.style.top = `${
+    y - startTop + document.documentElement.scrollTop
+  }px`;
 
   if (data.e.cancelable) data.e.preventDefault();
 
@@ -2103,8 +2107,9 @@ export function synthMove<T>(
 }
 
 export function handleScroll(e: DragEvent | PointerEvent) {
-  if (!isSynthDragState(state)) return;
+  e.stopPropagation();
 
+  if (!isSynthDragState(state)) return;
   let directionSet = false;
 
   for (const direction of Object.keys(scrollConfig)) {
@@ -2580,17 +2585,21 @@ export function removeClass(
     if (!nodeData) continue;
 
     for (const className of classNames) {
-      console.log("class name", nodeData.privateClasses);
       if (!nodeData.privateClasses.includes(className)) {
-        console.log("is removing");
         node.classList.remove(className);
       }
     }
   }
 }
 
-// Function to check if an element is scrollable
 function isScrollable(element: HTMLElement) {
+  if (element === document.documentElement) {
+    return (
+      element.scrollHeight > element.clientHeight ||
+      element.scrollWidth > element.clientWidth
+    );
+  }
+
   const style = window.getComputedStyle(element);
 
   return (
