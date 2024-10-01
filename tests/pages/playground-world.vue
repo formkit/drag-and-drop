@@ -33,7 +33,7 @@ const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   </div>
 </template>
 
-<style>
+<style scoped>
 .blue {
   background-color: lightblue !important;
   color: yellow !important;

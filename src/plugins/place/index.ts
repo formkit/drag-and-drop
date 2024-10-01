@@ -236,8 +236,6 @@ function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
     ? newValues.splice(index, 0, ...draggedValues)
     : newValues.push(...draggedValues);
 
-  console.log("index", index);
-
   if (state.initialParent.el !== state.currentParent.el) {
     const initialParentValues = parentValues(
       state.initialParent.el,
@@ -275,4 +273,6 @@ function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
       ? state.currentParent.data.config.synthDropZoneClass
       : state.currentParent.data.config.dropZoneClass
   );
+
+  placeState.draggedOverNodes = [];
 }

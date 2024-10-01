@@ -1,22 +1,31 @@
 import type {
   NodeDragEventData,
   ParentConfig,
+  DragState,
+  SynthDragState,
   NodeRecord,
-  ParentEventData,
-  PointeroverParentEvent,
   PointeroverNodeEvent,
+  ParentDragEventData,
+  PointeroverParentEvent,
 } from "../../types";
 import {
-  state,
   parents,
+  parentValues,
+  setParentValues,
   addNodeClass,
+  isSynthDragState,
   removeClass,
+  addClass,
+  state,
   isDragState,
 } from "../../index";
 
-export const swapState = {
-  draggedOverNodes: Array<NodeRecord<any>>(),
+export const placeState = {
+  draggedOverNodes: Array<NodeRecord<unknown>>(),
+  initialDraggedIndex: 0,
 };
+
+let dragoverEventListeneerSet = false;
 
 interface SwapConfig<T> extends ParentConfig<T> {}
 
@@ -31,19 +40,34 @@ export function swap<T>(swapConfig: Partial<SwapConfig<T>> = {}) {
       swapConfig: swapConfig,
     } as SwapConfig<T>;
 
+    if (!dragoverEventListeneerSet) {
+      document.addEventListener("dragover", rootDragover);
+      document.addEventListener(
+        "handleRootPointerover" as keyof DocumentEventMap,
+        (e) => rootPointerover(e as CustomEvent)
+      );
+    }
+
     return {
       setup() {
-        swapParentConfig.handleDragoverParent =
-          swapConfig.handleDragoverParent || handleDragoverParent;
+        swapParentConfig.handleNodeDragover =
+          swapConfig.handleNodeDragover || handleDragoverNode;
 
-        swapParentConfig.handleDragoverNode =
-          swapConfig.handleDragoverNode || handleDragoverNode;
+        swapParentConfig.handleParentDragover =
+          swapConfig.handleParentDragover || handleDragoverParent;
 
-        swapParentConfig.handlePointeroverNode =
-          swapConfig.handlePointeroverNode || handlePointeroverNode;
+        swapParentConfig.handleNodePointerover =
+          swapConfig.handleNodePointerover || handleNodePointerover;
 
-        swapParentConfig.handlePointeroverParent =
-          swapConfig.handlePointeroverParent || handlePointeroverParent;
+        swapParentConfig.handleParentPointerover =
+          swapConfig.handleParentPointerover || handlePointeroverParent;
+
+        const originalHandleend = swapParentConfig.handleEnd;
+        swapParentConfig.handleEnd = (state) => {
+          handleEnd(state);
+
+          originalHandleend(state);
+        };
 
         parentData.config = swapParentConfig;
       },
@@ -51,110 +75,233 @@ export function swap<T>(swapConfig: Partial<SwapConfig<T>> = {}) {
   };
 }
 
-function handleDragoverNode<T>(data: NodeDragEventData<T>) {
-  data.e.preventDefault();
-}
-
-export function handleDragoverParent<T>(_data: ParentEventData<T>) {}
-
-export function handlePointeroverParent<T>(_data: PointeroverParentEvent<T>) {}
-
-function handlePointeroverNode<T>(data: PointeroverNodeEvent<T>) {
+function rootDragover(_e: DragEvent) {
   if (!isDragState(state)) return;
 
-  if (data.detail.targetData.parent.el !== state.currentParent.el) return;
+  removeClass(
+    [state.currentParent.el],
+    state.currentParent.data.config.dropZoneParentClass
+  );
+}
 
-  const dropZoneClass =
-    data.detail.targetData.parent.data.config.synthDropZoneClass;
+function rootPointerover(_e: CustomEvent) {
+  if (!isSynthDragState(state)) return;
 
   removeClass(
-    swapState.draggedOverNodes.map((node) => node.el),
+    [state.currentParent.el],
+    state.currentParent.data.config.synthDropZoneParentClass
+  );
+}
+
+function updateDraggedOverNodes<T>(
+  data: PointeroverNodeEvent<T> | NodeDragEventData<T>,
+  state: DragState<T> | SynthDragState<T>
+) {
+  const targetData =
+    "detail" in data ? data.detail.targetData : data.targetData;
+
+  const config = targetData.parent.data.config;
+
+  const dropZoneClass = isSynthDragState(state)
+    ? config.synthDropZoneClass
+    : config.dropZoneClass;
+
+  removeClass(
+    placeState.draggedOverNodes.map((node) => node.el),
     dropZoneClass
   );
 
-  const enabledNodes = data.detail.targetData.parent.data.enabledNodes;
+  const enabledNodes = targetData.parent.data.enabledNodes;
 
-  swapState.draggedOverNodes = enabledNodes.slice(
-    data.detail.targetData.node.data.index,
-    data.detail.targetData.node.data.index + state.draggedNodes.length
+  if (!enabledNodes) return;
+
+  placeState.draggedOverNodes = enabledNodes.slice(
+    targetData.node.data.index,
+    targetData.node.data.index + state.draggedNodes.length
   );
 
   addNodeClass(
-    swapState.draggedOverNodes.map((node) => node.el),
+    placeState.draggedOverNodes.map((node) => node.el),
     dropZoneClass,
     true
   );
 
-  state.currentTargetValue = data.detail.targetData.node.data.value;
+  state.currentTargetValue = targetData.node.data.value;
 
-  state.currentParent = data.detail.targetData.parent as any;
+  state.currentParent = targetData.parent;
+
+  addClass(
+    state.currentParent.el,
+    isSynthDragState(state)
+      ? config.synthDropZoneParentClass
+      : config.dropZoneParentClass,
+    state.currentParent.data,
+    true
+  );
 }
-//function handleEnd<T>(data: NodeDragEventData<T> | NodePointerEventData<T>) {
-//  if (!state) return;
 
-//  if (!state.transferred) {
-//    const draggedParentValues = parentValues(
-//      state.initialParent.el,
-//      state.initialParent.data
-//    );
+function handleDragoverNode<T>(
+  data: NodeDragEventData<T>,
+  state: DragState<T>
+) {
+  data.e.preventDefault();
 
-//    let targetParentValues = parentValues(
-//      state.lastParent.el,
-//      state.lastParent.data
-//    );
+  data.e.stopPropagation();
 
-//    const draggedValues = state.draggedNodes.map((node) => node.data.value);
+  updateDraggedOverNodes(data, state);
+}
 
-//    const draggedOverNodeValues = swapState.draggedOverNodes.map(
-//      (node) => node.data.value
-//    );
+export function handleDragoverParent<T>(
+  data: ParentDragEventData<T>,
+  state: DragState<T>
+) {
+  data.e.preventDefault();
 
-//    const draggedIndex = state.draggedNodes[0].data.index;
+  data.e.stopPropagation();
 
-//    const draggedOverIndex = swapState.draggedOverNodes[0].data.index;
+  const currentConfig = state.currentParent.data.config;
 
-//    targetParentValues.splice(
-//      draggedOverIndex,
-//      draggedValues.length,
-//      ...draggedValues
-//    );
+  removeClass(
+    placeState.draggedOverNodes.map((node) => node.el),
+    currentConfig.dropZoneClass
+  );
 
-//    if (state.initialParent.el === state.lastParent.el) {
-//      targetParentValues.splice(
-//        draggedIndex,
-//        draggedValues.length,
-//        ...draggedOverNodeValues
-//      );
+  removeClass([state.currentParent.el], currentConfig.dropZoneParentClass);
 
-//      setParentValues(state.initialParent.el, state.initialParent.data, [
-//        ...targetParentValues,
-//      ]);
-//    } else {
-//      draggedParentValues.splice(
-//        draggedIndex,
-//        draggedValues.length,
-//        ...draggedOverNodeValues
-//      );
+  const config = data.targetData.parent.data.config;
 
-//      setParentValues(state.lastParent.el, state.lastParent.data, [
-//        ...targetParentValues,
-//      ]);
+  addClass(
+    data.targetData.parent.el,
+    config.dropZoneParentClass,
+    data.targetData.parent.data,
+    true
+  );
 
-//      setParentValues(state.initialParent.el, state.initialParent.data, [
-//        ...draggedParentValues,
-//      ]);
-//    }
-//  }
+  placeState.draggedOverNodes = [];
 
-//  const dropZoneClass =
-//    "clonedDraggedNode" in state
-//      ? data.targetData.parent.data.config.touchDropZoneClass
-//      : data.targetData.parent.data.config.dropZoneClass;
+  state.currentParent = data.targetData.parent;
+}
 
-//  removeClass(
-//    swapState.draggedOverNodes.map((node) => node.el),
-//    dropZoneClass
-//  );
+export function handlePointeroverParent<T>(data: PointeroverParentEvent<T>) {
+  const currentConfig = data.detail.state.currentParent.data.config;
 
-//  originalHandleEnd(data);
-//}
+  removeClass(
+    placeState.draggedOverNodes.map((node) => node.el),
+    currentConfig.synthDropZoneClass
+  );
+
+  removeClass(
+    [data.detail.state.currentParent.el],
+    currentConfig.synthDropZoneParentClass
+  );
+
+  const config = data.detail.targetData.parent.data.config;
+
+  addClass(
+    data.detail.targetData.parent.el,
+    config.synthDropZoneParentClass,
+    data.detail.targetData.parent.data,
+    true
+  );
+
+  placeState.draggedOverNodes = [];
+}
+
+function handleNodePointerover<T>(data: PointeroverNodeEvent<T>) {
+  if (!isSynthDragState(data.detail.state)) return;
+
+  updateDraggedOverNodes(data, data.detail.state);
+}
+
+function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
+  const isSynth = isSynthDragState(state);
+
+  removeClass(
+    [state.currentParent.el],
+    isSynth
+      ? state.currentParent.data.config.synthDropZoneParentClass
+      : state.currentParent.data.config.dropZoneParentClass
+  );
+
+  const values = parentValues(state.currentParent.el, state.currentParent.data);
+
+  const draggedValues = state.draggedNodes.map((node) => node.data.value);
+
+  const newValues = values.filter((x) => !draggedValues.includes(x));
+
+  const targetIndex = placeState.draggedOverNodes[0]?.data.index;
+
+  let newTargetParentValues: Array<T> = [];
+
+  if (state.initialParent.el == state.currentParent.el) {
+    if (targetIndex !== undefined) {
+      newValues.splice(targetIndex, 0, ...draggedValues);
+
+      setParentValues(
+        state.currentParent.el,
+        state.currentParent.data,
+        newValues
+      );
+    }
+  } else if (state.initialParent.el !== state.currentParent.el) {
+    const initialParentValues = parentValues(
+      state.initialParent.el,
+      state.initialParent.data
+    );
+
+    if (targetIndex === undefined) {
+      newTargetParentValues = newValues.concat(draggedValues);
+
+      setParentValues(
+        state.currentParent.el,
+        state.currentParent.data,
+        newTargetParentValues
+      );
+
+      setParentValues(
+        state.initialParent.el,
+        state.initialParent.data,
+        initialParentValues.filter((x) => !draggedValues.includes(x))
+      );
+    } else {
+      const targetedNodeValues = state.currentParent.data.enabledNodes
+        .slice(targetIndex, targetIndex + draggedValues.length)
+        .map((node) => node.data.value);
+
+      const newInitialParentValues = initialParentValues.filter(
+        (x) => !draggedValues.includes(x)
+      );
+
+      newInitialParentValues.splice(
+        state.initialIndex,
+        0,
+        ...targetedNodeValues
+      );
+
+      setParentValues(
+        state.initialParent.el,
+        state.initialParent.data,
+        newInitialParentValues
+      );
+
+      const newTargetParentValues = newValues.filter(
+        (x) => !targetedNodeValues.includes(x)
+      );
+
+      newTargetParentValues.splice(targetIndex, 0, ...draggedValues);
+
+      setParentValues(
+        state.currentParent.el,
+        state.currentParent.data,
+        newTargetParentValues
+      );
+    }
+  }
+
+  removeClass(
+    placeState.draggedOverNodes.map((node) => node.el),
+    isSynth
+      ? state.currentParent.data.config.synthDropZoneClass
+      : state.currentParent.data.config.dropZoneClass
+  );
+}

@@ -61,7 +61,7 @@ function updateConfig(config: Record<string, unknown>, e: MouseEvent) {
   </button>
 </template>
 
-<style>
+<style scoped>
 .dropZoneClass {
   background-color: green !important;
   color: white !important;

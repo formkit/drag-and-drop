@@ -60,7 +60,7 @@ dragAndDrop({
   </ul>
 </template>
 
-<style>
+<style scoped>
 .activeDescendantClass {
   border-color: red !important;
 }
