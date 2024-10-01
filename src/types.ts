@@ -80,13 +80,21 @@ export interface ParentConfig<T> {
   dragstartClasses: (
     node: NodeRecord<T>,
     nodes: Array<NodeRecord<T>>,
-    config: ParentConfig<T>
+    config: ParentConfig<T>,
+    isSynthDrag?: boolean
   ) => void;
+  // When drag starts, this will be applied to the dragged node(s) (not their
+  // representations being dragged) on dragstart. This will remain on the nodes
+  // until the drag ends.
   dragPlaceholderClass?: string;
   /**
    * The class to add to a node when the node is dragged over it.
    */
   dropZoneClass?: string;
+  /**
+   * The class to add to a parent when it is dragged over.
+   */
+  dropZoneParentClass?: string;
   /**
    * A flag to indicate whether the parent itself is a dropZone.
    */
@@ -287,6 +295,10 @@ export interface ParentConfig<T> {
    */
   sortable?: boolean;
   /**
+   * The class to add to a parent when it is dragged over.
+   */
+  synthDropZoneParentClass?: string;
+  /**
    * A function that returns the image to use for the drag operation. This is
    * invoked for synth drag operations operations. The clonedNode is what will
    * be set as the drag image, but this can be updated.
@@ -323,7 +335,18 @@ export interface ParentConfig<T> {
    * The class to add to a node when it is being synthetically dragged.
    */
   synthDraggingClass?: string;
+  /**
+   * On synth drag start, this is applied to the dragged node(s) (not their
+   * representations being dragged).
+   */
+  synthDragPlaceholderClass?: string;
+  /**
+   * When hovering over a node, this class is applied to the node.
+   */
   synthDropZoneClass?: string;
+  /**
+   * When a node receives focus, this class is applied to the node.
+   */
   synthActiveDescendantClass?: string;
   /**
    * Config option to allow recursive copying of computed styles of dragged

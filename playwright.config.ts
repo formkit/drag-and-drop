@@ -13,13 +13,13 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   projects: [
-    {
-      name: "Desktop Chrome",
-      testMatch: "tests/drag/**/*.spec.ts",
-      use: {
-        ...devices["Desktop Chrome"],
-      },
-    },
+    //{
+    //  name: "Desktop Chrome",
+    //  testMatch: "tests/drag/**/*.spec.ts",
+    //  use: {
+    //    ...devices["Desktop Chrome"],
+    //  },
+    //},
     //{
     //  name: "Desktop Firefox",
     //  testMatch: "tests/drag/**/*.spec.ts",

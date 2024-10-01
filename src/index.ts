@@ -178,7 +178,11 @@ function handlePointerdownRoot(_e: PointerEvent) {
 }
 
 function handlePointerupRoot(_e: PointerEvent) {
-  //handleEnd(e);
+  if (!isSynthDragState(state)) return;
+
+  const config = state.currentParent.data.config;
+
+  if (isSynthDragState(state)) config.handleEnd(state);
 }
 
 /**
@@ -278,8 +282,8 @@ export function dragAndDrop<T>({
       tearDownNodeRemap,
       remapFinished,
       scrollBehavior: {
-        x: 0.9,
-        y: 0.9,
+        x: 0.95,
+        y: 0.95,
       },
       threshold: {
         horizontal: 0,
@@ -1372,6 +1376,11 @@ export function dragstartClasses<T>(
 
     addNodeClass(
       nodes.map((x) => x.el),
+      isSynth ? config.synthDragPlaceholderClass : config.dragPlaceholderClass
+    );
+
+    addNodeClass(
+      nodes.map((x) => x.el),
       isSynth ? config.synthDropZoneClass : config.dropZoneClass
     );
 
@@ -1682,6 +1691,13 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
     state.initialParent.data?.config?.longPressClass
   );
 
+  removeClass(
+    state.draggedNodes.map((x) => x.el),
+    isSynth
+      ? state.initialParent.data.config.synthDragPlaceholderClass
+      : state.initialParent.data?.config?.dragPlaceholderClass
+  );
+
   if (isSynth) state.clonedDraggedNode.remove();
 
   deselect(state.draggedNodes, state.currentParent, state);
@@ -1691,8 +1707,6 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   resetState();
 
   state.selectedState = undefined;
-
-  console.log("end");
 
   synthNodePointerDown = false;
 
@@ -1713,13 +1727,15 @@ export function handleNodePointerup<T>(
   if (!state.pointerSelection && state.selectedState)
     deselect(state.selectedState.nodes, data.targetData.parent, state);
 
+  const config = data.targetData.parent.data.config;
+
   state.pointerSelection = false;
 
   synthNodePointerDown = false;
 
   if (!isDragState(state)) return;
 
-  handleEnd(state as DragState<T> | SynthDragState<T>);
+  config.handleEnd(state as DragState<T> | SynthDragState<T>);
 }
 
 export function handleNodePointermove<T>(
@@ -1729,16 +1745,7 @@ export function handleNodePointermove<T>(
   // TODO: I think this is OK but not sure.
   //data.e.stopPropagation();
 
-  if (isNative || !synthNodePointerDown || !validateDragHandle(data)) {
-    console.log(
-      "return early here",
-      isNative,
-      synthNodePointerDown,
-      !validateDragHandle(data)
-    );
-
-    return;
-  }
+  if (isNative || !synthNodePointerDown || !validateDragHandle(data)) return;
 
   if (!isSynthDragState(state)) {
     const config = data.targetData.parent.data.config;
@@ -1788,7 +1795,6 @@ function initSynthDrag<T>(
 
   let dragImage: HTMLElement | undefined;
 
-  console.log("draggedNodes", draggedNodes);
   if (config.synthDragImage) {
     dragImage = config.synthDragImage(data, draggedNodes);
   } else {
@@ -1895,16 +1901,6 @@ function pointermoveClasses<T>(
     removeClass(
       state.draggedNodes.map((x) => x.el),
       config?.longPressClass
-    );
-
-  //if (config.synthDraggingClass && state.clonedDraggedNode)
-  //  addNodeClass([state.clonedDraggedNode], config.synthDraggingClass);
-
-  if (config.synthDropZoneClass)
-    addNodeClass(
-      state.draggedNodes.map((x) => x.el),
-      config.synthDropZoneClass,
-      true
     );
 }
 
@@ -2138,8 +2134,18 @@ export function synthMove<T>(
 
   const elFromPoint = getElFromPoint(eventCoordinates(data.e));
 
-  if (!elFromPoint) return;
+  if (!elFromPoint) {
+    document.dispatchEvent(
+      new CustomEvent("handleRootPointerover", {
+        detail: {
+          e: data.e,
+          state,
+        },
+      })
+    );
 
+    return;
+  }
   const pointerMoveEventData = {
     e: data.e,
     targetData: elFromPoint,
