@@ -79,7 +79,6 @@ export function insertion<T>(
         parentData.config = insertionParentConfig;
 
         state.on("dragStarted", () => {
-          console.log("drag started");
           defineRanges(parent);
         });
 

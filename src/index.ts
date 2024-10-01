@@ -893,6 +893,7 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     dragend: nodeEventData(config.handleDragend),
     drop: nodeEventData(config.handleNodeDrop),
     touchstart: nodeEventData(config.handleNodeTouchstart),
+    pointercancel: nodeEventData(config.handleDragend),
     pointerdown: nodeEventData(config.handleNodePointerdown),
     pointerup: nodeEventData(config.handleNodePointerup),
     pointermove: nodeEventData(config.handleNodePointermove),
