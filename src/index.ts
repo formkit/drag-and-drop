@@ -254,6 +254,7 @@ export function dragAndDrop<T>({
       handleParentDragover,
       handleNodeDrop,
       handleDragend,
+      handleEnd,
       handleParentBlur,
       handleParentFocus,
       handleNodePointerup,
@@ -791,12 +792,14 @@ export function updateConfig<T>(
 }
 
 export function handleParentDrop<T>(
-  _data: ParentEventData<T>,
+  data: ParentEventData<T>,
   state: DragState<T>
 ) {
   dropped = true;
 
-  handleEnd(state);
+  const config = data.targetData.parent.data.config;
+
+  config.handleEnd(state);
 }
 
 export function tearDown(parent: HTMLElement) {
@@ -1237,6 +1240,8 @@ export function handleNodePointerdown<T>(
   data: NodePointerEventData<T>,
   state: BaseDragState<T>
 ) {
+  console.log("pointerdown", synthNodePointerDown);
+
   if (!validateDragHandle(data)) return;
 
   data.e.stopPropagation();
@@ -1617,7 +1622,9 @@ export function handleNodeDrop<T>(
 
   dropped = true;
 
-  handleEnd(state);
+  const config = data.targetData.parent.data.config;
+
+  config.handleEnd(state);
 }
 
 export function handleDragend<T>(
@@ -1632,11 +1639,10 @@ export function handleDragend<T>(
     return;
   }
 
-  handleEnd(state);
-
   const config = parents.get(state.initialParent.el)?.config;
+  config?.handleEnd(state);
 
-  if (config?.onDragend)
+  if (config?.onDragend) {
     config.onDragend({
       parent: state.currentParent,
       values: parentValues(state.currentParent.el, state.currentParent.data),
@@ -1644,6 +1650,7 @@ export function handleDragend<T>(
       draggedNodes: state.draggedNodes,
       position: state.initialIndex,
     });
+  }
 }
 
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
@@ -1665,7 +1672,6 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   if (state.originalZIndex !== undefined)
     state.draggedNode.el.style.zIndex = state.originalZIndex;
 
-  console.log("dropZoneClass", dropZoneClass);
   removeClass(
     state.draggedNodes.map((x) => x.el),
     dropZoneClass
@@ -1685,6 +1691,8 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   resetState();
 
   state.selectedState = undefined;
+
+  console.log("end");
 
   synthNodePointerDown = false;
 
@@ -1721,7 +1729,16 @@ export function handleNodePointermove<T>(
   // TODO: I think this is OK but not sure.
   //data.e.stopPropagation();
 
-  if (isNative || !synthNodePointerDown || !validateDragHandle(data)) return;
+  if (isNative || !synthNodePointerDown || !validateDragHandle(data)) {
+    console.log(
+      "return early here",
+      isNative,
+      synthNodePointerDown,
+      !validateDragHandle(data)
+    );
+
+    return;
+  }
 
   if (!isSynthDragState(state)) {
     const config = data.targetData.parent.data.config;
@@ -1771,6 +1788,7 @@ function initSynthDrag<T>(
 
   let dragImage: HTMLElement | undefined;
 
+  console.log("draggedNodes", draggedNodes);
   if (config.synthDragImage) {
     dragImage = config.synthDragImage(data, draggedNodes);
   } else {

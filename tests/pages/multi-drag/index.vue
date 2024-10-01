@@ -25,7 +25,7 @@ const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   </div>
 </template>
 
-<style>
+<style scoped>
 .dropZoneClass {
   background-color: green !important;
   color: white !important;

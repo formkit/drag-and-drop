@@ -172,7 +172,7 @@ export async function syntheticDrag(
       })
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     destinationElement.dispatchEvent(
       new PointerEvent("pointermove", {

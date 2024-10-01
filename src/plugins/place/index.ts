@@ -2,7 +2,7 @@ import type {
   NodeDragEventData,
   ParentConfig,
   DragState,
-  NodePointerEventData,
+  SynthDragState,
   NodeRecord,
   PointeroverNodeEvent,
   ParentEventData,
@@ -10,10 +10,10 @@ import type {
 } from "../../types";
 import {
   parents,
-  handleEnd as originalHandleEnd,
   parentValues,
   setParentValues,
   addNodeClass,
+  isSynthDragState,
   removeClass,
 } from "../../index";
 
@@ -36,16 +36,24 @@ export function place<T>(placeConfig: Partial<PlaceConfig<T>> = {}) {
 
     return {
       setup() {
-        placeParentConfig.handleDragoverNode =
-          placeConfig.handleDragoverNode || handleDragoverNode;
+        placeParentConfig.handleNodeDragover =
+          placeConfig.handleNodeDragover || handleDragoverNode;
 
-        placeParentConfig.handlePointeroverNode =
-          placeConfig.handlePointeroverNode || handlePointeroverNode;
+        placeParentConfig.handleParentDragover =
+          placeConfig.handleParentDragover || handleDragoverParent;
 
-        placeParentConfig.handlePointeroverParent =
-          placeConfig.handlePointeroverParent || handlePointeroverParent;
+        placeParentConfig.handleNodePointerover =
+          placeConfig.handleNodePointerover || handlePointeroverNode;
 
-        placeParentConfig.handleEnd = placeConfig.handleEnd || handleEnd;
+        placeParentConfig.handleParentPointerover =
+          placeConfig.handleParentPointerover || handlePointeroverParent;
+
+        const originalHandleend = placeParentConfig.handleEnd;
+        placeParentConfig.handleEnd = (state) => {
+          handleEnd(state);
+
+          originalHandleend(state);
+        };
 
         parentData.config = placeParentConfig;
       },
@@ -53,11 +61,53 @@ export function place<T>(placeConfig: Partial<PlaceConfig<T>> = {}) {
   };
 }
 
+function updateDraggedOverNodes<T>(
+  data: PointeroverNodeEvent<T> | NodeDragEventData<T>,
+  state: DragState<T> | SynthDragState<T>
+) {
+  const targetData =
+    "detail" in data ? data.detail.targetData : data.targetData;
+
+  const config = targetData.parent.data.config;
+
+  const dropZoneClass = isSynthDragState(state)
+    ? config.synthDropZoneClass
+    : config.dropZoneClass;
+
+  removeClass(
+    placeState.draggedOverNodes.map((node) => node.el),
+    dropZoneClass
+  );
+
+  const enabledNodes = targetData.parent.data.enabledNodes;
+
+  if (!enabledNodes) return;
+
+  placeState.draggedOverNodes = enabledNodes.slice(
+    targetData.node.data.index,
+    targetData.node.data.index + state.draggedNodes.length
+  );
+
+  addNodeClass(
+    placeState.draggedOverNodes.map((node) => node.el),
+    dropZoneClass,
+    true
+  );
+
+  state.currentTargetValue = targetData.node.data.value;
+
+  state.currentParent = targetData.parent;
+}
+
 function handleDragoverNode<T>(
   data: NodeDragEventData<T>,
   state: DragState<T>
 ) {
-  dragoverNode(data, state);
+  data.e.preventDefault();
+
+  data.e.stopPropagation();
+
+  updateDraggedOverNodes(data, state);
 }
 
 export function handleDragoverParent<T>(_data: ParentEventData<T>) {}
@@ -68,105 +118,45 @@ function handlePointeroverNode<T>(
   data: PointeroverNodeEvent<T>,
   state: DragState<T>
 ) {
-  if (data.detail.targetData.parent.el !== state.currentParent.el) return;
-
-  const dropZoneClass =
-    data.detail.targetData.parent.data.config.synthDropZoneClass;
-
-  removeClass(
-    placeState.draggedOverNodes.map((node) => node.el),
-    dropZoneClass
-  );
-
-  const enabledNodes = data.detail.targetData.parent.data.enabledNodes;
-
-  placeState.draggedOverNodes = enabledNodes.slice(
-    data.detail.targetData.node.data.index,
-    data.detail.targetData.node.data.index + state.draggedNodes.length
-  );
-
-  addNodeClass(
-    placeState.draggedOverNodes.map((node) => node.el),
-    dropZoneClass,
-    true
-  );
-
-  state.currentTargetValue = data.detail.targetData.node.data.value;
-
-  state.currentParent = data.detail.targetData.parent;
+  updateDraggedOverNodes(data, state);
 }
 
-function dragoverNode<T>(data: NodeDragEventData<T>, state: DragState<T>) {
-  data.e.preventDefault();
-
-  data.e.stopPropagation();
-
-  if (data.targetData.parent.el !== state.currentParent.el) return;
-
-  const dropZoneClass = data.targetData.parent.data.config.dropZoneClass;
-
-  removeClass(
-    placeState.draggedOverNodes.map((node) => node.el),
-    dropZoneClass
-  );
-
-  const enabledNodes = data.targetData.parent.data.enabledNodes;
-
-  if (!enabledNodes) return;
-
-  placeState.draggedOverNodes = enabledNodes.slice(
-    data.targetData.node.data.index,
-    data.targetData.node.data.index + state.draggedNodes.length
-  );
-
-  addNodeClass(
-    placeState.draggedOverNodes.map((node) => node.el),
-    dropZoneClass,
-    true
-  );
-
-  state.currentTargetValue = data.targetData.node.data.value;
-
-  state.currentParent = data.targetData.parent;
-}
-
-function handleEnd<T>(
-  data: NodeDragEventData<T> | NodePointerEventData<T>,
-  state: DragState<T>
-) {
-  if (!state) return;
-
-  if (state.transferred || state.currentParent.el !== state.initialParent.el)
-    return;
-
-  const draggedParentValues = parentValues(
-    state.initialParent.el,
-    state.initialParent.data
-  );
+function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
+  const values = parentValues(state.currentParent.el, state.currentParent.data);
 
   const draggedValues = state.draggedNodes.map((node) => node.data.value);
 
-  const newParentValues = [
-    ...draggedParentValues.filter((x) => !draggedValues.includes(x)),
-  ];
+  const newValues = values.filter((x) => !draggedValues.includes(x));
 
   const index = placeState.draggedOverNodes[0].data.index;
 
-  newParentValues.splice(index, 0, ...draggedValues);
+  newValues.splice(index, 0, ...draggedValues);
 
-  setParentValues(data.targetData.parent.el, data.targetData.parent.data, [
-    ...newParentValues,
-  ]);
+  if (state.initialParent.el !== state.currentParent.el) {
+    const initialParentValues = parentValues(
+      state.initialParent.el,
+      state.initialParent.data
+    );
 
-  const dropZoneClass =
-    "clonedDraggedNode" in state
-      ? data.targetData.parent.data.config.synthDropZoneClass
-      : data.targetData.parent.data.config.dropZoneClass;
+    const newInitialValues = initialParentValues.filter(
+      (x) => !draggedValues.includes(x)
+    );
+
+    setParentValues(
+      state.initialParent.el,
+      state.initialParent.data,
+      newInitialValues
+    );
+  }
+
+  setParentValues(state.currentParent.el, state.currentParent.data, newValues);
+
+  const dropZoneClass = isSynthDragState(state)
+    ? state.currentParent.data.config.synthDropZoneClass
+    : state.currentParent.data.config.dropZoneClass;
 
   removeClass(
     placeState.draggedOverNodes.map((node) => node.el),
     dropZoneClass
   );
-
-  originalHandleEnd(data, state);
 }

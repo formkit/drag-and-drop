@@ -2,52 +2,63 @@
 import { useDragAndDrop } from "../../../src/vue/index";
 import { place } from "../../../src/index";
 
-const [parent, values] = useDragAndDrop(
-  ["Apple", "Banana", "Orange", "Strawberry", "Pineapple", "Grapes"],
-  {
-    plugins: [place()],
-    dropZoneClass: "hover",
-  }
-);
+const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
+  plugins: [place()],
+  dropZoneClass: "dropZone",
+  group: "transfer",
+});
+
+const [parent2, values2] = useDragAndDrop(["Tomato", "Potato", "Onion"], {
+  plugins: [place()],
+  dropZoneClass: "dropZone",
+  group: "transfer",
+});
 </script>
 
 <template>
   <h2>Place Plugin</h2>
-  <div>
-    <ul ref="parent" class="list">
-      <li v-for="value in values" :id="value" :key="value" class="item">
-        {{ value }}
-      </li>
-    </ul>
-    <div class="values">
-      Values:
-      <span id="sort_values">
-        {{ values.map((x) => x).join(" ") }}
-      </span>
+  <div class="flex-wrap">
+    <div class="container">
+      <ul id="list_1" ref="parent1" class="list">
+        <li v-for="value in values1" :id="value" :key="value" class="item">
+          {{ value }}
+        </li>
+      </ul>
+      <div class="values">
+        Values:
+        <span id="values_1">
+          {{ values1.map((x) => x).join(" ") }}
+        </span>
+      </div>
+    </div>
+    <div>
+      <h2>Place Plugin</h2>
+      <div class="container">
+        <ul id="list_2" ref="parent2" class="list">
+          <li v-for="value in values2" :id="value" :key="value" class="item">
+            {{ value }}
+          </li>
+        </ul>
+        <div class="values">
+          Values:
+          <span id="values_2">
+            {{ values2.map((x) => x).join(" ") }}
+          </span>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.dropZone {
+  background-color: teal !important;
+}
 .item {
   padding: 10px;
   border: 1px solid #ccc;
   margin: 5px 0;
   list-style-type: none;
-}
-
-.item.hover {
-  position: relative;
-}
-
-.item.hover::before {
-  content: "";
-  position: absolute;
-  bottom: -5px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: green;
 }
 
 .list {

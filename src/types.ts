@@ -117,6 +117,7 @@ export interface ParentConfig<T> {
    * Function that is called when dragstart event occurs.
    */
   handleDragstart: (data: NodeDragEventData<T>, state: DragState<T>) => void;
+  handleEnd: (state: DragState<T> | SynthDragState<T>) => void;
   handleNodeDrop: (data: NodeDragEventData<T>, state: DragState<T>) => void;
   handleNodePointerup: (
     data: NodePointerEventData<T>,

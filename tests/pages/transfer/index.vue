@@ -87,15 +87,17 @@ h1 {
   padding: 0;
   margin: 0;
   margin-bottom: 2em;
+  width: 100%;
+  font-size: 0.5em;
 }
 
 .item {
-  padding: 10px;
+  padding: 2px;
   margin: 5px;
   border: 1px solid #ccc;
-  width: 200px;
+  width: 100px;
   border-radius: 5px;
-  height: 200px;
+  height: 100px;
 }
 
 .item-small {
