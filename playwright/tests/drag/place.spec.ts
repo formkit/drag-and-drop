@@ -94,7 +94,7 @@ test.describe("Place plugin", async () => {
     await expect(page.locator("#values_1")).toHaveText("Banana Apple");
   });
 
-  test.only("Test #2", async () => {
+  test("Test #2", async () => {
     await page.goto("http://localhost:3001/place");
     await new Promise((r) => setTimeout(r, 1000));
 

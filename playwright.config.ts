@@ -13,27 +13,27 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   projects: [
-    //{
-    //  name: "Desktop Chrome",
-    //  testMatch: "tests/drag/**/*.spec.ts",
-    //  use: {
-    //    ...devices["Desktop Chrome"],
-    //  },
-    //},
-    //{
-    //  name: "Desktop Firefox",
-    //  testMatch: "tests/drag/**/*.spec.ts",
-    //  use: {
-    //    ...devices["Desktop Firefox"],
-    //  },
-    //},
-    //{
-    //  name: "Desktop Webkit",
-    //  testMatch: "tests/drag/**/*.spec.ts",
-    //  use: {
-    //    ...devices["Desktop Webkit"],
-    //  },
-    //},
+    {
+      name: "Desktop Chrome",
+      testMatch: "tests/drag/**/*.spec.ts",
+      use: {
+        ...devices["Desktop Chrome"],
+      },
+    },
+    {
+      name: "Desktop Firefox",
+      testMatch: "tests/drag/**/*.spec.ts",
+      use: {
+        ...devices["Desktop Firefox"],
+      },
+    },
+    {
+      name: "Desktop Webkit",
+      testMatch: "tests/drag/**/*.spec.ts",
+      use: {
+        ...devices["Desktop Webkit"],
+      },
+    },
     {
       name: "iPhone 13 Chromium",
       testMatch: "tests/synthetic-drag/**/*.spec.ts",

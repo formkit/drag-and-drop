@@ -608,6 +608,7 @@ function handleEnd2(data, state2) {
 var placeState = {
   draggedOverNodes: Array()
 };
+var dragoverEventListeneerSet = false;
 function place(placeConfig = {}) {
   return (parent) => {
     const parentData = parents.get(parent);
@@ -616,88 +617,153 @@ function place(placeConfig = {}) {
       ...parentData.config,
       placeConfig
     };
+    if (!dragoverEventListeneerSet) {
+      document.addEventListener("dragover", rootDragover);
+      document.addEventListener(
+        "handleRootPointerover",
+        (e) => rootPointerover(e)
+      );
+    }
     return {
       setup() {
-        placeParentConfig.handleDragoverNode = placeConfig.handleDragoverNode || handleDragoverNode2;
-        placeParentConfig.handlePointeroverNode = placeConfig.handlePointeroverNode || handlePointeroverNode;
-        placeParentConfig.handlePointeroverParent = placeConfig.handlePointeroverParent || handlePointeroverParent2;
-        placeParentConfig.handleEnd = placeConfig.handleEnd || handleEnd3;
+        placeParentConfig.handleNodeDragover = placeConfig.handleNodeDragover || handleDragoverNode2;
+        placeParentConfig.handleParentDragover = placeConfig.handleParentDragover || handleDragoverParent2;
+        placeParentConfig.handleNodePointerover = placeConfig.handleNodePointerover || handleNodePointerover;
+        placeParentConfig.handleParentPointerover = placeConfig.handleParentPointerover || handlePointeroverParent2;
+        const originalHandleend = placeParentConfig.handleEnd;
+        placeParentConfig.handleEnd = (state2) => {
+          handleEnd3(state2);
+          originalHandleend(state2);
+        };
         parentData.config = placeParentConfig;
       }
     };
   };
 }
-function handleDragoverNode2(data, state2) {
-  dragoverNode(data, state2);
+function rootDragover(_e) {
+  if (!isDragState(state)) return;
+  removeClass(
+    [state.currentParent.el],
+    state.currentParent.data.config.dropZoneParentClass
+  );
 }
-function handlePointeroverParent2(_data) {
+function rootPointerover(_e) {
+  if (!isSynthDragState(state)) return;
+  removeClass(
+    [state.currentParent.el],
+    state.currentParent.data.config.synthDropZoneParentClass
+  );
 }
-function handlePointeroverNode(data, state2) {
-  if (data.detail.targetData.parent.el !== state2.currentParent.el) return;
-  const dropZoneClass = data.detail.targetData.parent.data.config.synthDropZoneClass;
+function updateDraggedOverNodes(data, state2) {
+  const targetData = "detail" in data ? data.detail.targetData : data.targetData;
+  const config = targetData.parent.data.config;
+  const dropZoneClass = isSynthDragState(state2) ? config.synthDropZoneClass : config.dropZoneClass;
   removeClass(
     placeState.draggedOverNodes.map((node) => node.el),
     dropZoneClass
   );
-  const enabledNodes = data.detail.targetData.parent.data.enabledNodes;
-  placeState.draggedOverNodes = enabledNodes.slice(
-    data.detail.targetData.node.data.index,
-    data.detail.targetData.node.data.index + state2.draggedNodes.length
-  );
-  addNodeClass(
-    placeState.draggedOverNodes.map((node) => node.el),
-    dropZoneClass,
-    true
-  );
-  state2.currentTargetValue = data.detail.targetData.node.data.value;
-  state2.currentParent = data.detail.targetData.parent;
-}
-function dragoverNode(data, state2) {
-  data.e.preventDefault();
-  data.e.stopPropagation();
-  if (data.targetData.parent.el !== state2.currentParent.el) return;
-  const dropZoneClass = data.targetData.parent.data.config.dropZoneClass;
-  removeClass(
-    placeState.draggedOverNodes.map((node) => node.el),
-    dropZoneClass
-  );
-  const enabledNodes = data.targetData.parent.data.enabledNodes;
+  const enabledNodes = targetData.parent.data.enabledNodes;
   if (!enabledNodes) return;
   placeState.draggedOverNodes = enabledNodes.slice(
-    data.targetData.node.data.index,
-    data.targetData.node.data.index + state2.draggedNodes.length
+    targetData.node.data.index,
+    targetData.node.data.index + state2.draggedNodes.length
   );
   addNodeClass(
     placeState.draggedOverNodes.map((node) => node.el),
     dropZoneClass,
     true
   );
-  state2.currentTargetValue = data.targetData.node.data.value;
-  state2.currentParent = data.targetData.parent;
-}
-function handleEnd3(data, state2) {
-  if (!state2) return;
-  if (state2.transferred || state2.currentParent.el !== state2.initialParent.el)
-    return;
-  const draggedParentValues = parentValues(
-    state2.initialParent.el,
-    state2.initialParent.data
+  state2.currentTargetValue = targetData.node.data.value;
+  state2.currentParent = targetData.parent;
+  addClass(
+    state2.currentParent.el,
+    isSynthDragState(state2) ? config.synthDropZoneParentClass : config.dropZoneParentClass,
+    state2.currentParent.data,
+    true
   );
-  const draggedValues = state2.draggedNodes.map((node) => node.data.value);
-  const newParentValues = [
-    ...draggedParentValues.filter((x) => !draggedValues.includes(x))
-  ];
-  const index = placeState.draggedOverNodes[0].data.index;
-  newParentValues.splice(index, 0, ...draggedValues);
-  setParentValues(data.targetData.parent.el, data.targetData.parent.data, [
-    ...newParentValues
-  ]);
-  const dropZoneClass = "clonedDraggedNode" in state2 ? data.targetData.parent.data.config.synthDropZoneClass : data.targetData.parent.data.config.dropZoneClass;
+}
+function handleDragoverNode2(data, state2) {
+  data.e.preventDefault();
+  data.e.stopPropagation();
+  updateDraggedOverNodes(data, state2);
+}
+function handleDragoverParent2(data, state2) {
+  data.e.preventDefault();
+  data.e.stopPropagation();
+  const currentConfig = state2.currentParent.data.config;
   removeClass(
     placeState.draggedOverNodes.map((node) => node.el),
-    dropZoneClass
+    currentConfig.dropZoneClass
   );
-  handleEnd(data, state2);
+  removeClass([state2.currentParent.el], currentConfig.dropZoneParentClass);
+  const config = data.targetData.parent.data.config;
+  addClass(
+    data.targetData.parent.el,
+    config.dropZoneParentClass,
+    data.targetData.parent.data,
+    true
+  );
+  placeState.draggedOverNodes = [];
+  state2.currentParent = data.targetData.parent;
+}
+function handlePointeroverParent2(data) {
+  const currentConfig = data.detail.state.currentParent.data.config;
+  removeClass(
+    placeState.draggedOverNodes.map((node) => node.el),
+    currentConfig.synthDropZoneClass
+  );
+  removeClass(
+    [data.detail.state.currentParent.el],
+    currentConfig.synthDropZoneParentClass
+  );
+  const config = data.detail.targetData.parent.data.config;
+  addClass(
+    data.detail.targetData.parent.el,
+    config.synthDropZoneParentClass,
+    data.detail.targetData.parent.data,
+    true
+  );
+  placeState.draggedOverNodes = [];
+}
+function handleNodePointerover(data) {
+  if (!isSynthDragState(data.detail.state)) return;
+  updateDraggedOverNodes(data, data.detail.state);
+}
+function handleEnd3(state2) {
+  const isSynth = isSynthDragState(state2);
+  removeClass(
+    [state2.currentParent.el],
+    isSynth ? state2.currentParent.data.config.synthDropZoneParentClass : state2.currentParent.data.config.dropZoneParentClass
+  );
+  const values = parentValues(state2.currentParent.el, state2.currentParent.data);
+  const draggedValues = state2.draggedNodes.map((node) => node.data.value);
+  const newValues = values.filter((x) => !draggedValues.includes(x));
+  const index = placeState.draggedOverNodes[0]?.data.index;
+  index !== void 0 ? newValues.splice(index, 0, ...draggedValues) : newValues.push(...draggedValues);
+  if (state2.initialParent.el !== state2.currentParent.el) {
+    const initialParentValues = parentValues(
+      state2.initialParent.el,
+      state2.initialParent.data
+    );
+    const newInitialValues = initialParentValues.filter(
+      (x) => !draggedValues.includes(x)
+    );
+    setParentValues(
+      state2.initialParent.el,
+      state2.initialParent.data,
+      newInitialValues
+    );
+  } else if (state2.initialParent.el === state2.currentParent.el && placeState.draggedOverNodes.length) {
+    setParentValues(
+      state2.currentParent.el,
+      state2.currentParent.data,
+      newValues
+    );
+  }
+  removeClass(
+    placeState.draggedOverNodes.map((node) => node.el),
+    isSynth ? state2.currentParent.data.config.synthDropZoneClass : state2.currentParent.data.config.dropZoneClass
+  );
 }
 
 // src/plugins/swap/index.ts
@@ -714,9 +780,9 @@ function swap(swapConfig = {}) {
     };
     return {
       setup() {
-        swapParentConfig.handleDragoverParent = swapConfig.handleDragoverParent || handleDragoverParent2;
+        swapParentConfig.handleDragoverParent = swapConfig.handleDragoverParent || handleDragoverParent3;
         swapParentConfig.handleDragoverNode = swapConfig.handleDragoverNode || handleDragoverNode3;
-        swapParentConfig.handlePointeroverNode = swapConfig.handlePointeroverNode || handlePointeroverNode2;
+        swapParentConfig.handlePointeroverNode = swapConfig.handlePointeroverNode || handlePointeroverNode;
         swapParentConfig.handlePointeroverParent = swapConfig.handlePointeroverParent || handlePointeroverParent3;
         parentData.config = swapParentConfig;
       }
@@ -726,11 +792,11 @@ function swap(swapConfig = {}) {
 function handleDragoverNode3(data) {
   data.e.preventDefault();
 }
-function handleDragoverParent2(_data) {
+function handleDragoverParent3(_data) {
 }
 function handlePointeroverParent3(_data) {
 }
-function handlePointeroverNode2(data) {
+function handlePointeroverNode(data) {
   if (!isDragState(state)) return;
   if (data.detail.targetData.parent.el !== state.currentParent.el) return;
   const dropZoneClass = data.detail.targetData.parent.data.config.synthDropZoneClass;
@@ -755,6 +821,7 @@ function handlePointeroverNode2(data) {
 // src/index.ts
 var isBrowser = typeof window !== "undefined";
 var touchDevice = window && "ontouchstart" in window;
+var dropped = false;
 var documentController;
 var isNative = false;
 var animationFrameId = null;
@@ -821,6 +888,7 @@ function resetState() {
 }
 function setDragState(dragStateProps2) {
   Object.assign(state, dragStateProps2);
+  dropped = false;
   state.emit("dragStarted", state);
   return state;
 }
@@ -830,6 +898,11 @@ function handlePointerdownRoot(_e) {
     deselect(state.selectedState.nodes, state.selectedState.parent, state);
   state.selectedState = state.activeState = void 0;
 }
+function handlePointerupRoot(_e) {
+  if (!isSynthDragState(state)) return;
+  const config = state.currentParent.data.config;
+  if (isSynthDragState(state)) config.handleEnd(state);
+}
 function handleRootKeydown(e) {
   if (e.key === "Escape") {
     if (state.selectedState)
@@ -838,6 +911,8 @@ function handleRootKeydown(e) {
       setActive(state.activeState.parent, void 0, state);
     state.selectedState = state.activeState = void 0;
   }
+}
+function handleRootDrop(_e) {
 }
 function handleRootDragover(e) {
   if (!isDragState(state)) return;
@@ -854,7 +929,9 @@ function dragAndDrop({
     documentController = addEvents(document, {
       dragover: handleRootDragover,
       pointerdown: handlePointerdownRoot,
-      keydown: handleRootKeydown
+      pointerup: handlePointerupRoot,
+      keydown: handleRootKeydown,
+      drop: handleRootDrop
     });
   tearDown(parent);
   const parentData = {
@@ -866,23 +943,25 @@ function dragAndDrop({
       draggedNodes,
       dragstartClasses,
       deepCopyStyles: config.deepCopyStyles ?? false,
-      handleKeydownNode,
-      handleKeydownParent,
+      handleNodeKeydown,
+      handleParentKeydown,
       handleDragstart,
-      handleDragoverNode: handleDragoverNode4,
-      handleDragoverParent: handleDragoverParent3,
+      handleNodeDragover,
+      handleParentDragover,
+      handleNodeDrop,
+      handleDragend,
       handleEnd,
-      handleBlurParent,
-      handleFocusParent,
-      handlePointerupNode,
-      handleTouchstart,
-      handlePointeroverNode: handlePointeroverNode3,
-      handlePointeroverParent: handlePointeroverParent4,
-      handlePointerdownNode,
-      handlePointermove,
-      handleDragenterNode,
-      handleDragleaveNode,
-      handleDropParent,
+      handleParentBlur,
+      handleParentFocus,
+      handleNodePointerup,
+      handleNodeTouchstart,
+      handleNodePointerover: handleNodePointerover2,
+      handleParentPointerover,
+      handleNodePointerdown,
+      handleNodePointermove,
+      handleNodeDragenter,
+      handleNodeDragleave,
+      handleParentDrop,
       multiDrag: config.multiDrag ?? false,
       nativeDrag: config.nativeDrag ?? true,
       performSort,
@@ -895,8 +974,8 @@ function dragAndDrop({
       tearDownNodeRemap,
       remapFinished,
       scrollBehavior: {
-        x: 0.9,
-        y: 0.9
+        x: 0.95,
+        y: 0.95
       },
       threshold: {
         horizontal: 0,
@@ -1082,9 +1161,9 @@ function clearLiveRegion(parent) {
   if (!liveRegion) return;
   liveRegion.textContent = "";
 }
-function handleBlurParent(_data, _state) {
+function handleParentBlur(_data, _state) {
 }
-function handleFocusParent(data, state2) {
+function handleParentFocus(data, state2) {
   const firstEnabledNode = data.targetData.parent.data.enabledNodes[0];
   if (!firstEnabledNode) return;
   if (state2.selectedState && state2.selectedState.parent.el !== data.targetData.parent.el) {
@@ -1226,7 +1305,10 @@ function updateConfig(parent, config) {
     config
   });
 }
-function handleDropParent(_data) {
+function handleParentDrop(data, state2) {
+  dropped = true;
+  const config = data.targetData.parent.data.config;
+  config.handleEnd(state2);
 }
 function tearDown(parent) {
   const parentData = parents.get(parent);
@@ -1242,17 +1324,17 @@ function isSynthDragState(state2) {
 }
 function setup(parent, parentData) {
   parentData.abortControllers.mainParent = addEvents(parent, {
-    keydown: parentEventData(parentData.config.handleKeydownParent),
-    dragover: parentEventData(parentData.config.handleDragoverParent),
-    handlePointeroverParent: parentData.config.handlePointeroverParent,
-    drop: parentEventData(parentData.config.handleDropParent),
+    keydown: parentEventData(parentData.config.handleParentKeydown),
+    dragover: parentEventData(parentData.config.handleParentDragover),
+    handleParentPointerover: parentData.config.handleParentPointerover,
+    drop: parentEventData(parentData.config.handleParentDrop),
     hasNestedParent: (e) => {
       const parent2 = parents.get(e.target);
       if (!parent2) return;
       parent2.nestedParent = e.detail.parent;
     },
-    blur: parentEventData(parentData.config.handleBlurParent),
-    focus: parentEventData(parentData.config.handleFocusParent)
+    blur: parentEventData(parentData.config.handleParentBlur),
+    focus: parentEventData(parentData.config.handleParentFocus)
   });
   setAttrs(parent, {
     role: "listbox",
@@ -1287,17 +1369,18 @@ function setupNode(data) {
   const config = data.parent.data.config;
   data.node.el.draggable = true;
   data.node.data.abortControllers.mainNode = addEvents(data.node.el, {
-    keydown: nodeEventData(config.handleKeydownNode),
+    keydown: nodeEventData(config.handleNodeKeydown),
     dragstart: nodeEventData(config.handleDragstart),
-    dragover: nodeEventData(config.handleDragoverNode),
-    dragenter: nodeEventData(config.handleDragenterNode),
-    dragleave: nodeEventData(config.handleDragleaveNode),
-    dragend: nodeEventData(config.handleEnd),
-    touchstart: nodeEventData(config.handleTouchstart),
-    pointerdown: nodeEventData(config.handlePointerdownNode),
-    pointerup: nodeEventData(config.handlePointerupNode),
-    pointermove: nodeEventData(config.handlePointermove),
-    handlePointeroverNode: config.handlePointeroverNode,
+    dragover: nodeEventData(config.handleNodeDragover),
+    dragenter: nodeEventData(config.handleNodeDragenter),
+    dragleave: nodeEventData(config.handleNodeDragleave),
+    dragend: nodeEventData(config.handleDragend),
+    drop: nodeEventData(config.handleNodeDrop),
+    touchstart: nodeEventData(config.handleNodeTouchstart),
+    pointerdown: nodeEventData(config.handleNodePointerdown),
+    pointerup: nodeEventData(config.handleNodePointerup),
+    pointermove: nodeEventData(config.handleNodePointermove),
+    handleNodePointerover: config.handleNodePointerover,
     mousedown: () => {
       if (!config.nativeDrag) isNative = false;
       else isNative = true;
@@ -1529,7 +1612,8 @@ function handleDragstart(data, state2) {
       state2
     );
 }
-function handlePointerdownNode(data, state2) {
+function handleNodePointerdown(data, state2) {
+  console.log("pointerdown", synthNodePointerDown);
   if (!validateDragHandle(data)) return;
   data.e.stopPropagation();
   synthNodePointerDown = true;
@@ -1623,15 +1707,23 @@ function handlePointerdownNode(data, state2) {
     );
   }
 }
-function dragstartClasses(_node, nodes2, config) {
+function dragstartClasses(_node, nodes2, config, isSynth = false) {
   addNodeClass(
     nodes2.map((x) => x.el),
-    config.draggingClass
+    isSynth ? config.synthDraggingClass : config.draggingClass
   );
   setTimeout(() => {
     removeClass(
       nodes2.map((x) => x.el),
-      config.draggingClass
+      isSynth ? config.synthDraggingClass : config.draggingClass
+    );
+    addNodeClass(
+      nodes2.map((x) => x.el),
+      isSynth ? config.synthDragPlaceholderClass : config.dragPlaceholderClass
+    );
+    addNodeClass(
+      nodes2.map((x) => x.el),
+      isSynth ? config.synthDropZoneClass : config.dropZoneClass
     );
     removeClass(
       nodes2.map((x) => x.el),
@@ -1666,6 +1758,7 @@ function initDrag(data, draggedNodes2) {
         for (const node of draggedNodes2) {
           const clonedNode = node.el.cloneNode(true);
           clonedNode.style.pointerEvents = "none";
+          clonedNode.id = node.el.id + "-clone";
           copyNodeStyle(node.el, clonedNode, true);
           wrapper.append(clonedNode);
         }
@@ -1681,7 +1774,6 @@ function initDrag(data, draggedNodes2) {
         });
         dragImage = wrapper;
       }
-      console.log("append drag iamge", dragImage);
       document.body.appendChild(dragImage);
     }
     data.e.dataTransfer.setDragImage(dragImage, data.e.offsetX, data.e.offsetY);
@@ -1712,9 +1804,9 @@ function handleClickNode(_data) {
 }
 function handleClickParent(_data) {
 }
-function handleKeydownNode(_data) {
+function handleNodeKeydown(_data) {
 }
-function handleKeydownParent(data, state2) {
+function handleParentKeydown(data, state2) {
   const activeDescendant = state2.activeState?.node;
   if (!activeDescendant) return;
   const parentData = data.targetData.parent.data;
@@ -1786,32 +1878,83 @@ function preventSortOnScroll() {
     }, 100);
   };
 }
-function handlePointeroverNode3(e) {
+function handleNodePointerover2(e) {
   if (e.detail.targetData.parent.el === e.detail.state.currentParent.el)
     sort(e.detail, e.detail.state);
   else transfer(e.detail, e.detail.state);
 }
-function handleEnd(_data, state2) {
-  console.log("hello world", state2);
-  return;
+function handleNodeDrop(data, state2) {
+  data.e.stopPropagation();
+  dropped = true;
+  const config = data.targetData.parent.data.config;
+  config.handleEnd(state2);
 }
-function handleTouchstart(data, _state) {
+function handleDragend(data, state2) {
+  data.e.preventDefault();
+  if (dropped) {
+    dropped = false;
+    return;
+  }
+  const config = parents.get(state2.initialParent.el)?.config;
+  config?.handleEnd(state2);
+  if (config?.onDragend) {
+    config.onDragend({
+      parent: state2.currentParent,
+      values: parentValues(state2.currentParent.el, state2.currentParent.data),
+      draggedNode: state2.draggedNode,
+      draggedNodes: state2.draggedNodes,
+      position: state2.initialIndex
+    });
+  }
+}
+function handleEnd(state2) {
+  cancelSynthScroll();
+  for (const [_el, controller] of state2.scrollEls) controller.abort();
+  if ("longPressTimeout" in state2 && state2.longPressTimeout)
+    clearTimeout(state2.longPressTimeout);
+  const config = parents.get(state2.initialParent.el)?.config;
+  const isSynth = "clonedDraggedNode" in state2 && state2.clonedDraggedNode;
+  const dropZoneClass = isSynth ? config?.synthDropZoneClass : config?.dropZoneClass;
+  if (state2.originalZIndex !== void 0)
+    state2.draggedNode.el.style.zIndex = state2.originalZIndex;
+  removeClass(
+    state2.draggedNodes.map((x) => x.el),
+    dropZoneClass
+  );
+  removeClass(
+    state2.draggedNodes.map((x) => x.el),
+    state2.initialParent.data?.config?.longPressClass
+  );
+  removeClass(
+    state2.draggedNodes.map((x) => x.el),
+    isSynth ? state2.initialParent.data.config.synthDragPlaceholderClass : state2.initialParent.data?.config?.dragPlaceholderClass
+  );
+  if (isSynth) state2.clonedDraggedNode.remove();
+  deselect(state2.draggedNodes, state2.currentParent, state2);
+  setActive(state2.currentParent, void 0, state2);
+  resetState();
+  state2.selectedState = void 0;
+  synthNodePointerDown = false;
+  state2.emit("dragend", state2);
+}
+function handleNodeTouchstart(data, _state) {
   if (data.e.cancelable) data.e.preventDefault();
 }
-function handlePointerupNode(data, state2) {
+function handleNodePointerup(data, state2) {
   if (!state2.pointerSelection && state2.selectedState)
     deselect(state2.selectedState.nodes, data.targetData.parent, state2);
+  const config = data.targetData.parent.data.config;
   state2.pointerSelection = false;
   synthNodePointerDown = false;
   if (!isDragState(state2)) return;
-  handleEnd(data, state2);
+  config.handleEnd(state2);
 }
-function handlePointermove(data, state2) {
+function handleNodePointermove(data, state2) {
   if (isNative || !synthNodePointerDown || !validateDragHandle(data)) return;
   if (!isSynthDragState(state2)) {
     const config = data.targetData.parent.data.config;
     const nodes2 = config.draggedNodes(data);
-    config.dragstartClasses(data.targetData.node, nodes2, config);
+    config.dragstartClasses(data.targetData.node, nodes2, config, true);
     const synthDragState = initSynthDrag(data, state2, nodes2);
     synthDragState.clonedDraggedNode.style.display = synthDragState.draggedNodeDisplay || "";
     synthMove(data, synthDragState);
@@ -1838,12 +1981,12 @@ function handlePointermove(data, state2) {
 function initSynthDrag(data, _state, draggedNodes2) {
   const config = data.targetData.parent.data.config;
   let dragImage;
-  console.log("init synth drag");
   if (config.synthDragImage) {
     dragImage = config.synthDragImage(data, draggedNodes2);
   } else {
     if (!config.multiDrag || draggedNodes2.length === 1) {
       dragImage = data.targetData.node.el.cloneNode(true);
+      dragImage.id = data.targetData.node.el.id + "-clone";
       copyNodeStyle(data.targetData.node.el, dragImage);
       Object.assign(dragImage.style, {
         width: data.targetData.node.el.getBoundingClientRect().width,
@@ -1857,6 +2000,7 @@ function initSynthDrag(data, _state, draggedNodes2) {
         const clonedNode = node.el.cloneNode(true);
         copyNodeStyle(node.el, clonedNode);
         clonedNode.style.pointerEvents = "none";
+        clonedNode.id = node.el.id + "-clone";
         wrapper.append(clonedNode);
       }
       const { width } = draggedNodes2[0].el.getBoundingClientRect();
@@ -1910,12 +2054,6 @@ function pointermoveClasses(state2, config) {
     removeClass(
       state2.draggedNodes.map((x) => x.el),
       config?.longPressClass
-    );
-  if (config.synthDropZoneClass)
-    addNodeClass(
-      state2.draggedNodes.map((x) => x.el),
-      config.synthDropZoneClass,
-      true
     );
 }
 function getScrollData(e, state2) {
@@ -2043,7 +2181,17 @@ function synthMove(data, state2) {
   }
   moveNode(data, state2);
   const elFromPoint = getElFromPoint(eventCoordinates(data.e));
-  if (!elFromPoint) return;
+  if (!elFromPoint) {
+    document.dispatchEvent(
+      new CustomEvent("handleRootPointerover", {
+        detail: {
+          e: data.e,
+          state: state2
+        }
+      })
+    );
+    return;
+  }
   const pointerMoveEventData = {
     e: data.e,
     targetData: elFromPoint,
@@ -2051,13 +2199,13 @@ function synthMove(data, state2) {
   };
   if ("node" in elFromPoint) {
     elFromPoint.node.el.dispatchEvent(
-      new CustomEvent("handlePointeroverNode", {
+      new CustomEvent("handleNodePointerover", {
         detail: pointerMoveEventData
       })
     );
   } else {
     elFromPoint.parent.el.dispatchEvent(
-      new CustomEvent("handlePointeroverParent", {
+      new CustomEvent("handleParentPointerover", {
         detail: pointerMoveEventData
       })
     );
@@ -2080,20 +2228,18 @@ function handleScroll(e) {
   }
   if (!directionSet) state.synthScrollDirection = void 0;
 }
-function handleDragoverNode4(data, state2) {
+function handleNodeDragover(data, state2) {
   const { x, y } = eventCoordinates(data.e);
   state2.coordinates.y = y;
   state2.coordinates.x = x;
-  data.e.preventDefault();
-  data.e.stopPropagation();
   data.targetData.parent.el === state2.currentParent?.el ? sort(data, state2) : transfer(data, state2);
 }
-function handleDragoverParent3(data, state2) {
+function handleParentDragover(data, state2) {
   if (!state2) return;
   Object.assign(eventCoordinates(data.e));
   transfer(data, state2);
 }
-function handlePointeroverParent4(e) {
+function handleParentPointerover(e) {
   if (e.detail.targetData.parent.el !== e.detail.state.currentParent.el)
     transfer(e.detail, e.detail.state);
 }
@@ -2122,10 +2268,10 @@ function validateTransfer({
   }
   return true;
 }
-function handleDragenterNode(data, _state) {
+function handleNodeDragenter(data, _state) {
   data.e.preventDefault();
 }
-function handleDragleaveNode(data, _state) {
+function handleNodeDragleave(data, _state) {
   data.e.preventDefault();
 }
 function validateSort(data, state2, x, y) {
@@ -2486,25 +2632,27 @@ export {
   getElFromPoint,
   getRealCoords,
   getScrollables,
-  handleBlurParent,
   handleClickNode,
   handleClickParent,
-  handleDragoverNode4 as handleDragoverNode,
-  handleDragoverParent3 as handleDragoverParent,
+  handleDragend,
   handleDragstart,
-  handleDropParent,
   handleEnd,
-  handleFocusParent,
-  handleKeydownNode,
-  handleKeydownParent,
   handleLongPress,
-  handlePointerdownNode,
-  handlePointermove,
-  handlePointeroverNode3 as handlePointeroverNode,
-  handlePointeroverParent4 as handlePointeroverParent,
-  handlePointerupNode,
+  handleNodeDragover,
+  handleNodeDrop,
+  handleNodeKeydown,
+  handleNodePointerdown,
+  handleNodePointermove,
+  handleNodePointerover2 as handleNodePointerover,
+  handleNodePointerup,
+  handleNodeTouchstart,
+  handleParentBlur,
+  handleParentDragover,
+  handleParentDrop,
+  handleParentFocus,
+  handleParentKeydown,
+  handleParentPointerover,
   handleScroll,
-  handleTouchstart,
   initDrag,
   insertion,
   isBrowser,

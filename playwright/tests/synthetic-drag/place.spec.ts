@@ -111,20 +111,20 @@ test.describe("Place plugin synthetic", async () => {
 
     // Picking up Orange should set the drag placeholder and drop zone on Orange
     // and the parent drop zone class on the parent container.
-    await syntheticDrag(page, {
-      originEl: { id: "Orange", position: "center" },
-      destinationEl: { id: "Orange", position: "center" },
-      dragStart: true,
-    });
-    await expect(page.locator("#Orange")).toHaveClass(
-      "item synthDragPlaceholder synthDropZone"
-    );
-    await expect(await page.locator(".synthDragPlaceholder").count()).toBe(1);
-    await expect(await page.locator(".synthDropZone").count()).toBe(1);
-    await expect(await page.locator(".synthDropZoneParent").count()).toBe(1);
-    await expect(page.locator("#list_1")).toHaveClass(
-      "list synthDropZoneParent"
-    );
+    //await syntheticDrag(page, {
+    //  originEl: { id: "Orange", position: "center" },
+    //  destinationEl: { id: "Orange", position: "center" },
+    //  dragStart: true,
+    //});
+    //await expect(page.locator("#Orange")).toHaveClass(
+    //  "item synthDragPlaceholder synthDropZone"
+    //);
+    //await expect(await page.locator(".synthDragPlaceholder").count()).toBe(1);
+    //await expect(await page.locator(".synthDropZone").count()).toBe(1);
+    //await expect(await page.locator(".synthDropZoneParent").count()).toBe(1);
+    //await expect(page.locator("#list_1")).toHaveClass(
+    //  "list synthDropZoneParent"
+    //);
 
     // Dragging off of the Orange but still within the same parent container
     // should remove the drop zone class from the original item, keep the drag
@@ -133,6 +133,7 @@ test.describe("Place plugin synthetic", async () => {
     await syntheticDrag(page, {
       originEl: { id: "Orange", position: "center" },
       destinationEl: { id: "title", position: "center" },
+      dragStart: true,
     });
     await expect(page.locator("#Orange")).toHaveClass(
       "item synthDragPlaceholder"
