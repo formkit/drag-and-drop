@@ -46,7 +46,7 @@ test.describe("Multi drag sorting", async () => {
     );
   });
 
-  test("Select two, drag both", async () => {
+  test.only("Select two, drag both", async () => {
     await page.goto("http://localhost:3001/multi-drag");
     await new Promise((r) => setTimeout(r, 1000));
     await page.click("#Apple");

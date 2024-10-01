@@ -5,6 +5,7 @@ const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   draggingClass: "blue",
   dropZoneClass: "dropZoneClass",
   multiDrag: true,
+  selectedClass: "selected",
 });
 </script>
 
@@ -26,6 +27,11 @@ const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
 </template>
 
 <style scoped>
+.selected {
+  background-color: yellow !important;
+  color: black !important;
+}
+
 .dropZoneClass {
   background-color: green !important;
   color: white !important;

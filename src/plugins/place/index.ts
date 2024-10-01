@@ -236,6 +236,8 @@ function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
     ? newValues.splice(index, 0, ...draggedValues)
     : newValues.push(...draggedValues);
 
+  console.log("index", index);
+
   if (state.initialParent.el !== state.currentParent.el) {
     const initialParentValues = parentValues(
       state.initialParent.el,
@@ -245,11 +247,16 @@ function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
     const newInitialValues = initialParentValues.filter(
       (x) => !draggedValues.includes(x)
     );
-
     setParentValues(
       state.initialParent.el,
       state.initialParent.data,
       newInitialValues
+    );
+
+    setParentValues(
+      state.currentParent.el,
+      state.currentParent.data,
+      newValues
     );
   } else if (
     state.initialParent.el === state.currentParent.el &&

@@ -1244,8 +1244,6 @@ export function handleNodePointerdown<T>(
   data: NodePointerEventData<T>,
   state: BaseDragState<T>
 ) {
-  console.log("pointerdown", synthNodePointerDown);
-
   if (!validateDragHandle(data)) return;
 
   data.e.stopPropagation();
