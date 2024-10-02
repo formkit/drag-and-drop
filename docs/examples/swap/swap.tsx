@@ -1,6 +1,6 @@
 import React from "react";
 import { useDragAndDrop } from "@formkit/drag-and-drop/react";
-import { swap } from "@formkit/drag-and-drop";
+import { dropOrSwap } from "@formkit/drag-and-drop";
 
 export function myComponent() {
   const todoItems = [
@@ -15,7 +15,7 @@ export function myComponent() {
 
   const [todoList, todos] = useDragAndDrop<HTMLUListElement, string>(
     todoItems,
-    { group: "todoList", plugins: [swap()] }
+    { group: "todoList", plugins: [dropOrSwap()] }
   );
 
   return (

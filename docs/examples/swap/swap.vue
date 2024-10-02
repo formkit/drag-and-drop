@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
-import { swap } from "@formkit/drag-and-drop";
+import { dropOrSwap } from "@formkit/drag-and-drop";
 
 const [parent, tapes] = useDragAndDrop(
   [
@@ -12,7 +12,7 @@ const [parent, tapes] = useDragAndDrop(
     "Spandau Ballet",
   ],
   {
-    plugins: [swap()],
+    plugins: [dropOrSwap()],
   }
 );
 </script>

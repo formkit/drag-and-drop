@@ -1,5 +1,5 @@
 import { reactive, html } from "@arrow-js/core";
-import { dragAndDrop, swap } from "@formkit/drag-and-drop";
+import { dragAndDrop, dropOrSwap } from "@formkit/drag-and-drop";
 
 const state = reactive({
   todos: [
@@ -20,7 +20,7 @@ dragAndDrop<string>({
   },
   config: {
     group: "todoList",
-    plugins: [swap()],
+    plugins: [dropOrSwap()],
   },
 });
 
