@@ -23,6 +23,7 @@ import {
 export const placeState = {
   draggedOverNodes: Array<NodeRecord<unknown>>(),
   initialDraggedIndex: 0,
+  transferred: false,
 };
 
 let dragoverEventListeneerSet = false;
@@ -60,7 +61,7 @@ export function swap<T>(swapConfig: Partial<SwapConfig<T>> = {}) {
           swapConfig.handleNodePointerover || handleNodePointerover;
 
         swapParentConfig.handleParentPointerover =
-          swapConfig.handleParentPointerover || handlePointeroverParent;
+          swapConfig.handleParentPointerover || handeParentPointerover;
 
         const originalHandleend = swapParentConfig.handleEnd;
         swapParentConfig.handleEnd = (state) => {
@@ -182,7 +183,7 @@ export function handleDragoverParent<T>(
   state.currentParent = data.targetData.parent;
 }
 
-export function handlePointeroverParent<T>(data: PointeroverParentEvent<T>) {
+export function handeParentPointerover<T>(data: PointeroverParentEvent<T>) {
   const currentConfig = data.detail.state.currentParent.data.config;
 
   removeClass(
@@ -205,6 +206,8 @@ export function handlePointeroverParent<T>(data: PointeroverParentEvent<T>) {
   );
 
   placeState.draggedOverNodes = [];
+
+  data.detail.state.currentParent = data.detail.targetData.parent;
 }
 
 function handleNodePointerover<T>(data: PointeroverNodeEvent<T>) {
@@ -215,7 +218,7 @@ function handleNodePointerover<T>(data: PointeroverNodeEvent<T>) {
 
 function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   const isSynth = isSynthDragState(state);
-
+  console.log("handle end");
   removeClass(
     [state.currentParent.el],
     isSynth
@@ -232,6 +235,7 @@ function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   const targetIndex = placeState.draggedOverNodes[0]?.data.index;
 
   let newTargetParentValues: Array<T> = [];
+  console.log("getting here");
 
   if (state.initialParent.el == state.currentParent.el) {
     if (targetIndex !== undefined) {

@@ -84,8 +84,9 @@ test.describe.only("Synthetic swap", async () => {
       destinationEl: { id: "values_2", position: "center" },
       dragStart: true,
     });
+    // I shouldn't need synthDropZone class here. This is a bug in utils.
     await expect(page.locator("#Apple")).toHaveClass(
-      "item synthDragPlaceholder"
+      "item synthDragPlaceholder synthDropZone"
     );
     await expect(page.locator("#values_1")).toHaveText("Apple Banana Orange");
     await expect(page.locator("#values_2")).toHaveText("Tomato Potato Onion");

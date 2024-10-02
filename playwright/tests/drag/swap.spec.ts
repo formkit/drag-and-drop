@@ -7,7 +7,7 @@ test.beforeEach(async ({ browser }) => {
   page = await browser.newPage();
 });
 
-test.describe.only("Drag swap", async () => {
+test.describe("Drag swap", async () => {
   test("Test #1: Swapping within list.", async () => {
     await page.goto("http://localhost:3001/swap");
     await new Promise((r) => setTimeout(r, 1000));
@@ -72,7 +72,7 @@ test.describe.only("Drag swap", async () => {
     await expect(page.locator("#values_1")).toHaveText("Banana Apple Orange");
   });
 
-  test.only("Test #2: Swapping between lists.", async () => {
+  test("Test #2: Swapping between lists.", async () => {
     await page.goto("http://localhost:3001/swap");
     await new Promise((r) => setTimeout(r, 1000));
 
