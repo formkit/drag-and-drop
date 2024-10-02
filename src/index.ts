@@ -37,6 +37,7 @@ export { animations } from "./plugins/animations";
 export { insertion } from "./plugins/insertion";
 export { place } from "./plugins/place";
 export { swap } from "./plugins/swap";
+export { dropOrSwap } from "./plugins/drop-or-swap";
 
 /**
  * Check to see if code is running in a browser.
@@ -257,8 +258,9 @@ export function dragAndDrop<T>({
       handleNodeDragover,
       handleParentDragover,
       handleNodeDrop,
-      handleDragend,
+      handlePointercancel,
       handleEnd,
+      handleDragend,
       handleParentBlur,
       handleParentFocus,
       handleNodePointerup,
@@ -893,7 +895,7 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     dragend: nodeEventData(config.handleDragend),
     drop: nodeEventData(config.handleNodeDrop),
     touchstart: nodeEventData(config.handleNodeTouchstart),
-    pointercancel: nodeEventData(config.handleDragend),
+    pointercancel: nodeEventData(config.handlePointercancel),
     pointerdown: nodeEventData(config.handleNodePointerdown),
     pointerup: nodeEventData(config.handleNodePointerup),
     pointermove: nodeEventData(config.handleNodePointermove),
@@ -1224,6 +1226,8 @@ export function handleDragstart<T>(
   config.dragstartClasses(data.targetData.node, nodes, config);
 
   const dragState = initDrag(data, nodes);
+
+  console.log(dragState);
 
   if (config.onDragstart)
     config.onDragstart(
@@ -1636,8 +1640,8 @@ export function handleNodeDrop<T>(
 }
 
 export function handleDragend<T>(
-  data: NodeEventData<T>,
-  state: DragState<T> | SynthDragState<T>
+  data: NodeDragEventData<T>,
+  state: DragState<T>
 ) {
   data.e.preventDefault();
 
@@ -1647,8 +1651,7 @@ export function handleDragend<T>(
     return;
   }
 
-  const config = parents.get(state.initialParent.el)?.config;
-  config?.handleEnd(state);
+  const config = data.targetData.parent.data.config;
 
   if (config?.onDragend) {
     config.onDragend({
@@ -1659,6 +1662,37 @@ export function handleDragend<T>(
       position: state.initialIndex,
     });
   }
+
+  config.handleEnd(state);
+}
+
+export function handlePointercancel<T>(
+  data: NodeEventData<T>,
+  state: DragState<T> | SynthDragState<T> | BaseDragState<T>
+) {
+  if (!isSynthDragState(state)) return;
+
+  data.e.preventDefault();
+
+  if (dropped) {
+    dropped = false;
+
+    return;
+  }
+
+  const config = parents.get(state.initialParent.el)?.config;
+
+  if (config?.onDragend) {
+    config.onDragend({
+      parent: state.currentParent,
+      values: parentValues(state.currentParent.el, state.currentParent.data),
+      draggedNode: state.draggedNode,
+      draggedNodes: state.draggedNodes,
+      position: state.initialIndex,
+    });
+  }
+
+  config?.handleEnd(state);
 }
 
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {

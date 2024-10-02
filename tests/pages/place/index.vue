@@ -5,6 +5,7 @@ import { place } from "../../../src/index";
 const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   plugins: [place()],
   dropZoneClass: "dropZone",
+
   group: "transfer",
   dragPlaceholderClass: "dragPlaceholder",
   dropZoneParentClass: "dropZoneParent",
@@ -46,6 +47,7 @@ const [parent2, values2] = useDragAndDrop(["Tomato", "Potato", "Onion"], {
             {{ values1.map((x) => x).join(" ") }}
           </span>
         </div>
+        1
       </ul>
     </div>
     <div>

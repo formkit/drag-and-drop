@@ -88,6 +88,10 @@ export interface ParentConfig<T> {
   // until the drag ends.
   dragPlaceholderClass?: string;
   /**
+   * The configuration object for the drop and swap plugin.
+   */
+  dropSwapConfig?: DropSwapConfig<T>;
+  /**
    * The class to add to a node when the node is dragged over it.
    */
   dropZoneClass?: string;
@@ -117,10 +121,7 @@ export interface ParentConfig<T> {
   /**
    * Function that is called when dragend or touchend event occurs.
    */
-  handleDragend: (
-    data: NodeDragEventData<T> | NodePointerEventData<T>,
-    state: DragState<T>
-  ) => void;
+  handleDragend: (data: NodeDragEventData<T>, state: DragState<T>) => void;
   /**
    * Function that is called when dragstart event occurs.
    */
@@ -167,6 +168,10 @@ export interface ParentConfig<T> {
    * Function that is called when a dragover event is triggered on a node.
    */
   handleNodeDragover: (data: NodeDragEventData<T>, state: DragState<T>) => void;
+  handlePointercancel: (
+    data: NodeDragEventData<T> | NodePointerEventData<T>,
+    state: DragState<T> | SynthDragState<T> | BaseDragState<T>
+  ) => void;
   /*
    * Function that is called when a pointerdown is triggered on node.
    */
@@ -950,3 +955,21 @@ export type StateEvents =
   | "end"
   | "dragend"
   | "synthdragend";
+
+export interface ShouldSwapData<T> {
+  sourceParent: ParentRecord<T>;
+  targetParent: ParentRecord<T>;
+  draggedNodes: Array<NodeRecord<T>>;
+  targetNodes: Array<NodeRecord<T>>;
+  state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
+}
+// Drop or Swap Types
+export interface DropSwapConfig<T> {
+  shouldSwap: (data: ShouldSwapData<T>) => boolean;
+}
+
+export interface DropSwapState {
+  draggedOverNodes: Array<NodeRecord<unknown>>;
+  initialDraggedIndex: number | undefined;
+  transferred: boolean;
+}

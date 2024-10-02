@@ -1,9 +1,16 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../../src/vue/index";
-import { swap } from "../../../src/index";
+import { dropOrSwap } from "../../../src/index";
 
 const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
-  plugins: [swap()],
+  plugins: [
+    dropOrSwap({
+      shouldSwap: (data) => {
+        return true;
+      },
+      test: "hello",
+    }),
+  ],
   dropZoneClass: "dropZone",
   group: "transfer",
   dragPlaceholderClass: "dragPlaceholder",
@@ -17,7 +24,11 @@ const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
 });
 
 const [parent2, values2] = useDragAndDrop(["Tomato", "Potato", "Onion"], {
-  plugins: [swap()],
+  plugins: [
+    dropOrSwap({
+      mode: "swap",
+    }),
+  ],
   dropZoneClass: "dropZone",
   group: "transfer",
   dragPlaceholderClass: "dragPlaceholder",
@@ -25,6 +36,7 @@ const [parent2, values2] = useDragAndDrop(["Tomato", "Potato", "Onion"], {
   synthDropZoneParentClass: "synthDropZoneParent",
   synthDropZoneClass: "synthDropZone",
   synthDragPlaceholderClass: "synthDragPlaceholder",
+
   draggable: (el) => {
     return el.tagName === "LI";
   },
