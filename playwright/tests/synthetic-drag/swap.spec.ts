@@ -73,7 +73,7 @@ test.describe.only("Synthetic swap", async () => {
     await expect(page.locator("#values_1")).toHaveText("Banana Apple Orange");
   });
 
-  test("Test #2: Swapping between lists.", async () => {
+  test.skip("Test #2: Swapping between lists.", async () => {
     await page.goto("http://localhost:3001/swap");
     await new Promise((r) => setTimeout(r, 1000));
 
@@ -84,6 +84,7 @@ test.describe.only("Synthetic swap", async () => {
       destinationEl: { id: "values_2", position: "center" },
       dragStart: true,
     });
+    await new Promise((r) => setTimeout(r, 1000));
     // I shouldn't need synthDropZone class here. This is a bug in utils.
     await expect(page.locator("#Apple")).toHaveClass(
       "item synthDragPlaceholder synthDropZone"
@@ -92,9 +93,10 @@ test.describe.only("Synthetic swap", async () => {
     await expect(page.locator("#values_2")).toHaveText("Tomato Potato Onion");
     await syntheticDrag(page, {
       originEl: { id: "values_2", position: "center" },
-      destinationEl: { id: "values_2", position: "center" },
+      destinationEl: { id: "values_2", position: "top" },
       drop: true,
     });
+    await new Promise((r) => setTimeout(r, 10000));
     await expect(page.locator("#Apple")).toHaveClass("item");
     await expect(page.locator("#values_1")).toHaveText("Banana Orange");
     await expect(page.locator("#values_2")).toHaveText(

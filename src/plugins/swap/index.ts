@@ -83,6 +83,8 @@ function rootDragover(_e: DragEvent) {
     [state.currentParent.el],
     state.currentParent.data.config.dropZoneParentClass
   );
+
+  state.currentParent = state.initialParent;
 }
 
 function rootPointerover(_e: CustomEvent) {
@@ -92,6 +94,8 @@ function rootPointerover(_e: CustomEvent) {
     [state.currentParent.el],
     state.currentParent.data.config.synthDropZoneParentClass
   );
+
+  state.currentParent = state.initialParent;
 }
 
 function updateDraggedOverNodes<T>(
@@ -218,7 +222,6 @@ function handleNodePointerover<T>(data: PointeroverNodeEvent<T>) {
 
 function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   const isSynth = isSynthDragState(state);
-  console.log("handle end");
   removeClass(
     [state.currentParent.el],
     isSynth
@@ -235,7 +238,6 @@ function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   const targetIndex = placeState.draggedOverNodes[0]?.data.index;
 
   let newTargetParentValues: Array<T> = [];
-  console.log("getting here");
 
   if (state.initialParent.el == state.currentParent.el) {
     if (targetIndex !== undefined) {
