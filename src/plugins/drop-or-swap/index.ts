@@ -1,4 +1,5 @@
 import type {
+  DropSwapConfig,
   NodeDragEventData,
   DragState,
   SynthDragState,
@@ -7,7 +8,6 @@ import type {
   ParentDragEventData,
   PointeroverParentEvent,
 } from "../../types";
-import type { DropSwapConfig } from "./types";
 import {
   parents,
   parentValues,
@@ -224,112 +224,40 @@ function handleNodePointerover<T>(data: PointeroverNodeEvent<T>) {
   updateDraggedOverNodes(data, data.detail.state);
 }
 
-function placeHandleEnd<T>(state: DragState<T> | SynthDragState<T>) {
-  const isSynth = isSynthDragState(state);
-
-  removeClass(
-    [state.currentParent.el],
-    isSynth
-      ? state.currentParent.data.config.synthDropZoneParentClass
-      : state.currentParent.data.config.dropZoneParentClass
-  );
-
-  const values = parentValues(state.currentParent.el, state.currentParent.data);
-
-  const draggedValues = state.draggedNodes.map((node) => node.data.value);
-
-  const newValues = values.filter((x) => !draggedValues.includes(x));
-
-  const index = dropSwapState.draggedOverNodes[0]?.data.index;
-
-  // If we do not have dragged over nodes, then we know that we are appending
-  // items to the end of the list/
-  index !== undefined
-    ? newValues.splice(index, 0, ...draggedValues)
-    : newValues.push(...draggedValues);
-
-  if (state.initialParent.el !== state.currentParent.el) {
-    const initialParentValues = parentValues(
-      state.initialParent.el,
-      state.initialParent.data
-    );
-
-    const newInitialValues = initialParentValues.filter(
-      (x) => !draggedValues.includes(x)
-    );
-    setParentValues(
-      state.initialParent.el,
-      state.initialParent.data,
-      newInitialValues
-    );
-
-    setParentValues(
-      state.currentParent.el,
-      state.currentParent.data,
-      newValues
-    );
-  } else if (
-    state.initialParent.el === state.currentParent.el &&
-    dropSwapState.draggedOverNodes.length
-  ) {
-    setParentValues(
-      state.currentParent.el,
-      state.currentParent.data,
-      newValues
-    );
-  }
-
-  removeClass(
-    dropSwapState.draggedOverNodes.map((node) => node.el),
-    isSynth
-      ? state.currentParent.data.config.synthDropZoneClass
-      : state.currentParent.data.config.dropZoneClass
-  );
-
-  dropSwapState.draggedOverNodes = [];
-}
-
 function swapElements<T>(
-  arr1: T[], // First array
-  arr2: T[] | null, // Second array (null if it's a single array operation)
-  index1: number | number[], // Index (or indices) in arr1 to swap
-  index2: number // Index in arr2 (or in arr1 if arr2 is null) to swap
+  arr1: T[],
+  arr2: T[] | null,
+  index1: number | number[],
+  index2: number
 ): T[] | [T[], T[]] {
-  // Ensure index1 is an array (if a single index is passed)
   const indices1 = Array.isArray(index1) ? index1 : [index1];
 
   if (arr2 === null) {
-    // Case for a single array, swapping within arr1
-    // Extract elements from arr1
     const elementsFromArr1 = indices1.map((i) => arr1[i]);
+
     const elementFromArr2 = arr1[index2];
 
-    // Swap the elements within arr1
     arr1.splice(index2, 1, ...elementsFromArr1);
+
     indices1.forEach((i, idx) => {
       arr1[i] = idx === 0 ? elementFromArr2 : (undefined as unknown as T);
     });
 
-    // Filter out undefined values
     return arr1.filter((el) => el !== undefined);
   } else {
-    // Case for swapping between two arrays
-    // Extract elements from both arrays
     const elementsFromArr1 = indices1.map((i) => arr1[i]);
+
     const elementFromArr2 = arr2[index2];
 
-    // Swap the elements
     arr2.splice(index2, 1, ...elementsFromArr1);
+
     indices1.forEach((i, idx) => {
       arr1[i] = idx === 0 ? elementFromArr2 : (undefined as unknown as T);
     });
 
-    // Filter out undefined values from arr1 if multiple elements were swapped
     return [arr1.filter((el) => el !== undefined), arr2];
   }
 }
-
-// Example usage:
 
 function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   const isSynth = isSynthDragState(state);

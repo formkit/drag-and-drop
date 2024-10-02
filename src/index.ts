@@ -35,8 +35,6 @@ import type {
 export * from "./types";
 export { animations } from "./plugins/animations";
 export { insertion } from "./plugins/insertion";
-export { place } from "./plugins/place";
-export { swap } from "./plugins/swap";
 export { dropOrSwap } from "./plugins/drop-or-swap";
 
 /**

@@ -51,17 +51,17 @@ export function insertion<T>(
         }
       },
       setup() {
-        insertionParentConfig.handleDragoverNode =
-          insertionConfig.handleDragoverNode || handleDragoverNode;
+        insertionParentConfig.handleNodeDragover =
+          insertionConfig.handleNodeDragover || handleNodeDragover;
 
-        insertionParentConfig.handlePointeroverParent =
-          insertionConfig.handlePointeroverParent || handlePointeroverParent;
+        insertionParentConfig.handleParentPointerover =
+          insertionConfig.handleParentPointerover || handleParentPointerover;
 
-        insertionParentConfig.handlePointeroverNode =
-          insertionConfig.handlePointeroverNode || handlePointeroverParent;
+        insertionParentConfig.handleNodePointerover =
+          insertionConfig.handleNodePointerover || handleParentPointerover;
 
-        insertionParentConfig.handleDragoverParent =
-          insertionConfig.handleDragoverParent || handleDragoverParent;
+        insertionParentConfig.handleParentDragover =
+          insertionConfig.handleParentDragover || handleParentDragover;
 
         insertionParentConfig.handleEnd =
           insertionConfig.handleEnd || handleEnd;
@@ -324,7 +324,7 @@ function defineRanges(parent: HTMLElement) {
   });
 }
 
-export function handleDragoverNode<T>(data: NodeDragEventData<T>) {
+export function handleNodeDragover<T>(data: NodeDragEventData<T>) {
   data.e.preventDefault();
 }
 
@@ -500,7 +500,7 @@ function findClosest<T>(enabledNodes: NodeRecord<T>[]) {
   }
 }
 
-export function handlePointeroverParent<T>(
+export function handleParentPointerover<T>(
   data: PointeroverParentEvent<T>,
   state: DragState<T>
 ) {
