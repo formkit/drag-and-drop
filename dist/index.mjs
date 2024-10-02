@@ -118,21 +118,29 @@ function animate(node, animation, duration) {
   }, duration);
 }
 
-// src/plugins/insertion/index.ts
-var insertionState = {
-  draggedOverNodes: Array(),
+// src/plugins/insert/index.ts
+var insertState = {
+  draggedOverNodes: [],
   draggedOverParent: null,
   targetIndex: 0,
-  ascending: false
+  ascending: false,
+  coordinates: { x: 0, y: 0 },
+  insertPoint: null
 };
-function insertion(insertionConfig = {}) {
+var listenersSet = false;
+function insert(insertConfig) {
   return (parent) => {
     const parentData = parents.get(parent);
     if (!parentData) return;
-    const insertionParentConfig = {
+    const insertParentConfig = {
       ...parentData.config,
-      insertionConfig
+      insertConfig
     };
+    if (!listenersSet) {
+      document.addEventListener("dragover", checkPosition);
+      document.addEventListener("pointermove", checkPosition);
+      listenersSet = true;
+    }
     return {
       teardown() {
         if (parentData.abortControllers.root) {
@@ -140,30 +148,30 @@ function insertion(insertionConfig = {}) {
         }
       },
       setup() {
-        insertionParentConfig.handleDragoverNode = insertionConfig.handleDragoverNode || handleDragoverNode;
-        insertionParentConfig.handlePointeroverParent = insertionConfig.handlePointeroverParent || handlePointeroverParent;
-        insertionParentConfig.handlePointeroverNode = insertionConfig.handlePointeroverNode || handlePointeroverParent;
-        insertionParentConfig.handleDragoverParent = insertionConfig.handleDragoverParent || handleDragoverParent;
-        insertionParentConfig.handleEnd = insertionConfig.handleEnd || handleEnd2;
-        document.body.addEventListener("dragover", checkPosition);
-        document.body.addEventListener("pointermove", checkPosition);
-        const observer = new ResizeObserver(() => {
-          defineRanges(parent);
-        });
-        observer.observe(parent);
-        parentData.config = insertionParentConfig;
+        insertParentConfig.handleNodeDragover = insertConfig.handleNodeDragover || handleNodeDragover;
+        insertParentConfig.handleParentPointerover = insertConfig.handleParentPointerover || handleParentPointerover;
+        insertParentConfig.handleNodePointerover = insertConfig.handleNodePointerover || handleParentPointerover;
+        insertParentConfig.handleParentDragover = insertConfig.handleParentDragover || handleParentDragover;
+        const originalHandleend = insertParentConfig.handleEnd;
+        insertParentConfig.handleEnd = (state2) => {
+          handleEnd(state2);
+          originalHandleend(state2);
+        };
+        parentData.config = insertParentConfig;
         state.on("dragStarted", () => {
-          defineRanges(parent);
+          const insertPoint = parentData.config.insertConfig?.insertPoint({
+            el: parent,
+            data: parentData
+          });
+          if (!insertPoint) return;
+          if (!document.body.contains(insertPoint))
+            document.body.appendChild(insertPoint);
+          Object.assign(insertPoint, {
+            position: "absolute",
+            display: "none"
+          });
+          insertState.insertPoint = insertPoint;
         });
-        const insertionPointConfig = insertionConfig.insertionPoint || {};
-        const div = document.createElement(insertionPointConfig.tag || "div");
-        div.id = insertionPointConfig.id || "insertion-point";
-        div.classList.add(
-          ...insertionPointConfig.classes || ["insertion-point"]
-        );
-        div.style.position = "absolute";
-        div.style.display = "none";
-        document.body.appendChild(div);
         window.addEventListener("scroll", defineRanges.bind(null, parent));
         window.addEventListener("resize", defineRanges.bind(null, parent));
       },
@@ -178,17 +186,17 @@ function checkPosition(e) {
   const el = document.elementFromPoint(e.clientX, e.clientY);
   if (!(el instanceof HTMLElement)) return;
   if (!parents.has(el)) {
-    const insertionPoint = document.getElementById("insertion-point");
-    if (insertionPoint && insertionPoint === el) return;
-    if (insertionPoint) insertionPoint.style.display = "none";
-    if (insertionState.draggedOverParent) {
+    const insertPoint = insertState.insertPoint;
+    if (insertPoint && insertPoint === el) return;
+    if (insertPoint) insertPoint.style.display = "none";
+    if (insertState.draggedOverParent) {
       removeClass(
-        [insertionState.draggedOverParent.el],
-        insertionState.draggedOverParent.data.config.dropZoneClass
+        [insertState.draggedOverParent.el],
+        insertState.draggedOverParent.data.config.dropZoneClass
       );
     }
-    insertionState.draggedOverNodes = [];
-    insertionState.draggedOverParent = null;
+    insertState.draggedOverNodes = [];
+    insertState.draggedOverParent = null;
     state.currentParent = state.initialParent;
   }
 }
@@ -270,11 +278,29 @@ function descendingHorizontal(nodeCoords, prevNodeCoords) {
     vertical: false
   };
 }
+function getRealCoords(el) {
+  const { top, bottom, left, right, height, width } = el.getBoundingClientRect();
+  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+  const adjustedTop = top + scrollTop;
+  const adjustedBottom = bottom + scrollTop;
+  const adjustedLeft = left + scrollLeft;
+  const adjustedRight = right + scrollLeft;
+  return {
+    top: adjustedTop,
+    bottom: adjustedBottom,
+    left: adjustedLeft,
+    right: adjustedRight,
+    height,
+    width
+  };
+}
 function defineRanges(parent) {
   const parentData = parents.get(parent);
   if (!parentData) return;
   const enabledNodes = parentData.enabledNodes;
   enabledNodes.forEach((node, index) => {
+    node.data.range = {};
     let aboveOrBelowPrevious = false;
     let aboveOrBelowAfter = false;
     let prevNodeCoords = void 0;
@@ -291,7 +317,6 @@ function defineRanges(parent) {
       aboveOrBelowAfter = nodeCoords.top > nextNodeCoords.bottom || nodeCoords.bottom < nextNodeCoords.top;
     }
     const fullishWidth = parent.getBoundingClientRect().width * 0.8 < nodeCoords.width;
-    if (!node.data.range) return;
     if (fullishWidth) {
       node.data.range.ascending = ascendingVertical(nodeCoords, nextNodeCoords);
       node.data.range.descending = descendingVertical(
@@ -328,11 +353,11 @@ function defineRanges(parent) {
     }
   });
 }
-function handleDragoverNode(data) {
+function handleNodeDragover(data) {
   data.e.preventDefault();
 }
-function handleDragoverParent(data, state2) {
-  if (!insertionState) return;
+function handleParentDragover(data, state2) {
+  if (!state2 || !insertState) return;
   data.e.stopPropagation();
   data.e.preventDefault();
   const { x, y } = eventCoordinates(data.e);
@@ -340,13 +365,13 @@ function handleDragoverParent(data, state2) {
   const clientY = y;
   const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
   const scrollTop = window.scrollY || document.documentElement.scrollTop;
-  state2.coordinates.x = clientX + scrollLeft;
-  state2.coordinates.y = clientY + scrollTop;
+  insertState.coordinates.x = clientX + scrollLeft;
+  insertState.coordinates.y = clientY + scrollTop;
   const nestedParent = data.targetData.parent.data.nestedParent;
   let realTargetParent = data.targetData.parent;
   if (nestedParent) {
     const rect = nestedParent.el.getBoundingClientRect();
-    if (state2.coordinates.y > rect.top && state2.coordinates.y < rect.bottom)
+    if (insertState.coordinates.y > rect.top && insertState.coordinates.y < rect.bottom)
       realTargetParent = nestedParent;
   }
   realTargetParent.el === state2.currentParent?.el ? moveBetween(realTargetParent) : moveOutside(realTargetParent, state2);
@@ -354,24 +379,27 @@ function handleDragoverParent(data, state2) {
 }
 function moveBetween(data) {
   if (data.data.config.sortable === false) return;
-  if (data.el === insertionState.draggedOverParent?.el && insertionState.draggedOverParent.data.getValues(data.el).length === 0) {
+  if (data.el === insertState.draggedOverParent?.el && insertState.draggedOverParent.data.getValues(data.el).length === 0) {
     return;
-  } else if (insertionState.draggedOverParent?.el) {
+  } else if (insertState.draggedOverParent?.el) {
     removeClass(
-      [insertionState.draggedOverParent.el],
-      insertionState.draggedOverParent.data.config.dropZoneClass
+      [insertState.draggedOverParent.el],
+      insertState.draggedOverParent.data.config.dropZoneClass
     );
-    insertionState.draggedOverParent = null;
+    insertState.draggedOverParent = null;
   }
   const foundRange = findClosest(data.data.enabledNodes);
   if (!foundRange) return;
-  const position = foundRange[0].data.range[foundRange[1]];
-  if (!position) return;
-  positionInsertionPoint(
-    position,
-    foundRange[1] === "ascending",
-    foundRange[0]
-  );
+  const key = foundRange[1];
+  if (foundRange) {
+    const position = foundRange[0].data.range ? foundRange[0].data.range[key] : void 0;
+    if (position)
+      positioninsertPoint(
+        position,
+        foundRange[1] === "ascending",
+        foundRange[0]
+      );
+  }
 }
 function moveOutside(data, state2) {
   if (data.el === state2.currentParent.el) return false;
@@ -393,46 +421,45 @@ function moveOutside(data, state2) {
   const values = data.data.getValues(data.el);
   if (!values.length) {
     addParentClass([data.el], targetConfig.dropZoneClass);
-    insertionState.draggedOverParent = data;
-    const insertionPoint = document.getElementById("insertion-point");
-    if (insertionPoint) insertionPoint.style.display = "none";
+    insertState.draggedOverParent = data;
+    const insertPoint = insertState.insertPoint;
+    if (insertPoint) insertPoint.style.display = "none";
   } else {
     removeClass([state2.currentParent.el], targetConfig.dropZoneClass);
     const enabledNodes = data.data.enabledNodes;
     const foundRange = findClosest(enabledNodes);
     if (!foundRange) return;
-    const position = foundRange[0].data.range[foundRange[1]];
-    if (!position) return;
-    positionInsertionPoint(
-      position,
-      foundRange[1] === "ascending",
-      foundRange[0]
-    );
+    const key = foundRange[1];
+    if (foundRange) {
+      const position = foundRange[0].data.range ? foundRange[0].data.range[key] : void 0;
+      if (position)
+        positioninsertPoint(
+          position,
+          foundRange[1] === "ascending",
+          foundRange[0]
+        );
+    }
   }
 }
 function findClosest(enabledNodes) {
   let foundRange = null;
   for (let x = 0; x < enabledNodes.length; x++) {
-    if (!isDragState(state) || !enabledNodes[x].data.range) continue;
-    const ascending = enabledNodes[x].data.range.ascending;
-    const descending = enabledNodes[x].data.range.descending;
-    if (!ascending && !descending) continue;
-    if (ascending) {
-      if (state.coordinates.y > ascending.y[0] && state.coordinates.y < ascending.y[1] && state.coordinates.x > ascending.x[0] && state.coordinates.x < ascending.x[1]) {
+    if (!state || !enabledNodes[x].data.range) continue;
+    if (enabledNodes[x].data.range.ascending) {
+      if (insertState.coordinates.y > enabledNodes[x].data.range.ascending.y[0] && insertState.coordinates.y < enabledNodes[x].data.range.ascending.y[1] && insertState.coordinates.x > enabledNodes[x].data.range.ascending.x[0] && insertState.coordinates.x < enabledNodes[x].data.range.ascending.x[1]) {
         foundRange = [enabledNodes[x], "ascending"];
         return foundRange;
       }
     }
-    if (descending) {
-      if (state.coordinates.y > descending.y[0] && state.coordinates.y < descending.y[1] && state.coordinates.x > descending.x[0] && state.coordinates.x < descending.x[1]) {
+    if (enabledNodes[x].data.range.descending) {
+      if (insertState.coordinates.y > enabledNodes[x].data.range.descending.y[0] && insertState.coordinates.y < enabledNodes[x].data.range.descending.y[1] && insertState.coordinates.x > enabledNodes[x].data.range.descending.x[0] && insertState.coordinates.x < enabledNodes[x].data.range.descending.x[1]) {
         foundRange = [enabledNodes[x], "descending"];
         return foundRange;
       }
     }
   }
 }
-function handlePointeroverParent(data, state2) {
-  if (!insertionState) return;
+function handleParentPointerover(data, state2) {
   data.detail.e.stopPropagation();
   const { x, y } = eventCoordinates(data.detail.e);
   state2.coordinates.y = y;
@@ -447,85 +474,71 @@ function handlePointeroverParent(data, state2) {
   const enabledNodes = realTargetParent.data.enabledNodes;
   const foundRange = findClosest(enabledNodes);
   if (!foundRange) return;
-  const position = foundRange[0].data.range[foundRange[1]];
-  positionInsertionPoint(
-    position,
-    foundRange[1] === "ascending",
-    foundRange[0]
-  );
-  data.detail.targetData.parent.el === state2.currentParent?.el ? moveBetween(realTargetParent) : moveOutside(realTargetParent, state2);
+  const key = foundRange[1];
+  if (foundRange) {
+    const position = foundRange[0].data.range ? foundRange[0].data.range[key] : void 0;
+    if (position)
+      positioninsertPoint(
+        position,
+        foundRange[1] === "ascending",
+        foundRange[0]
+      );
+  }
+  data.detail.targetData.parent.el === state2.currentParent.el ? moveBetween(realTargetParent) : moveOutside(realTargetParent, state2);
 }
-function positionInsertionPoint(position, ascending, node) {
+function positioninsertPoint(position, ascending, node) {
   if (!state) return;
-  const div = document.getElementById("insertion-point");
-  if (!div) return;
-  insertionState.draggedOverNodes = [node];
+  insertState.draggedOverNodes = [node];
+  if (!insertState.insertPoint) return;
   if (position.vertical) {
-    const topPosition = position.y[ascending ? 1 : 0] - div.getBoundingClientRect().height / 2;
-    div.style.top = `${topPosition}px`;
+    const topPosition = position.y[ascending ? 1 : 0] - insertState.insertPoint.getBoundingClientRect().height / 2;
+    insertState.insertPoint.style.top = `${topPosition}px`;
     const leftCoordinate = position.x[0];
     const rightCoordinate = position.x[1];
-    div.style.left = `${leftCoordinate}px`;
-    div.style.right = `${rightCoordinate}px`;
-    div.style.height = "4px";
-    div.style.width = rightCoordinate - leftCoordinate + "px";
+    insertState.insertPoint.style.left = `${leftCoordinate}px`;
+    insertState.insertPoint.style.right = `${rightCoordinate}px`;
+    insertState.insertPoint.style.height = "4px";
+    insertState.insertPoint.style.width = rightCoordinate - leftCoordinate + "px";
   } else {
-    const leftPosition = position.x[ascending ? 1 : 0] - div.getBoundingClientRect().width / 2;
-    div.style.left = `${leftPosition}px`;
+    const leftPosition = position.x[ascending ? 1 : 0] - insertState.insertPoint.getBoundingClientRect().width / 2;
+    insertState.insertPoint.style.left = `${leftPosition}px`;
     const topCoordinate = position.y[0];
     const bottomCoordinate = position.y[1];
-    div.style.top = `${topCoordinate}px`;
-    div.style.bottom = `${bottomCoordinate}px`;
-    div.style.width = "4px";
-    div.style.height = bottomCoordinate - topCoordinate + "px";
+    insertState.insertPoint.style.top = `${topCoordinate}px`;
+    insertState.insertPoint.style.bottom = `${bottomCoordinate}px`;
+    insertState.insertPoint.style.width = "4px";
+    insertState.insertPoint.style.height = bottomCoordinate - topCoordinate + "px";
   }
-  insertionState.targetIndex = node.data.index;
-  insertionState.ascending = ascending;
-  div.style.display = "block";
+  insertState.targetIndex = node.data.index;
+  insertState.ascending = ascending;
+  insertState.insertPoint.style.display = "block";
 }
-function handleEnd2(data, state2) {
-  data.e.stopPropagation();
-  const insertionPoint = document.getElementById("insertion-point");
-  if (!insertionState.draggedOverParent) {
+function handleEnd(state2) {
+  const insertPoint = insertState.insertPoint;
+  if (!insertState.draggedOverParent) {
     const draggedParentValues = parentValues(
       state2.initialParent.el,
       state2.initialParent.data
     );
     const transferred = state2.initialParent.el !== state2.currentParent.el;
     const draggedValues = state2.draggedNodes.map((node) => node.data.value);
-    const enabledNodes = [...data.targetData.parent.data.enabledNodes];
-    const originalIndex = state2.draggedNodes[0].data.index;
-    if (!transferred && insertionState.draggedOverNodes[0] && insertionState.draggedOverNodes[0].el !== state2.draggedNodes[0].el) {
+    if (!transferred && insertState.draggedOverNodes[0] && insertState.draggedOverNodes[0].el !== state2.draggedNodes[0].el) {
       const newParentValues = [
         ...draggedParentValues.filter((x) => !draggedValues.includes(x))
       ];
-      let index = insertionState.draggedOverNodes[0].data.index;
-      if (insertionState.targetIndex > state2.draggedNodes[0].data.index && !insertionState.ascending) {
+      let index = insertState.draggedOverNodes[0].data.index;
+      if (insertState.targetIndex > state2.draggedNodes[0].data.index && !insertState.ascending) {
         index--;
-      } else if (insertionState.targetIndex < state2.draggedNodes[0].data.index && insertionState.ascending) {
+      } else if (insertState.targetIndex < state2.draggedNodes[0].data.index && insertState.ascending) {
         index++;
       }
       newParentValues.splice(index, 0, ...draggedValues);
-      setParentValues(data.targetData.parent.el, data.targetData.parent.data, [
+      setParentValues(state2.initialParent.el, state2.initialParent.data, [
         ...newParentValues
       ]);
-      if (data.targetData.parent.data.config.onSort) {
-        const sortEventData = {
-          parent: {
-            el: data.targetData.parent.el,
-            data: data.targetData.parent.data
-          },
-          previousValues: [...draggedParentValues],
-          previousNodes: [...enabledNodes],
-          nodes: [...data.targetData.parent.data.enabledNodes],
-          values: [...newParentValues],
-          draggedNode: state2.draggedNode,
-          previousPosition: originalIndex,
-          position: index
-        };
-        data.targetData.parent.data.config.onSort(sortEventData);
+      if (state2.initialParent.data.config.onSort) {
       }
-    } else if (transferred && insertionState.draggedOverNodes.length) {
+    } else if (transferred && insertState.draggedOverNodes.length) {
       const targetParentValues = parentValues(
         state2.currentParent.el,
         state2.currentParent.data
@@ -534,8 +547,8 @@ function handleEnd2(data, state2) {
         state2.initialParent.el,
         state2.initialParent.data
       );
-      let index = insertionState.draggedOverNodes[0].data.index || 0;
-      if (insertionState.ascending) index++;
+      let index = insertState.draggedOverNodes[0].data.index || 0;
+      if (insertState.ascending) index++;
       const insertValues = state2.dynamicValues.length ? state2.dynamicValues : draggedValues;
       targetParentValues.splice(index, 0, ...insertValues);
       setParentValues(state2.currentParent.el, state2.currentParent.data, [
@@ -545,96 +558,107 @@ function handleEnd2(data, state2) {
       setParentValues(state2.initialParent.el, state2.initialParent.data, [
         ...draggedParentValues2
       ]);
-      const transferEventData = {
-        sourceParent: state2.currentParent,
-        targetParent: data.targetData.parent,
-        initialParent: state2.initialParent,
+      const data = {
+        sourceParent: state2.initialParent,
+        targetParent: state2.currentParent,
         draggedNodes: state2.draggedNodes,
-        targetIndex: index,
+        targetNodes: insertState.draggedOverNodes,
         state: state2
       };
-      if (data.targetData.parent.data.config.onTransfer)
-        data.targetData.parent.data.config.onTransfer(transferEventData);
-      if (state2.currentParent.data.config.onTransfer)
-        state2.currentParent.data.config.onTransfer(transferEventData);
+      if (state2.initialParent.data.config.insertConfig?.insertEvent)
+        state2.initialParent.data.config.insertConfig.insertEvent(data);
+      if (state2.currentParent.data.config.insertConfig?.insertEvent)
+        state2.currentParent.data.config.insertConfig.insertEvent(data);
     }
-  } else if (insertionState.draggedOverParent) {
-    const draggedOverParentValues = parentValues(
-      insertionState.draggedOverParent.el,
-      insertionState.draggedOverParent.data
-    );
+  } else if (insertState.draggedOverParent) {
     const draggedValues = state2.draggedNodes.map((node) => node.data.value);
+    const draggedParentValues = parentValues(
+      state2.initialParent.el,
+      state2.initialParent.data
+    );
+    const newParentValues = [
+      ...draggedParentValues.filter((x) => !draggedValues.includes(x))
+    ];
+    const draggedOverParentValues = parentValues(
+      insertState.draggedOverParent.el,
+      insertState.draggedOverParent.data
+    );
     const insertValues = state2.dynamicValues.length ? state2.dynamicValues : draggedValues;
     draggedOverParentValues.push(...insertValues);
     setParentValues(
-      insertionState.draggedOverParent.el,
-      insertionState.draggedOverParent.data,
+      insertState.draggedOverParent.el,
+      insertState.draggedOverParent.data,
       [...draggedOverParentValues]
     );
-    const transferEventData = {
-      sourceParent: state2.currentParent,
-      targetParent: insertionState.draggedOverParent,
-      initialParent: state2.initialParent,
+    setParentValues(state2.initialParent.el, state2.initialParent.data, [
+      ...newParentValues
+    ]);
+    const data = {
+      sourceParent: state2.initialParent,
+      targetParent: state2.currentParent,
       draggedNodes: state2.draggedNodes,
-      targetIndex: draggedOverParentValues.length - 1,
+      targetNodes: insertState.draggedOverNodes,
       state: state2
     };
-    if (data.targetData.parent.data.config.onTransfer)
-      data.targetData.parent.data.config.onTransfer(transferEventData);
-    if (state2.currentParent.data.config.onTransfer)
-      state2.currentParent.data.config.onTransfer(transferEventData);
+    if (state2.initialParent.data.config.insertConfig?.insertEvent)
+      state2.initialParent.data.config.insertConfig.insertEvent(data);
+    if (state2.currentParent.data.config.insertConfig?.insertEvent)
+      state2.currentParent.data.config.insertConfig.insertEvent(data);
     removeClass(
-      [insertionState.draggedOverParent.el],
-      insertionState.draggedOverParent.data.config.dropZoneClass
+      [insertState.draggedOverParent.el],
+      insertState.draggedOverParent.data.config.dropZoneClass
     );
   }
-  if (insertionPoint) insertionPoint.style.display = "none";
-  const dropZoneClass = "clonedDraggedNode" in state2 ? data.targetData.parent.data.config.synthDropZoneClass : data.targetData.parent.data.config.dropZoneClass;
+  if (insertPoint) insertPoint.style.display = "none";
+  const dropZoneClass = isSynthDragState(state2) ? state2.initialParent.data.config.synthDropZoneClass : state2.initialParent.data.config.dropZoneClass;
   removeClass(
-    insertionState.draggedOverNodes.map((node) => node.el),
+    insertState.draggedOverNodes.map((node) => node.el),
     dropZoneClass
   );
-  const dragPlaceholderClass = data.targetData.parent.data.config.dragPlaceholderClass;
+  const dragPlaceholderClass = state2.initialParent.data.config.dragPlaceholderClass;
   removeClass(
     state2.draggedNodes.map((node) => node.el),
     dragPlaceholderClass
   );
-  insertionState.draggedOverNodes = [];
-  handleEnd(data, state2);
+  insertState.draggedOverNodes = [];
+  insertState.draggedOverParent = null;
 }
 
-// src/plugins/place/index.ts
-var placeState = {
-  draggedOverNodes: Array()
+// src/plugins/drop-or-swap/index.ts
+var dropSwapState = {
+  draggedOverNodes: Array(),
+  initialDraggedIndex: void 0,
+  transferred: false
 };
-var dragoverEventListeneerSet = false;
-function place(placeConfig = {}) {
+var listenersSet2 = false;
+function dropOrSwap(dropSwapConfig = {}) {
   return (parent) => {
     const parentData = parents.get(parent);
     if (!parentData) return;
-    const placeParentConfig = {
+    const dropSwapParentConfig = {
       ...parentData.config,
-      placeConfig
+      dropSwapConfig
     };
-    if (!dragoverEventListeneerSet) {
+    if (!listenersSet2) {
       document.addEventListener("dragover", rootDragover);
       document.addEventListener(
         "handleRootPointerover",
         (e) => rootPointerover(e)
       );
+      listenersSet2 = true;
     }
     return {
       setup() {
-        placeParentConfig.handleNodeDragover = placeConfig.handleNodeDragover || handleDragoverNode2;
-        placeParentConfig.handleParentDragover = placeConfig.handleParentDragover || handleDragoverParent2;
-        placeParentConfig.handleNodePointerover = placeConfig.handleNodePointerover || handleNodePointerover;
-        placeParentConfig.handleParentPointerover = placeConfig.handleParentPointerover || handlePointeroverParent2;
-        const originalHandleend = placeParentConfig.handleEnd;
-        placeParentConfig.handleEnd = (state2) => {
-          handleEnd3(state2);
+        dropSwapParentConfig.handleNodeDragover = dropSwapConfig.handleNodeDragover || handleNodeDragover2;
+        dropSwapParentConfig.handleParentDragover = dropSwapConfig.handleParentDragover || handleParentDragover2;
+        dropSwapParentConfig.handleNodePointerover = dropSwapConfig.handleNodePointerover || handleNodePointerover;
+        dropSwapParentConfig.handleParentPointerover = dropSwapConfig.handleParentPointerover || handeParentPointerover;
+        const originalHandleend = dropSwapParentConfig.handleEnd;
+        dropSwapParentConfig.handleEnd = (state2) => {
+          handleEnd2(state2);
           originalHandleend(state2);
         };
-        parentData.config = placeParentConfig;
+        parentData.config = dropSwapParentConfig;
       }
     };
   };
@@ -645,6 +669,7 @@ function rootDragover(_e) {
     [state.currentParent.el],
     state.currentParent.data.config.dropZoneParentClass
   );
+  state.currentParent = state.initialParent;
 }
 function rootPointerover(_e) {
   if (!isSynthDragState(state)) return;
@@ -652,23 +677,24 @@ function rootPointerover(_e) {
     [state.currentParent.el],
     state.currentParent.data.config.synthDropZoneParentClass
   );
+  state.currentParent = state.initialParent;
 }
 function updateDraggedOverNodes(data, state2) {
   const targetData = "detail" in data ? data.detail.targetData : data.targetData;
   const config = targetData.parent.data.config;
   const dropZoneClass = isSynthDragState(state2) ? config.synthDropZoneClass : config.dropZoneClass;
   removeClass(
-    placeState.draggedOverNodes.map((node) => node.el),
+    dropSwapState.draggedOverNodes.map((node) => node.el),
     dropZoneClass
   );
   const enabledNodes = targetData.parent.data.enabledNodes;
   if (!enabledNodes) return;
-  placeState.draggedOverNodes = enabledNodes.slice(
+  dropSwapState.draggedOverNodes = enabledNodes.slice(
     targetData.node.data.index,
     targetData.node.data.index + state2.draggedNodes.length
   );
   addNodeClass(
-    placeState.draggedOverNodes.map((node) => node.el),
+    dropSwapState.draggedOverNodes.map((node) => node.el),
     dropZoneClass,
     true
   );
@@ -681,17 +707,17 @@ function updateDraggedOverNodes(data, state2) {
     true
   );
 }
-function handleDragoverNode2(data, state2) {
+function handleNodeDragover2(data, state2) {
   data.e.preventDefault();
   data.e.stopPropagation();
   updateDraggedOverNodes(data, state2);
 }
-function handleDragoverParent2(data, state2) {
+function handleParentDragover2(data, state2) {
   data.e.preventDefault();
   data.e.stopPropagation();
   const currentConfig = state2.currentParent.data.config;
   removeClass(
-    placeState.draggedOverNodes.map((node) => node.el),
+    dropSwapState.draggedOverNodes.map((node) => node.el),
     currentConfig.dropZoneClass
   );
   removeClass([state2.currentParent.el], currentConfig.dropZoneParentClass);
@@ -702,13 +728,13 @@ function handleDragoverParent2(data, state2) {
     data.targetData.parent.data,
     true
   );
-  placeState.draggedOverNodes = [];
+  dropSwapState.draggedOverNodes = [];
   state2.currentParent = data.targetData.parent;
 }
-function handlePointeroverParent2(data) {
+function handeParentPointerover(data) {
   const currentConfig = data.detail.state.currentParent.data.config;
   removeClass(
-    placeState.draggedOverNodes.map((node) => node.el),
+    dropSwapState.draggedOverNodes.map((node) => node.el),
     currentConfig.synthDropZoneClass
   );
   removeClass(
@@ -722,28 +748,54 @@ function handlePointeroverParent2(data) {
     data.detail.targetData.parent.data,
     true
   );
-  placeState.draggedOverNodes = [];
+  dropSwapState.draggedOverNodes = [];
+  data.detail.state.currentParent = data.detail.targetData.parent;
 }
 function handleNodePointerover(data) {
   if (!isSynthDragState(data.detail.state)) return;
   updateDraggedOverNodes(data, data.detail.state);
 }
-function handleEnd3(state2) {
+function swapElements(arr1, arr2, index1, index2) {
+  const indices1 = Array.isArray(index1) ? index1 : [index1];
+  if (arr2 === null) {
+    const elementsFromArr1 = indices1.map((i) => arr1[i]);
+    const elementFromArr2 = arr1[index2];
+    arr1.splice(index2, 1, ...elementsFromArr1);
+    indices1.forEach((i, idx) => {
+      arr1[i] = idx === 0 ? elementFromArr2 : void 0;
+    });
+    return arr1.filter((el) => el !== void 0);
+  } else {
+    const elementsFromArr1 = indices1.map((i) => arr1[i]);
+    const elementFromArr2 = arr2[index2];
+    arr2.splice(index2, 1, ...elementsFromArr1);
+    indices1.forEach((i, idx) => {
+      arr1[i] = idx === 0 ? elementFromArr2 : void 0;
+    });
+    return [arr1.filter((el) => el !== void 0), arr2];
+  }
+}
+function handleEnd2(state2) {
   const isSynth = isSynthDragState(state2);
   removeClass(
     [state2.currentParent.el],
     isSynth ? state2.currentParent.data.config.synthDropZoneParentClass : state2.currentParent.data.config.dropZoneParentClass
   );
+  removeClass(
+    dropSwapState.draggedOverNodes.map((node) => node.el),
+    isSynth ? state2.currentParent.data.config.synthDropZoneClass : state2.currentParent.data.config.dropZoneClass
+  );
   const values = parentValues(state2.currentParent.el, state2.currentParent.data);
   const draggedValues = state2.draggedNodes.map((node) => node.data.value);
   const newValues = values.filter((x) => !draggedValues.includes(x));
-  const index = placeState.draggedOverNodes[0]?.data.index;
-  index !== void 0 ? newValues.splice(index, 0, ...draggedValues) : newValues.push(...draggedValues);
-  if (state2.initialParent.el !== state2.currentParent.el) {
-    const initialParentValues = parentValues(
-      state2.initialParent.el,
-      state2.initialParent.data
-    );
+  const targetIndex = dropSwapState.draggedOverNodes[0]?.data.index;
+  const draggedIndex = state2.draggedNodes[0].data.index;
+  const initialParentValues = parentValues(
+    state2.initialParent.el,
+    state2.initialParent.data
+  );
+  if (targetIndex === void 0) {
+    if (state2.initialParent.el === state2.currentParent.el) return;
     const newInitialValues = initialParentValues.filter(
       (x) => !draggedValues.includes(x)
     );
@@ -755,165 +807,54 @@ function handleEnd3(state2) {
     setParentValues(
       state2.currentParent.el,
       state2.currentParent.data,
-      newValues
+      values.concat(draggedValues)
     );
-  } else if (state2.initialParent.el === state2.currentParent.el && placeState.draggedOverNodes.length) {
+    return;
+  }
+  let swap = false;
+  const shouldSwap = state2.initialParent.data.config.dropSwapConfig?.shouldSwap;
+  if (shouldSwap)
+    swap = shouldSwap({
+      sourceParent: state2.initialParent,
+      targetParent: state2.currentParent,
+      draggedNodes: state2.draggedNodes,
+      targetNodes: dropSwapState.draggedOverNodes,
+      state: state2
+    });
+  if (state2.initialParent.el === state2.currentParent.el) {
+    newValues.splice(targetIndex, 0, ...draggedValues);
     setParentValues(
       state2.currentParent.el,
       state2.currentParent.data,
-      newValues
+      swap ? swapElements(values, null, draggedIndex, targetIndex) : newValues
     );
-  }
-  removeClass(
-    placeState.draggedOverNodes.map((node) => node.el),
-    isSynth ? state2.currentParent.data.config.synthDropZoneClass : state2.currentParent.data.config.dropZoneClass
-  );
-  placeState.draggedOverNodes = [];
-}
-
-// src/plugins/swap/index.ts
-var placeState2 = {
-  draggedOverNodes: Array(),
-  initialDraggedIndex: 0,
-  transferred: false
-};
-var dragoverEventListeneerSet2 = false;
-function swap(swapConfig = {}) {
-  return (parent) => {
-    const parentData = parents.get(parent);
-    if (!parentData) return;
-    const swapParentConfig = {
-      ...parentData.config,
-      swapConfig
-    };
-    if (!dragoverEventListeneerSet2) {
-      document.addEventListener("dragover", rootDragover2);
-      document.addEventListener(
-        "handleRootPointerover",
-        (e) => rootPointerover2(e)
+  } else {
+    if (swap) {
+      const res = swapElements(
+        initialParentValues,
+        newValues,
+        state2.initialIndex,
+        targetIndex
       );
-    }
-    return {
-      setup() {
-        swapParentConfig.handleNodeDragover = swapConfig.handleNodeDragover || handleDragoverNode3;
-        swapParentConfig.handleParentDragover = swapConfig.handleParentDragover || handleDragoverParent3;
-        swapParentConfig.handleNodePointerover = swapConfig.handleNodePointerover || handleNodePointerover2;
-        swapParentConfig.handleParentPointerover = swapConfig.handleParentPointerover || handeParentPointerover;
-        const originalHandleend = swapParentConfig.handleEnd;
-        swapParentConfig.handleEnd = (state2) => {
-          handleEnd4(state2);
-          originalHandleend(state2);
-        };
-        parentData.config = swapParentConfig;
-      }
-    };
-  };
-}
-function rootDragover2(_e) {
-  if (!isDragState(state)) return;
-  removeClass(
-    [state.currentParent.el],
-    state.currentParent.data.config.dropZoneParentClass
-  );
-  state.currentParent = state.initialParent;
-}
-function rootPointerover2(_e) {
-  if (!isSynthDragState(state)) return;
-  removeClass(
-    [state.currentParent.el],
-    state.currentParent.data.config.synthDropZoneParentClass
-  );
-  state.currentParent = state.initialParent;
-}
-function updateDraggedOverNodes2(data, state2) {
-  const targetData = "detail" in data ? data.detail.targetData : data.targetData;
-  const config = targetData.parent.data.config;
-  const dropZoneClass = isSynthDragState(state2) ? config.synthDropZoneClass : config.dropZoneClass;
-  removeClass(
-    placeState2.draggedOverNodes.map((node) => node.el),
-    dropZoneClass
-  );
-  const enabledNodes = targetData.parent.data.enabledNodes;
-  if (!enabledNodes) return;
-  placeState2.draggedOverNodes = enabledNodes.slice(
-    targetData.node.data.index,
-    targetData.node.data.index + state2.draggedNodes.length
-  );
-  addNodeClass(
-    placeState2.draggedOverNodes.map((node) => node.el),
-    dropZoneClass,
-    true
-  );
-  state2.currentTargetValue = targetData.node.data.value;
-  state2.currentParent = targetData.parent;
-  addClass(
-    state2.currentParent.el,
-    isSynthDragState(state2) ? config.synthDropZoneParentClass : config.dropZoneParentClass,
-    state2.currentParent.data,
-    true
-  );
-}
-function handleDragoverNode3(data, state2) {
-  data.e.preventDefault();
-  data.e.stopPropagation();
-  updateDraggedOverNodes2(data, state2);
-}
-function handleDragoverParent3(data, state2) {
-  data.e.preventDefault();
-  data.e.stopPropagation();
-  const currentConfig = state2.currentParent.data.config;
-  removeClass(
-    placeState2.draggedOverNodes.map((node) => node.el),
-    currentConfig.dropZoneClass
-  );
-  removeClass([state2.currentParent.el], currentConfig.dropZoneParentClass);
-  const config = data.targetData.parent.data.config;
-  addClass(
-    data.targetData.parent.el,
-    config.dropZoneParentClass,
-    data.targetData.parent.data,
-    true
-  );
-  placeState2.draggedOverNodes = [];
-  state2.currentParent = data.targetData.parent;
-}
-function handeParentPointerover(data) {
-  const currentConfig = data.detail.state.currentParent.data.config;
-  removeClass(
-    placeState2.draggedOverNodes.map((node) => node.el),
-    currentConfig.synthDropZoneClass
-  );
-  removeClass(
-    [data.detail.state.currentParent.el],
-    currentConfig.synthDropZoneParentClass
-  );
-  const config = data.detail.targetData.parent.data.config;
-  addClass(
-    data.detail.targetData.parent.el,
-    config.synthDropZoneParentClass,
-    data.detail.targetData.parent.data,
-    true
-  );
-  placeState2.draggedOverNodes = [];
-  data.detail.state.currentParent = data.detail.targetData.parent;
-}
-function handleNodePointerover2(data) {
-  if (!isSynthDragState(data.detail.state)) return;
-  updateDraggedOverNodes2(data, data.detail.state);
-}
-function handleEnd4(state2) {
-  const isSynth = isSynthDragState(state2);
-  removeClass(
-    [state2.currentParent.el],
-    isSynth ? state2.currentParent.data.config.synthDropZoneParentClass : state2.currentParent.data.config.dropZoneParentClass
-  );
-  const values = parentValues(state2.currentParent.el, state2.currentParent.data);
-  const draggedValues = state2.draggedNodes.map((node) => node.data.value);
-  const newValues = values.filter((x) => !draggedValues.includes(x));
-  const targetIndex = placeState2.draggedOverNodes[0]?.data.index;
-  let newTargetParentValues = [];
-  if (state2.initialParent.el == state2.currentParent.el) {
-    if (targetIndex !== void 0) {
+      setParentValues(
+        state2.initialParent.el,
+        state2.initialParent.data,
+        res[0]
+      );
+      setParentValues(
+        state2.currentParent.el,
+        state2.currentParent.data,
+        res[1]
+      );
+    } else {
+      const newInitialValues = initialParentValues.filter(
+        (x) => !draggedValues.includes(x)
+      );
+      setParentValues(
+        state2.initialParent.el,
+        state2.initialParent.data,
+        newInitialValues
+      );
       newValues.splice(targetIndex, 0, ...draggedValues);
       setParentValues(
         state2.currentParent.el,
@@ -921,53 +862,7 @@ function handleEnd4(state2) {
         newValues
       );
     }
-  } else if (state2.initialParent.el !== state2.currentParent.el) {
-    const initialParentValues = parentValues(
-      state2.initialParent.el,
-      state2.initialParent.data
-    );
-    if (targetIndex === void 0) {
-      newTargetParentValues = newValues.concat(draggedValues);
-      setParentValues(
-        state2.currentParent.el,
-        state2.currentParent.data,
-        newTargetParentValues
-      );
-      setParentValues(
-        state2.initialParent.el,
-        state2.initialParent.data,
-        initialParentValues.filter((x) => !draggedValues.includes(x))
-      );
-    } else {
-      const targetedNodeValues = state2.currentParent.data.enabledNodes.slice(targetIndex, targetIndex + draggedValues.length).map((node) => node.data.value);
-      const newInitialParentValues = initialParentValues.filter(
-        (x) => !draggedValues.includes(x)
-      );
-      newInitialParentValues.splice(
-        state2.initialIndex,
-        0,
-        ...targetedNodeValues
-      );
-      setParentValues(
-        state2.initialParent.el,
-        state2.initialParent.data,
-        newInitialParentValues
-      );
-      const newTargetParentValues2 = newValues.filter(
-        (x) => !targetedNodeValues.includes(x)
-      );
-      newTargetParentValues2.splice(targetIndex, 0, ...draggedValues);
-      setParentValues(
-        state2.currentParent.el,
-        state2.currentParent.data,
-        newTargetParentValues2
-      );
-    }
   }
-  removeClass(
-    placeState2.draggedOverNodes.map((node) => node.el),
-    isSynth ? state2.currentParent.data.config.synthDropZoneClass : state2.currentParent.data.config.dropZoneClass
-  );
 }
 
 // src/index.ts
@@ -1098,17 +993,18 @@ function dragAndDrop({
       handleNodeKeydown,
       handleParentKeydown,
       handleDragstart,
-      handleNodeDragover,
-      handleParentDragover,
+      handleNodeDragover: handleNodeDragover3,
+      handleParentDragover: handleParentDragover3,
       handleNodeDrop,
+      handlePointercancel,
+      handleEnd: handleEnd3,
       handleDragend,
-      handleEnd,
       handleParentBlur,
       handleParentFocus,
       handleNodePointerup,
       handleNodeTouchstart,
-      handleNodePointerover: handleNodePointerover3,
-      handleParentPointerover,
+      handleNodePointerover: handleNodePointerover2,
+      handleParentPointerover: handleParentPointerover2,
       handleNodePointerdown,
       handleNodePointermove,
       handleNodeDragenter,
@@ -1529,7 +1425,7 @@ function setupNode(data) {
     dragend: nodeEventData(config.handleDragend),
     drop: nodeEventData(config.handleNodeDrop),
     touchstart: nodeEventData(config.handleNodeTouchstart),
-    pointercancel: nodeEventData(config.handleDragend),
+    pointercancel: nodeEventData(config.handlePointercancel),
     pointerdown: nodeEventData(config.handleNodePointerdown),
     pointerup: nodeEventData(config.handleNodePointerup),
     pointermove: nodeEventData(config.handleNodePointermove),
@@ -2030,7 +1926,7 @@ function preventSortOnScroll() {
     }, 100);
   };
 }
-function handleNodePointerover3(e) {
+function handleNodePointerover2(e) {
   if (e.detail.targetData.parent.el === e.detail.state.currentParent.el)
     sort(e.detail, e.detail.state);
   else transfer(e.detail, e.detail.state);
@@ -2047,8 +1943,7 @@ function handleDragend(data, state2) {
     dropped = false;
     return;
   }
-  const config = parents.get(state2.initialParent.el)?.config;
-  config?.handleEnd(state2);
+  const config = data.targetData.parent.data.config;
   if (config?.onDragend) {
     config.onDragend({
       parent: state2.currentParent,
@@ -2058,8 +1953,28 @@ function handleDragend(data, state2) {
       position: state2.initialIndex
     });
   }
+  config.handleEnd(state2);
 }
-function handleEnd(state2) {
+function handlePointercancel(data, state2) {
+  if (!isSynthDragState(state2)) return;
+  data.e.preventDefault();
+  if (dropped) {
+    dropped = false;
+    return;
+  }
+  const config = parents.get(state2.initialParent.el)?.config;
+  if (config?.onDragend) {
+    config.onDragend({
+      parent: state2.currentParent,
+      values: parentValues(state2.currentParent.el, state2.currentParent.data),
+      draggedNode: state2.draggedNode,
+      draggedNodes: state2.draggedNodes,
+      position: state2.initialIndex
+    });
+  }
+  config?.handleEnd(state2);
+}
+function handleEnd3(state2) {
   cancelSynthScroll();
   for (const [_el, controller] of state2.scrollEls) controller.abort();
   if ("longPressTimeout" in state2 && state2.longPressTimeout)
@@ -2215,7 +2130,7 @@ function getScrollData(e, state2) {
     y: yThresh,
     scrollOutside
   } = state2.initialParent.data.config.scrollBehavior;
-  const coordinates = getRealCoords(e.currentTarget);
+  const coordinates = getRealCoords2(e.currentTarget);
   return {
     xThresh,
     yThresh,
@@ -2380,18 +2295,18 @@ function handleScroll(e) {
   }
   if (!directionSet) state.synthScrollDirection = void 0;
 }
-function handleNodeDragover(data, state2) {
+function handleNodeDragover3(data, state2) {
   const { x, y } = eventCoordinates(data.e);
   state2.coordinates.y = y;
   state2.coordinates.x = x;
   data.targetData.parent.el === state2.currentParent?.el ? sort(data, state2) : transfer(data, state2);
 }
-function handleParentDragover(data, state2) {
+function handleParentDragover3(data, state2) {
   if (!state2) return;
   Object.assign(eventCoordinates(data.e));
   transfer(data, state2);
 }
-function handleParentPointerover(e) {
+function handleParentPointerover2(e) {
   if (e.detail.targetData.parent.el !== e.detail.state.currentParent.el)
     transfer(e.detail, e.detail.state);
 }
@@ -2750,7 +2665,7 @@ function copyNodeStyle(sourceNode, targetNode, omitKeys = false) {
 function eventCoordinates(data) {
   return { x: data.clientX, y: data.clientY };
 }
-function getRealCoords(el) {
+function getRealCoords2(el) {
   const { top, bottom, left, right, height, width } = el.getBoundingClientRect();
   const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
   const scrollTop = window.scrollY || document.documentElement.scrollTop;
@@ -2779,34 +2694,36 @@ export {
   dragStateProps,
   dragValues,
   dragstartClasses,
+  dropOrSwap,
   emit,
   eventCoordinates,
   getElFromPoint,
-  getRealCoords,
+  getRealCoords2 as getRealCoords,
   getScrollables,
   handleClickNode,
   handleClickParent,
   handleDragend,
   handleDragstart,
-  handleEnd,
+  handleEnd3 as handleEnd,
   handleLongPress,
-  handleNodeDragover,
+  handleNodeDragover3 as handleNodeDragover,
   handleNodeDrop,
   handleNodeKeydown,
   handleNodePointerdown,
   handleNodePointermove,
-  handleNodePointerover3 as handleNodePointerover,
+  handleNodePointerover2 as handleNodePointerover,
   handleNodePointerup,
   handleNodeTouchstart,
   handleParentBlur,
-  handleParentDragover,
+  handleParentDragover3 as handleParentDragover,
   handleParentDrop,
   handleParentFocus,
   handleParentKeydown,
-  handleParentPointerover,
+  handleParentPointerover2 as handleParentPointerover,
+  handlePointercancel,
   handleScroll,
   initDrag,
-  insertion,
+  insert,
   isBrowser,
   isDragState,
   isNode,
@@ -2820,7 +2737,6 @@ export {
   parents,
   performSort,
   performTransfer,
-  place,
   preventSortOnScroll,
   remapFinished,
   remapNodes,
@@ -2833,7 +2749,6 @@ export {
   setupNodeRemap,
   sort,
   state,
-  swap,
   synthMove,
   tearDown,
   tearDownNode,

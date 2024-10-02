@@ -193,7 +193,7 @@ export interface ParentConfig<T> {
    */
   handleNodePointerover: (
     data: PointeroverNodeEvent<T>,
-    state: DragState<T>
+    state: SynthDragState<T>
   ) => void;
   /**
    * Function that is called when a node that is being moved by touchmove event
@@ -201,7 +201,7 @@ export interface ParentConfig<T> {
    */
   handleParentPointerover: (
     e: PointeroverParentEvent<T>,
-    state: DragState<T>
+    state: SynthDragState<T>
   ) => void;
   /**
    * Config option for insert plugin.
@@ -984,7 +984,7 @@ export interface DropSwapConfig<T> {
   ) => void;
   handleNodePointerover?: (
     data: PointeroverNodeEvent<unknown>,
-    state: DragState<unknown>
+    state: SynthDragState<unknown>
   ) => void;
 }
 
@@ -996,16 +996,39 @@ export interface DropSwapState {
 
 export interface InsertConfig<T> {
   insertPoint: (parent: ParentRecord<T>) => HTMLElement;
-  handleNodeDragover?: (data: NodeDragEventData<T>) => void;
-  handleParentDragover?: (data: ParentDragEventData<T>) => void;
+  insertEvent?: (data: InsertEvent<T>) => void;
+  handleNodeDragover?: (
+    data: NodeDragEventData<T>,
+    state: DragState<T>
+  ) => void;
+  handleParentDragover?: (
+    data: ParentDragEventData<T>,
+    state: DragState<T>
+  ) => void;
   handleParentPointerover?: (
     data: PointeroverParentEvent<T>,
     state: SynthDragState<T>
   ) => void;
-  handleNodePointerover?: (data: PointeroverNodeEvent<T>) => void;
+  handleNodePointerover?: (
+    data: PointeroverNodeEvent<T>,
+    state: SynthDragState<T>
+  ) => void;
   handleEnd?: (data: NodeDragEventData<T> | NodePointerEventData<T>) => void;
 }
 
-export interface InsertState {
-  insertPoint: HTMLElement;
+export interface InsertState<T> {
+  insertPoint: HTMLElement | null;
+  draggedOverNodes: Array<NodeRecord<T>>;
+  draggedOverParent: ParentRecord<T> | null;
+  targetIndex: number;
+  ascending: boolean;
+  coordinates: { x: number; y: number };
+}
+
+export interface InsertEvent<T> {
+  sourceParent: ParentRecord<T>;
+  targetParent: ParentRecord<T>;
+  draggedNodes: Array<NodeRecord<T>>;
+  targetNodes: Array<NodeRecord<T>>;
+  state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
 }
