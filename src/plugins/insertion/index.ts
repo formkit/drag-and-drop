@@ -1,17 +1,16 @@
-import type { InsertionConfig, InsertionParentConfig } from "./types";
+import type { InsertionConfig, InsertionParentConfig } from "../../types";
 import type {
   DragState,
   NodeDragEventData,
   NodeRecord,
   ParentEventData,
-  NodePointerEventData,
   PointeroverParentEvent,
   ParentRecord,
   Coordinates,
+  SynthDragState,
 } from "../../types";
 
 import {
-  handleEnd as originalHandleEnd,
   parents,
   parentValues,
   setParentValues,
@@ -41,7 +40,7 @@ export function insertion<T>(
 
     const insertionParentConfig = {
       ...parentData.config,
-      insertionConfig: insertionConfig,
+      insertionConfig,
     } as InsertionParentConfig<T>;
 
     return {
@@ -63,8 +62,15 @@ export function insertion<T>(
         insertionParentConfig.handleParentDragover =
           insertionConfig.handleParentDragover || handleParentDragover;
 
-        insertionParentConfig.handleEnd =
-          insertionConfig.handleEnd || handleEnd;
+        const originalHandleend = insertionParentConfig.handleEnd;
+
+        insertionParentConfig.handleEnd = (
+          state: DragState<T> | SynthDragState<T>
+        ) => {
+          handleEnd(state);
+
+          originalHandleend(state);
+        };
 
         document.body.addEventListener("dragover", checkPosition);
 
@@ -328,7 +334,7 @@ export function handleNodeDragover<T>(data: NodeDragEventData<T>) {
   data.e.preventDefault();
 }
 
-export function handleDragoverParent<T>(
+export function handleParentDragover<T>(
   data: ParentEventData<T>,
   state: DragState<T>
 ) {
@@ -602,12 +608,9 @@ function positionInsertionPoint<T>(
 
 export function handleParentDrop<T>(_data: NodeDragEventData<T>) {}
 
-export function handleEnd<T>(
-  data: NodeDragEventData<T> | NodePointerEventData<T>,
-  state: DragState<T>
-) {
-  data.e.stopPropagation();
-
+export function handleEnd<T>(state: DragState<T>) {
+  console.log("insertion handlene");
+  return;
   const insertionPoint = document.getElementById("insertion-point");
 
   if (!insertionState.draggedOverParent) {

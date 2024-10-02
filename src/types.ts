@@ -989,3 +989,19 @@ export interface DropSwapState {
   initialDraggedIndex: number | undefined;
   transferred: boolean;
 }
+
+export interface InsertionConfig<T> {
+  handleNodeDragover?: (data: NodeDragEventData<T>) => void;
+  handleParentDragover?: (data: ParentDragEventData<T>) => void;
+  handleParentPointerover?: (data: PointeroverParentEvent<T>) => void;
+  handleNodePointerover?: (data: PointeroverNodeEvent<T>) => void;
+  handleEnd?: (data: NodeDragEventData<T> | NodePointerEventData<T>) => void;
+  insertionPoint?: {
+    tag?: string;
+    classes?: string[];
+    id?: string;
+  };
+}
+export interface InsertionParentConfig<T> extends ParentConfig<T> {
+  insertionConfig: InsertionConfig<T>;
+}
