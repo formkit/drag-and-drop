@@ -7,8 +7,8 @@ test.beforeEach(async ({ browser }) => {
   page = await browser.newPage();
 });
 
-test.describe.only("Drag swap", async () => {
-  test.only("Test #1: Swapping within list.", async () => {
+test.describe("Drag swap", async () => {
+  test("Test #1: Swapping within list.", async () => {
     await page.goto("http://localhost:3001/swap");
     await new Promise((r) => setTimeout(r, 1000));
 

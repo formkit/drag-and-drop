@@ -18,7 +18,7 @@ test.describe("Place plugin", async () => {
     // the parent container receive the parent drop zone class.
     await drag(page, {
       originEl: { id: "Apple", position: "center" },
-      destinationEl: { id: "Apple", position: "center" },
+      destinationEl: { id: "Apple", çposition: "center" },
       dragStart: true,
     });
     await expect(page.locator("#values_1")).toHaveText("Apple Banana Orange");

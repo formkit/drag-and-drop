@@ -358,9 +358,23 @@ function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
 
   const draggedIndex = state.draggedNodes[0].data.index;
 
+  const initialParentValues = parentValues(
+    state.initialParent.el,
+    state.initialParent.data
+  );
+
   if (targetIndex === undefined) {
-    console.log("targetIndex is undefined");
     if (state.initialParent.el === state.currentParent.el) return;
+
+    const newInitialValues = initialParentValues.filter(
+      (x) => !draggedValues.includes(x)
+    );
+
+    setParentValues(
+      state.initialParent.el,
+      state.initialParent.data,
+      newInitialValues
+    );
 
     setParentValues(
       state.currentParent.el,
@@ -385,36 +399,51 @@ function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
     });
 
   if (state.initialParent.el === state.currentParent.el) {
+    newValues.splice(targetIndex, 0, ...draggedValues);
+
     setParentValues(
       state.currentParent.el,
       state.currentParent.data,
-      swap
-        ? swapElements(values, null, draggedIndex, targetIndex)
-        : newValues.concat(draggedValues)
+      swap ? swapElements(values, null, draggedIndex, targetIndex) : newValues
     );
   } else {
-    const initialParentValues = parentValues(
-      state.initialParent.el,
-      state.initialParent.data
-    );
+    if (swap) {
+      const res = swapElements(
+        initialParentValues,
+        newValues,
+        state.initialIndex,
+        targetIndex
+      );
 
-    const res = swapElements(
-      initialParentValues,
-      newValues,
-      state.initialIndex,
-      targetIndex
-    );
+      setParentValues(
+        state.initialParent.el,
+        state.initialParent.data,
+        res[0] as T[]
+      );
 
-    setParentValues(
-      state.initialParent.el,
-      state.initialParent.data,
-      res[0] as T[]
-    );
+      setParentValues(
+        state.currentParent.el,
+        state.currentParent.data,
+        res[1] as T[]
+      );
+    } else {
+      const newInitialValues = initialParentValues.filter(
+        (x) => !draggedValues.includes(x)
+      );
 
-    setParentValues(
-      state.currentParent.el,
-      state.currentParent.data,
-      res[1] as T[]
-    );
+      setParentValues(
+        state.initialParent.el,
+        state.initialParent.data,
+        newInitialValues
+      );
+
+      newValues.splice(targetIndex, 0, ...draggedValues);
+
+      setParentValues(
+        state.currentParent.el,
+        state.currentParent.data,
+        newValues
+      );
+    }
   }
 }

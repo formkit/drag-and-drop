@@ -1227,8 +1227,6 @@ export function handleDragstart<T>(
 
   const dragState = initDrag(data, nodes);
 
-  console.log(dragState);
-
   if (config.onDragstart)
     config.onDragstart(
       {
