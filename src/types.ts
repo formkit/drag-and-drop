@@ -204,6 +204,10 @@ export interface ParentConfig<T> {
     state: DragState<T>
   ) => void;
   /**
+   * Config option for insert plugin.
+   */
+  insertConfig?: InsertConfig<T>;
+  /**
    * A flag to indicate whether long touch is enabled.
    */
   longPress?: boolean;
@@ -436,12 +440,12 @@ export interface NodeData<T> {
    * Set by the insertion plugin to define the coordinates for a given node.
    */
   range?: {
-    ascending: {
+    ascending?: {
       y: number[];
       x: number[];
       vertical: boolean;
     };
-    descending: {
+    descending?: {
       y: number[];
       x: number[];
       vertical: boolean;
@@ -990,18 +994,18 @@ export interface DropSwapState {
   transferred: boolean;
 }
 
-export interface InsertionConfig<T> {
+export interface InsertConfig<T> {
+  insertPoint: (parent: ParentRecord<T>) => HTMLElement;
   handleNodeDragover?: (data: NodeDragEventData<T>) => void;
   handleParentDragover?: (data: ParentDragEventData<T>) => void;
-  handleParentPointerover?: (data: PointeroverParentEvent<T>) => void;
+  handleParentPointerover?: (
+    data: PointeroverParentEvent<T>,
+    state: SynthDragState<T>
+  ) => void;
   handleNodePointerover?: (data: PointeroverNodeEvent<T>) => void;
   handleEnd?: (data: NodeDragEventData<T> | NodePointerEventData<T>) => void;
-  insertionPoint?: {
-    tag?: string;
-    classes?: string[];
-    id?: string;
-  };
 }
-export interface InsertionParentConfig<T> extends ParentConfig<T> {
-  insertionConfig: InsertionConfig<T>;
+
+export interface InsertState {
+  insertPoint: HTMLElement;
 }

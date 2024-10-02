@@ -26,9 +26,9 @@ export const dropSwapState = {
   transferred: false,
 };
 
-let dragoverEventListeneerSet = false;
+let listenersSet = false;
 
-export function dropOrSwap<T>(dropSwapConfig: Partial<DropSwapConfig<T>> = {}) {
+export function dropOrSwap<T>(dropSwapConfig: DropSwapConfig<T> = {}) {
   return (parent: HTMLElement) => {
     const parentData = parents.get(parent);
 
@@ -39,7 +39,7 @@ export function dropOrSwap<T>(dropSwapConfig: Partial<DropSwapConfig<T>> = {}) {
       dropSwapConfig,
     };
 
-    if (!dragoverEventListeneerSet) {
+    if (!listenersSet) {
       document.addEventListener("dragover", rootDragover);
 
       document.addEventListener(
@@ -47,7 +47,7 @@ export function dropOrSwap<T>(dropSwapConfig: Partial<DropSwapConfig<T>> = {}) {
         (e) => rootPointerover(e as CustomEvent)
       );
 
-      dragoverEventListeneerSet = true;
+      listenersSet = true;
     }
 
     return {

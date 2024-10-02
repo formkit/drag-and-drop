@@ -34,7 +34,7 @@ import type {
 
 export * from "./types";
 export { animations } from "./plugins/animations";
-export { insertion } from "./plugins/insertion";
+export { insert } from "./plugins/insert";
 export { dropOrSwap } from "./plugins/drop-or-swap";
 
 /**
