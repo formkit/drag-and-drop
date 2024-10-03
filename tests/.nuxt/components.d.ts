@@ -2,13 +2,7 @@
 import type { DefineComponent, SlotsType } from 'vue'
 type IslandComponent<T extends DefineComponent> = T & DefineComponent<{}, {refresh: () => Promise<void>}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, SlotsType<{ fallback: { error: unknown } }>>
 interface _GlobalComponents {
-      'List': typeof import("../components/List.vue")['default']
-    'ListItem': typeof import("../components/ListItem.vue")['default']
-    'ListSubItem': typeof import("../components/ListSubItem.vue")['default']
-    'TrulyNestedList': typeof import("../components/truly-nested/TrulyNestedList.vue")['default']
-    'TrulyNestedListItem': typeof import("../components/truly-nested/TrulyNestedListItem.vue")['default']
-    'TrulyNestedListSubItem': typeof import("../components/truly-nested/TrulyNestedListSubItem.vue")['default']
-    'NuxtWelcome': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/welcome.vue")['default']
+      'NuxtWelcome': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/welcome.vue")['default']
     'NuxtLayout': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/nuxt-layout")['default']
     'NuxtErrorBoundary': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/nuxt-error-boundary")['default']
     'ClientOnly': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/client-only")['default']
@@ -31,13 +25,7 @@ interface _GlobalComponents {
     'Body': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/head/runtime/components")['Body']
     'NuxtIsland': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/nuxt-island")['default']
     'NuxtRouteAnnouncer': IslandComponent<typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/server-placeholder")['default']>
-      'LazyList': typeof import("../components/List.vue")['default']
-    'LazyListItem': typeof import("../components/ListItem.vue")['default']
-    'LazyListSubItem': typeof import("../components/ListSubItem.vue")['default']
-    'LazyTrulyNestedList': typeof import("../components/truly-nested/TrulyNestedList.vue")['default']
-    'LazyTrulyNestedListItem': typeof import("../components/truly-nested/TrulyNestedListItem.vue")['default']
-    'LazyTrulyNestedListSubItem': typeof import("../components/truly-nested/TrulyNestedListSubItem.vue")['default']
-    'LazyNuxtWelcome': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/welcome.vue")['default']
+      'LazyNuxtWelcome': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/welcome.vue")['default']
     'LazyNuxtLayout': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/nuxt-layout")['default']
     'LazyNuxtErrorBoundary': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/nuxt-error-boundary")['default']
     'LazyClientOnly': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/client-only")['default']
@@ -66,12 +54,6 @@ declare module 'vue' {
   export interface GlobalComponents extends _GlobalComponents { }
 }
 
-export const List: typeof import("../components/List.vue")['default']
-export const ListItem: typeof import("../components/ListItem.vue")['default']
-export const ListSubItem: typeof import("../components/ListSubItem.vue")['default']
-export const TrulyNestedList: typeof import("../components/truly-nested/TrulyNestedList.vue")['default']
-export const TrulyNestedListItem: typeof import("../components/truly-nested/TrulyNestedListItem.vue")['default']
-export const TrulyNestedListSubItem: typeof import("../components/truly-nested/TrulyNestedListSubItem.vue")['default']
 export const NuxtWelcome: typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/welcome.vue")['default']
 export const NuxtLayout: typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/nuxt-layout")['default']
 export const NuxtErrorBoundary: typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/nuxt-error-boundary")['default']
@@ -95,12 +77,6 @@ export const Html: typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+w
 export const Body: typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/head/runtime/components")['Body']
 export const NuxtIsland: typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/nuxt-island")['default']
 export const NuxtRouteAnnouncer: IslandComponent<typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/server-placeholder")['default']>
-export const LazyList: typeof import("../components/List.vue")['default']
-export const LazyListItem: typeof import("../components/ListItem.vue")['default']
-export const LazyListSubItem: typeof import("../components/ListSubItem.vue")['default']
-export const LazyTrulyNestedList: typeof import("../components/truly-nested/TrulyNestedList.vue")['default']
-export const LazyTrulyNestedListItem: typeof import("../components/truly-nested/TrulyNestedListItem.vue")['default']
-export const LazyTrulyNestedListSubItem: typeof import("../components/truly-nested/TrulyNestedListSubItem.vue")['default']
 export const LazyNuxtWelcome: typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/welcome.vue")['default']
 export const LazyNuxtLayout: typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/nuxt-layout")['default']
 export const LazyNuxtErrorBoundary: typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/app/components/nuxt-error-boundary")['default']

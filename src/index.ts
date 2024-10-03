@@ -616,12 +616,6 @@ export function performTransfer<T>({
   state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
   targetNode?: NodeRecord<T>;
 }) {
-  console.trace();
-  console.log("perform transfer");
-
-  console.log("current parent", currentParent.data);
-  console.log("target parent", targetParent.el);
-
   const draggedValues = draggedNodes.map((x) => x.data.value);
 
   const currentParentValues = parentValues(
@@ -629,22 +623,7 @@ export function performTransfer<T>({
     currentParent.data
   ).filter((x: any) => !draggedValues.includes(x));
 
-  console.log(
-    "current parent values 2",
-    currentParentValues.map((x) => x.name)
-  );
-
   const targetParentValues = parentValues(targetParent.el, targetParent.data);
-
-  console.log(
-    "target parent values 2",
-    targetParentValues.map((x) => x.name)
-  );
-
-  console.log(
-    "dragged values",
-    draggedValues.map((x) => x)
-  );
 
   const reset =
     initialParent.el === targetParent.el &&
@@ -769,8 +748,6 @@ export function setParentValues<T>(
 ): void {
   const treeGroup = parentData.config.treeGroup;
 
-  console.log("parent", parent);
-
   if (treeGroup) {
     const ancestorEl = treeAncestors[treeGroup];
 
@@ -780,23 +757,12 @@ export function setParentValues<T>(
 
     const ancestorValues = ancestorData.getValues(ancestorEl);
 
-    console.log("ancestor values", ancestorValues);
-
-    console.log("ancestor el", ancestorEl);
-
     const initialParentValues = parentData.getValues(parent);
-
-    console.log("initial parent values", initialParentValues);
 
     const updatedValues = setValueAtCoordinatesUsingFindIndex(
       ancestorValues,
       initialParentValues,
       values
-    );
-
-    console.log(
-      "UPDATED VALUES",
-      updatedValues.map((x) => x.name)
     );
 
     if (!updatedValues) {
