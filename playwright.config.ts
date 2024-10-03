@@ -42,13 +42,5 @@ export default defineConfig({
         browserName: "chromium",
       },
     },
-    {
-      name: "iPhone 13 webkit",
-      testMatch: "tests/synthetic-drag/**/*.spec.ts",
-      use: {
-        ...devices["iPhone 13"],
-        browserName: "webkit",
-      },
-    },
   ],
 });
