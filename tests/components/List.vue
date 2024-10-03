@@ -36,5 +36,6 @@ dragAndDrop({
   border: 1px solid #ddd;
   border-radius: 5px;
   background-color: #f9f9f9;
+  width: 300px;
 }
 </style>

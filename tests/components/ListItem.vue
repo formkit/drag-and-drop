@@ -8,12 +8,12 @@ const props = defineProps({
 
 const listItemRef = ref();
 
-dragAndDrop({
-  parent: listItemRef,
-  values: props.item.items,
-  treeGroup: "nested",
-  group: "submitem",
-});
+//dragAndDrop({
+//  parent: listItemRef,
+//  values: props.item.items,
+//  treeGroup: "nested",
+//  group: "submitem",
+//});
 </script>
 
 <template>
@@ -21,13 +21,13 @@ dragAndDrop({
     <!-- List Item -->
     <div class="list-item">
       {{ item.name }}
-      <div ref="listItemRef">
+      <!--<div ref="listItemRef">
         <ListSubItem
           v-for="subitem in item.items"
           :key="subitem.id"
           :item="subitem"
         />
-      </div>
+      </div>-->
     </div>
   </div>
 </template>
@@ -38,13 +38,5 @@ dragAndDrop({
   margin: 5px 0;
   border-bottom: 1px solid #ddd;
   transition: background-color 0.3s;
-}
-
-.list-item:hover {
-  background-color: #eaeaea;
-}
-
-.list-item:last-child {
-  border-bottom: none;
 }
 </style>

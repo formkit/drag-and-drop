@@ -327,7 +327,7 @@ export interface ParentConfig<T> {
   /**
    * Property to identify the parent record who is the ancestor of the current parent.
    */
-  treeAncestor?: ParentRecord<T>;
+  treeAncestor?: boolean;
   /**
    * Property to identify which group of tree descendants the current parent belongs to.
    */

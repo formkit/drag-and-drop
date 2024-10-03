@@ -1,13 +1,9 @@
 <script setup lang="ts">
 import { dragAndDrop } from "../../../src/vue/index";
-import { insertion } from "../../../src";
-import { NestedGroup, NestedList } from "../../../src/vue";
-
+import { parents } from "../../../src/index";
 import List from "../../components/List.vue";
 import ListItem from "../../components/ListItem.vue";
 import ListSubItem from "../../components/ListSubItem.vue";
-
-import { provide } from "vue";
 
 const lists = ref([
   {
@@ -84,15 +80,22 @@ dragAndDrop({
   parent,
   values: lists,
   group: "nested",
-  plugins: [insertion()],
+  treeGroup: "nested",
+  treeAncestor: true,
+});
+
+onMounted(() => {
+  setTimeout(() => {
+    console.log("parents", parents);
+  }, 1000);
 });
 </script>
 
 <template>
-  <h2>Nested Example</h2>
-  <NestedGroup name="nested-items" ref="parent">
-    <List v-for="list in lists" :key="list.id" :list="list" />
-  </NestedGroup>
+  <div class="container">
+    <h1>Nested</h1>
+    <div ref="parent">
+      <List v-for="list in lists" :key="list.id" :list="list" />
+    </div>
+  </div>
 </template>
-
-<style scoped></style>

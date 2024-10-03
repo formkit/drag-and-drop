@@ -390,6 +390,8 @@ export function performSort<T>({
   draggedNodes: Array<NodeRecord<T>>;
   targetNode: NodeRecord<T>;
 }) {
+  const config = parent.data.config;
+
   const draggedValues = draggedNodes.map((x) => x.data.value);
 
   const targetParentValues = parentValues(parent.el, parent.data);
@@ -406,22 +408,31 @@ export function performSort<T>({
 
   if ("draggedNode" in state) state.currentTargetValue = targetNode.data.value;
 
+  //console.log(
+  //  "new parent values for sort",
+  //  newParentValues.map((x) => x.name)
+  //);
+
+  console.log(
+    "final values",
+    newParentValues.map((x) => x.name)
+  );
   setParentValues(parent.el, parent.data, [...newParentValues]);
 
-  if (parent.data.config.onSort)
-    parent.data.config.onSort({
-      parent: {
-        el: parent.el,
-        data: parent.data,
-      },
-      previousValues: [...targetParentValues],
-      previousNodes: [...enabledNodes],
-      nodes: [...parent.data.enabledNodes],
-      values: [...newParentValues],
-      draggedNode: draggedNodes[0],
-      previousPosition: originalIndex,
-      position: targetNode.data.index,
-    });
+  //  if (parent.data.config.onSort)
+  //    parent.data.config.onSort({
+  //      parent: {
+  //        el: parent.el,
+  //        data: parent.data,
+  //      },
+  //      previousValues: [...targetParentValues],
+  //      previousNodes: [...enabledNodes],
+  //      nodes: [...parent.data.enabledNodes],
+  //      values: [...newParentValues],
+  //      draggedNode: draggedNodes[0],
+  //      previousPosition: originalIndex,
+  //      position: targetNode.data.index,
+  //    });
 }
 
 /**
@@ -604,12 +615,25 @@ export function performTransfer<T>({
   state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
   targetNode?: NodeRecord<T>;
 }) {
+  console.log("perform transfer");
   const draggedValues = draggedNodes.map((x) => x.data.value);
+
+  console.log(
+    "dragged values",
+    draggedValues.map((x) => x.name)
+  );
 
   const currentParentValues = parentValues(
     currentParent.el,
     currentParent.data
   ).filter((x: any) => !draggedValues.includes(x));
+
+  console.log(
+    "current parent values",
+    currentParentValues.map((x) => x.name)
+  );
+
+  return;
 
   const targetParentValues = parentValues(targetParent.el, targetParent.data);
 
@@ -635,6 +659,7 @@ export function performTransfer<T>({
     targetParentValues.splice(targetIndex, 0, ...draggedValues);
   }
 
+  console.log("setting here", currentParentValues, targetParentValues);
   setParentValues(currentParent.el, currentParent.data, currentParentValues);
 
   setParentValues(targetParent.el, targetParent.data, targetParentValues);
@@ -1694,8 +1719,6 @@ export function handlePointercancel<T>(
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   cancelSynthScroll();
 
-  for (const [_el, controller] of state.scrollEls) controller.abort();
-
   if ("longPressTimeout" in state && state.longPressTimeout)
     clearTimeout(state.longPressTimeout);
 
@@ -2229,9 +2252,9 @@ export function handleNodeDragover<T>(
 
   state.coordinates.x = x;
 
-  //data.e.preventDefault();
+  data.e.preventDefault();
 
-  //data.e.stopPropagation();
+  data.e.stopPropagation();
 
   data.targetData.parent.el === state.currentParent?.el
     ? sort(data, state)
@@ -2242,7 +2265,10 @@ export function handleParentDragover<T>(
   data: ParentEventData<T>,
   state: DragState<T>
 ) {
-  if (!state) return;
+  return;
+  data.e.preventDefault();
+
+  data.e.stopPropagation();
 
   Object.assign(eventCoordinates(data.e as DragEvent));
 
@@ -2351,6 +2377,12 @@ export function validateSort<T>(
   if (
     data.targetData.parent.el !== state.currentParent?.el ||
     data.targetData.parent.data.config.sortable === false
+  )
+    return false;
+
+  if (
+    data.targetData.parent.data.config.treeGroup &&
+    data.targetData.node.el.contains(state.draggedNodes[0].el)
   )
     return false;
 
