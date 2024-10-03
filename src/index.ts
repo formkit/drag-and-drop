@@ -390,6 +390,7 @@ export function performSort<T>({
   draggedNodes: Array<NodeRecord<T>>;
   targetNode: NodeRecord<T>;
 }) {
+  return;
   const config = parent.data.config;
 
   const draggedValues = draggedNodes.map((x) => x.data.value);
@@ -615,13 +616,13 @@ export function performTransfer<T>({
   state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
   targetNode?: NodeRecord<T>;
 }) {
+  console.trace();
   console.log("perform transfer");
-  const draggedValues = draggedNodes.map((x) => x.data.value);
 
-  console.log(
-    "dragged values",
-    draggedValues.map((x) => x.name)
-  );
+  console.log("current parent", currentParent.data);
+  console.log("target parent", targetParent.el);
+
+  const draggedValues = draggedNodes.map((x) => x.data.value);
 
   const currentParentValues = parentValues(
     currentParent.el,
@@ -629,13 +630,21 @@ export function performTransfer<T>({
   ).filter((x: any) => !draggedValues.includes(x));
 
   console.log(
-    "current parent values",
+    "current parent values 2",
     currentParentValues.map((x) => x.name)
   );
 
-  return;
-
   const targetParentValues = parentValues(targetParent.el, targetParent.data);
+
+  console.log(
+    "target parent values 2",
+    targetParentValues.map((x) => x.name)
+  );
+
+  console.log(
+    "dragged values",
+    draggedValues.map((x) => x)
+  );
 
   const reset =
     initialParent.el === targetParent.el &&
@@ -659,7 +668,6 @@ export function performTransfer<T>({
     targetParentValues.splice(targetIndex, 0, ...draggedValues);
   }
 
-  console.log("setting here", currentParentValues, targetParentValues);
   setParentValues(currentParent.el, currentParent.data, currentParentValues);
 
   setParentValues(targetParent.el, targetParent.data, targetParentValues);
@@ -761,6 +769,8 @@ export function setParentValues<T>(
 ): void {
   const treeGroup = parentData.config.treeGroup;
 
+  console.log("parent", parent);
+
   if (treeGroup) {
     const ancestorEl = treeAncestors[treeGroup];
 
@@ -770,12 +780,23 @@ export function setParentValues<T>(
 
     const ancestorValues = ancestorData.getValues(ancestorEl);
 
+    console.log("ancestor values", ancestorValues);
+
+    console.log("ancestor el", ancestorEl);
+
     const initialParentValues = parentData.getValues(parent);
+
+    console.log("initial parent values", initialParentValues);
 
     const updatedValues = setValueAtCoordinatesUsingFindIndex(
       ancestorValues,
       initialParentValues,
       values
+    );
+
+    console.log(
+      "UPDATED VALUES",
+      updatedValues.map((x) => x.name)
     );
 
     if (!updatedValues) {
@@ -1057,10 +1078,24 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     }
   }
 
+  if (enabledNodes.length === 0) {
+    //console.log("parent", parent);
+    //console.log("show me the values", parentData.getValues(parent));
+  }
+
   if (
     enabledNodes.length !== parentData.getValues(parent).length &&
     !config.disabled
   ) {
+    //console.log(
+    //  "parentData.getValues(parent).length",
+    //  parentData.getValues(parent).map((x) => x.name)
+    //);
+    //console.log(
+    //  "enabledNodes.length",
+    //  enabledNodes.map((x) => x.textContent)
+    //);
+    //console.log("parent.el", parent);
     console.warn(
       "The number of draggable items defined in the parent element does not match the number of values. This may cause unexpected behavior."
     );
@@ -2265,10 +2300,11 @@ export function handleParentDragover<T>(
   data: ParentEventData<T>,
   state: DragState<T>
 ) {
-  return;
   data.e.preventDefault();
 
   data.e.stopPropagation();
+
+  return;
 
   Object.assign(eventCoordinates(data.e as DragEvent));
 
@@ -2297,7 +2333,6 @@ export function validateTransfer<T>({
 
   const targetConfig = targetParent.data.config;
 
-  // Not checking for contains among all dragged nodes, should do this.
   if (targetConfig.treeGroup && draggedNodes[0].el.contains(targetParent.el))
     return false;
 

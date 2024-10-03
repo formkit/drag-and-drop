@@ -13,7 +13,7 @@ const lists = ref([
       {
         id: 1,
         name: "Fruits",
-        subitems: [
+        items: [
           { id: 1, name: "Apples" },
           { id: 2, name: "Bananas" },
           { id: 3, name: "Cherries" },
@@ -22,7 +22,7 @@ const lists = ref([
       {
         id: 2,
         name: "Vegetables",
-        subitems: [
+        items: [
           { id: 1, name: "Carrots" },
           { id: 2, name: "Broccoli" },
           { id: 3, name: "Spinach" },
@@ -31,7 +31,7 @@ const lists = ref([
       {
         id: 3,
         name: "Dairy",
-        subitems: [
+        items: [
           { id: 1, name: "Milk" },
           { id: 2, name: "Cheese" },
           { id: 3, name: "Yogurt" },
