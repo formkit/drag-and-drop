@@ -3,15 +3,30 @@ import { RefObject, Dispatch, SetStateAction } from 'react';
 interface ParentDragEventData<T> extends ParentEventData<T> {
     e: DragEvent;
 }
+type NativeDragEffects = "link" | "none" | "copy" | "move";
 /**
  * The configuration object for a given parent.
  */
 interface ParentConfig<T> {
-    [key: string]: any;
     /**
      * A function that returns whether a given parent accepts a given node.
      */
-    accepts?: (targetParentData: ParentRecord<T>, initialParentData: ParentRecord<T>, lastParentData: ParentRecord<T>, state: DragState<T>) => boolean;
+    accepts?: (targetParentData: ParentRecord<T>, initialParentData: ParentRecord<T>, currentParentData: ParentRecord<T>, state: BaseDragState<T>) => boolean;
+    activeDescendantClass?: string;
+    /**
+     * The data transfer effect to use for the drag operation.
+     */
+    dragEffectAllowed: NativeDragEffects;
+    /**
+     * The data transfer effect to use for the drag operation.
+     */
+    dragDropEffect: NativeDragEffects;
+    /**
+     * A function that returns the image to use for the drag operation. This is
+     * invoked for native operations. The clonedNode is what will be set as the drag
+     * image, but this can be updated.
+     */
+    dragImage?: (data: NodeDragEventData<T>, draggedNodes: Array<NodeRecord<T>>) => HTMLElement;
     /**
      * A flag to disable dragability of all nodes in the parent.
      */
@@ -24,14 +39,28 @@ interface ParentConfig<T> {
      * A function that returns whether a given node is draggable.
      */
     draggable?: (child: HTMLElement) => boolean;
+    draggedNodes: (data: NodeEventData<T>) => Array<NodeRecord<T>>;
     /**
      * The class to add to a node when it is being dragged.
      */
     draggingClass?: string;
     /**
+     * Accepts array of "dragged nodes" and applies dragstart classes to them.
+     */
+    dragstartClasses: (node: NodeRecord<T>, nodes: Array<NodeRecord<T>>, config: ParentConfig<T>, isSynthDrag?: boolean) => void;
+    dragPlaceholderClass?: string;
+    /**
+     * The configuration object for the drop and swap plugin.
+     */
+    dropSwapConfig?: DropSwapConfig<T>;
+    /**
      * The class to add to a node when the node is dragged over it.
      */
     dropZoneClass?: string;
+    /**
+     * The class to add to a parent when it is dragged over.
+     */
+    dropZoneParentClass?: string;
     /**
      * A flag to indicate whether the parent itself is a dropZone.
      */
@@ -41,41 +70,66 @@ interface ParentConfig<T> {
      * parents to transfer nodes between each other.
      */
     group?: string;
+    handleParentBlur: (data: ParentEventData<T>, state: BaseDragState<T>) => void;
+    handleParentFocus: (data: ParentEventData<T>, state: BaseDragState<T>) => void;
+    handleNodeKeydown: (data: NodeEventData<T>, state: DragState<T>) => void;
+    handleParentKeydown: (data: ParentKeydownEventData<T>, state: DragState<T>) => void;
     /**
      * Function that is called when dragend or touchend event occurs.
      */
-    handleEnd: (data: NodeDragEventData<T> | NodePointerEventData<T>) => void;
+    handleDragend: (data: NodeDragEventData<T>, state: DragState<T>) => void;
     /**
      * Function that is called when dragstart event occurs.
      */
-    handleDragstart: (data: NodeDragEventData<T>) => void;
+    handleDragstart: (data: NodeDragEventData<T>, state: DragState<T>) => void;
+    handleEnd: (state: DragState<T> | SynthDragState<T>) => void;
+    handleNodeDrop: (data: NodeDragEventData<T>, state: DragState<T>) => void;
+    handleNodePointerup: (data: NodePointerEventData<T>, state: DragState<T>) => void;
     /**
      * Function that is called when touchstart event occurs.
      */
-    handleTouchstart: (data: NodePointerEventData<T>) => void;
+    handleNodeTouchstart: (data: NodePointerEventData<T>, state: DragState<T>) => void;
+    /**
+     * Function that is called when a dragenter event is triggered on the node.
+     */
+    handleNodeDragenter: (data: NodeDragEventData<T>, state: DragState<T>) => void;
+    /**
+     * Dragleave event on node
+     */
+    handleNodeDragleave: (data: NodeDragEventData<T>, state: DragState<T>) => void;
     /**
      * Function that is called when a dragover event is triggered on the parent.
      */
-    handleDragoverParent: (data: ParentDragEventData<T>) => void;
+    handleParentDragover: (data: ParentDragEventData<T>, state: DragState<T>) => void;
+    /**
+     * Drop event on parent
+     */
+    handleParentDrop: (data: ParentDragEventData<T>, state: DragState<T>) => void;
     /**
      * Function that is called when a dragover event is triggered on a node.
      */
-    handleDragoverNode: (data: NodeDragEventData<T>) => void;
+    handleNodeDragover: (data: NodeDragEventData<T>, state: DragState<T>) => void;
+    handlePointercancel: (data: NodeDragEventData<T> | NodePointerEventData<T>, state: DragState<T> | SynthDragState<T> | BaseDragState<T>) => void;
+    handleNodePointerdown: (data: NodePointerEventData<T>, state: DragState<T>) => void;
     /**
      * Function that is called when either a pointermove or touchmove event is fired
      * where now the "dragged" node is being moved programatically.
      */
-    handlePointermove: (data: NodePointerEventData<T>) => void;
+    handleNodePointermove: (data: NodePointerEventData<T>, state: DragState<T>) => void;
     /**
      * Function that is called when a node that is being moved by touchmove event
      * is over a given node (similar to dragover).
      */
-    handlePointeroverNode: (data: PointeroverNodeEvent<T>) => void;
+    handleNodePointerover: (data: PointeroverNodeEvent<T>, state: SynthDragState<T>) => void;
     /**
      * Function that is called when a node that is being moved by touchmove event
      * is over the parent (similar to dragover).
      */
-    handlePointeroverParent: (e: PointeroverParentEvent<T>) => void;
+    handleParentPointerover: (e: PointeroverParentEvent<T>, state: SynthDragState<T>) => void;
+    /**
+     * Config option for insert plugin.
+     */
+    insertConfig?: InsertConfig<T>;
     /**
      * A flag to indicate whether long touch is enabled.
      */
@@ -87,11 +141,12 @@ interface ParentConfig<T> {
     /**
      * The time in milliseconds to wait before a long touch is performed.
      */
-    longPressTimeout?: number;
+    longPressTimeout?: any;
     /**
      * The name of the parent (used for accepts function for increased specificity).
      */
     name?: string;
+    multiDrag?: boolean;
     /**
      * If set to false, the library will not use the native drag and drop API.
      */
@@ -99,23 +154,48 @@ interface ParentConfig<T> {
     /**
      * Function that is called when a sort operation is to be performed.
      */
-    performSort: (state: DragState<T>, data: NodeDragEventData<T> | NodePointerEventData<T>) => void;
+    performSort: ({ parent, draggedNodes, targetNode, }: {
+        parent: ParentRecord<T>;
+        draggedNodes: Array<NodeRecord<T>>;
+        targetNode: NodeRecord<T>;
+    }) => void;
     /**
      * Function that is called when a transfer operation is to be performed.
      */
-    performTransfer: (state: DragState<T>, data: NodeEventData<T> | ParentEventData<T>) => void;
+    performTransfer: ({ currentParent, targetParent, initialParent, draggedNodes, initialIndex, state, targetNode, }: {
+        currentParent: ParentRecord<T>;
+        targetParent: ParentRecord<T>;
+        initialParent: ParentRecord<T>;
+        draggedNodes: Array<NodeRecord<T>>;
+        initialIndex: number;
+        state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
+        targetNode?: NodeRecord<T>;
+    }) => void;
     /**
      * An array of functions to use for a given parent.
      */
     plugins?: Array<DNDPlugin>;
     /**
+     * Takes a given node and reapplies the drag classes.
+     */
+    reapplyDragClasses: (node: Node, parentData: ParentData<T>) => void;
+    /**
+     * Invoked when the remapping of a given parent's nodes is finished.
+     */
+    remapFinished: (data: ParentData<T>) => void;
+    /**
      * The root element to use for the parent.
      */
     root: Document | ShadowRoot;
+    selectedClass?: string;
     /**
      * Function that is called when a node is set up.
      */
     setupNode: SetupNode;
+    /**
+     * Called when the value of the parent is changed and the nodes are remapped.
+     */
+    setupNodeRemap: SetupNode;
     /**
      * The scroll behavior of the parent.
      *
@@ -135,9 +215,31 @@ interface ParentConfig<T> {
      */
     sortable?: boolean;
     /**
+     * The class to add to a parent when it is dragged over.
+     */
+    synthDropZoneParentClass?: string;
+    /**
+     * A function that returns the image to use for the drag operation. This is
+     * invoked for synth drag operations operations. The clonedNode is what will
+     * be set as the drag image, but this can be updated.
+     */
+    synthDragImage?: (data: NodePointerEventData<T>, draggedNodes: Array<NodeRecord<T>>) => HTMLElement;
+    /**
      * Function that is called when a node is torn down.
      */
     tearDownNode: TearDownNode;
+    /**
+     * Called when the value of the parent is changed and the nodes are remapped.
+     */
+    tearDownNodeRemap: TearDownNode;
+    /**
+     * Property to identify the parent record who is the ancestor of the current parent.
+     */
+    treeAncestor?: boolean;
+    /**
+     * Property to identify which group of tree descendants the current parent belongs to.
+     */
+    treeGroup?: string;
     /**
      * The threshold for a drag to be considered a valid sort
      * operation.
@@ -150,7 +252,24 @@ interface ParentConfig<T> {
      * The class to add to a node when it is being synthetically dragged.
      */
     synthDraggingClass?: string;
+    /**
+     * On synth drag start, this is applied to the dragged node(s) (not their
+     * representations being dragged).
+     */
+    synthDragPlaceholderClass?: string;
+    /**
+     * When hovering over a node, this class is applied to the node.
+     */
     synthDropZoneClass?: string;
+    /**
+     * When a node receives focus, this class is applied to the node.
+     */
+    synthActiveDescendantClass?: string;
+    /**
+     * Config option to allow recursive copying of computed styles of dragged
+     * element to the cloned one that will be dragged (only for synthetic drag).
+     */
+    deepCopyStyles?: boolean;
     /**
      * Callback function for when a sort operation is performed.
      */
@@ -197,7 +316,10 @@ interface ParentData<T> {
      * classes).
      */
     privateClasses: Array<string>;
-    [key: string]: any;
+    /**
+     * Set on parentData indicating that the current parent is nested beneath an ancestor.
+     */
+    nestedParent?: ParentRecord<T>;
 }
 /**
  * The data assigned to a given node in the `nodes` weakmap.
@@ -220,7 +342,21 @@ interface NodeData<T> {
      * The abort controllers for the node.
      */
     abortControllers: Record<string, AbortController>;
-    [key: string]: any;
+    /**
+     * Set by the insertion plugin to define the coordinates for a given node.
+     */
+    range?: {
+        ascending?: {
+            y: number[];
+            x: number[];
+            vertical: boolean;
+        };
+        descending?: {
+            y: number[];
+            x: number[];
+            vertical: boolean;
+        };
+    };
 }
 /**
  * The data passed to the node event listener.
@@ -253,6 +389,16 @@ interface NodePointerEventData<T> extends NodeEventData<T> {
      * The data of the target node.
      */
     targetData: NodeTargetData<T>;
+}
+interface ParentKeydownEventData<T> extends ParentEventData<T> {
+    /**
+     * The event that was triggered.
+     */
+    e: KeyboardEvent;
+    /**
+     * The data of the target node.
+     */
+    targetData: ParentTargetData<T>;
 }
 /**
  * The data passed to the parent event listener.
@@ -311,6 +457,7 @@ interface PointeroverNodeEvent<T> extends Event {
     detail: {
         e: PointerEvent;
         targetData: NodeTargetData<T>;
+        state: SynthDragState<T>;
     };
 }
 /**
@@ -321,6 +468,7 @@ interface PointeroverParentEvent<T> extends Event {
     detail: {
         e: PointerEvent;
         targetData: ParentTargetData<T>;
+        state: SynthDragState<T>;
     };
 }
 /**
@@ -363,43 +511,18 @@ type TearDownNode = <T>(data: TearDownNodeData<T>) => void;
  * The payload of when the setupNode function is called in a given plugin.
  */
 interface SetupNodeData<T> {
-    /**
-     * The node that is being set up.
-     */
-    node: Node;
-    /**
-     * The data of the node that is being set up.
-     */
-    nodeData: NodeData<T>;
-    /**
-     * The parent of the node that is being set up.
-     */
-    parent: HTMLElement;
-    /**
-     * The data of the parent of the node that is being set up.
-     */
-    parentData: ParentData<T>;
+    node: NodeRecord<T>;
+    parent: ParentRecord<T>;
 }
 /**
  * The payload of when the tearDownNode function is called in a given plugin.
  */
 interface TearDownNodeData<T> {
-    /**
-     * The node that is being torn down.
-     */
-    node: Node;
-    /**
-     * The data of the node that is being torn down.
-     */
-    nodeData?: NodeData<T>;
-    /**
-     * The parent of the node that is being torn down.
-     */
-    parent: HTMLElement;
-    /**
-     * The data of the parent of the node that is being torn down.
-     */
-    parentData: ParentData<T>;
+    node: {
+        el: Node;
+        data?: NodeData<T>;
+    };
+    parent: ParentRecord<T>;
 }
 /**
  * The state of the current drag. State is only created when a drag start
@@ -417,7 +540,7 @@ interface TearDownNodeData<T> {
  * @param incomingDirection - The direction that the dragged node is moving into
  * a dragover node.
  * @param initialParent - The parent that the dragged node was initially in.
- * @param lastParent - The parent that the dragged node was most recently in.
+ * @param currentParent - The parent that the dragged node was most recently in.
  * @param lastValue - The last value of the dragged node.
  * @param originalZIndex - The original z-index of the dragged node.
  * @param preventEnter - A flag to prevent a sort operation from firing until
@@ -428,11 +551,63 @@ interface TearDownNodeData<T> {
  * @param targetIndex - The index of the node that the dragged node is moving
  * into.
  */
-interface DragState<T> extends DragStateProps<T> {
+type SynthDragState<T> = SynthDragStateProps & DragState<T>;
+interface SynthDragStateProps {
     /**
-     * The node that was most recently clicked (used optionally).
+     * Element
      */
-    activeNode: NodeRecord<T> | undefined;
+    clonedDraggedNode: HTMLElement;
+    /**
+     * Direction of the synthetic drag scroll
+     */
+    synthScrollDirection: "up" | "down" | "left" | "right" | undefined;
+    /**
+     * The display of the synthetic node.
+     */
+    draggedNodeDisplay: string;
+    /**
+     * Flag indcating whether a scrollable el is being scrolled via.
+     * synthetic drag.
+     */
+    synthDragScrolling: boolean;
+    /**
+     * Pointer id of dragged el
+     */
+    pointerId: number;
+}
+type DragState<T> = DragStateProps<T> & BaseDragState<T>;
+type BaseDragState<T> = {
+    activeState?: {
+        node: NodeRecord<T>;
+        parent: ParentRecord<T>;
+    };
+    /**
+     * The nodes that will be updated by a drag action (sorted).
+     */
+    affectedNodes: Array<NodeRecord<T>>;
+    /**
+     * The last value the dragged node targeted.
+     */
+    currentTargetValue: T | undefined;
+    emit: (event: string, data: unknown) => void;
+    on: (event: string, callback: CallableFunction) => void;
+    newActiveDescendant?: NodeRecord<T>;
+    /**
+     * The original z-index of the dragged node.
+     */
+    originalZIndex?: string;
+    pointerSelection: boolean;
+    preventEnter: boolean;
+    /**
+     * Flag indicating that the remap just finished.
+     */
+    remapJustFinished: boolean;
+    selectedState?: {
+        nodes: Array<NodeRecord<T>>;
+        parent: ParentRecord<T>;
+    };
+};
+interface DragStateProps<T> {
     /**
      * The nodes that will be updated by a drag action (sorted).
      */
@@ -448,10 +623,6 @@ interface DragState<T> extends DragStateProps<T> {
      */
     clonedDraggedEls: Array<Element>;
     /**
-     * Element
-     */
-    clonedDraggedNode: Node | undefined;
-    /**
      * The coordinates of the dragged element itself.
      */
     coordinates: {
@@ -459,17 +630,14 @@ interface DragState<T> extends DragStateProps<T> {
         y: number;
     };
     /**
-     * A flag to indicate whether the dragged node is moving.
+     * The parent that the dragged node was most recently in.
      */
-    pointerMoved: boolean;
+    currentParent: ParentRecord<T>;
+    currentTargetValue: T | undefined;
     /**
      * The node that is being dragged.
      */
     draggedNode: NodeRecord<T>;
-    /**
-     * The display of the touched node.
-     */
-    draggedNodeDisplay: string | undefined;
     /**
      * The nodes that are being dragged.
      */
@@ -491,38 +659,17 @@ interface DragState<T> extends DragStateProps<T> {
      */
     initialParent: ParentRecord<T>;
     /**
-     * The parent that the dragged node was most recently in.
-     */
-    lastParent: ParentRecord<T>;
-    /**
-     * The last value of the dragged node.
-     */
-    lastValue: any;
-    /**
-     * The last value the dragged node targeted.
-     */
-    lastTargetValue: any;
-    /**
      * longPress - A flag to indicate whether a long press has occurred.
      */
     longPress: boolean;
     /**
      * Long press timeout
      */
-    longPressTimeout: any;
+    longPressTimeout: number;
     /**
-     * The original z-index of the dragged node.
+     * scrollEls
      */
-    originalZIndex: string | undefined;
-    preventEnter: boolean;
-    /**
-     * Flag indicating that the remap just finished.
-     */
-    remapJustFinished: boolean;
-    /**
-     * The nearest parent that is scrollable.
-     */
-    scrollParent: HTMLElement;
+    scrollEls: Array<[HTMLElement, AbortController]>;
     /**
      * The top position of pointerdown.
      */
@@ -540,25 +687,9 @@ interface DragState<T> extends DragStateProps<T> {
      */
     transferred: boolean;
 }
-interface DragStateProps<T> {
-    clonedDraggedNode: Node | undefined;
-    coordinates: {
-        x: number;
-        y: number;
-    };
-    draggedNode: NodeRecord<T>;
-    draggedNodes: Array<NodeRecord<T>>;
-    initialIndex: number;
-    initialParent: ParentRecord<T>;
-    lastParent: ParentRecord<T>;
-    preventEnter: boolean;
-    scrollParent: HTMLElement;
-    startTop: number;
-    startLeft: number;
-}
 type SortEvent = <T>(data: SortEventData<T>) => void;
 type TransferEvent = <T>(data: TransferEventData<T>) => void;
-type DragstartEvent = <T>(data: DragstartEventData<T>) => void;
+type DragstartEvent = <T>(data: DragstartEventData<T>, state: DragState<T>) => void;
 type DragendEvent = <T>(data: DragendEventData<T>) => void;
 interface SortEventData<T> {
     parent: ParentRecord<T>;
@@ -573,17 +704,11 @@ interface SortEventData<T> {
 interface TransferEventData<T> {
     sourceParent: ParentRecord<T>;
     targetParent: ParentRecord<T>;
-    previousSourceValues: Array<T>;
-    sourceValues: Array<T>;
-    previousTargetValues: Array<T>;
-    targetValues: Array<T>;
-    previousSourceNodes: Array<NodeRecord<T>>;
-    sourceNodes: Array<NodeRecord<T>>;
-    previousTargetNodes: Array<NodeRecord<T>>;
-    targetNodes: Array<NodeRecord<T>>;
-    draggedNode: NodeRecord<T>;
-    sourcePreviousPosition: number;
-    targetPosition: number;
+    initialParent: ParentRecord<T>;
+    draggedNodes: Array<NodeRecord<T>>;
+    targetIndex: number;
+    state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
+    targetNode?: NodeRecord<T>;
 }
 interface DragstartEventData<T> {
     parent: ParentRecord<T>;
@@ -597,7 +722,36 @@ interface DragendEventData<T> {
     values: Array<T>;
     draggedNode: NodeRecord<T>;
     draggedNodes: Array<NodeRecord<T>>;
-    position: number;
+}
+interface ShouldSwapData<T> {
+    sourceParent: ParentRecord<T>;
+    targetParent: ParentRecord<T>;
+    draggedNodes: Array<NodeRecord<T>>;
+    targetNodes: Array<NodeRecord<T>>;
+    state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
+}
+interface DropSwapConfig<T> {
+    shouldSwap?: (data: ShouldSwapData<T>) => boolean;
+    handleNodeDragover?: (data: NodeDragEventData<unknown>, state: DragState<unknown>) => void;
+    handleParentDragover?: (data: ParentDragEventData<unknown>, state: DragState<unknown>) => void;
+    handleParentPointerover?: (e: PointeroverParentEvent<unknown>, state: DragState<unknown>) => void;
+    handleNodePointerover?: (data: PointeroverNodeEvent<unknown>, state: SynthDragState<unknown>) => void;
+}
+interface InsertConfig<T> {
+    insertPoint: (parent: ParentRecord<T>) => HTMLElement;
+    insertEvent?: (data: InsertEvent<T>) => void;
+    handleNodeDragover?: (data: NodeDragEventData<T>, state: DragState<T>) => void;
+    handleParentDragover?: (data: ParentDragEventData<T>, state: DragState<T>) => void;
+    handleParentPointerover?: (data: PointeroverParentEvent<T>, state: SynthDragState<T>) => void;
+    handleNodePointerover?: (data: PointeroverNodeEvent<T>, state: SynthDragState<T>) => void;
+    handleEnd?: (data: NodeDragEventData<T> | NodePointerEventData<T>) => void;
+}
+interface InsertEvent<T> {
+    sourceParent: ParentRecord<T>;
+    targetParent: ParentRecord<T>;
+    draggedNodes: Array<NodeRecord<T>>;
+    targetNodes: Array<NodeRecord<T>>;
+    state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
 }
 
 type ReactElement<E extends HTMLElement> = E | RefObject<E>;

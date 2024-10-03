@@ -34,7 +34,6 @@ const [parent, values] = useDragAndDrop(
 }
 .list {
   list-style-type: none;
-  width: 1400px;
   padding: 0;
   margin: 0;
   margin-bottom: 2em;

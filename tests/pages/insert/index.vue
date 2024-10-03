@@ -1,11 +1,45 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../../src/vue/index";
-import { insertion } from "../../../src/index";
+import { insert } from "../../../src/index";
+
+const insertPointClasses = [
+  "absolute",
+  "bg-blue-500",
+  "z-[1000]",
+  "rounded-full",
+  "duration-[5ms]",
+  "before:block",
+  'before:content-["Insert"]',
+  "before:whitespace-nowrap",
+  "before:block",
+  "before:bg-blue-500",
+  "before:py-1",
+  "before:px-2",
+  "before:rounded-full",
+  "before:text-xs",
+  "before:absolute",
+  "before:top-1/2",
+  "before:left-1/2",
+  "before:-translate-y-1/2",
+  "before:-translate-x-1/2",
+  "before:text-white",
+  "before:text-xs",
+];
 
 const [parent, values] = useDragAndDrop(
   ["Apple", "Banana", "Orange", "Strawberry", "Pineapple", "Grapes"],
   {
-    plugins: [insertion()],
+    plugins: [
+      insert({
+        insertPoint: (parent) => {
+          const div = document.createElement("div");
+
+          for (const cls of insertPointClasses) div.classList.add(cls);
+
+          return div;
+        },
+      }),
+    ],
   }
 );
 </script>
@@ -52,12 +86,12 @@ const [parent, values] = useDragAndDrop(
 
 .list {
   list-style-type: none;
-  width: 1400px;
   padding: 0;
   margin: 0;
   margin-bottom: 2em;
   display: flex;
   flex-direction: column;
+  width: 300px;
 }
 
 .item {
@@ -69,7 +103,6 @@ const [parent, values] = useDragAndDrop(
   background-color: #f9f9f9;
   box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s;
-  width: 400px;
   height: 50px;
 }
 

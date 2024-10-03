@@ -13,7 +13,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 8
+          version: 9.10.0
       - run: pnpm install --frozen-lockfile
       - name: Build Dev Frameworks
         run: cd tests-frameworks && pnpm install && cd ..

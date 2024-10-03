@@ -35,7 +35,7 @@ html.dark {
 }
 
 html {
-  @apply scroll-smooth;
+  /*@apply scroll-smooth;*/
   scroll-padding: 1em;
 }
 

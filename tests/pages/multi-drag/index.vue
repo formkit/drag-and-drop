@@ -1,21 +1,16 @@
 <script setup lang="ts">
-import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
-import { multiDrag, selections } from "@formkit/drag-and-drop";
+import { useDragAndDrop } from "../../../src/vue/index";
 
-const [parent, values] = useDragAndDrop(
-  ["Apple", "Banana", "Orange", "Strawberry", "Pineapple", "Grapes"],
-  {
-    plugins: [
-      multiDrag({
-        plugins: [selections()],
-      }),
-    ],
-  }
-);
+const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
+  draggingClass: "blue",
+  dropZoneClass: "dropZoneClass",
+  multiDrag: true,
+  selectedClass: "selected",
+});
 </script>
 
 <template>
-  <h2>Place Plugin</h2>
+  <h2>Multi drag plugin</h2>
   <div>
     <ul ref="parent" class="list">
       <li v-for="value in values" :id="value" :key="value" class="item">
@@ -29,10 +24,24 @@ const [parent, values] = useDragAndDrop(
       </span>
     </div>
   </div>
-  <div id="randomElement">Random element</div>
 </template>
 
 <style scoped>
+.selected {
+  background-color: yellow !important;
+  color: black !important;
+}
+
+.dropZoneClass {
+  background-color: green !important;
+  color: white !important;
+}
+
+.blue {
+  background-color: lightblue !important;
+  color: yellow !important;
+}
+
 .item {
   padding: 10px;
   border: 1px solid #ccc;
@@ -56,7 +65,6 @@ const [parent, values] = useDragAndDrop(
 
 .list {
   list-style-type: none;
-  width: 1400px;
   padding: 0;
   margin: 0;
   margin-bottom: 2em;

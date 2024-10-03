@@ -14,7 +14,7 @@
     >
       <SectionIntroduction />
       <SectionGettingStarted />
-      <SectionFeatures />
+      <SectionCoreFeatures />
       <SectionPlugins />
       <SectionEvents />
       <SectionConfiguration />

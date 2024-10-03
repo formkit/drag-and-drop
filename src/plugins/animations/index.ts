@@ -1,6 +1,6 @@
 import type { SetupNodeData, Node } from "../../types";
 import type { AnimationsConfig } from "./types";
-import { state, parents } from "../../index";
+import { state, parents, isDragState } from "../../index";
 
 export function animations(animationsConfig: Partial<AnimationsConfig> = {}) {
   const slideUp = [
@@ -49,26 +49,26 @@ export function animations(animationsConfig: Partial<AnimationsConfig> = {}) {
       },
 
       setupNodeRemap<T>(data: SetupNodeData<T>) {
-        if (!state) return;
+        if (!isDragState(state)) return;
 
         const duration = animationsConfig.duration || 150;
 
-        if (data.nodeData.value === state.draggedNode.data.value) {
+        if (data.node.data.value === state.draggedNode.data.value) {
           switch (state.incomingDirection) {
             case "below":
-              animate(data.node, slideUp, duration);
+              animate(data.node.el, slideUp, duration);
 
               break;
             case "above":
-              animate(data.node, slideDown, duration);
+              animate(data.node.el, slideDown, duration);
 
               break;
             case "left":
-              animate(data.node, slideRight, duration);
+              animate(data.node.el, slideRight, duration);
 
               break;
             case "right":
-              animate(data.node, slideLeft, duration);
+              animate(data.node.el, slideLeft, duration);
 
               break;
           }
@@ -79,14 +79,14 @@ export function animations(animationsConfig: Partial<AnimationsConfig> = {}) {
         if (
           !state.affectedNodes
             .map((x) => x.data.value)
-            .includes(data.nodeData.value)
+            .includes(data.node.data.value)
         )
           return;
 
-        const nodeRect = data.node.getBoundingClientRect();
+        const nodeRect = data.node.el.getBoundingClientRect();
 
         const nodeIndex = state.affectedNodes.findIndex(
-          (x) => x.data.value === data.nodeData.value
+          (x) => x.data.value === data.node.data.value
         );
 
         const draggedNodeIndex = state.draggedNode.data.index;
@@ -115,26 +115,26 @@ export function animations(animationsConfig: Partial<AnimationsConfig> = {}) {
           );
 
           if (xDiff > yDiff && ascendingDirection) {
-            animate(data.node, slideRight, duration);
+            animate(data.node.el, slideRight, duration);
           } else if (xDiff > yDiff && !ascendingDirection) {
-            animate(data.node, slideLeft, duration);
+            animate(data.node.el, slideLeft, duration);
           }
         } else {
           switch (state.incomingDirection) {
             case "below":
-              animate(data.node, slideDown, duration);
+              animate(data.node.el, slideDown, duration);
 
               break;
             case "above":
-              animate(data.node, slideUp, duration);
+              animate(data.node.el, slideUp, duration);
 
               break;
             case "left":
-              animate(data.node, slideLeft, duration);
+              animate(data.node.el, slideLeft, duration);
 
               break;
             case "right":
-              animate(data.node, slideRight, duration);
+              animate(data.node.el, slideRight, duration);
 
               break;
           }

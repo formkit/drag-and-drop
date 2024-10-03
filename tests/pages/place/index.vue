@@ -1,58 +1,99 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../../src/vue/index";
-import { place, animations } from "../../../src/index";
+import { dropOrSwap } from "../../../src/index";
 
-const [parent, values] = useDragAndDrop(
-  ["Apple", "Banana", "Orange", "Strawberry", "Pineapple", "Grapes"],
-  {
-    plugins: [place(), animations()],
-    dropZoneClass: "hover",
-  }
-);
+const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
+  plugins: [dropOrSwap({})],
+  dropZoneClass: "dropZone",
+  group: "transfer",
+  dragPlaceholderClass: "dragPlaceholder",
+  dropZoneParentClass: "dropZoneParent",
+  synthDropZoneParentClass: "synthDropZoneParent",
+  synthDropZoneClass: "synthDropZone",
+  synthDragPlaceholderClass: "synthDragPlaceholder",
+  draggable: (el) => {
+    return el.tagName === "LI";
+  },
+});
+
+const [parent2, values2] = useDragAndDrop(["Tomato", "Potato", "Onion"], {
+  plugins: [dropOrSwap({})],
+  dropZoneClass: "dropZone",
+  group: "transfer",
+  dragPlaceholderClass: "dragPlaceholder",
+  dropZoneParentClass: "dropZoneParent",
+  synthDropZoneParentClass: "synthDropZoneParent",
+  synthDropZoneClass: "synthDropZone",
+  synthDragPlaceholderClass: "synthDragPlaceholder",
+  draggable: (el) => {
+    return el.tagName === "LI";
+  },
+});
 </script>
 
 <template>
-  <h2>Place Plugin</h2>
-  <div>
-    <ul ref="parent" class="list">
-      <li v-for="value in values" :id="value" :key="value" class="item">
-        {{ value }}
-      </li>
-    </ul>
-    <div class="values">
-      Values:
-      <span id="sort_values">
-        {{ values.map((x) => x).join(" ") }}
-      </span>
+  <h2 id="title">Place Plugin</h2>
+  <div class="flex-wrap">
+    <div class="container">
+      <h4>List 1</h4>
+      <ul id="list_1" ref="parent1" class="list">
+        <li v-for="value in values1" :id="value" :key="value" class="item">
+          {{ value }}
+        </li>
+        <div class="values">
+          Values:
+          <span id="values_1">
+            {{ values1.map((x) => x).join(" ") }}
+          </span>
+        </div>
+        1
+      </ul>
+    </div>
+    <div>
+      <div class="container">
+        <h4>List 2</h4>
+        <ul id="list_2" ref="parent2" class="list">
+          <li v-for="value in values2" :id="value" :key="value" class="item">
+            {{ value }}
+          </li>
+          <div class="values">
+            Values:
+            <span id="values_2">
+              {{ values2.map((x) => x).join(" ") }}
+            </span>
+          </div>
+        </ul>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.dropZoneParent,
+.synthDropZoneParent {
+  border: 1px solid purple !important;
+}
+
+.dropZone,
+.synthDropZone {
+  background-color: teal !important;
+}
+
+.dragPlaceholder,
+.synthDragPlaceholder {
+  opacity: 0.5;
+}
+
 .item {
+  width: 200px;
   padding: 10px;
   border: 1px solid #ccc;
   margin: 5px 0;
   list-style-type: none;
 }
 
-.item.hover {
-  position: relative;
-}
-
-.item.hover::before {
-  content: "";
-  position: absolute;
-  bottom: -5px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: green;
-}
-
 .list {
   list-style-type: none;
-  width: 1400px;
   padding: 0;
   margin: 0;
   margin-bottom: 2em;
