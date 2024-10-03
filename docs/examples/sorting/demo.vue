@@ -42,6 +42,10 @@ dragAndDrop({
             <CassetteTape :label="tape" :data-label="tape" />
           </li>
         </ul>
+        <pre
+          class="bg-white text-gray-800 p-4 border border-gray-300 rounded-lg font-mono text-sm shadow-sm overflow-x-auto whitespace-pre-wrap whitespace-pre mt-10"
+          >{{ JSON.stringify(tapes) }}</pre
+        >
       </div>
     </div>
   </DemoContainer>

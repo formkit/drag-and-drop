@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../../src/vue/index";
-import { place } from "../../../src/index";
+import { dropOrSwap } from "../../../src/index";
 
 const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
-  plugins: [place()],
+  plugins: [dropOrSwap()],
   dropZoneClass: "dropZone",
   group: "transfer",
   dragPlaceholderClass: "dragPlaceholder",
@@ -19,7 +19,7 @@ const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
 });
 
 const [parent2, values2] = useDragAndDrop(["Tomato", "Potato", "Onion"], {
-  plugins: [place()],
+  plugins: [dropOrSwap()],
   dropZoneClass: "dropZone",
   group: "transfer",
   dragPlaceholderClass: "dragPlaceholder",

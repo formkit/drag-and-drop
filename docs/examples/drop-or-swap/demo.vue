@@ -3,5 +3,5 @@ import ToDos from "../ToDos.vue";
 </script>
 
 <template>
-  <ToDos :swap="true" :transfer="false" />
+  <ToDos :use-drop-or-swap="true" :transfer="true" />
 </template>

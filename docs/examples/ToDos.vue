@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { dropOrSwap } from "@formkit/drag-and-drop";
-import { useDragAndDrop } from "../../src/vue/index";
+import { dropOrSwap, insert } from "@formkit/drag-and-drop";
+import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
 
 const props = defineProps({
   dragHandles: {
@@ -11,7 +11,7 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-  swap: {
+  useDropOrSwap: {
     type: Boolean,
     default: false,
   },
@@ -19,7 +19,82 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  insert: {
+    type: Boolean,
+    default: false,
+  },
 });
+
+const todoShouldSwap = ref(false);
+const doneShouldSwap = ref(false);
+
+const todoConfig = {
+  group: "todoList",
+  dragHandle: props.dragHandles ? ".kanban-handle" : undefined,
+  sortable: props.sortable,
+  plugins: (() => {
+    const pluginArray = [];
+    if (props.insert) {
+      pluginArray.push(
+        insert({
+          insertPoint: (parent) => {
+            const div = document.createElement("div");
+
+            for (const cls of insertPointClasses) div.classList.add(cls);
+
+            return div;
+          },
+        })
+      );
+    }
+    if (props.useDropOrSwap) {
+      pluginArray.push(
+        dropOrSwap({
+          shouldSwap: () => {
+            return todoShouldSwap.value;
+          },
+        })
+      );
+    }
+    return pluginArray.length ? pluginArray : undefined;
+  })(),
+  dropZoneClass: !props.insert ? "!bg-lime-200" : undefined,
+  dropZoneParentClass: !props.insert ? "!border-4 border-lime-300" : undefined,
+};
+
+const doneConfig = {
+  group: "todoList",
+  dragHandle: props.dragHandles ? ".kanban-handle" : undefined,
+  sortable: props.sortable,
+  plugins: (() => {
+    const pluginArray = [];
+    if (props.insert) {
+      pluginArray.push(
+        insert({
+          insertPoint: (parent) => {
+            const div = document.createElement("div");
+
+            for (const cls of insertPointClasses) div.classList.add(cls);
+
+            return div;
+          },
+        })
+      );
+    }
+    if (props.useDropOrSwap) {
+      pluginArray.push(
+        dropOrSwap({
+          shouldSwap: () => {
+            return todoShouldSwap.value;
+          },
+        })
+      );
+    }
+    return pluginArray.length ? pluginArray : undefined;
+  })(),
+  dropZoneClass: !props.insert ? "!bg-lime-200" : undefined,
+  dropZoneParentClass: !props.insert ? "!border-4 border-lime-300" : undefined,
+};
 
 const [todoList, todos] = useDragAndDrop(
   [
@@ -30,25 +105,48 @@ const [todoList, todos] = useDragAndDrop(
     "Learn C++",
     "Return Nintendo Power Glove",
   ],
-  {
-    group: "todoList",
-    dragHandle: !!props.dragHandles ? ".kanban-handle" : undefined,
-    sortable: props.sortable,
-    plugins: props.swap ? [dropOrSwap()] : undefined,
-    dropZoneClass: "!bg-lime-200",
-  }
+  todoConfig
 );
-const [doneList, dones] = useDragAndDrop(["Pickup new mix-tape from Beth"], {
-  group: "todoList",
-  dragHandle: !!props.dragHandles ? ".kanban-handle" : undefined,
-  sortable: props.sortable,
-  plugins: props.swap ? [dropOrSwap()] : undefined,
-  dropZoneClass: "!bg-lime-200",
-});
+const [doneList, dones] = useDragAndDrop(
+  ["Pickup new mix-tape from Beth"],
+  doneConfig
+);
 
 if (props.dragHandles) {
   dones.value.push("Implement drag handles");
 }
+
+function toggleTodoSwap() {
+  todoShouldSwap.value = !todoShouldSwap.value;
+}
+
+function toggleDoneSwap() {
+  doneShouldSwap.value = !doneShouldSwap.value;
+}
+
+const insertPointClasses = [
+  "absolute",
+  "bg-blue-500",
+  "z-[1000]",
+  "rounded-full",
+  "duration-[5ms]",
+  "before:block",
+  'before:content-["Insert"]',
+  "before:whitespace-nowrap",
+  "before:block",
+  "before:bg-blue-500",
+  "before:py-1",
+  "before:px-2",
+  "before:rounded-full",
+  "before:text-xs",
+  "before:absolute",
+  "before:top-1/2",
+  "before:left-1/2",
+  "before:-translate-y-1/2",
+  "before:-translate-x-1/2",
+  "before:text-white",
+  "before:text-xs",
+];
 </script>
 
 <template>
@@ -81,6 +179,18 @@ if (props.dragHandles) {
               {{ todo }}
             </li>
           </ul>
+          <div v-if="useDropOrSwap">
+            <button
+              @click="toggleTodoSwap()"
+              class="bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg mt-4"
+            >
+              Toggle {{ todoShouldSwap ? "Drop" : "Swap" }}
+            </button>
+          </div>
+          <pre
+            class="bg-white text-gray-800 p-4 border border-gray-300 rounded-lg font-mono text-sm shadow-sm overflow-x-auto whitespace-pre-wrap whitespace-pre mt-10"
+            >{{ JSON.stringify(todos) }}</pre
+          >
         </div>
         <div v-if="transfer" class="kanban-column">
           <h2 class="kanban-title">Complete</h2>
@@ -107,6 +217,18 @@ if (props.dragHandles) {
               </span>
             </li>
           </ul>
+          <div v-if="useDropOrSwap">
+            <button
+              @click="toggleDoneSwap()"
+              class="bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg mt-4"
+            >
+              Toggle {{ doneShouldSwap ? "Drop" : "Swap" }}
+            </button>
+          </div>
+          <pre
+            class="bg-white text-gray-800 p-4 border border-gray-300 rounded-lg font-mono text-sm shadow-sm overflow-x-auto whitespace-pre-wrap whitespace-pre mt-10"
+            >{{ JSON.stringify(dones) }}</pre
+          >
         </div>
       </div>
     </div>

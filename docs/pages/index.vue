@@ -14,12 +14,11 @@
     >
       <SectionIntroduction />
       <SectionGettingStarted />
-      <SectionFeatures />
-      <!--<SectionFeatures />
-      <SectionPlugins />-->
-      <!--<SectionEvents />-->
-      <!--<SectionConfiguration />
-      <SectionSupport />-->
+      <SectionCoreFeatures />
+      <SectionPlugins />
+      <SectionEvents />
+      <SectionConfiguration />
+      <SectionSupport />
     </div>
   </main>
   <TheFooter />

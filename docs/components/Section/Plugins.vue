@@ -8,23 +8,26 @@
       They can be used to add new features, modify existing ones, or even create
       entirely new experiences.
     </p>
-    <h3 id="animations">Animations</h3>
+    <h3 id="drop-or-swap">Drop or Swap</h3>
+    <p>
+      The examples seen so far have shown the values of a given list being
+      updated as the end-user drags over the list and its children. To enable
+      behavior where the values of the list are only updated when the user drops
+      the item, use the <code>dropOrSwap</code> plugin.
+    </p>
+    <h3 id="insert">Insert (Experimental)</h3>
+    <p>
+      Similar to the <code>dropOrSwap</code> plugin, the
+      <code>insert</code> plugin does not update values until the user drops the
+      item. In addition, the <code>insert</code> plugin will render an insert
+      point between the items to indicate where the item will be placed.
+      <CodeExample example="insert" />
+    </p>
+    <h3 id="animations">Animations (Experimenal)</h3>
     <p>
       To add animations to your drag and drop experience, you can use the
-      first-party <code>animations</code> plugin.
+      <code>animations</code> plugin.
     </p>
     <CodeExample example="animations" />
-    <h3 id="swap">Swap</h3>
-    <p>
-      If you would prefer to only update values (sort) when the drag is
-      released, you can use the <code>swap</code> plugin.
-    </p>
-    <CodeExample example="swap" />
-    <h3 id="multi-drag">Multi Drag</h3>
-    <p>
-      The multi-drag plugin allows you to select multiple items and drag them
-      together.
-    </p>
-    <CodeExample example="multi-drag" />
   </SectionWrapper>
 </template>

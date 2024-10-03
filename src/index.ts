@@ -390,9 +390,6 @@ export function performSort<T>({
   draggedNodes: Array<NodeRecord<T>>;
   targetNode: NodeRecord<T>;
 }) {
-  return;
-  const config = parent.data.config;
-
   const draggedValues = draggedNodes.map((x) => x.data.value);
 
   const targetParentValues = parentValues(parent.el, parent.data);
@@ -409,31 +406,22 @@ export function performSort<T>({
 
   if ("draggedNode" in state) state.currentTargetValue = targetNode.data.value;
 
-  //console.log(
-  //  "new parent values for sort",
-  //  newParentValues.map((x) => x.name)
-  //);
-
-  console.log(
-    "final values",
-    newParentValues.map((x) => x.name)
-  );
   setParentValues(parent.el, parent.data, [...newParentValues]);
 
-  //  if (parent.data.config.onSort)
-  //    parent.data.config.onSort({
-  //      parent: {
-  //        el: parent.el,
-  //        data: parent.data,
-  //      },
-  //      previousValues: [...targetParentValues],
-  //      previousNodes: [...enabledNodes],
-  //      nodes: [...parent.data.enabledNodes],
-  //      values: [...newParentValues],
-  //      draggedNode: draggedNodes[0],
-  //      previousPosition: originalIndex,
-  //      position: targetNode.data.index,
-  //    });
+  if (parent.data.config.onSort)
+    parent.data.config.onSort({
+      parent: {
+        el: parent.el,
+        data: parent.data,
+      },
+      previousValues: [...targetParentValues],
+      previousNodes: [...enabledNodes],
+      nodes: [...parent.data.enabledNodes],
+      values: [...newParentValues],
+      draggedNode: draggedNodes[0],
+      previousPosition: originalIndex,
+      position: targetNode.data.index,
+    });
 }
 
 /**
@@ -1044,24 +1032,10 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     }
   }
 
-  if (enabledNodes.length === 0) {
-    //console.log("parent", parent);
-    //console.log("show me the values", parentData.getValues(parent));
-  }
-
   if (
     enabledNodes.length !== parentData.getValues(parent).length &&
     !config.disabled
   ) {
-    //console.log(
-    //  "parentData.getValues(parent).length",
-    //  parentData.getValues(parent).map((x) => x.name)
-    //);
-    //console.log(
-    //  "enabledNodes.length",
-    //  enabledNodes.map((x) => x.textContent)
-    //);
-    //console.log("parent.el", parent);
     console.warn(
       "The number of draggable items defined in the parent element does not match the number of values. This may cause unexpected behavior."
     );
@@ -1448,6 +1422,12 @@ export function initDrag<T>(
           data.e.offsetY
         );
 
+        const originalZIndex = data.targetData.node.el.style.zIndex;
+
+        dragState.originalZIndex = originalZIndex;
+
+        data.targetData.node.el.style.zIndex = "9999";
+
         return dragState;
       } else {
         const wrapper = document.createElement("div");
@@ -1629,7 +1609,7 @@ export function handleParentKeydown<T>(
 }
 
 export function preventSortOnScroll() {
-  let scrollTimeout: number;
+  let scrollTimeout: any;
 
   return () => {
     clearTimeout(scrollTimeout);
@@ -1675,16 +1655,6 @@ export function handleDragend<T>(
 
   const config = data.targetData.parent.data.config;
 
-  if (config?.onDragend) {
-    config.onDragend({
-      parent: state.currentParent,
-      values: parentValues(state.currentParent.el, state.currentParent.data),
-      draggedNode: state.draggedNode,
-      draggedNodes: state.draggedNodes,
-      position: state.initialIndex,
-    });
-  }
-
   config.handleEnd(state);
 }
 
@@ -1710,7 +1680,6 @@ export function handlePointercancel<T>(
       values: parentValues(state.currentParent.el, state.currentParent.data),
       draggedNode: state.draggedNode,
       draggedNodes: state.draggedNodes,
-      position: state.initialIndex,
     });
   }
 
@@ -1725,7 +1694,7 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
 
   const config = parents.get(state.initialParent.el)?.config;
 
-  const isSynth = "clonedDraggedNode" in state && state.clonedDraggedNode;
+  const isSynth = isSynthDragState(state);
 
   const dropZoneClass = isSynth
     ? config?.synthDropZoneClass
@@ -1763,7 +1732,14 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
 
   synthNodePointerDown = false;
 
-  state.emit("dragend", state);
+  config?.onDragend?.({
+    parent: state.currentParent,
+    values: parentValues(state.currentParent.el, state.currentParent.data),
+    draggedNode: state.draggedNode,
+    draggedNodes: state.draggedNodes,
+  });
+
+  state.emit("dragEnded", state);
 }
 
 export function handleNodeTouchstart<T>(
@@ -2269,8 +2245,6 @@ export function handleParentDragover<T>(
   data.e.preventDefault();
 
   data.e.stopPropagation();
-
-  return;
 
   Object.assign(eventCoordinates(data.e as DragEvent));
 

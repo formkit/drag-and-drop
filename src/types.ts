@@ -218,7 +218,7 @@ export interface ParentConfig<T> {
   /**
    * The time in milliseconds to wait before a long touch is performed.
    */
-  longPressTimeout?: number;
+  longPressTimeout?: any;
   /**
    * The name of the parent (used for accepts function for increased specificity).
    */
@@ -927,7 +927,6 @@ export interface DragendEventData<T> {
   values: Array<T>;
   draggedNode: NodeRecord<T>;
   draggedNodes: Array<NodeRecord<T>>;
-  position: number;
 }
 
 export interface ScrollData {

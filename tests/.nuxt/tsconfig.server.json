@@ -69,7 +69,7 @@
         "../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt"
       ],
       "#internal/nuxt/paths": [
-        "../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/dist/core/runtime/nitro/paths"
+        "../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.50_eslint@8.57.1_ioredis@5.4.1_magicast@0_rcqp6qryyuv66k3k4ycdfb4vie/node_modules/nuxt/dist/core/runtime/nitro/paths"
       ],
       "~": [
         "./.."
@@ -117,7 +117,7 @@
   "exclude": [
     "../node_modules",
     "../../node_modules",
-    "../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@20.16.5_eslint@8.57.1_ioredis@5.4.1_magicast@0._b5skcavbiarhwfsnc4eslqhlb4/node_modules/nuxt/node_modules",
+    "../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.50_eslint@8.57.1_ioredis@5.4.1_magicast@0_rcqp6qryyuv66k3k4ycdfb4vie/node_modules/nuxt/node_modules",
     "../dist"
   ]
 }

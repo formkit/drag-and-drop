@@ -160,7 +160,7 @@ interface ParentConfig<T> {
     /**
      * The time in milliseconds to wait before a long touch is performed.
      */
-    longPressTimeout?: number;
+    longPressTimeout?: any;
     /**
      * The name of the parent (used for accepts function for increased specificity).
      */
@@ -254,7 +254,7 @@ interface ParentConfig<T> {
     /**
      * Property to identify the parent record who is the ancestor of the current parent.
      */
-    treeAncestor?: ParentRecord<T>;
+    treeAncestor?: boolean;
     /**
      * Property to identify which group of tree descendants the current parent belongs to.
      */
@@ -806,7 +806,6 @@ interface DragendEventData<T> {
     values: Array<T>;
     draggedNode: NodeRecord<T>;
     draggedNodes: Array<NodeRecord<T>>;
-    position: number;
 }
 interface ScrollData {
     xThresh: number;

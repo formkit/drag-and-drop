@@ -36,11 +36,9 @@ function getValues(parent) {
 }
 function setValues(newValues, parent) {
   const currentValues = parentValues.get(parent);
-  if (currentValues && "value" in currentValues) {
+  if (currentValues && "value" in currentValues)
     currentValues.value = newValues;
-  } else if (currentValues) {
-    parentValues.set(parent, newValues);
-  }
+  else if (currentValues) parentValues.set(parent, newValues);
 }
 function dragAndDrop(data) {
   if (!isBrowser) return;
