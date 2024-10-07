@@ -7,8 +7,12 @@ test.beforeEach(async ({ browser }) => {
   page = await browser.newPage();
 });
 
+<<<<<<< HEAD
 // Needs more work
 test.describe.skip("Non native selections multiple", async () => {
+=======
+test.describe("Non native selections multiple", async () => {
+>>>>>>> release/v0.2.0
   test("Non native selections multiple", async () => {
     page.goto("http://localhost:3001/selections/non-native-multiple");
     await new Promise((r) => setTimeout(r, 1000));

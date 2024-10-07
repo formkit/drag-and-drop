@@ -63,7 +63,11 @@ const [parent2, values2] = useDragAndDrop(vegetables, {
   <div class="container">
     <div class="scroll">
       <div
+<<<<<<< HEAD
         style="height: 400px; overflow: scroll; width: 100px"
+=======
+        style="height: 400px; overflow: scroll"
+>>>>>>> release/v0.2.0
         ref="parent"
         class="parent"
         id="parent"
@@ -84,10 +88,14 @@ const [parent2, values2] = useDragAndDrop(vegetables, {
   </div>
 </template>
 
+<<<<<<< HEAD
 <style>
 body {
   height: 1000px !important;
 }
+=======
+<style scoped>
+>>>>>>> release/v0.2.0
 .container {
   display: flex;
 }

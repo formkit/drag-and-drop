@@ -1,8 +1,13 @@
 <script setup lang="ts">
+<<<<<<< HEAD
 import { dragAndDrop } from "../../src/vue/index";
 
 const dragList = ref();
 const tapes = ref([
+=======
+import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
+const [parent, tapes] = useDragAndDrop([
+>>>>>>> release/v0.2.0
   "Depeche Mode",
   "Duran Duran",
   "Pet Shop Boys",
@@ -10,6 +15,7 @@ const tapes = ref([
   "Tears for Fears",
   "Spandau Ballet",
 ]);
+<<<<<<< HEAD
 dragAndDrop({
   parent: dragList,
   values: tapes,
@@ -78,3 +84,14 @@ dragAndDrop({
   transform: rotate(-3deg);
 }
 </style>
+=======
+</script>
+
+<template>
+  <ul ref="parent">
+    <li v-for="tape in tapes" :key="tape" class="cassette">
+      {{ tape }}
+    </li>
+  </ul>
+</template>
+>>>>>>> release/v0.2.0

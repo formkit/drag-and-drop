@@ -18,7 +18,10 @@ import type {
   ParentsData,
   PointeroverNodeEvent,
   PointeroverParentEvent,
+<<<<<<< HEAD
   ScrollData,
+=======
+>>>>>>> release/v0.2.0
   SetupNodeData,
   TearDownNodeData,
   BaseDragState,
@@ -49,8 +52,11 @@ export const touchDevice = window && "ontouchstart" in window;
 
 let dropped = false;
 
+<<<<<<< HEAD
 let synthScrollEl: HTMLElement | undefined;
 
+=======
+>>>>>>> release/v0.2.0
 /**
  * Abort controller for the document.
  */
@@ -59,6 +65,7 @@ let documentController: AbortController | undefined;
 let isNative = false;
 
 let animationFrameId: number | null = null;
+<<<<<<< HEAD
 
 const scrollConfig: {
   [key: string]: [number, number];
@@ -68,6 +75,8 @@ const scrollConfig: {
   left: [-1, 0],
   right: [1, 0],
 };
+=======
+>>>>>>> release/v0.2.0
 
 export const nodes: NodesData<any> = new WeakMap<Node, NodeData<unknown>>();
 
@@ -204,9 +213,13 @@ function handleRootKeydown(e: KeyboardEvent) {
   }
 }
 
+<<<<<<< HEAD
 function handleRootDrop(_e: DragEvent) {
   //e.preventDefault();
 }
+=======
+function handleRootDrop(_e: DragEvent) {}
+>>>>>>> release/v0.2.0
 
 /**
  * If we are currently dragging, then let's prevent default on dragover to avoid
@@ -268,6 +281,10 @@ export function dragAndDrop<T>({
       handleNodeTouchstart,
       handleNodePointerover,
       handleParentPointerover,
+<<<<<<< HEAD
+=======
+      handleParentScroll,
+>>>>>>> release/v0.2.0
       handleNodePointerdown,
       handleNodePointermove,
       handleNodeDragenter,
@@ -1191,6 +1208,25 @@ function draggedNodes<T>(data: NodeEventData<T>): Array<NodeRecord<T>> {
   return [];
 }
 
+<<<<<<< HEAD
+=======
+let scrollTimeout: number | undefined;
+
+function handleParentScroll<T>(_data: ParentEventData<T>) {
+  if (!isDragState(state)) return;
+
+  if (isSynthDragState(state)) return;
+
+  state.preventEnter = true;
+
+  if (scrollTimeout) clearTimeout(scrollTimeout);
+
+  scrollTimeout = setTimeout(() => {
+    state.preventEnter = false;
+  }, 100);
+}
+
+>>>>>>> release/v0.2.0
 /**
  * Responsible for assigning dragstart classes to the dragged nodes.
  */
@@ -1758,9 +1794,12 @@ export function handleNodePointermove<T>(
   data: NodePointerEventData<T>,
   state: SynthDragState<T> | BaseDragState<T>
 ) {
+<<<<<<< HEAD
   // TODO: I think this is OK but not sure.
   //data.e.stopPropagation();
 
+=======
+>>>>>>> release/v0.2.0
   if (isNative || !synthNodePointerDown || !validateDragHandle(data)) return;
 
   if (!isSynthDragState(state)) {
@@ -1777,8 +1816,11 @@ export function handleNodePointermove<T>(
 
     synthMove(data, synthDragState);
 
+<<<<<<< HEAD
     //document.body.addEventListener("pointermove", handleScroll);
 
+=======
+>>>>>>> release/v0.2.0
     if (config.onDragstart)
       config.onDragstart(
         {
@@ -2025,6 +2067,7 @@ export function handleParentDragover<T>(
 
   data.e.stopPropagation();
 
+<<<<<<< HEAD
   const scrollable = isScrollable(data.targetData.parent.el);
 
   if (scrollable) {
@@ -2036,6 +2079,8 @@ export function handleParentDragover<T>(
     ]);
   }
 
+=======
+>>>>>>> release/v0.2.0
   Object.assign(eventCoordinates(data.e as DragEvent));
 
   transfer(data, state);
@@ -2536,7 +2581,11 @@ function scrollContainer<T>(
       (documentElement.scrollTop + window.innerHeight);
 
     // Check if the pointer is near the bottom of the viewport (5% of viewport height)
+<<<<<<< HEAD
     if (clientY > window.innerHeight * 0.8 && difference > 0) {
+=======
+    if (clientY > window.innerHeight * 0.95 && difference > 0) {
+>>>>>>> release/v0.2.0
       shouldScroll = true;
 
       scrollY = 5;
@@ -2547,7 +2596,11 @@ function scrollContainer<T>(
       shouldScroll = true;
 
       scrollY = -5;
+<<<<<<< HEAD
     } else if (clientX > window.innerWidth * 0.8) {
+=======
+    } else if (clientX > window.innerWidth * 0.95) {
+>>>>>>> release/v0.2.0
       shouldScroll = true;
 
       scrollX = 5;
@@ -2625,6 +2678,13 @@ function scrollContainer<T>(
       state.animationFrameId = undefined;
     }
   }
+<<<<<<< HEAD
+=======
+
+  setTimeout(() => {
+    state.preventEnter = false;
+  });
+>>>>>>> release/v0.2.0
 }
 
 // Function to start the scroll interval when pointer is near the edge
@@ -2642,6 +2702,7 @@ function startScrolling<T>(e: PointerEvent, state: SynthDragState<T>) {
   });
 }
 
+<<<<<<< HEAD
 //// Function to stop the scroll interval
 //function stopScrolling() {
 //  if (scrollInterval !== null) {
@@ -2650,6 +2711,8 @@ function startScrolling<T>(e: PointerEvent, state: SynthDragState<T>) {
 //  }
 //}
 
+=======
+>>>>>>> release/v0.2.0
 export function getElFromPoint<T>(
   coordinates: {
     x: number;

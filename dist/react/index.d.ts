@@ -85,6 +85,10 @@ interface ParentConfig<T> {
     handleEnd: (state: DragState<T> | SynthDragState<T>) => void;
     handleNodeDrop: (data: NodeDragEventData<T>, state: DragState<T>) => void;
     handleNodePointerup: (data: NodePointerEventData<T>, state: DragState<T>) => void;
+<<<<<<< HEAD
+=======
+    handleParentScroll: (data: ParentEventData<T>, state: DragState<T> | BaseDragState<T> | SynthDragState<T>) => void;
+>>>>>>> release/v0.2.0
     /**
      * Function that is called when touchstart event occurs.
      */
@@ -574,6 +578,11 @@ interface SynthDragStateProps {
      * Pointer id of dragged el
      */
     pointerId: number;
+<<<<<<< HEAD
+=======
+    scrollElement: HTMLElement | undefined;
+    animationFrameId: number | undefined;
+>>>>>>> release/v0.2.0
 }
 type DragState<T> = DragStateProps<T> & BaseDragState<T>;
 type BaseDragState<T> = {

@@ -872,12 +872,15 @@ var dropped = false;
 var documentController;
 var isNative = false;
 var animationFrameId = null;
+<<<<<<< HEAD
 var scrollConfig = {
   up: [0, -1],
   down: [0, 1],
   left: [-1, 0],
   right: [1, 0]
 };
+=======
+>>>>>>> release/v0.2.0
 var nodes = /* @__PURE__ */ new WeakMap();
 var parents = /* @__PURE__ */ new WeakMap();
 var treeAncestors = {};
@@ -1005,6 +1008,10 @@ function dragAndDrop({
       handleNodeTouchstart,
       handleNodePointerover: handleNodePointerover2,
       handleParentPointerover: handleParentPointerover2,
+<<<<<<< HEAD
+=======
+      handleParentScroll,
+>>>>>>> release/v0.2.0
       handleNodePointerdown,
       handleNodePointermove,
       handleNodeDragenter,
@@ -1626,6 +1633,19 @@ function draggedNodes(data) {
   }
   return [];
 }
+<<<<<<< HEAD
+=======
+var scrollTimeout;
+function handleParentScroll(_data) {
+  if (!isDragState(state)) return;
+  if (isSynthDragState(state)) return;
+  state.preventEnter = true;
+  if (scrollTimeout) clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(() => {
+    state.preventEnter = false;
+  }, 100);
+}
+>>>>>>> release/v0.2.0
 function handleDragstart(data, state2) {
   if (!validateDragstart(data) || !validateDragHandle(data)) {
     data.e.preventDefault();
@@ -1909,11 +1929,19 @@ function handleParentKeydown(data, state2) {
   }
 }
 function preventSortOnScroll() {
+<<<<<<< HEAD
   let scrollTimeout;
   return () => {
     clearTimeout(scrollTimeout);
     if (state) state.preventEnter = true;
     scrollTimeout = setTimeout(() => {
+=======
+  let scrollTimeout2;
+  return () => {
+    clearTimeout(scrollTimeout2);
+    if (state) state.preventEnter = true;
+    scrollTimeout2 = setTimeout(() => {
+>>>>>>> release/v0.2.0
       if (state) state.preventEnter = false;
     }, 100);
   };
@@ -2110,6 +2138,7 @@ function pointermoveClasses(state2, config) {
       config?.longPressClass
     );
 }
+<<<<<<< HEAD
 function getScrollData(e, state2) {
   if (!(e.currentTarget instanceof HTMLElement)) return;
   const {
@@ -2131,10 +2160,13 @@ function getScrollData(e, state2) {
     scrollHeight: e.currentTarget.scrollHeight
   };
 }
+=======
+>>>>>>> release/v0.2.0
 function cancelSynthScroll() {
   if (animationFrameId !== null) {
     cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
+<<<<<<< HEAD
   }
 }
 function setSynthScrollDirection(direction, el, state2) {
@@ -2214,6 +2246,10 @@ function shouldScrollUp(state2, data) {
 function shouldScrollDown(state2, data) {
   return state2.coordinates.y > data.clientHeight * data.yThresh && data.scrollParent.scrollTop !== data.scrollParent.clientHeight;
 }
+=======
+  }
+}
+>>>>>>> release/v0.2.0
 function moveNode(data, state2) {
   const { x, y } = eventCoordinates(data.e);
   state2.coordinates.y = y;
@@ -2232,7 +2268,11 @@ function synthMove(data, state2) {
     return;
   }
   moveNode(data, state2);
+<<<<<<< HEAD
   const elFromPoint = getElFromPoint(eventCoordinates(data.e));
+=======
+  const elFromPoint = getElFromPoint(eventCoordinates(data.e), data.e, state2);
+>>>>>>> release/v0.2.0
   if (!elFromPoint) {
     document.dispatchEvent(
       new CustomEvent("handleRootPointerover", {
@@ -2263,6 +2303,7 @@ function synthMove(data, state2) {
     );
   }
 }
+<<<<<<< HEAD
 function handleScroll(e) {
   e.stopPropagation();
   if (!isSynthDragState(state)) return;
@@ -2280,6 +2321,8 @@ function handleScroll(e) {
   }
   if (!directionSet) state.synthScrollDirection = void 0;
 }
+=======
+>>>>>>> release/v0.2.0
 function handleNodeDragover3(data, state2) {
   const { x, y } = eventCoordinates(data.e);
   state2.coordinates.y = y;
@@ -2291,6 +2334,7 @@ function handleNodeDragover3(data, state2) {
 function handleParentDragover3(data, state2) {
   data.e.preventDefault();
   data.e.stopPropagation();
+<<<<<<< HEAD
   const scrollable = isScrollable(data.targetData.parent.el);
   if (scrollable) {
     state2.scrollEls.push([
@@ -2300,6 +2344,8 @@ function handleParentDragover3(data, state2) {
       })
     ]);
   }
+=======
+>>>>>>> release/v0.2.0
   Object.assign(eventCoordinates(data.e));
   transfer(data, state2);
 }
@@ -2569,13 +2615,109 @@ function removeClass(els, className) {
   }
 }
 function isScrollable(element) {
+<<<<<<< HEAD
   if (element === document.documentElement) {
+=======
+  if (element === document.documentElement || element === document.body) {
+>>>>>>> release/v0.2.0
     return element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth;
   }
   const style = window.getComputedStyle(element);
   return (style.overflowY === "auto" || style.overflowY === "scroll") && element.scrollHeight > element.clientHeight || (style.overflowX === "auto" || style.overflowX === "scroll") && element.scrollWidth > element.clientWidth;
 }
+<<<<<<< HEAD
 function getElFromPoint(coordinates) {
+=======
+function getScrollableUnderPointer(x, y) {
+  const elements = document.elementsFromPoint(x, y);
+  for (const el of elements) {
+    if (el instanceof HTMLElement && isScrollable(el)) {
+      return el;
+    }
+  }
+  return document.documentElement;
+}
+function scrollContainer(e, scrollElement, state2) {
+  const rect = scrollElement.getBoundingClientRect();
+  const { clientX, clientY } = e;
+  let scrollX = 0;
+  let scrollY = 0;
+  let shouldScroll = false;
+  let difference = 0;
+  state2.preventEnter = true;
+  if (scrollElement === document.body || scrollElement === document.documentElement) {
+    const documentElement = document.documentElement;
+    difference = documentElement.scrollHeight - (documentElement.scrollTop + window.innerHeight);
+    if (clientY > window.innerHeight * 0.8 && difference > 0) {
+      shouldScroll = true;
+      scrollY = 5;
+    } else if (clientY < window.innerHeight * 0.05 && documentElement.scrollTop > 0) {
+      shouldScroll = true;
+      scrollY = -5;
+    } else if (clientX > window.innerWidth * 0.8) {
+      shouldScroll = true;
+      scrollX = 5;
+    } else if (clientX < window.innerWidth * 0.05 && documentElement.scrollLeft > 0) {
+      shouldScroll = true;
+      scrollX = -5;
+    }
+  } else {
+    if (clientY > rect.bottom - (rect.bottom - rect.top) * 0.05 && scrollElement.scrollTop + scrollElement.clientHeight < scrollElement.scrollHeight) {
+      shouldScroll = true;
+      scrollY = 5;
+    } else if (clientY < rect.top + (rect.bottom - rect.top) * 0.05 && scrollElement.scrollTop > 0) {
+      shouldScroll = true;
+      scrollY = -5;
+    } else if (clientX > rect.right - (rect.right - rect.left) * 0.05 && scrollElement.scrollLeft + scrollElement.clientWidth < scrollElement.scrollWidth) {
+      shouldScroll = true;
+      scrollX = 5;
+    } else if (clientX < rect.left + (rect.right - rect.left) * 0.05 && scrollElement.scrollLeft > 0) {
+      shouldScroll = true;
+      scrollX = -5;
+    }
+  }
+  if (shouldScroll) {
+    if (scrollElement === document.body || scrollElement === document.documentElement) {
+      window.scrollBy({ left: scrollX, top: scrollY });
+      const startLeft = state2.startLeft ?? 0;
+      const startTop = state2.startTop ?? 0;
+      state2.clonedDraggedNode.style.top = `${clientY - startTop + window.scrollY}px`;
+      state2.clonedDraggedNode.style.left = `${clientX - startLeft + window.scrollX}px`;
+    } else {
+      scrollElement.scrollBy({ left: scrollX, top: scrollY });
+    }
+    state2.animationFrameId = requestAnimationFrame(
+      () => scrollContainer(e, scrollElement, state2)
+    );
+  } else {
+    if (state2.animationFrameId) {
+      cancelAnimationFrame(state2.animationFrameId);
+      state2.animationFrameId = void 0;
+    }
+  }
+  setTimeout(() => {
+    state2.preventEnter = false;
+  });
+}
+function startScrolling(e, state2) {
+  if (!state2.scrollElement) return;
+  state2.animationFrameId = requestAnimationFrame(() => {
+    if (!state2.scrollElement && state2.animationFrameId) {
+      cancelAnimationFrame(state2.animationFrameId);
+      return;
+    }
+    if (state2.scrollElement) scrollContainer(e, state2.scrollElement, state2);
+  });
+}
+function getElFromPoint(coordinates, e, state2) {
+  const scrollable = getScrollableUnderPointer(coordinates.x, coordinates.y);
+  if (state2.animationFrameId) {
+    cancelAnimationFrame(state2.animationFrameId);
+    state2.preventEnter = false;
+  }
+  state2.scrollElement = scrollable;
+  startScrolling(e, state2);
+>>>>>>> release/v0.2.0
   let target = document.elementFromPoint(coordinates.x, coordinates.y);
   if (!isNode(target)) return;
   let isParent;
@@ -2714,7 +2856,10 @@ export {
   handleParentKeydown,
   handleParentPointerover2 as handleParentPointerover,
   handlePointercancel,
+<<<<<<< HEAD
   handleScroll,
+=======
+>>>>>>> release/v0.2.0
   initDrag,
   insert,
   isBrowser,

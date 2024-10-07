@@ -70,7 +70,11 @@ dragAndDrop({
 }
 
 body {
+<<<<<<< HEAD
   height: 10000px !important;
+=======
+  /*height: 10000px !important;*/
+>>>>>>> release/v0.2.0
 }
 
 h1 {
