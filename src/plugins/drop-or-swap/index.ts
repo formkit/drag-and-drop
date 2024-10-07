@@ -88,7 +88,7 @@ function rootDragover(_e: DragEvent) {
     state.currentParent.data.config.dropZoneParentClass
   );
 
-  state.currentParent = state.initialParent;
+  //state.currentParent = state.initialParent;
 }
 
 function rootPointerover(_e: CustomEvent) {
@@ -262,6 +262,10 @@ function swapElements<T>(
 function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   const isSynth = isSynthDragState(state);
 
+  console.log(dropSwapState.draggedOverNodes);
+
+  console.log("current parent", state.currentParent.el);
+
   removeClass(
     [state.currentParent.el],
     isSynth
@@ -275,6 +279,8 @@ function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
       ? state.currentParent.data.config.synthDropZoneClass
       : state.currentParent.data.config.dropZoneClass
   );
+
+  console.log("isSynth", state.currentParent.data.config.dropZoneClass);
 
   const values = parentValues(state.currentParent.el, state.currentParent.data);
 

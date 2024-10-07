@@ -380,6 +380,7 @@ export function performSort<T>({
 
   if ("draggedNode" in state) state.currentTargetValue = targetNode.data.value;
 
+  console.log("new parent values", newParentValues);
   setParentValues(parent.el, parent.data, [...newParentValues]);
 
   if (parent.data.config.onSort)
@@ -773,6 +774,9 @@ export function handleParentDrop<T>(
   data: ParentEventData<T>,
   state: DragState<T>
 ) {
+  data.e.preventDefault();
+  data.e.stopPropagation();
+
   dropped = true;
 
   const config = data.targetData.parent.data.config;
@@ -1624,6 +1628,8 @@ export function handleNodeDrop<T>(
 ) {
   data.e.stopPropagation();
 
+  data.e.preventDefault();
+
   dropped = true;
 
   const config = data.targetData.parent.data.config;
@@ -1636,6 +1642,8 @@ export function handleDragend<T>(
   state: DragState<T>
 ) {
   data.e.preventDefault();
+
+  data.e.stopPropagation();
 
   if (dropped) {
     dropped = false;
@@ -2117,8 +2125,12 @@ export function validateSort<T>(
 
   if (state.preventEnter) return false;
 
-  if (state.draggedNodes.map((x) => x.el).includes(data.targetData.node.el)) {
+  if (
+    state.draggedNodes.map((x) => x.el).includes(data.targetData.node.el) &&
+    !data.targetData.parent.data.config.treeGroup
+  ) {
     state.currentTargetValue = undefined;
+    console.log("hello world");
 
     return false;
   }
@@ -2135,8 +2147,10 @@ export function validateSort<T>(
   if (
     data.targetData.parent.data.config.treeGroup &&
     data.targetData.node.el.contains(state.draggedNodes[0].el)
-  )
+  ) {
+    console.log("getting here??????");
     return false;
+  }
 
   const targetRect = data.targetData.node.el.getBoundingClientRect();
 
