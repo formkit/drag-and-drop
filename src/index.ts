@@ -2629,14 +2629,6 @@ function startScrolling<T>(e: PointerEvent, state: SynthDragState<T>) {
   });
 }
 
-//// Function to stop the scroll interval
-//function stopScrolling() {
-//  if (scrollInterval !== null) {
-//    window.clearInterval(scrollInterval);
-//    scrollInterval = null;
-//  }
-//}
-
 export function getElFromPoint<T>(
   coordinates: {
     x: number;
