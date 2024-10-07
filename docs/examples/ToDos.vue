@@ -159,11 +159,12 @@ const insertPointClasses = [
         <div class="kanban-column">
           <h2 class="kanban-title">ToDos</h2>
 
-          <ul ref="todoList" class="kanban-list">
+          <ul ref="todoList" class="kanban-list" aria-label="Todo List">
             <li
               v-for="todo in todos"
               :key="todo"
               class="kanban-item flex items-center"
+              :aria-label="todo"
             >
               <span
                 v-if="dragHandles"
@@ -195,11 +196,12 @@ const insertPointClasses = [
         <div v-if="transfer" class="kanban-column">
           <h2 class="kanban-title">Complete</h2>
 
-          <ul ref="doneList" class="kanban-list">
+          <ul ref="doneList" class="kanban-list" aria-label="Done List">
             <li
               v-for="done in dones"
               :key="done"
               class="kanban-item kanban-complete flex items-center"
+              :aria-label="done"
             >
               <span
                 v-if="dragHandles"

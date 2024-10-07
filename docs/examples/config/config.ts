@@ -131,6 +131,10 @@ export interface ParentConfig<T> {
     data: NodePointerEventData<T>,
     state: DragState<T>
   ) => void;
+  handleParentScroll: (
+    data: ParentEventData<T>,
+    state: DragState<T> | BaseDragState<T> | SynthDragState<T>
+  ) => void;
   /**
    * Function that is called when touchstart event occurs.
    */

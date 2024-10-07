@@ -1,6 +1,6 @@
 <template>
   <SectionWrapper>
-    <h2 id="event">Events</h2>
+    <h2 id="events">Events</h2>
     <p>
       When using a drag and drop library, often it is useful to be able to
       listen to particular events, such as when a drag starts or ends. Event

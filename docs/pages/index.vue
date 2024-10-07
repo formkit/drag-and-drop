@@ -19,6 +19,7 @@
       <SectionPlugins />
       <SectionEvents />
       <SectionConfiguration />
+      <SectionAccessibility />
       <SectionSupport />
     </div>
   </main>
