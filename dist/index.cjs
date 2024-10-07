@@ -36,7 +36,6 @@ __export(src_exports, {
   eventCoordinates: () => eventCoordinates,
   getElFromPoint: () => getElFromPoint,
   getRealCoords: () => getRealCoords2,
-  getScrollables: () => getScrollables,
   handleClickNode: () => handleClickNode,
   handleClickParent: () => handleClickParent,
   handleDragend: () => handleDragend,
@@ -1156,20 +1155,9 @@ function dragAndDrop({
   setup(parent, parentData);
   remapNodes(parent, true);
 }
-function dragStateProps(data, draggedNodes2, nativeDrag = true) {
+function dragStateProps(data, draggedNodes2) {
   const { x, y } = eventCoordinates(data.e);
   const rect = data.targetData.node.el.getBoundingClientRect();
-  const scrollEls = [];
-  for (const scrollable of getScrollables()) {
-    scrollEls.push([
-      scrollable,
-      nativeDrag ? addEvents(scrollable, {
-        scroll: preventSortOnScroll()
-      }) : addEvents(scrollable, {
-        pointermove: handleScroll
-      })
-    ]);
-  }
   return {
     affectedNodes: [],
     ascendingDirection: false,
@@ -1197,7 +1185,7 @@ function dragStateProps(data, draggedNodes2, nativeDrag = true) {
     longPress: data.targetData.parent.data.config.longPress ?? false,
     longPressTimeout: 0,
     currentTargetValue: data.targetData.node.data.value,
-    scrollEls,
+    scrollEls: [],
     startLeft: x - rect.left,
     startTop: y - rect.top,
     targetIndex: data.targetData.node.data.index,
@@ -2199,7 +2187,7 @@ function initSynthDrag(data, _state, draggedNodes2) {
     contextmenu: noDefault
   });
   const synthDragState = setDragState({
-    ...dragStateProps(data, draggedNodes2, false),
+    ...dragStateProps(data, draggedNodes2),
     ...synthDragStateProps
   });
   return synthDragState;
@@ -2312,14 +2300,12 @@ function shouldScroll(direction, e, state2) {
   }
 }
 function shouldScrollRight(state2, data) {
-  return;
   const diff = data.scrollParent.clientWidth + data.x - state2.coordinates.x;
   if (!data.scrollOutside && diff < 0) return;
   if (diff < (1 - data.xThresh) * data.scrollParent.clientWidth && !(data.scrollParent.scrollLeft + data.scrollParent.clientWidth >= data.scrollParent.scrollWidth))
     return state2;
 }
 function shouldScrollLeft(state2, data) {
-  return;
   const diff = data.scrollParent.clientWidth + data.x - state2.coordinates.x;
   if (!data.scrollOutside && diff > data.scrollParent.clientWidth) return;
   if (diff > data.xThresh * data.scrollParent.clientWidth && data.scrollParent.scrollLeft !== 0)
@@ -2408,6 +2394,15 @@ function handleNodeDragover3(data, state2) {
 function handleParentDragover3(data, state2) {
   data.e.preventDefault();
   data.e.stopPropagation();
+  const scrollable = isScrollable(data.targetData.parent.el);
+  if (scrollable) {
+    state2.scrollEls.push([
+      data.targetData.parent.el,
+      addEvents(data.targetData.parent.el, {
+        scroll: preventSortOnScroll()
+      })
+    ]);
+  }
   Object.assign(eventCoordinates(data.e));
   transfer(data, state2);
 }
@@ -2683,11 +2678,6 @@ function isScrollable(element) {
   const style = window.getComputedStyle(element);
   return (style.overflowY === "auto" || style.overflowY === "scroll") && element.scrollHeight > element.clientHeight || (style.overflowX === "auto" || style.overflowX === "scroll") && element.scrollWidth > element.clientWidth;
 }
-function getScrollables() {
-  return Array.from(document.querySelectorAll("*")).filter(
-    (el) => el instanceof HTMLElement && isScrollable(el)
-  );
-}
 function getElFromPoint(coordinates) {
   let target = document.elementFromPoint(coordinates.x, coordinates.y);
   if (!isNode(target)) return;
@@ -2807,7 +2797,6 @@ function getRealCoords2(el) {
   eventCoordinates,
   getElFromPoint,
   getRealCoords,
-  getScrollables,
   handleClickNode,
   handleClickParent,
   handleDragend,

@@ -765,6 +765,8 @@ export interface SynthDragStateProps {
    * Pointer id of dragged el
    */
   pointerId: number;
+  scrollElement: HTMLElement | undefined;
+  animationFrameId: number | undefined;
 }
 
 export type DragState<T> = DragStateProps<T> & BaseDragState<T>;

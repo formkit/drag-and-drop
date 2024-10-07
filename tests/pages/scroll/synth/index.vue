@@ -48,12 +48,10 @@ const vegetables = [
 ];
 
 const [parent, values] = useDragAndDrop(fruits, {
-  nativeDrag: false,
   group: "fruits",
 });
 
 const [parent2, values2] = useDragAndDrop(vegetables, {
-  nativeDrag: false,
   group: "fruits",
 });
 </script>
@@ -65,7 +63,7 @@ const [parent2, values2] = useDragAndDrop(vegetables, {
   <div class="container">
     <div class="scroll">
       <div
-        style="height: 400px; overflow: scroll"
+        style="height: 400px; overflow: scroll; width: 100px"
         ref="parent"
         class="parent"
         id="parent"
@@ -86,7 +84,10 @@ const [parent2, values2] = useDragAndDrop(vegetables, {
   </div>
 </template>
 
-<style scoped>
+<style>
+body {
+  height: 1000px !important;
+}
 .container {
   display: flex;
 }

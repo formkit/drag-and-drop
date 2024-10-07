@@ -2,7 +2,8 @@
 import type { DefineComponent, SlotsType } from 'vue'
 type IslandComponent<T extends DefineComponent> = T & DefineComponent<{}, {refresh: () => Promise<void>}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, SlotsType<{ fallback: { error: unknown } }>>
 interface _GlobalComponents {
-      'NuxtWelcome': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/welcome.vue")['default']
+      'CassetteTape': typeof import("../components/CassetteTape.vue")['default']
+    'NuxtWelcome': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/welcome.vue")['default']
     'NuxtLayout': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/nuxt-layout")['default']
     'NuxtErrorBoundary': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/nuxt-error-boundary")['default']
     'ClientOnly': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/client-only")['default']
@@ -25,7 +26,8 @@ interface _GlobalComponents {
     'Body': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/head/runtime/components")['Body']
     'NuxtIsland': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/nuxt-island")['default']
     'NuxtRouteAnnouncer': IslandComponent<typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/server-placeholder")['default']>
-      'LazyNuxtWelcome': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/welcome.vue")['default']
+      'LazyCassetteTape': typeof import("../components/CassetteTape.vue")['default']
+    'LazyNuxtWelcome': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/welcome.vue")['default']
     'LazyNuxtLayout': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/nuxt-layout")['default']
     'LazyNuxtErrorBoundary': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/nuxt-error-boundary")['default']
     'LazyClientOnly': typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/client-only")['default']
@@ -54,6 +56,7 @@ declare module 'vue' {
   export interface GlobalComponents extends _GlobalComponents { }
 }
 
+export const CassetteTape: typeof import("../components/CassetteTape.vue")['default']
 export const NuxtWelcome: typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/welcome.vue")['default']
 export const NuxtLayout: typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/nuxt-layout")['default']
 export const NuxtErrorBoundary: typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/nuxt-error-boundary")['default']
@@ -77,6 +80,7 @@ export const Html: typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+w
 export const Body: typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/head/runtime/components")['Body']
 export const NuxtIsland: typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/nuxt-island")['default']
 export const NuxtRouteAnnouncer: IslandComponent<typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/server-placeholder")['default']>
+export const LazyCassetteTape: typeof import("../components/CassetteTape.vue")['default']
 export const LazyNuxtWelcome: typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/welcome.vue")['default']
 export const LazyNuxtLayout: typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/nuxt-layout")['default']
 export const LazyNuxtErrorBoundary: typeof import("../../node_modules/.pnpm/nuxt@3.13.2_@parcel+watcher@2.4.1_@types+node@18.19.54_eslint@8.57.1_ioredis@5.4.1_magicast@0_hxxfk7ycp265twoy2ueiwjc44a/node_modules/nuxt/dist/app/components/nuxt-error-boundary")['default']
