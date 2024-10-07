@@ -29,6 +29,7 @@ import type {
   NodeFromPoint,
   ParentFromPoint,
   Coordinates,
+  ParentDragEventData,
 } from "./types";
 
 export * from "./types";
@@ -53,6 +54,8 @@ let dropped = false;
 let documentController: AbortController | undefined;
 
 let isNative = false;
+
+let animationFrameId: number | null = null;
 
 export const nodes: NodesData<any> = new WeakMap<Node, NodeData<unknown>>();
 
@@ -317,8 +320,6 @@ export function dragStateProps<T>(
 
   const rect = data.targetData.node.el.getBoundingClientRect();
 
-  const scrollEls: Array<[HTMLElement, AbortController]> = [];
-
   return {
     affectedNodes: [],
     ascendingDirection: false,
@@ -346,7 +347,7 @@ export function dragStateProps<T>(
     longPress: data.targetData.parent.data.config.longPress ?? false,
     longPressTimeout: 0,
     currentTargetValue: data.targetData.node.data.value,
-    scrollEls,
+    scrollEls: [],
     startLeft: x - rect.left,
     startTop: y - rect.top,
     targetIndex: data.targetData.node.data.index,
@@ -805,7 +806,6 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
     keydown: parentEventData(parentData.config.handleParentKeydown),
     dragover: parentEventData(parentData.config.handleParentDragover),
     handleParentPointerover: parentData.config.handleParentPointerover,
-    scroll: parentEventData(parentData.config.handleParentScroll),
     drop: parentEventData(parentData.config.handleParentDrop),
     hasNestedParent: (e: CustomEvent) => {
       const parent = parents.get(e.target as HTMLElement);
@@ -1599,7 +1599,7 @@ export function handleParentKeydown<T>(
 }
 
 export function preventSortOnScroll() {
-  let scrollTimeout: any;
+  let scrollTimeout: ReturnType<typeof setTimeout>;
 
   return () => {
     clearTimeout(scrollTimeout);
@@ -1677,6 +1677,8 @@ export function handlePointercancel<T>(
 }
 
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
+  cancelSynthScroll();
+
   if ("longPressTimeout" in state && state.longPressTimeout)
     clearTimeout(state.longPressTimeout);
 
@@ -1759,9 +1761,6 @@ export function handleNodePointermove<T>(
   data: NodePointerEventData<T>,
   state: SynthDragState<T> | BaseDragState<T>
 ) {
-  // TODO: I think this is OK but not sure.
-  //data.e.stopPropagation();
-
   if (isNative || !synthNodePointerDown || !validateDragHandle(data)) return;
 
   if (!isSynthDragState(state)) {
@@ -1920,6 +1919,13 @@ function pointermoveClasses<T>(
       config?.longPressClass
     );
 }
+function cancelSynthScroll() {
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId);
+
+    animationFrameId = null;
+  }
+}
 
 function moveNode<T>(data: NodePointerEventData<T>, state: SynthDragState<T>) {
   const { x, y } = eventCoordinates(data.e);
@@ -1955,7 +1961,7 @@ export function synthMove<T>(
 
   moveNode(data, state);
 
-  const elFromPoint = getElFromPoint(eventCoordinates(data.e));
+  const elFromPoint = getElFromPoint(eventCoordinates(data.e), data.e, state);
 
   if (!elFromPoint) {
     document.dispatchEvent(
@@ -2010,7 +2016,7 @@ export function handleNodeDragover<T>(
 }
 
 export function handleParentDragover<T>(
-  data: ParentEventData<T>,
+  data: ParentDragEventData<T>,
   state: DragState<T>
 ) {
   data.e.preventDefault();
@@ -2461,7 +2467,7 @@ export function removeClass(
 }
 
 function isScrollable(element: HTMLElement) {
-  if (element === document.documentElement) {
+  if (element === document.documentElement || element === document.body) {
     return (
       element.scrollHeight > element.clientHeight ||
       element.scrollWidth > element.clientWidth
@@ -2478,25 +2484,179 @@ function isScrollable(element: HTMLElement) {
   );
 }
 
-/**
- * Used for getting the closest scrollable parent of a given element.
- *
- * @param node - The parent element to start the search from.
- *
- * @returns The closest scrollable parent or the document's root element.
- *
- * @internal
- */
-export function getScrollables(): Array<HTMLElement> {
-  return Array.from(document.querySelectorAll("*")).filter(
-    (el) => el instanceof HTMLElement && isScrollable(el)
-  ) as Array<HTMLElement>;
+function getScrollableUnderPointer(x: number, y: number): HTMLElement {
+  const elements = document.elementsFromPoint(x, y);
+  for (const el of elements) {
+    if (el instanceof HTMLElement && isScrollable(el)) {
+      return el;
+    }
+  }
+
+  return document.documentElement;
 }
 
-export function getElFromPoint<T>(coordinates: {
-  x: number;
-  y: number;
-}): NodeFromPoint<T> | ParentFromPoint<T> | undefined {
+function scrollContainer<T>(
+  e: PointerEvent,
+  scrollElement: HTMLElement,
+  state: SynthDragState<T>
+) {
+  const rect = scrollElement.getBoundingClientRect();
+  const { clientX, clientY } = e;
+
+  let scrollX = 0;
+  let scrollY = 0;
+  let shouldScroll = false;
+  let difference = 0;
+
+  state.preventEnter = true;
+
+  // Handle scrolling for the document body
+  if (
+    scrollElement === document.body ||
+    scrollElement === document.documentElement
+  ) {
+    const documentElement = document.documentElement;
+
+    // Calculate how far from the bottom of the document the scroll position is
+    difference =
+      documentElement.scrollHeight -
+      (documentElement.scrollTop + window.innerHeight);
+
+    // Check if the pointer is near the bottom of the viewport (5% of viewport height)
+    if (clientY > window.innerHeight * 0.8 && difference > 0) {
+      shouldScroll = true;
+
+      scrollY = 5;
+    } else if (
+      clientY < window.innerHeight * 0.05 &&
+      documentElement.scrollTop > 0
+    ) {
+      shouldScroll = true;
+
+      scrollY = -5;
+    } else if (clientX > window.innerWidth * 0.8) {
+      shouldScroll = true;
+
+      scrollX = 5;
+    } else if (
+      clientX < window.innerWidth * 0.05 &&
+      documentElement.scrollLeft > 0
+    ) {
+      shouldScroll = true;
+
+      scrollX = -5;
+    }
+  } else {
+    if (
+      clientY > rect.bottom - (rect.bottom - rect.top) * 0.05 &&
+      scrollElement.scrollTop + scrollElement.clientHeight <
+        scrollElement.scrollHeight
+    ) {
+      shouldScroll = true;
+
+      scrollY = 5;
+    } else if (
+      clientY < rect.top + (rect.bottom - rect.top) * 0.05 &&
+      scrollElement.scrollTop > 0
+    ) {
+      shouldScroll = true;
+
+      scrollY = -5;
+    } else if (
+      clientX > rect.right - (rect.right - rect.left) * 0.05 &&
+      scrollElement.scrollLeft + scrollElement.clientWidth <
+        scrollElement.scrollWidth
+    ) {
+      shouldScroll = true;
+
+      scrollX = 5;
+    } else if (
+      clientX < rect.left + (rect.right - rect.left) * 0.05 &&
+      scrollElement.scrollLeft > 0
+    ) {
+      shouldScroll = true;
+
+      scrollX = -5;
+    }
+  }
+
+  if (shouldScroll) {
+    if (
+      scrollElement === document.body ||
+      scrollElement === document.documentElement
+    ) {
+      window.scrollBy({ left: scrollX, top: scrollY });
+
+      const startLeft = state.startLeft ?? 0;
+
+      const startTop = state.startTop ?? 0;
+
+      state.clonedDraggedNode.style.top = `${
+        clientY - startTop + window.scrollY
+      }px`;
+
+      state.clonedDraggedNode.style.left = `${
+        clientX - startLeft + window.scrollX
+      }px`;
+    } else {
+      scrollElement.scrollBy({ left: scrollX, top: scrollY });
+    }
+
+    state.animationFrameId = requestAnimationFrame(() =>
+      scrollContainer(e, scrollElement, state)
+    );
+  } else {
+    if (state.animationFrameId) {
+      cancelAnimationFrame(state.animationFrameId);
+
+      state.animationFrameId = undefined;
+    }
+  }
+}
+
+// Function to start the scroll interval when pointer is near the edge
+function startScrolling<T>(e: PointerEvent, state: SynthDragState<T>) {
+  if (!state.scrollElement) return;
+
+  state.animationFrameId = requestAnimationFrame(() => {
+    if (!state.scrollElement && state.animationFrameId) {
+      cancelAnimationFrame(state.animationFrameId);
+
+      return;
+    }
+
+    if (state.scrollElement) scrollContainer(e, state.scrollElement, state);
+  });
+}
+
+//// Function to stop the scroll interval
+//function stopScrolling() {
+//  if (scrollInterval !== null) {
+//    window.clearInterval(scrollInterval);
+//    scrollInterval = null;
+//  }
+//}
+
+export function getElFromPoint<T>(
+  coordinates: {
+    x: number;
+    y: number;
+  },
+  e: PointerEvent,
+  state: SynthDragState<T>
+): NodeFromPoint<T> | ParentFromPoint<T> | undefined {
+  const scrollable = getScrollableUnderPointer(coordinates.x, coordinates.y);
+
+  if (state.animationFrameId) {
+    cancelAnimationFrame(state.animationFrameId);
+
+    state.preventEnter = false;
+  }
+
+  state.scrollElement = scrollable;
+
+  startScrolling(e, state);
+
   let target = document.elementFromPoint(coordinates.x, coordinates.y);
 
   if (!isNode(target)) return;

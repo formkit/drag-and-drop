@@ -36,7 +36,6 @@ __export(src_exports, {
   eventCoordinates: () => eventCoordinates,
   getElFromPoint: () => getElFromPoint,
   getRealCoords: () => getRealCoords2,
-  getScrollables: () => getScrollables,
   handleClickNode: () => handleClickNode,
   handleClickParent: () => handleClickParent,
   handleDragend: () => handleDragend,
@@ -974,6 +973,7 @@ var touchDevice = window && "ontouchstart" in window;
 var dropped = false;
 var documentController;
 var isNative = false;
+var animationFrameId = null;
 var nodes = /* @__PURE__ */ new WeakMap();
 var parents = /* @__PURE__ */ new WeakMap();
 var treeAncestors = {};
@@ -1152,7 +1152,6 @@ function dragAndDrop({
 function dragStateProps(data, draggedNodes2) {
   const { x, y } = eventCoordinates(data.e);
   const rect = data.targetData.node.el.getBoundingClientRect();
-  const scrollEls = [];
   return {
     affectedNodes: [],
     ascendingDirection: false,
@@ -1180,7 +1179,7 @@ function dragStateProps(data, draggedNodes2) {
     longPress: data.targetData.parent.data.config.longPress ?? false,
     longPressTimeout: 0,
     currentTargetValue: data.targetData.node.data.value,
-    scrollEls,
+    scrollEls: [],
     startLeft: x - rect.left,
     startTop: y - rect.top,
     targetIndex: data.targetData.node.data.index,
@@ -1462,7 +1461,6 @@ function setup(parent, parentData) {
     keydown: parentEventData(parentData.config.handleParentKeydown),
     dragover: parentEventData(parentData.config.handleParentDragover),
     handleParentPointerover: parentData.config.handleParentPointerover,
-    scroll: parentEventData(parentData.config.handleParentScroll),
     drop: parentEventData(parentData.config.handleParentDrop),
     hasNestedParent: (e) => {
       const parent2 = parents.get(e.target);
@@ -2066,6 +2064,7 @@ function handlePointercancel(data, state2) {
   config?.handleEnd(state2);
 }
 function handleEnd3(state2) {
+  cancelSynthScroll();
   if ("longPressTimeout" in state2 && state2.longPressTimeout)
     clearTimeout(state2.longPressTimeout);
   const config = parents.get(state2.initialParent.el)?.config;
@@ -2218,6 +2217,12 @@ function pointermoveClasses(state2, config) {
       config?.longPressClass
     );
 }
+function cancelSynthScroll() {
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
+}
 function moveNode(data, state2) {
   const { x, y } = eventCoordinates(data.e);
   state2.coordinates.y = y;
@@ -2236,7 +2241,7 @@ function synthMove(data, state2) {
     return;
   }
   moveNode(data, state2);
-  const elFromPoint = getElFromPoint(eventCoordinates(data.e));
+  const elFromPoint = getElFromPoint(eventCoordinates(data.e), data.e, state2);
   if (!elFromPoint) {
     document.dispatchEvent(
       new CustomEvent("handleRootPointerover", {
@@ -2547,18 +2552,98 @@ function removeClass(els, className) {
   }
 }
 function isScrollable(element) {
-  if (element === document.documentElement) {
+  if (element === document.documentElement || element === document.body) {
     return element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth;
   }
   const style = window.getComputedStyle(element);
   return (style.overflowY === "auto" || style.overflowY === "scroll") && element.scrollHeight > element.clientHeight || (style.overflowX === "auto" || style.overflowX === "scroll") && element.scrollWidth > element.clientWidth;
 }
-function getScrollables() {
-  return Array.from(document.querySelectorAll("*")).filter(
-    (el) => el instanceof HTMLElement && isScrollable(el)
-  );
+function getScrollableUnderPointer(x, y) {
+  const elements = document.elementsFromPoint(x, y);
+  for (const el of elements) {
+    if (el instanceof HTMLElement && isScrollable(el)) {
+      return el;
+    }
+  }
+  return document.documentElement;
 }
-function getElFromPoint(coordinates) {
+function scrollContainer(e, scrollElement, state2) {
+  const rect = scrollElement.getBoundingClientRect();
+  const { clientX, clientY } = e;
+  let scrollX = 0;
+  let scrollY = 0;
+  let shouldScroll = false;
+  let difference = 0;
+  state2.preventEnter = true;
+  if (scrollElement === document.body || scrollElement === document.documentElement) {
+    const documentElement = document.documentElement;
+    difference = documentElement.scrollHeight - (documentElement.scrollTop + window.innerHeight);
+    if (clientY > window.innerHeight * 0.8 && difference > 0) {
+      shouldScroll = true;
+      scrollY = 5;
+    } else if (clientY < window.innerHeight * 0.05 && documentElement.scrollTop > 0) {
+      shouldScroll = true;
+      scrollY = -5;
+    } else if (clientX > window.innerWidth * 0.8) {
+      shouldScroll = true;
+      scrollX = 5;
+    } else if (clientX < window.innerWidth * 0.05 && documentElement.scrollLeft > 0) {
+      shouldScroll = true;
+      scrollX = -5;
+    }
+  } else {
+    if (clientY > rect.bottom - (rect.bottom - rect.top) * 0.05 && scrollElement.scrollTop + scrollElement.clientHeight < scrollElement.scrollHeight) {
+      shouldScroll = true;
+      scrollY = 5;
+    } else if (clientY < rect.top + (rect.bottom - rect.top) * 0.05 && scrollElement.scrollTop > 0) {
+      shouldScroll = true;
+      scrollY = -5;
+    } else if (clientX > rect.right - (rect.right - rect.left) * 0.05 && scrollElement.scrollLeft + scrollElement.clientWidth < scrollElement.scrollWidth) {
+      shouldScroll = true;
+      scrollX = 5;
+    } else if (clientX < rect.left + (rect.right - rect.left) * 0.05 && scrollElement.scrollLeft > 0) {
+      shouldScroll = true;
+      scrollX = -5;
+    }
+  }
+  if (shouldScroll) {
+    if (scrollElement === document.body || scrollElement === document.documentElement) {
+      window.scrollBy({ left: scrollX, top: scrollY });
+      const startLeft = state2.startLeft ?? 0;
+      const startTop = state2.startTop ?? 0;
+      state2.clonedDraggedNode.style.top = `${clientY - startTop + window.scrollY}px`;
+      state2.clonedDraggedNode.style.left = `${clientX - startLeft + window.scrollX}px`;
+    } else {
+      scrollElement.scrollBy({ left: scrollX, top: scrollY });
+    }
+    state2.animationFrameId = requestAnimationFrame(
+      () => scrollContainer(e, scrollElement, state2)
+    );
+  } else {
+    if (state2.animationFrameId) {
+      cancelAnimationFrame(state2.animationFrameId);
+      state2.animationFrameId = void 0;
+    }
+  }
+}
+function startScrolling(e, state2) {
+  if (!state2.scrollElement) return;
+  state2.animationFrameId = requestAnimationFrame(() => {
+    if (!state2.scrollElement && state2.animationFrameId) {
+      cancelAnimationFrame(state2.animationFrameId);
+      return;
+    }
+    if (state2.scrollElement) scrollContainer(e, state2.scrollElement, state2);
+  });
+}
+function getElFromPoint(coordinates, e, state2) {
+  const scrollable = getScrollableUnderPointer(coordinates.x, coordinates.y);
+  if (state2.animationFrameId) {
+    cancelAnimationFrame(state2.animationFrameId);
+    state2.preventEnter = false;
+  }
+  state2.scrollElement = scrollable;
+  startScrolling(e, state2);
   let target = document.elementFromPoint(coordinates.x, coordinates.y);
   if (!isNode(target)) return;
   let isParent;
@@ -2677,7 +2762,6 @@ function getRealCoords2(el) {
   eventCoordinates,
   getElFromPoint,
   getRealCoords,
-  getScrollables,
   handleClickNode,
   handleClickParent,
   handleDragend,
