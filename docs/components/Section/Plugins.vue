@@ -15,6 +15,7 @@
       behavior where the values of the list are only updated when the user drops
       the item, use the <code>dropOrSwap</code> plugin.
     </p>
+    <CodeExample example="drop-or-swap" />
     <h3 id="insert">Insert (Experimental)</h3>
     <p>
       Similar to the <code>dropOrSwap</code> plugin, the
