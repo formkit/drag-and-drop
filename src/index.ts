@@ -265,6 +265,7 @@ export function dragAndDrop<T>({
       handleNodeTouchstart,
       handleNodePointerover,
       handleParentPointerover,
+      handleParentScroll,
       handleNodePointerdown,
       handleNodePointermove,
       handleNodeDragenter,
@@ -324,27 +325,13 @@ export function dragAndDrop<T>({
 
 export function dragStateProps<T>(
   data: NodeDragEventData<T> | NodePointerEventData<T>,
-  draggedNodes: Array<NodeRecord<T>>,
-  nativeDrag = true
+  draggedNodes: Array<NodeRecord<T>>
 ): DragStateProps<T> {
   const { x, y } = eventCoordinates(data.e);
 
   const rect = data.targetData.node.el.getBoundingClientRect();
 
   const scrollEls: Array<[HTMLElement, AbortController]> = [];
-
-  for (const scrollable of getScrollables()) {
-    scrollEls.push([
-      scrollable,
-      nativeDrag
-        ? addEvents(scrollable, {
-            scroll: preventSortOnScroll(),
-          })
-        : addEvents(scrollable, {
-            pointermove: handleScroll,
-          }),
-    ]);
-  }
 
   return {
     affectedNodes: [],
@@ -832,6 +819,7 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
     keydown: parentEventData(parentData.config.handleParentKeydown),
     dragover: parentEventData(parentData.config.handleParentDragover),
     handleParentPointerover: parentData.config.handleParentPointerover,
+    scroll: parentEventData(parentData.config.handleParentScroll),
     drop: parentEventData(parentData.config.handleParentDrop),
     hasNestedParent: (e: CustomEvent) => {
       const parent = parents.get(e.target as HTMLElement);
@@ -1202,6 +1190,22 @@ function draggedNodes<T>(data: NodeEventData<T>): Array<NodeRecord<T>> {
   }
 
   return [];
+}
+
+let scrollTimeout: number | undefined;
+
+function handleParentScroll<T>(_data: ParentEventData<T>) {
+  if (!isDragState(state)) return;
+
+  if (isSynthDragState(state)) return;
+
+  state.preventEnter = true;
+
+  if (scrollTimeout) clearTimeout(scrollTimeout);
+
+  scrollTimeout = setTimeout(() => {
+    state.preventEnter = false;
+  }, 100);
 }
 
 /**
@@ -1892,7 +1896,7 @@ function initSynthDrag<T>(
   });
 
   const synthDragState = setDragState({
-    ...dragStateProps(data, draggedNodes, false),
+    ...dragStateProps(data, draggedNodes),
     ...synthDragStateProps,
   }) as SynthDragState<T>;
 

@@ -1109,6 +1109,7 @@ function dragAndDrop({
       handleNodeTouchstart,
       handleNodePointerover: handleNodePointerover2,
       handleParentPointerover: handleParentPointerover2,
+      handleParentScroll,
       handleNodePointerdown,
       handleNodePointermove,
       handleNodeDragenter,
@@ -1156,20 +1157,10 @@ function dragAndDrop({
   setup(parent, parentData);
   remapNodes(parent, true);
 }
-function dragStateProps(data, draggedNodes2, nativeDrag = true) {
+function dragStateProps(data, draggedNodes2) {
   const { x, y } = eventCoordinates(data.e);
   const rect = data.targetData.node.el.getBoundingClientRect();
   const scrollEls = [];
-  for (const scrollable of getScrollables()) {
-    scrollEls.push([
-      scrollable,
-      nativeDrag ? addEvents(scrollable, {
-        scroll: preventSortOnScroll()
-      }) : addEvents(scrollable, {
-        pointermove: handleScroll
-      })
-    ]);
-  }
   return {
     affectedNodes: [],
     ascendingDirection: false,
@@ -1479,6 +1470,7 @@ function setup(parent, parentData) {
     keydown: parentEventData(parentData.config.handleParentKeydown),
     dragover: parentEventData(parentData.config.handleParentDragover),
     handleParentPointerover: parentData.config.handleParentPointerover,
+    scroll: parentEventData(parentData.config.handleParentScroll),
     drop: parentEventData(parentData.config.handleParentDrop),
     hasNestedParent: (e) => {
       const parent2 = parents.get(e.target);
@@ -1740,6 +1732,16 @@ function draggedNodes(data) {
     ];
   }
   return [];
+}
+var scrollTimeout;
+function handleParentScroll(_data) {
+  if (!isDragState(state)) return;
+  if (isSynthDragState(state)) return;
+  state.preventEnter = true;
+  if (scrollTimeout) clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(() => {
+    state.preventEnter = false;
+  }, 100);
 }
 function handleDragstart(data, state2) {
   if (!validateDragstart(data) || !validateDragHandle(data)) {
@@ -2024,11 +2026,11 @@ function handleParentKeydown(data, state2) {
   }
 }
 function preventSortOnScroll() {
-  let scrollTimeout;
+  let scrollTimeout2;
   return () => {
-    clearTimeout(scrollTimeout);
+    clearTimeout(scrollTimeout2);
     if (state) state.preventEnter = true;
-    scrollTimeout = setTimeout(() => {
+    scrollTimeout2 = setTimeout(() => {
       if (state) state.preventEnter = false;
     }, 100);
   };
@@ -2199,7 +2201,7 @@ function initSynthDrag(data, _state, draggedNodes2) {
     contextmenu: noDefault
   });
   const synthDragState = setDragState({
-    ...dragStateProps(data, draggedNodes2, false),
+    ...dragStateProps(data, draggedNodes2),
     ...synthDragStateProps
   });
   return synthDragState;

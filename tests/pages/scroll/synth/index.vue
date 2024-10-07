@@ -48,12 +48,10 @@ const vegetables = [
 ];
 
 const [parent, values] = useDragAndDrop(fruits, {
-  nativeDrag: false,
   group: "fruits",
 });
 
 const [parent2, values2] = useDragAndDrop(vegetables, {
-  nativeDrag: false,
   group: "fruits",
 });
 </script>

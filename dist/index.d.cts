@@ -124,6 +124,7 @@ interface ParentConfig<T> {
      * Drop event on parent
      */
     handleParentDrop: (data: ParentDragEventData<T>, state: DragState<T>) => void;
+    handleParentScroll: (data: ParentEventData<T>, state: DragState<T> | BaseDragState<T> | SynthDragState<T>) => void;
     /**
      * Function that is called when a dragover event is triggered on a node.
      */
@@ -931,7 +932,7 @@ declare function setDragState<T>(dragStateProps: (SynthDragStateProps & DragStat
  * @returns void
  */
 declare function dragAndDrop<T>({ parent, getValues, setValues, config, }: DragAndDrop<T>): void;
-declare function dragStateProps<T>(data: NodeDragEventData<T> | NodePointerEventData<T>, draggedNodes: Array<NodeRecord<T>>, nativeDrag?: boolean): DragStateProps<T>;
+declare function dragStateProps<T>(data: NodeDragEventData<T> | NodePointerEventData<T>, draggedNodes: Array<NodeRecord<T>>): DragStateProps<T>;
 declare function performSort<T>({ parent, draggedNodes, targetNode, }: {
     parent: ParentRecord<T>;
     draggedNodes: Array<NodeRecord<T>>;

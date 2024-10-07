@@ -164,6 +164,10 @@ export interface ParentConfig<T> {
    * Drop event on parent
    */
   handleParentDrop: (data: ParentDragEventData<T>, state: DragState<T>) => void;
+  handleParentScroll: (
+    data: ParentEventData<T>,
+    state: DragState<T> | BaseDragState<T> | SynthDragState<T>
+  ) => void;
   /**
    * Function that is called when a dragover event is triggered on a node.
    */
