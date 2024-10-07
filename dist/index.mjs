@@ -2523,6 +2523,9 @@ function scrollContainer(e, scrollElement, state2) {
       state2.animationFrameId = void 0;
     }
   }
+  setTimeout(() => {
+    state2.preventEnter = false;
+  });
 }
 function startScrolling(e, state2) {
   if (!state2.scrollElement) return;

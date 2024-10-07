@@ -2612,6 +2612,10 @@ function scrollContainer<T>(
       state.animationFrameId = undefined;
     }
   }
+
+  setTimeout(() => {
+    state.preventEnter = false;
+  });
 }
 
 // Function to start the scroll interval when pointer is near the edge
