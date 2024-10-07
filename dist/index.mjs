@@ -871,13 +871,6 @@ var touchDevice = window && "ontouchstart" in window;
 var dropped = false;
 var documentController;
 var isNative = false;
-var animationFrameId = null;
-var scrollConfig = {
-  up: [0, -1],
-  down: [0, 1],
-  left: [-1, 0],
-  right: [1, 0]
-};
 var nodes = /* @__PURE__ */ new WeakMap();
 var parents = /* @__PURE__ */ new WeakMap();
 var treeAncestors = {};
@@ -1970,7 +1963,6 @@ function handlePointercancel(data, state2) {
   config?.handleEnd(state2);
 }
 function handleEnd3(state2) {
-  cancelSynthScroll();
   if ("longPressTimeout" in state2 && state2.longPressTimeout)
     clearTimeout(state2.longPressTimeout);
   const config = parents.get(state2.initialParent.el)?.config;
@@ -2123,112 +2115,6 @@ function pointermoveClasses(state2, config) {
       config?.longPressClass
     );
 }
-function getScrollData(e, state2) {
-  if (!(e.currentTarget instanceof HTMLElement)) return;
-  const {
-    x: xThresh,
-    y: yThresh,
-    scrollOutside
-  } = state2.initialParent.data.config.scrollBehavior;
-  const coordinates = getRealCoords2(e.currentTarget);
-  return {
-    xThresh,
-    yThresh,
-    scrollOutside,
-    scrollParent: e.currentTarget,
-    x: coordinates.left,
-    y: coordinates.top,
-    clientWidth: e.currentTarget.clientWidth,
-    clientHeight: e.currentTarget.clientHeight,
-    scrollWidth: e.currentTarget.scrollWidth,
-    scrollHeight: e.currentTarget.scrollHeight
-  };
-}
-function cancelSynthScroll() {
-  if (animationFrameId !== null) {
-    cancelAnimationFrame(animationFrameId);
-    animationFrameId = null;
-  }
-}
-function setSynthScrollDirection(direction, el, state2) {
-  if (state2.synthScrollDirection === direction) return;
-  state2.synthScrollDirection = direction;
-  cancelSynthScroll();
-  if (direction === "up" && el.scrollTop === 0) return;
-  if (direction === "down" && el.scrollTop + el.clientHeight >= el.scrollHeight)
-    return;
-  if (direction === "left" && el.scrollLeft === 0) return;
-  if (direction === "right" && el.scrollLeft + el.clientWidth >= el.scrollWidth)
-    return;
-  let lastTimestamp = null;
-  const scroll = (timestamp) => {
-    if (lastTimestamp === null) lastTimestamp = timestamp;
-    const elapsed = timestamp - lastTimestamp;
-    const baseSpeed = 500;
-    const distance = baseSpeed * elapsed / 1e3;
-    if (state2.synthScrollDirection === void 0 && animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-      return;
-    }
-    switch (direction) {
-      case "up":
-        el.scrollBy(0, -distance);
-        state2.clonedDraggedNode.style.top = `${state2.coordinates.y + el.scrollTop}px`;
-        break;
-      case "down":
-        el.scrollBy(0, distance);
-        state2.clonedDraggedNode.style.top = `${state2.coordinates.y + el.scrollTop - state2.startTop}px`;
-        break;
-      case "left":
-        el.scrollBy(-distance, 0);
-        state2.clonedDraggedNode.style.left = `${state2.coordinates.x + el.scrollLeft}px`;
-        break;
-      case "right":
-        state2.clonedDraggedNode.style.left = `${state2.coordinates.x + el.scrollLeft}px`;
-        el.scrollBy(distance, 0);
-    }
-    lastTimestamp = timestamp;
-    animationFrameId = requestAnimationFrame(scroll);
-  };
-  animationFrameId = requestAnimationFrame(scroll);
-}
-function shouldScroll(direction, e, state2) {
-  const dataScrollData = getScrollData(e, state2);
-  if (!dataScrollData) return false;
-  switch (direction) {
-    case "down":
-      return !!shouldScrollDown(state2, dataScrollData);
-    case "up":
-      return !!shouldScrollUp(state2, dataScrollData);
-    case "right":
-      return !!shouldScrollRight(state2, dataScrollData);
-    case "left":
-      return !!shouldScrollLeft(state2, dataScrollData);
-    default:
-      return false;
-  }
-}
-function shouldScrollRight(state2, data) {
-  return;
-  const diff = data.scrollParent.clientWidth + data.x - state2.coordinates.x;
-  if (!data.scrollOutside && diff < 0) return;
-  if (diff < (1 - data.xThresh) * data.scrollParent.clientWidth && !(data.scrollParent.scrollLeft + data.scrollParent.clientWidth >= data.scrollParent.scrollWidth))
-    return state2;
-}
-function shouldScrollLeft(state2, data) {
-  return;
-  const diff = data.scrollParent.clientWidth + data.x - state2.coordinates.x;
-  if (!data.scrollOutside && diff > data.scrollParent.clientWidth) return;
-  if (diff > data.xThresh * data.scrollParent.clientWidth && data.scrollParent.scrollLeft !== 0)
-    return state2;
-}
-function shouldScrollUp(state2, data) {
-  return state2.coordinates.y <= 0.1 * data.scrollParent.clientHeight && data.scrollParent.scrollTop !== 0;
-}
-function shouldScrollDown(state2, data) {
-  return state2.coordinates.y > data.clientHeight * data.yThresh && data.scrollParent.scrollTop !== data.scrollParent.clientHeight;
-}
 function moveNode(data, state2) {
   const { x, y } = eventCoordinates(data.e);
   state2.coordinates.y = y;
@@ -2277,23 +2163,6 @@ function synthMove(data, state2) {
       })
     );
   }
-}
-function handleScroll(e) {
-  e.stopPropagation();
-  if (!isSynthDragState(state)) return;
-  let directionSet = false;
-  for (const direction of Object.keys(scrollConfig)) {
-    if (shouldScroll(direction, e, state)) {
-      setSynthScrollDirection(
-        direction,
-        e.currentTarget,
-        state
-      );
-      directionSet = true;
-      break;
-    }
-  }
-  if (!directionSet) state.synthScrollDirection = void 0;
 }
 function handleNodeDragover3(data, state2) {
   const { x, y } = eventCoordinates(data.e);
@@ -2726,7 +2595,6 @@ export {
   handleParentKeydown,
   handleParentPointerover2 as handleParentPointerover,
   handlePointercancel,
-  handleScroll,
   initDrag,
   insert,
   isBrowser,
