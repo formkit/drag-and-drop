@@ -57,10 +57,6 @@ __export(src_exports, {
   handleParentKeydown: () => handleParentKeydown,
   handleParentPointerover: () => handleParentPointerover2,
   handlePointercancel: () => handlePointercancel,
-<<<<<<< HEAD
-  handleScroll: () => handleScroll,
-=======
->>>>>>> release/v0.2.0
   initDrag: () => initDrag,
   insert: () => insert,
   isBrowser: () => isBrowser,
@@ -978,15 +974,6 @@ var dropped = false;
 var documentController;
 var isNative = false;
 var animationFrameId = null;
-<<<<<<< HEAD
-var scrollConfig = {
-  up: [0, -1],
-  down: [0, 1],
-  left: [-1, 0],
-  right: [1, 0]
-};
-=======
->>>>>>> release/v0.2.0
 var nodes = /* @__PURE__ */ new WeakMap();
 var parents = /* @__PURE__ */ new WeakMap();
 var treeAncestors = {};
@@ -1114,10 +1101,7 @@ function dragAndDrop({
       handleNodeTouchstart,
       handleNodePointerover: handleNodePointerover2,
       handleParentPointerover: handleParentPointerover2,
-<<<<<<< HEAD
-=======
       handleParentScroll,
->>>>>>> release/v0.2.0
       handleNodePointerdown,
       handleNodePointermove,
       handleNodeDragenter,
@@ -1739,8 +1723,6 @@ function draggedNodes(data) {
   }
   return [];
 }
-<<<<<<< HEAD
-=======
 var scrollTimeout;
 function handleParentScroll(_data) {
   if (!isDragState(state)) return;
@@ -1751,7 +1733,6 @@ function handleParentScroll(_data) {
     state.preventEnter = false;
   }, 100);
 }
->>>>>>> release/v0.2.0
 function handleDragstart(data, state2) {
   if (!validateDragstart(data) || !validateDragHandle(data)) {
     data.e.preventDefault();
@@ -2035,19 +2016,11 @@ function handleParentKeydown(data, state2) {
   }
 }
 function preventSortOnScroll() {
-<<<<<<< HEAD
-  let scrollTimeout;
-  return () => {
-    clearTimeout(scrollTimeout);
-    if (state) state.preventEnter = true;
-    scrollTimeout = setTimeout(() => {
-=======
   let scrollTimeout2;
   return () => {
     clearTimeout(scrollTimeout2);
     if (state) state.preventEnter = true;
     scrollTimeout2 = setTimeout(() => {
->>>>>>> release/v0.2.0
       if (state) state.preventEnter = false;
     }, 100);
   };
@@ -2244,118 +2217,12 @@ function pointermoveClasses(state2, config) {
       config?.longPressClass
     );
 }
-<<<<<<< HEAD
-function getScrollData(e, state2) {
-  if (!(e.currentTarget instanceof HTMLElement)) return;
-  const {
-    x: xThresh,
-    y: yThresh,
-    scrollOutside
-  } = state2.initialParent.data.config.scrollBehavior;
-  const coordinates = getRealCoords2(e.currentTarget);
-  return {
-    xThresh,
-    yThresh,
-    scrollOutside,
-    scrollParent: e.currentTarget,
-    x: coordinates.left,
-    y: coordinates.top,
-    clientWidth: e.currentTarget.clientWidth,
-    clientHeight: e.currentTarget.clientHeight,
-    scrollWidth: e.currentTarget.scrollWidth,
-    scrollHeight: e.currentTarget.scrollHeight
-  };
-}
-=======
->>>>>>> release/v0.2.0
 function cancelSynthScroll() {
   if (animationFrameId !== null) {
     cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
-<<<<<<< HEAD
   }
 }
-function setSynthScrollDirection(direction, el, state2) {
-  if (state2.synthScrollDirection === direction) return;
-  state2.synthScrollDirection = direction;
-  cancelSynthScroll();
-  if (direction === "up" && el.scrollTop === 0) return;
-  if (direction === "down" && el.scrollTop + el.clientHeight >= el.scrollHeight)
-    return;
-  if (direction === "left" && el.scrollLeft === 0) return;
-  if (direction === "right" && el.scrollLeft + el.clientWidth >= el.scrollWidth)
-    return;
-  let lastTimestamp = null;
-  const scroll = (timestamp) => {
-    if (lastTimestamp === null) lastTimestamp = timestamp;
-    const elapsed = timestamp - lastTimestamp;
-    const baseSpeed = 500;
-    const distance = baseSpeed * elapsed / 1e3;
-    if (state2.synthScrollDirection === void 0 && animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-      return;
-    }
-    switch (direction) {
-      case "up":
-        el.scrollBy(0, -distance);
-        state2.clonedDraggedNode.style.top = `${state2.coordinates.y + el.scrollTop}px`;
-        break;
-      case "down":
-        el.scrollBy(0, distance);
-        state2.clonedDraggedNode.style.top = `${state2.coordinates.y + el.scrollTop - state2.startTop}px`;
-        break;
-      case "left":
-        el.scrollBy(-distance, 0);
-        state2.clonedDraggedNode.style.left = `${state2.coordinates.x + el.scrollLeft}px`;
-        break;
-      case "right":
-        state2.clonedDraggedNode.style.left = `${state2.coordinates.x + el.scrollLeft}px`;
-        el.scrollBy(distance, 0);
-    }
-    lastTimestamp = timestamp;
-    animationFrameId = requestAnimationFrame(scroll);
-  };
-  animationFrameId = requestAnimationFrame(scroll);
-}
-function shouldScroll(direction, e, state2) {
-  const dataScrollData = getScrollData(e, state2);
-  if (!dataScrollData) return false;
-  switch (direction) {
-    case "down":
-      return !!shouldScrollDown(state2, dataScrollData);
-    case "up":
-      return !!shouldScrollUp(state2, dataScrollData);
-    case "right":
-      return !!shouldScrollRight(state2, dataScrollData);
-    case "left":
-      return !!shouldScrollLeft(state2, dataScrollData);
-    default:
-      return false;
-  }
-}
-function shouldScrollRight(state2, data) {
-  const diff = data.scrollParent.clientWidth + data.x - state2.coordinates.x;
-  if (!data.scrollOutside && diff < 0) return;
-  if (diff < (1 - data.xThresh) * data.scrollParent.clientWidth && !(data.scrollParent.scrollLeft + data.scrollParent.clientWidth >= data.scrollParent.scrollWidth))
-    return state2;
-}
-function shouldScrollLeft(state2, data) {
-  const diff = data.scrollParent.clientWidth + data.x - state2.coordinates.x;
-  if (!data.scrollOutside && diff > data.scrollParent.clientWidth) return;
-  if (diff > data.xThresh * data.scrollParent.clientWidth && data.scrollParent.scrollLeft !== 0)
-    return state2;
-}
-function shouldScrollUp(state2, data) {
-  return state2.coordinates.y <= 0.1 * data.scrollParent.clientHeight && data.scrollParent.scrollTop !== 0;
-}
-function shouldScrollDown(state2, data) {
-  return state2.coordinates.y > data.clientHeight * data.yThresh && data.scrollParent.scrollTop !== data.scrollParent.clientHeight;
-}
-=======
-  }
-}
->>>>>>> release/v0.2.0
 function moveNode(data, state2) {
   const { x, y } = eventCoordinates(data.e);
   state2.coordinates.y = y;
@@ -2374,11 +2241,7 @@ function synthMove(data, state2) {
     return;
   }
   moveNode(data, state2);
-<<<<<<< HEAD
-  const elFromPoint = getElFromPoint(eventCoordinates(data.e));
-=======
   const elFromPoint = getElFromPoint(eventCoordinates(data.e), data.e, state2);
->>>>>>> release/v0.2.0
   if (!elFromPoint) {
     document.dispatchEvent(
       new CustomEvent("handleRootPointerover", {
@@ -2409,26 +2272,6 @@ function synthMove(data, state2) {
     );
   }
 }
-<<<<<<< HEAD
-function handleScroll(e) {
-  e.stopPropagation();
-  if (!isSynthDragState(state)) return;
-  let directionSet = false;
-  for (const direction of Object.keys(scrollConfig)) {
-    if (shouldScroll(direction, e, state)) {
-      setSynthScrollDirection(
-        direction,
-        e.currentTarget,
-        state
-      );
-      directionSet = true;
-      break;
-    }
-  }
-  if (!directionSet) state.synthScrollDirection = void 0;
-}
-=======
->>>>>>> release/v0.2.0
 function handleNodeDragover3(data, state2) {
   const { x, y } = eventCoordinates(data.e);
   state2.coordinates.y = y;
@@ -2440,18 +2283,6 @@ function handleNodeDragover3(data, state2) {
 function handleParentDragover3(data, state2) {
   data.e.preventDefault();
   data.e.stopPropagation();
-<<<<<<< HEAD
-  const scrollable = isScrollable(data.targetData.parent.el);
-  if (scrollable) {
-    state2.scrollEls.push([
-      data.targetData.parent.el,
-      addEvents(data.targetData.parent.el, {
-        scroll: preventSortOnScroll()
-      })
-    ]);
-  }
-=======
->>>>>>> release/v0.2.0
   Object.assign(eventCoordinates(data.e));
   transfer(data, state2);
 }
@@ -2721,19 +2552,12 @@ function removeClass(els, className) {
   }
 }
 function isScrollable(element) {
-<<<<<<< HEAD
-  if (element === document.documentElement) {
-=======
   if (element === document.documentElement || element === document.body) {
->>>>>>> release/v0.2.0
     return element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth;
   }
   const style = window.getComputedStyle(element);
   return (style.overflowY === "auto" || style.overflowY === "scroll") && element.scrollHeight > element.clientHeight || (style.overflowX === "auto" || style.overflowX === "scroll") && element.scrollWidth > element.clientWidth;
 }
-<<<<<<< HEAD
-function getElFromPoint(coordinates) {
-=======
 function getScrollableUnderPointer(x, y) {
   const elements = document.elementsFromPoint(x, y);
   for (const el of elements) {
@@ -2754,13 +2578,13 @@ function scrollContainer(e, scrollElement, state2) {
   if (scrollElement === document.body || scrollElement === document.documentElement) {
     const documentElement = document.documentElement;
     difference = documentElement.scrollHeight - (documentElement.scrollTop + window.innerHeight);
-    if (clientY > window.innerHeight * 0.8 && difference > 0) {
+    if (clientY > window.innerHeight * 0.95 && difference > 0) {
       shouldScroll = true;
       scrollY = 5;
     } else if (clientY < window.innerHeight * 0.05 && documentElement.scrollTop > 0) {
       shouldScroll = true;
       scrollY = -5;
-    } else if (clientX > window.innerWidth * 0.8) {
+    } else if (clientX > window.innerWidth * 0.95) {
       shouldScroll = true;
       scrollX = 5;
     } else if (clientX < window.innerWidth * 0.05 && documentElement.scrollLeft > 0) {
@@ -2823,7 +2647,6 @@ function getElFromPoint(coordinates, e, state2) {
   }
   state2.scrollElement = scrollable;
   startScrolling(e, state2);
->>>>>>> release/v0.2.0
   let target = document.elementFromPoint(coordinates.x, coordinates.y);
   if (!isNode(target)) return;
   let isParent;
@@ -2963,10 +2786,6 @@ function getRealCoords2(el) {
   handleParentKeydown,
   handleParentPointerover,
   handlePointercancel,
-<<<<<<< HEAD
-  handleScroll,
-=======
->>>>>>> release/v0.2.0
   initDrag,
   insert,
   isBrowser,
