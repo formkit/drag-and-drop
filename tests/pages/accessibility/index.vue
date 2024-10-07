@@ -70,7 +70,7 @@ dragAndDrop({
 }
 
 body {
-  height: 10000px !important;
+  /*height: 10000px !important;*/
 }
 
 h1 {

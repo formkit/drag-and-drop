@@ -39,7 +39,7 @@ const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   color: yellow !important;
 }
 body {
-  height: 10000px !important;
+  /*height: 10000px !important;*/
 }
 h1 {
   margin-bottom: 1em;

@@ -2523,7 +2523,7 @@ function scrollContainer<T>(
       (documentElement.scrollTop + window.innerHeight);
 
     // Check if the pointer is near the bottom of the viewport (5% of viewport height)
-    if (clientY > window.innerHeight * 0.8 && difference > 0) {
+    if (clientY > window.innerHeight * 0.95 && difference > 0) {
       shouldScroll = true;
 
       scrollY = 5;
@@ -2534,7 +2534,7 @@ function scrollContainer<T>(
       shouldScroll = true;
 
       scrollY = -5;
-    } else if (clientX > window.innerWidth * 0.8) {
+    } else if (clientX > window.innerWidth * 0.95) {
       shouldScroll = true;
 
       scrollX = 5;
