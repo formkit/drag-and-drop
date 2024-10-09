@@ -417,6 +417,8 @@ export interface ParentData<T> {
    * Set on parentData indicating that the current parent is nested beneath an ancestor.
    */
   nestedParent?: ParentRecord<T>;
+  emit: (event: string, data: unknown) => void;
+  on: (event: string, callback: CallableFunction) => void;
 }
 
 /**
@@ -997,6 +999,7 @@ export interface DropSwapState {
   draggedOverNodes: Array<NodeRecord<unknown>>;
   initialDraggedIndex: number | undefined;
   transferred: boolean;
+  dragging: boolean;
 }
 
 export interface InsertConfig<T> {
@@ -1010,14 +1013,8 @@ export interface InsertConfig<T> {
     data: ParentDragEventData<T>,
     state: DragState<T>
   ) => void;
-  handleParentPointerover?: (
-    data: PointeroverParentEvent<T>,
-    state: SynthDragState<T>
-  ) => void;
-  handleNodePointerover?: (
-    data: PointeroverNodeEvent<T>,
-    state: SynthDragState<T>
-  ) => void;
+  handleParentPointerover?: (data: PointeroverParentEvent<T>) => void;
+  handleNodePointerover?: (data: PointeroverNodeEvent<T>) => void;
   handleEnd?: (data: NodeDragEventData<T> | NodePointerEventData<T>) => void;
 }
 
@@ -1028,6 +1025,7 @@ export interface InsertState<T> {
   targetIndex: number;
   ascending: boolean;
   coordinates: { x: number; y: number };
+  dragging: boolean;
 }
 
 export interface InsertEvent<T> {

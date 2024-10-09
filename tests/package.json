@@ -13,7 +13,8 @@
     "@nuxtjs/tailwindcss": "^6.12.1",
     "nuxt": "^3.11.1",
     "vue": "^3.4.21",
-    "vue-router": "^4.3.0"
+    "vue-router": "^4.3.0",
+    "@formkit/drag-and-drop": "workspace:*"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",

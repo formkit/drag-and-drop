@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useDragAndDrop } from "../../../src/vue/index";
+import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
 
 const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   group: "transfer",
@@ -35,7 +35,7 @@ const [parent3, values3] = useDragAndDrop(
   <h1>Transfer</h1>
   <div class="flex-wrap">
     <div>
-      <ul id="transfer_1" ref="parent1" class="list">
+      <ul id="transfer_1" ref="parent1" class="list" aria-label="list1">
         <li v-for="value in values1" :id="value" :key="value" class="item">
           {{ value }}
         </li>
@@ -45,7 +45,7 @@ const [parent3, values3] = useDragAndDrop(
       </ul>
     </div>
     <div>
-      <ul id="2" ref="parent2" class="list">
+      <ul id="2" ref="parent2" class="list" aria-label="list2">
         <li v-for="value in values2" :id="value" :key="value" class="item">
           {{ value }}
         </li>

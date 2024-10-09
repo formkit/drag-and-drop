@@ -44,8 +44,6 @@ export { dropOrSwap } from "./plugins/drop-or-swap";
  */
 export const isBrowser = typeof window !== "undefined";
 
-export const touchDevice = window && "ontouchstart" in window;
-
 let dropped = false;
 
 /**
@@ -141,12 +139,11 @@ export function resetState() {
  * @returns void
  */
 export function setDragState<T>(
-  dragStateProps:
-    | (SynthDragStateProps & DragStateProps<T>)
-    | DragStateProps<T>
-    | undefined
+  dragStateProps: (SynthDragStateProps & DragStateProps<T>) | DragStateProps<T>
 ): DragState<T> | SynthDragState<T> {
   Object.assign(state, dragStateProps);
+
+  dragStateProps.initialParent.data.emit("dragStarted", state);
 
   dropped = false;
 
@@ -230,6 +227,8 @@ export function dragAndDrop<T>({
 
   tearDown(parent);
 
+  const [emit, on] = createEmitter();
+
   const parentData: ParentData<T> = {
     getValues,
     setValues,
@@ -284,6 +283,8 @@ export function dragAndDrop<T>({
     enabledNodes: [],
     abortControllers: {},
     privateClasses: [],
+    on,
+    emit,
   };
 
   const nodesObserver = new MutationObserver(nodesMutated);
@@ -1314,6 +1315,8 @@ export function handleNodePointerdown<T>(
     return;
   }
 
+  const touchDevice = isBrowser && window && "ontouchstart" in window;
+
   if (state.selectedState?.nodes?.length) {
     const idx = state.selectedState.nodes.findIndex(
       (x) => x.el === data.targetData.node.el
@@ -2023,7 +2026,7 @@ export function handleParentDragover<T>(
 
   data.e.stopPropagation();
 
-  Object.assign(eventCoordinates(data.e as DragEvent));
+  Object.assign(eventCoordinates(data.e));
 
   transfer(data, state);
 }
@@ -2283,7 +2286,7 @@ export function transfer<T>(
   if (
     !validateTransfer({
       currentParent: state.currentParent,
-      targetParent: data.targetData.parent,
+      targetParent: data.targetData.parent as any,
       initialParent: state.initialParent,
       draggedNodes: state.draggedNodes,
       state,

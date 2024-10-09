@@ -125,9 +125,10 @@ var insertState = {
   targetIndex: 0,
   ascending: false,
   coordinates: { x: 0, y: 0 },
-  insertPoint: null
+  insertPoint: null,
+  dragging: false
 };
-var listenersSet = false;
+var documentController;
 function insert(insertConfig) {
   return (parent) => {
     const parentData = parents.get(parent);
@@ -136,11 +137,6 @@ function insert(insertConfig) {
       ...parentData.config,
       insertConfig
     };
-    if (!listenersSet) {
-      document.addEventListener("dragover", checkPosition);
-      document.addEventListener("pointermove", checkPosition);
-      listenersSet = true;
-    }
     return {
       teardown() {
         if (parentData.abortControllers.root) {
@@ -157,6 +153,15 @@ function insert(insertConfig) {
           handleEnd(state2);
           originalHandleend(state2);
         };
+        parentData.on("dragStarted", () => {
+          documentController = addEvents(document, {
+            dragover: checkPosition,
+            pointermove: checkPosition
+          });
+        });
+        parentData.on("dragEnded", () => {
+          documentController?.abort();
+        });
         parentData.config = insertParentConfig;
         state.on("dragStarted", () => {
           const insertPoint = parentData.config.insertConfig?.insertPoint({
@@ -628,9 +633,10 @@ function handleEnd(state2) {
 var dropSwapState = {
   draggedOverNodes: Array(),
   initialDraggedIndex: void 0,
-  transferred: false
+  transferred: false,
+  dragging: false
 };
-var listenersSet2 = false;
+var documentController2;
 function dropOrSwap(dropSwapConfig = {}) {
   return (parent) => {
     const parentData = parents.get(parent);
@@ -639,14 +645,6 @@ function dropOrSwap(dropSwapConfig = {}) {
       ...parentData.config,
       dropSwapConfig
     };
-    if (!listenersSet2) {
-      document.addEventListener("dragover", rootDragover);
-      document.addEventListener(
-        "handleRootPointerover",
-        (e) => rootPointerover(e)
-      );
-      listenersSet2 = true;
-    }
     return {
       setup() {
         dropSwapParentConfig.handleNodeDragover = dropSwapConfig.handleNodeDragover || handleNodeDragover2;
@@ -658,6 +656,15 @@ function dropOrSwap(dropSwapConfig = {}) {
           handleEnd2(state2);
           originalHandleend(state2);
         };
+        parentData.on("dragStarted", () => {
+          documentController2 = addEvents(document, {
+            dragover: rootDragover,
+            handleRootPointerover: rootPointerover
+          });
+        });
+        parentData.on("dragEnded", () => {
+          documentController2?.abort();
+        });
         parentData.config = dropSwapParentConfig;
       }
     };
@@ -867,9 +874,8 @@ function handleEnd2(state2) {
 
 // src/index.ts
 var isBrowser = typeof window !== "undefined";
-var touchDevice = window && "ontouchstart" in window;
 var dropped = false;
-var documentController;
+var documentController3;
 var isNative = false;
 var animationFrameId = null;
 var nodes = /* @__PURE__ */ new WeakMap();
@@ -929,6 +935,7 @@ function resetState() {
 }
 function setDragState(dragStateProps2) {
   Object.assign(state, dragStateProps2);
+  dragStateProps2.initialParent.data.emit("dragStarted", state);
   dropped = false;
   state.emit("dragStarted", state);
   return state;
@@ -966,8 +973,8 @@ function dragAndDrop({
   config = {}
 }) {
   if (!isBrowser) return;
-  if (!documentController)
-    documentController = addEvents(document, {
+  if (!documentController3)
+    documentController3 = addEvents(document, {
       dragover: handleRootDragover,
       pointerdown: handlePointerdownRoot,
       pointerup: handlePointerupRoot,
@@ -975,6 +982,7 @@ function dragAndDrop({
       drop: handleRootDrop
     });
   tearDown(parent);
+  const [emit2, on2] = createEmitter();
   const parentData = {
     getValues,
     setValues,
@@ -1028,7 +1036,9 @@ function dragAndDrop({
     },
     enabledNodes: [],
     abortControllers: {},
-    privateClasses: []
+    privateClasses: [],
+    on: on2,
+    emit: emit2
   };
   const nodesObserver = new MutationObserver(nodesMutated);
   nodesObserver.observe(parent, { childList: true });
@@ -1719,6 +1729,7 @@ function handleNodePointerdown(data, state2) {
     );
     return;
   }
+  const touchDevice = isBrowser && window && "ontouchstart" in window;
   if (state2.selectedState?.nodes?.length) {
     const idx = state2.selectedState.nodes.findIndex(
       (x) => x.el === data.targetData.node.el
@@ -2715,7 +2726,6 @@ export {
   tearDownNode,
   tearDownNodeRemap,
   throttle,
-  touchDevice,
   transfer,
   treeAncestors,
   updateConfig,

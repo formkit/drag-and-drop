@@ -7,6 +7,7 @@ import type {
   PointeroverNodeEvent,
   ParentDragEventData,
   PointeroverParentEvent,
+  DropSwapState,
 } from "../../types";
 import {
   parents,
@@ -17,16 +18,21 @@ import {
   removeClass,
   addClass,
   state,
+  addEvents,
   isDragState,
 } from "../../index";
 
-export const dropSwapState = {
+export const dropSwapState: DropSwapState = {
   draggedOverNodes: Array<NodeRecord<unknown>>(),
   initialDraggedIndex: undefined,
   transferred: false,
+  dragging: false,
 };
 
-let listenersSet = false;
+/**
+ * Abort controller for the document.
+ */
+let documentController: AbortController | undefined;
 
 export function dropOrSwap<T>(dropSwapConfig: DropSwapConfig<T> = {}) {
   return (parent: HTMLElement) => {
@@ -38,17 +44,6 @@ export function dropOrSwap<T>(dropSwapConfig: DropSwapConfig<T> = {}) {
       ...parentData.config,
       dropSwapConfig,
     };
-
-    if (!listenersSet) {
-      document.addEventListener("dragover", rootDragover);
-
-      document.addEventListener(
-        "handleRootPointerover" as keyof DocumentEventMap,
-        (e) => rootPointerover(e as CustomEvent)
-      );
-
-      listenersSet = true;
-    }
 
     return {
       setup() {
@@ -73,6 +68,17 @@ export function dropOrSwap<T>(dropSwapConfig: DropSwapConfig<T> = {}) {
 
           originalHandleend(state);
         };
+
+        parentData.on("dragStarted", () => {
+          documentController = addEvents(document, {
+            dragover: rootDragover,
+            handleRootPointerover: rootPointerover,
+          });
+        });
+
+        parentData.on("dragEnded", () => {
+          documentController?.abort();
+        });
 
         parentData.config = dropSwapParentConfig;
       },

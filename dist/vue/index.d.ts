@@ -321,6 +321,8 @@ interface ParentData<T> {
      * Set on parentData indicating that the current parent is nested beneath an ancestor.
      */
     nestedParent?: ParentRecord<T>;
+    emit: (event: string, data: unknown) => void;
+    on: (event: string, callback: CallableFunction) => void;
 }
 /**
  * The data assigned to a given node in the `nodes` weakmap.
@@ -745,8 +747,8 @@ interface InsertConfig<T> {
     insertEvent?: (data: InsertEvent<T>) => void;
     handleNodeDragover?: (data: NodeDragEventData<T>, state: DragState<T>) => void;
     handleParentDragover?: (data: ParentDragEventData<T>, state: DragState<T>) => void;
-    handleParentPointerover?: (data: PointeroverParentEvent<T>, state: SynthDragState<T>) => void;
-    handleNodePointerover?: (data: PointeroverNodeEvent<T>, state: SynthDragState<T>) => void;
+    handleParentPointerover?: (data: PointeroverParentEvent<T>) => void;
+    handleNodePointerover?: (data: PointeroverNodeEvent<T>) => void;
     handleEnd?: (data: NodeDragEventData<T> | NodePointerEventData<T>) => void;
 }
 interface InsertEvent<T> {

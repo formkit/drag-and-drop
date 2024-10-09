@@ -21,6 +21,7 @@ import {
   isSynthDragState,
   eventCoordinates,
   removeClass,
+  addEvents,
 } from "../../index";
 
 export const insertState: InsertState<unknown> = {
@@ -30,9 +31,10 @@ export const insertState: InsertState<unknown> = {
   ascending: false,
   coordinates: { x: 0, y: 0 },
   insertPoint: null,
+  dragging: false,
 };
 
-let listenersSet = false;
+let documentController: AbortController | undefined;
 
 // WIP: This is a work in progress and not yet fully functional
 export function insert<T>(insertConfig: InsertConfig<T>) {
@@ -45,14 +47,6 @@ export function insert<T>(insertConfig: InsertConfig<T>) {
       ...parentData.config,
       insertConfig,
     };
-
-    if (!listenersSet) {
-      document.addEventListener("dragover", checkPosition);
-
-      document.addEventListener("pointermove", checkPosition);
-
-      listenersSet = true;
-    }
 
     return {
       teardown() {
@@ -83,6 +77,17 @@ export function insert<T>(insertConfig: InsertConfig<T>) {
           originalHandleend(state);
         };
 
+        parentData.on("dragStarted", () => {
+          documentController = addEvents(document, {
+            dragover: checkPosition,
+            pointermove: checkPosition,
+          });
+        });
+
+        parentData.on("dragEnded", () => {
+          documentController?.abort();
+        });
+
         parentData.config = insertParentConfig;
 
         state.on("dragStarted", () => {
@@ -103,16 +108,6 @@ export function insert<T>(insertConfig: InsertConfig<T>) {
 
           insertState.insertPoint = insertPoint;
         });
-
-        //const observer = new ResizeObserver(() => {
-        //  if (parent.classList.contains("w-full")) {
-        //    setTimeout(() => {
-        //      defineRanges(parent);
-        //    }, 500);
-        //  }
-        //});
-
-        //observer.observe(parent);
 
         window.addEventListener("scroll", defineRanges.bind(null, parent));
 
