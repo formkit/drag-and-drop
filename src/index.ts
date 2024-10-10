@@ -51,8 +51,6 @@ let dropped = false;
  */
 let documentController: AbortController | undefined;
 
-let isNative = false;
-
 let animationFrameId: number | null = null;
 
 export const nodes: NodesData<any> = new WeakMap<Node, NodeData<unknown>>();
@@ -99,9 +97,12 @@ const baseDragState = {
   originalZIndex: undefined,
   pointerSelection: false,
   preventEnter: false,
+  longPress: false,
+  longPressTimeout: 0,
   remapJustFinished: false,
   selectednodes: [],
   selectedParent: undefined,
+  preventSynthDrag: false,
 };
 
 /**
@@ -121,11 +122,14 @@ export function resetState() {
     preventEnter: false,
     remapJustFinished: false,
     selectednodes: [],
+    preventSynthDrag: false,
     selectedParent: undefined,
     pointerSelection: false,
     synthScrollDirection: undefined,
     draggedNodeDisplay: undefined,
     synthDragScrolling: false,
+    longPress: false,
+    longPressTimeout: 0,
   };
 
   state = { ...baseDragState } as BaseDragState<unknown>;
@@ -155,7 +159,7 @@ export function setDragState<T>(
 /**
  *
  */
-function handlePointerdownRoot(_e: PointerEvent) {
+function handleRootPointerdown(_e: PointerEvent) {
   if (state.activeState) setActive(state.activeState.parent, undefined, state);
 
   if (state.selectedState)
@@ -164,7 +168,7 @@ function handlePointerdownRoot(_e: PointerEvent) {
   state.selectedState = state.activeState = undefined;
 }
 
-function handlePointerupRoot(_e: PointerEvent) {
+function handleRootPointerup(_e: PointerEvent) {
   if (!isSynthDragState(state)) return;
 
   const config = state.currentParent.data.config;
@@ -219,8 +223,8 @@ export function dragAndDrop<T>({
   if (!documentController)
     documentController = addEvents(document, {
       dragover: handleRootDragover,
-      pointerdown: handlePointerdownRoot,
-      pointerup: handlePointerupRoot,
+      pointerdown: handleRootPointerdown,
+      pointerup: handleRootPointerup,
       keydown: handleRootKeydown,
       drop: handleRootDrop,
     });
@@ -873,10 +877,6 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     pointerup: nodeEventData(config.handleNodePointerup),
     pointermove: nodeEventData(config.handleNodePointermove),
     handleNodePointerover: config.handleNodePointerover,
-    mousedown: () => {
-      if (!config.nativeDrag) isNative = false;
-      else isNative = true;
-    },
   });
 
   data.node.el.setAttribute("role", "option");
@@ -1106,6 +1106,7 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
       state.draggedNode.data = nodeData;
 
       state.draggedNode.el = node;
+
       const draggedNode = state.draggedNodes.find(
         (x) => x.data.value === nodeData.value
       );
@@ -1202,13 +1203,21 @@ export function handleDragstart<T>(
   data: NodeDragEventData<T>,
   state: BaseDragState<T>
 ) {
-  if (!validateDragstart(data) || !validateDragHandle(data)) {
+  const config = data.targetData.parent.data.config;
+
+  if (
+    !validateDragstart(data) ||
+    !validateDragHandle({
+      x: data.e.clientX,
+      y: data.e.clientY,
+      node: data.targetData.node,
+      config,
+    })
+  ) {
     data.e.preventDefault();
 
     return;
   }
-
-  const config = data.targetData.parent.data.config;
 
   const nodes = config.draggedNodes(data);
 
@@ -1236,11 +1245,21 @@ export function handleNodePointerdown<T>(
   data: NodePointerEventData<T>,
   state: BaseDragState<T>
 ) {
-  if (!validateDragHandle(data)) return;
+  if (
+    !validateDragHandle({
+      x: data.e.clientX,
+      y: data.e.clientY,
+      node: data.targetData.node,
+      config: data.targetData.parent.data.config,
+    })
+  )
+    return;
 
   data.e.stopPropagation();
 
   synthNodePointerDown = true;
+
+  handleLongPress(data, state, data.targetData.node);
 
   const parentData = data.targetData.parent.data;
 
@@ -1325,7 +1344,7 @@ export function handleNodePointerdown<T>(
     if (idx === -1) {
       if (state.selectedState.parent.el !== data.targetData.parent.el) {
         deselect(state.selectedState.nodes, data.targetData.parent, state);
-      } else if (parentData.config.multiDrag && (touchDevice || !isNative)) {
+      } else if (parentData.config.multiDrag && touchDevice) {
         selectedNodes.push(...state.selectedState.nodes);
       } else {
         deselect(state.selectedState.nodes, data.targetData.parent, state);
@@ -1393,7 +1412,6 @@ export function initDrag<T>(
   draggedNodes: Array<NodeRecord<T>>
 ): DragState<T> {
   const dragState = setDragState(dragStateProps(data, draggedNodes));
-
   data.e.stopPropagation();
 
   if (data.e.dataTransfer) {
@@ -1465,25 +1483,24 @@ export function initDrag<T>(
   return dragState;
 }
 
-export function validateDragHandle<T>(
-  data: NodeDragEventData<T> | NodePointerEventData<T>
-): boolean {
-  const config = data.targetData.parent.data.config;
-
+export function validateDragHandle<T>({
+  x,
+  y,
+  node,
+  config,
+}: {
+  x: number;
+  y: number;
+  node: NodeRecord<T>;
+  config: ParentConfig<T>;
+}): boolean {
   if (!config.dragHandle) return true;
 
-  const dragHandles = data.targetData.node.el.querySelectorAll(
-    config.dragHandle
-  );
+  const dragHandles = node.el.querySelectorAll(config.dragHandle);
 
   if (!dragHandles) return false;
 
-  const coordinates = data.e;
-
-  const elFromPoint = config.root.elementFromPoint(
-    coordinates.x,
-    coordinates.y
-  );
+  const elFromPoint = config.root.elementFromPoint(x, y);
 
   if (!elFromPoint) return false;
 
@@ -1735,10 +1752,24 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   state.emit("dragEnded", state);
 }
 
+const clickableTags = ["BUTTON", "A", "INPUT", "SELECT", "TEXTAREA", "LABEL"];
+
 export function handleNodeTouchstart<T>(
   data: NodeEventData<T>,
   _state: BaseDragState<T>
 ) {
+  if (
+    !(data.e instanceof TouchEvent) ||
+    !(data.e.target instanceof HTMLElement)
+  )
+    return;
+
+  if (clickableTags.includes(data.e.target.tagName)) {
+    state.preventSynthDrag = true;
+
+    return;
+  }
+
   if (data.e.cancelable) data.e.preventDefault();
 }
 
@@ -1746,6 +1777,8 @@ export function handleNodePointerup<T>(
   data: NodePointerEventData<T>,
   state: DragState<T> | SynthDragState<T> | BaseDragState<T>
 ) {
+  state.preventSynthDrag = false;
+
   if (!state.pointerSelection && state.selectedState)
     deselect(state.selectedState.nodes, data.targetData.parent, state);
 
@@ -1754,6 +1787,14 @@ export function handleNodePointerup<T>(
   state.pointerSelection = false;
 
   synthNodePointerDown = false;
+
+  if ("longPressTimeout" in state && state.longPressTimeout)
+    clearTimeout(state.longPressTimeout);
+
+  removeClass(
+    data.targetData.parent.data.enabledNodes.map((x) => x.el),
+    config.longPressClass
+  );
 
   if (!isDragState(state)) return;
 
@@ -1764,7 +1805,21 @@ export function handleNodePointermove<T>(
   data: NodePointerEventData<T>,
   state: SynthDragState<T> | BaseDragState<T>
 ) {
-  if (isNative || !synthNodePointerDown || !validateDragHandle(data)) return;
+  const touchDevice = isBrowser && window && "ontouchstart" in window;
+
+  if (!touchDevice || state.preventSynthDrag) return;
+
+  if (
+    !synthNodePointerDown ||
+    (!isSynthDragState(state) &&
+      !validateDragHandle({
+        x: data.e.clientX,
+        y: data.e.clientY,
+        node: data.targetData.node,
+        config: data.targetData.parent.data.config,
+      }))
+  )
+    return;
 
   if (!isSynthDragState(state)) {
     const config = data.targetData.parent.data.config;
@@ -1891,25 +1946,23 @@ function initSynthDrag<T>(
 
 export function handleLongPress<T>(
   data: NodePointerEventData<T>,
-  dragState: DragState<T>
+  state: BaseDragState<T>,
+  node: NodeRecord<T>
 ) {
   const config = data.targetData.parent.data.config;
 
   if (!config.longPress) return;
 
-  dragState.longPressTimeout = setTimeout(() => {
-    if (!dragState) return;
+  state.longPressTimeout = setTimeout(() => {
+    if (!state) return;
 
-    dragState.longPress = true;
+    state.longPress = true;
 
     if (config.longPressClass && data.e.cancelable)
-      addNodeClass(
-        dragState.draggedNodes.map((x) => x.el),
-        config.longPressClass
-      );
+      addNodeClass([node.el], config.longPressClass);
 
     data.e.preventDefault();
-  }, config.longPressTimeout || 200);
+  }, config.longPressDuration || 200);
 }
 
 function pointermoveClasses<T>(

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../../src/vue/index";
+import { animations } from "../../../src";
 
 const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   group: "transfer",
@@ -8,6 +9,10 @@ const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   },
   dropZoneClass: "dropZone",
   synthDropZoneClass: "synthDropZone",
+  dragHandle: ".dragHandle",
+  longPress: true,
+  longPressClass: "dragging",
+  plugins: [animations()],
 });
 
 const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
@@ -17,6 +22,8 @@ const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
   },
   dropZoneClass: "dropZone",
   synthDropZoneClass: "synthDropZone",
+  longPress: true,
+  longPressClass: "dragging",
 });
 
 const [parent3, values3] = useDragAndDrop(
@@ -27,17 +34,24 @@ const [parent3, values3] = useDragAndDrop(
       return el.tagName === "LI";
     },
     dropZoneClass: "dropZone",
+    longPressClass: "dragging",
   }
 );
+
+function click() {
+  console.log("click");
+}
 </script>
 
 <template>
-  <h1>Transfer</h1>
+  <h1>Drag Handles</h1>
+  <button @click="click">Click me</button>
   <div class="flex-wrap">
     <div>
       <ul id="transfer_1" ref="parent1" class="list" aria-label="list1">
         <li v-for="value in values1" :id="value" :key="value" class="item">
           {{ value }}
+          <span class="dragHandle" @click="click">Click me</span>
         </li>
         <span id="values_1" class="text-xs">
           {{ values1.map((x) => x).join(" ") }}

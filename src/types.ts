@@ -222,7 +222,7 @@ export interface ParentConfig<T> {
   /**
    * The time in milliseconds to wait before a long touch is performed.
    */
-  longPressTimeout?: any;
+  longPressDuration?: number;
   /**
    * The name of the parent (used for accepts function for increased specificity).
    */
@@ -793,6 +793,10 @@ export type BaseDragState<T> = {
   emit: (event: string, data: unknown) => void;
   on: (event: string, callback: CallableFunction) => void;
   newActiveDescendant?: NodeRecord<T>;
+  preventSynthDrag: boolean;
+  longPress: boolean;
+  longPressTimeout: number;
+
   /**
    * The original z-index of the dragged node.
    */
