@@ -161,7 +161,7 @@ interface ParentConfig<T> {
     /**
      * The time in milliseconds to wait before a long touch is performed.
      */
-    longPressTimeout?: any;
+    longPressDuration?: number;
     /**
      * The name of the parent (used for accepts function for increased specificity).
      */
@@ -681,6 +681,9 @@ type BaseDragState<T> = {
     emit: (event: string, data: unknown) => void;
     on: (event: string, callback: CallableFunction) => void;
     newActiveDescendant?: NodeRecord<T>;
+    preventSynthDrag: boolean;
+    longPress: boolean;
+    longPressTimeout: number;
     /**
      * The original z-index of the dragged node.
      */
@@ -989,7 +992,12 @@ declare function handleDragstart<T>(data: NodeDragEventData<T>, state: BaseDragS
 declare function handleNodePointerdown<T>(data: NodePointerEventData<T>, state: BaseDragState<T>): void;
 declare function dragstartClasses<T>(_node: NodeRecord<T>, nodes: Array<NodeRecord<T>>, config: ParentConfig<T>, isSynth?: boolean): void;
 declare function initDrag<T>(data: NodeDragEventData<T>, draggedNodes: Array<NodeRecord<T>>): DragState<T>;
-declare function validateDragHandle<T>(data: NodeDragEventData<T> | NodePointerEventData<T>): boolean;
+declare function validateDragHandle<T>({ x, y, node, config, }: {
+    x: number;
+    y: number;
+    node: NodeRecord<T>;
+    config: ParentConfig<T>;
+}): boolean;
 declare function handleClickNode<T>(_data: NodeEventData<T>): void;
 declare function handleClickParent<T>(_data: ParentEventData<T>): void;
 declare function handleNodeKeydown<T>(_data: NodeEventData<T>): void;
@@ -1003,7 +1011,7 @@ declare function handleEnd<T>(state: DragState<T> | SynthDragState<T>): void;
 declare function handleNodeTouchstart<T>(data: NodeEventData<T>, _state: BaseDragState<T>): void;
 declare function handleNodePointerup<T>(data: NodePointerEventData<T>, state: DragState<T> | SynthDragState<T> | BaseDragState<T>): void;
 declare function handleNodePointermove<T>(data: NodePointerEventData<T>, state: SynthDragState<T> | BaseDragState<T>): void;
-declare function handleLongPress<T>(data: NodePointerEventData<T>, dragState: DragState<T>): void;
+declare function handleLongPress<T>(data: NodePointerEventData<T>, state: BaseDragState<T>, node: NodeRecord<T>): void;
 declare function synthMove<T>(data: NodePointerEventData<T>, state: SynthDragState<T>): void;
 declare function handleNodeDragover<T>(data: NodeDragEventData<T>, state: DragState<T>): void;
 declare function handleParentDragover<T>(data: ParentDragEventData<T>, state: DragState<T>): void;
