@@ -2018,9 +2018,9 @@ function handleEnd3(state2) {
   });
   state2.emit("dragEnded", state2);
 }
-var clickableTags = ["BUTTON", "A", "INPUT", "SELECT", "TEXTAREA", "LABEL"];
+var clickableTags = ["BUTTON", "A", "INPUT", "SELECT", "TEXTAREA"];
 function handleNodeTouchstart(data, _state) {
-  if (!(data.e instanceof TouchEvent) || !(data.e.target instanceof HTMLElement))
+  if (!(data.e instanceof TouchEvent) || !(data.e.target instanceof Element))
     return;
   if (clickableTags.includes(data.e.target.tagName)) {
     state.preventSynthDrag = true;
@@ -2046,14 +2046,17 @@ function handleNodePointerup(data, state2) {
 }
 function handleNodePointermove(data, state2) {
   const touchDevice = isBrowser && window && "ontouchstart" in window;
-  if (!touchDevice || state2.preventSynthDrag) return;
+  if (!touchDevice || state2.preventSynthDrag) {
+    return;
+  }
   if (!synthNodePointerDown || !isSynthDragState(state2) && !validateDragHandle({
     x: data.e.clientX,
     y: data.e.clientY,
     node: data.targetData.node,
     config: data.targetData.parent.data.config
-  }))
+  })) {
     return;
+  }
   if (!isSynthDragState(state2)) {
     const config = data.targetData.parent.data.config;
     const nodes2 = config.draggedNodes(data);
@@ -2174,7 +2177,7 @@ function moveNode(data, state2) {
   pointermoveClasses(state2, data.targetData.parent.data.config);
 }
 function synthMove(data, state2) {
-  const config = data.targetData.parent.data.config;
+  const config = state2.initialParent.data.config;
   if (config.longPress && !state2.longPress) {
     clearTimeout(state2.longPressTimeout);
     return;

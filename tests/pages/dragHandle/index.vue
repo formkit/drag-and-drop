@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../../src/vue/index";
-import { animations } from "../../../src";
 
 const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   group: "transfer",
@@ -10,9 +9,6 @@ const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   dropZoneClass: "dropZone",
   synthDropZoneClass: "synthDropZone",
   dragHandle: ".dragHandle",
-  longPress: true,
-  longPressClass: "dragging",
-  plugins: [animations()],
 });
 
 const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
@@ -22,8 +18,6 @@ const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
   },
   dropZoneClass: "dropZone",
   synthDropZoneClass: "synthDropZone",
-  longPress: true,
-  longPressClass: "dragging",
 });
 
 const [parent3, values3] = useDragAndDrop(
@@ -34,7 +28,6 @@ const [parent3, values3] = useDragAndDrop(
       return el.tagName === "LI";
     },
     dropZoneClass: "dropZone",
-    longPressClass: "dragging",
   }
 );
 

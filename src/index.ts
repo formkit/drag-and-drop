@@ -1752,16 +1752,13 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   state.emit("dragEnded", state);
 }
 
-const clickableTags = ["BUTTON", "A", "INPUT", "SELECT", "TEXTAREA", "LABEL"];
+const clickableTags = ["BUTTON", "A", "INPUT", "SELECT", "TEXTAREA"];
 
 export function handleNodeTouchstart<T>(
   data: NodeEventData<T>,
   _state: BaseDragState<T>
 ) {
-  if (
-    !(data.e instanceof TouchEvent) ||
-    !(data.e.target instanceof HTMLElement)
-  )
+  if (!(data.e instanceof TouchEvent) || !(data.e.target instanceof Element))
     return;
 
   if (clickableTags.includes(data.e.target.tagName)) {
@@ -1807,7 +1804,9 @@ export function handleNodePointermove<T>(
 ) {
   const touchDevice = isBrowser && window && "ontouchstart" in window;
 
-  if (!touchDevice || state.preventSynthDrag) return;
+  if (!touchDevice || state.preventSynthDrag) {
+    return;
+  }
 
   if (
     !synthNodePointerDown ||
@@ -1818,8 +1817,9 @@ export function handleNodePointermove<T>(
         node: data.targetData.node,
         config: data.targetData.parent.data.config,
       }))
-  )
+  ) {
     return;
+  }
 
   if (!isSynthDragState(state)) {
     const config = data.targetData.parent.data.config;
@@ -2007,7 +2007,7 @@ export function synthMove<T>(
   data: NodePointerEventData<T>,
   state: SynthDragState<T>
 ) {
-  const config = data.targetData.parent.data.config;
+  const config = state.initialParent.data.config;
 
   if (config.longPress && !state.longPress) {
     clearTimeout(state.longPressTimeout);
