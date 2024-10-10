@@ -221,7 +221,7 @@ export interface ParentConfig<T> {
   /**
    * The time in milliseconds to wait before a long touch is performed.
    */
-  longPressTimeout?: any;
+  longPressDuration?: number;
   /**
    * The name of the parent (used for accepts function for increased specificity).
    */
