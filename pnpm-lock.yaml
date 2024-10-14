@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@formkit/drag-and-drop':
-        specifier: ^0.1.6
-        version: 0.1.6
+        specifier: ^0.2.3
+        version: 0.2.3
       '@playwright/test':
         specifier: ^1.42.1
         version: 1.47.2
@@ -793,8 +793,8 @@ packages:
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
-  '@formkit/drag-and-drop@0.1.6':
-    resolution: {integrity: sha512-wZyxvk7WTbQ12q8ZGvLoYner1ktBOUf+lCblJT3P0LyqpjGCKTfQMKJtwToKQzJgTbhvow4LBu+yP92Mux321w==}
+  '@formkit/drag-and-drop@0.2.3':
+    resolution: {integrity: sha512-nYm6GVfFY4s/1y7Ryba9W9/MSnRnOZZuclZ0knV9DNCamjNthrIguWQJkUGNbmQdZE8hbgjH1v9mgF9Saype6g==}
 
   '@humanwhocodes/config-array@0.13.0':
     resolution: {integrity: sha512-DZLEEqFWQFiyK6h5YIeynKx7JlvCYWL0cImfSRXZ9l4Sg2efkFGTuFf6vzXjK1cq6IYkU+Eg/JizXw+TD2vRNw==}
@@ -5492,7 +5492,7 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@formkit/drag-and-drop@0.1.6': {}
+  '@formkit/drag-and-drop@0.2.3': {}
 
   '@humanwhocodes/config-array@0.13.0':
     dependencies:
