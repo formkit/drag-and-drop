@@ -710,10 +710,13 @@ function setValueAtCoordinatesUsingFindIndex(
 
   coordinates.forEach((coords) => {
     let current = obj;
+
     for (let i = 0; i < coords.length - 1; i++) {
       const index = coords[i];
+
       current = current[index];
     }
+
     const lastIndex = coords[coords.length - 1];
 
     current[lastIndex] = newArray;
@@ -750,7 +753,6 @@ export function setParentValues<T>(
       initialParentValues,
       values
     );
-
     if (!updatedValues) {
       console.warn("No updated value found");
 
@@ -1230,6 +1232,7 @@ export function handleDragstart<T>(
   const config = data.targetData.parent.data.config;
 
   if (
+    touchDevice ||
     !validateDragstart(data) ||
     !validateDragHandle({
       x: data.e.clientX,
@@ -1679,6 +1682,8 @@ export function handleDragend<T>(
   state: DragState<T>
 ) {
   data.e.preventDefault();
+
+  data.e.stopPropagation();
 
   if (dropped) {
     dropped = false;
