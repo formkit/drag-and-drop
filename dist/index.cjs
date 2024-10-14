@@ -49,7 +49,6 @@ __export(src_exports, {
   handleNodePointermove: () => handleNodePointermove,
   handleNodePointerover: () => handleNodePointerover2,
   handleNodePointerup: () => handleNodePointerup,
-  handleNodeTouchstart: () => handleNodeTouchstart,
   handleParentBlur: () => handleParentBlur,
   handleParentDragover: () => handleParentDragover3,
   handleParentDrop: () => handleParentDrop,
@@ -974,10 +973,16 @@ function handleEnd2(state2) {
 }
 
 // src/index.ts
+function checkTouchSupport() {
+  if (!isBrowser) return false;
+  return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+}
 var isBrowser = typeof window !== "undefined";
 var dropped = false;
 var documentController3;
+var windowController;
 var animationFrameId = null;
+var touchDevice = false;
 var nodes = /* @__PURE__ */ new WeakMap();
 var parents = /* @__PURE__ */ new WeakMap();
 var treeAncestors = {};
@@ -1079,6 +1084,7 @@ function dragAndDrop({
   config = {}
 }) {
   if (!isBrowser) return;
+  touchDevice = checkTouchSupport();
   if (!documentController3)
     documentController3 = addEvents(document, {
       dragover: handleRootDragover,
@@ -1086,6 +1092,12 @@ function dragAndDrop({
       pointerup: handleRootPointerup,
       keydown: handleRootKeydown,
       drop: handleRootDrop
+    });
+  if (!windowController)
+    windowController = addEvents(window, {
+      resize: () => {
+        touchDevice = checkTouchSupport();
+      }
     });
   tearDown(parent);
   const [emit2, on2] = createEmitter();
@@ -1110,7 +1122,6 @@ function dragAndDrop({
       handleParentBlur,
       handleParentFocus,
       handleNodePointerup,
-      handleNodeTouchstart,
       handleNodePointerover: handleNodePointerover2,
       handleParentPointerover: handleParentPointerover2,
       handleParentScroll,
@@ -1524,15 +1535,18 @@ function setupNode(data) {
     dragleave: nodeEventData(config.handleNodeDragleave),
     dragend: nodeEventData(config.handleDragend),
     drop: nodeEventData(config.handleNodeDrop),
-    touchstart: nodeEventData(config.handleNodeTouchstart),
     pointercancel: nodeEventData(config.handlePointercancel),
     pointerdown: nodeEventData(config.handleNodePointerdown),
     pointerup: nodeEventData(config.handleNodePointerup),
     pointermove: nodeEventData(config.handleNodePointermove),
-    handleNodePointerover: config.handleNodePointerover
+    handleNodePointerover: config.handleNodePointerover,
+    contextmenu: (e) => {
+      if (touchDevice) e.preventDefault();
+    }
   });
   data.node.el.setAttribute("role", "option");
   data.node.el.setAttribute("aria-selected", "false");
+  data.node.el.style.touchAction = "none";
   config.reapplyDragClasses(data.node.el, data.parent.data);
   data.parent.data.config.plugins?.forEach((plugin) => {
     plugin(data.parent.el)?.setupNode?.(data);
@@ -1678,8 +1692,9 @@ function remapNodes(parent, force) {
         (x2) => x2.data.value === nodeData.value
       );
       if (draggedNode) draggedNode.el = node;
-      if (isSynthDragState(state))
+      if (isSynthDragState(state)) {
         state.draggedNode.el.setPointerCapture(state.pointerId);
+      }
     }
     enabledNodeRecords.push({
       el: node,
@@ -1843,7 +1858,6 @@ function handleNodePointerdown(data, state2) {
     );
     return;
   }
-  const touchDevice = isBrowser && window && "ontouchstart" in window;
   if (state2.selectedState?.nodes?.length) {
     const idx = state2.selectedState.nodes.findIndex(
       (x) => x.el === data.targetData.node.el
@@ -1903,8 +1917,8 @@ function dragstartClasses(_node, nodes2, config, isSynth = false) {
   });
 }
 function initDrag(data, draggedNodes2) {
-  const dragState = setDragState(dragStateProps(data, draggedNodes2));
   data.e.stopPropagation();
+  const dragState = setDragState(dragStateProps(data, draggedNodes2));
   if (data.e.dataTransfer) {
     const config = data.targetData.parent.data.config;
     data.e.dataTransfer.dropEffect = config.dragDropEffect;
@@ -2119,16 +2133,6 @@ function handleEnd3(state2) {
   });
   state2.emit("dragEnded", state2);
 }
-var clickableTags = ["BUTTON", "A", "INPUT", "SELECT", "TEXTAREA"];
-function handleNodeTouchstart(data, _state) {
-  if (!(data.e instanceof TouchEvent) || !(data.e.target instanceof Element))
-    return;
-  if (clickableTags.includes(data.e.target.tagName)) {
-    state.preventSynthDrag = true;
-    return;
-  }
-  if (data.e.cancelable) data.e.preventDefault();
-}
 function handleNodePointerup(data, state2) {
   state2.preventSynthDrag = false;
   if (!state2.pointerSelection && state2.selectedState)
@@ -2146,20 +2150,23 @@ function handleNodePointerup(data, state2) {
   config.handleEnd(state2);
 }
 function handleNodePointermove(data, state2) {
-  const touchDevice = isBrowser && window && "ontouchstart" in window;
-  if (!touchDevice || state2.preventSynthDrag) {
-    return;
-  }
+  if (data.targetData.parent.data.config.nativeDrag && !touchDevice) return;
+  if (state2.preventSynthDrag) return;
+  const { x, y } = eventCoordinates(data.e);
   if (!synthNodePointerDown || !isSynthDragState(state2) && !validateDragHandle({
-    x: data.e.clientX,
-    y: data.e.clientY,
+    x,
+    y,
     node: data.targetData.node,
     config: data.targetData.parent.data.config
-  })) {
+  }))
     return;
-  }
   if (!isSynthDragState(state2)) {
     const config = data.targetData.parent.data.config;
+    if (config.longPress && !state2.longPress) {
+      clearTimeout(state2.longPressTimeout);
+      state2.longPress = false;
+      return;
+    }
     const nodes2 = config.draggedNodes(data);
     config.dragstartClasses(data.targetData.node, nodes2, config, true);
     const synthDragState = initSynthDrag(data, state2, nodes2);
@@ -2233,9 +2240,6 @@ function initSynthDrag(data, _state, draggedNodes2) {
     draggedNodeDisplay: display,
     synthDragScrolling: false
   };
-  addEvents(document, {
-    contextmenu: noDefault
-  });
   const synthDragState = setDragState({
     ...dragStateProps(data, draggedNodes2),
     ...synthDragStateProps
@@ -2278,11 +2282,6 @@ function moveNode(data, state2) {
   pointermoveClasses(state2, data.targetData.parent.data.config);
 }
 function synthMove(data, state2) {
-  const config = state2.initialParent.data.config;
-  if (config.longPress && !state2.longPress) {
-    clearTimeout(state2.longPressTimeout);
-    return;
-  }
   moveNode(data, state2);
   const elFromPoint = getElFromPoint(eventCoordinates(data.e), data.e, state2);
   if (!elFromPoint) {
@@ -2821,7 +2820,6 @@ function getRealCoords2(el) {
   handleNodePointermove,
   handleNodePointerover,
   handleNodePointerup,
-  handleNodeTouchstart,
   handleParentBlur,
   handleParentDragover,
   handleParentDrop,

@@ -87,10 +87,6 @@ interface ParentConfig<T> {
     handleNodePointerup: (data: NodePointerEventData<T>, state: DragState<T>) => void;
     handleParentScroll: (data: ParentEventData<T>, state: DragState<T> | BaseDragState<T> | SynthDragState<T>) => void;
     /**
-     * Function that is called when touchstart event occurs.
-     */
-    handleNodeTouchstart: (data: NodePointerEventData<T>, state: DragState<T>) => void;
-    /**
      * Function that is called when a dragenter event is triggered on the node.
      */
     handleNodeDragenter: (data: NodeDragEventData<T>, state: DragState<T>) => void;

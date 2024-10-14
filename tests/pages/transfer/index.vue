@@ -17,6 +17,7 @@ const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
   },
   dropZoneClass: "dropZone",
   synthDropZoneClass: "synthDropZone",
+  longPress: true,
 });
 
 const [parent3, values3] = useDragAndDrop(
@@ -27,6 +28,7 @@ const [parent3, values3] = useDragAndDrop(
       return el.tagName === "LI";
     },
     dropZoneClass: "dropZone",
+    longPress: true,
   }
 );
 </script>
@@ -38,6 +40,7 @@ const [parent3, values3] = useDragAndDrop(
       <ul id="transfer_1" ref="parent1" class="list" aria-label="list1">
         <li v-for="value in values1" :id="value" :key="value" class="item">
           {{ value }}
+          <div class="dragHandle">Drag handle</div>
         </li>
         <span id="values_1" class="text-xs">
           {{ values1.map((x) => x).join(" ") }}

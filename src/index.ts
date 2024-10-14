@@ -37,6 +37,13 @@ export { animations } from "./plugins/animations";
 export { insert } from "./plugins/insert";
 export { dropOrSwap } from "./plugins/drop-or-swap";
 
+// Function to detect if the device supports touch
+function checkTouchSupport() {
+  if (!isBrowser) return false;
+
+  return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+}
+
 /**
  * Check to see if code is running in a browser.
  *
@@ -51,7 +58,11 @@ let dropped = false;
  */
 let documentController: AbortController | undefined;
 
+let windowController: AbortController | undefined;
+
 let animationFrameId: number | null = null;
+
+let touchDevice: boolean = false;
 
 export const nodes: NodesData<any> = new WeakMap<Node, NodeData<unknown>>();
 
@@ -220,6 +231,8 @@ export function dragAndDrop<T>({
 }: DragAndDrop<T>): void {
   if (!isBrowser) return;
 
+  touchDevice = checkTouchSupport();
+
   if (!documentController)
     documentController = addEvents(document, {
       dragover: handleRootDragover,
@@ -227,6 +240,13 @@ export function dragAndDrop<T>({
       pointerup: handleRootPointerup,
       keydown: handleRootKeydown,
       drop: handleRootDrop,
+    });
+
+  if (!windowController)
+    windowController = addEvents(window, {
+      resize: () => {
+        touchDevice = checkTouchSupport();
+      },
     });
 
   tearDown(parent);
@@ -254,7 +274,6 @@ export function dragAndDrop<T>({
       handleParentBlur,
       handleParentFocus,
       handleNodePointerup,
-      handleNodeTouchstart,
       handleNodePointerover,
       handleParentPointerover,
       handleParentScroll,
@@ -871,17 +890,21 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     dragleave: nodeEventData(config.handleNodeDragleave),
     dragend: nodeEventData(config.handleDragend),
     drop: nodeEventData(config.handleNodeDrop),
-    touchstart: nodeEventData(config.handleNodeTouchstart),
     pointercancel: nodeEventData(config.handlePointercancel),
     pointerdown: nodeEventData(config.handleNodePointerdown),
     pointerup: nodeEventData(config.handleNodePointerup),
     pointermove: nodeEventData(config.handleNodePointermove),
     handleNodePointerover: config.handleNodePointerover,
+    contextmenu: (e: Event) => {
+      if (touchDevice) e.preventDefault();
+    },
   });
 
   data.node.el.setAttribute("role", "option");
 
   data.node.el.setAttribute("aria-selected", "false");
+
+  data.node.el.style.touchAction = "none";
 
   config.reapplyDragClasses(data.node.el, data.parent.data);
 
@@ -1113,8 +1136,9 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
 
       if (draggedNode) draggedNode.el = node;
 
-      if (isSynthDragState(state))
+      if (isSynthDragState(state)) {
         state.draggedNode.el.setPointerCapture(state.pointerId);
+      }
     }
 
     enabledNodeRecords.push({
@@ -1334,8 +1358,6 @@ export function handleNodePointerdown<T>(
     return;
   }
 
-  const touchDevice = isBrowser && window && "ontouchstart" in window;
-
   if (state.selectedState?.nodes?.length) {
     const idx = state.selectedState.nodes.findIndex(
       (x) => x.el === data.targetData.node.el
@@ -1411,8 +1433,9 @@ export function initDrag<T>(
   data: NodeDragEventData<T>,
   draggedNodes: Array<NodeRecord<T>>
 ): DragState<T> {
-  const dragState = setDragState(dragStateProps(data, draggedNodes));
   data.e.stopPropagation();
+
+  const dragState = setDragState(dragStateProps(data, draggedNodes));
 
   if (data.e.dataTransfer) {
     const config = data.targetData.parent.data.config;
@@ -1752,24 +1775,6 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   state.emit("dragEnded", state);
 }
 
-const clickableTags = ["BUTTON", "A", "INPUT", "SELECT", "TEXTAREA"];
-
-export function handleNodeTouchstart<T>(
-  data: NodeEventData<T>,
-  _state: BaseDragState<T>
-) {
-  if (!(data.e instanceof TouchEvent) || !(data.e.target instanceof Element))
-    return;
-
-  if (clickableTags.includes(data.e.target.tagName)) {
-    state.preventSynthDrag = true;
-
-    return;
-  }
-
-  if (data.e.cancelable) data.e.preventDefault();
-}
-
 export function handleNodePointerup<T>(
   data: NodePointerEventData<T>,
   state: DragState<T> | SynthDragState<T> | BaseDragState<T>
@@ -1802,27 +1807,34 @@ export function handleNodePointermove<T>(
   data: NodePointerEventData<T>,
   state: SynthDragState<T> | BaseDragState<T>
 ) {
-  const touchDevice = isBrowser && window && "ontouchstart" in window;
+  if (data.targetData.parent.data.config.nativeDrag && !touchDevice) return;
 
-  if (!touchDevice || state.preventSynthDrag) {
-    return;
-  }
+  if (state.preventSynthDrag) return;
+
+  const { x, y } = eventCoordinates(data.e as PointerEvent);
 
   if (
     !synthNodePointerDown ||
     (!isSynthDragState(state) &&
       !validateDragHandle({
-        x: data.e.clientX,
-        y: data.e.clientY,
+        x,
+        y,
         node: data.targetData.node,
         config: data.targetData.parent.data.config,
       }))
-  ) {
+  )
     return;
-  }
 
   if (!isSynthDragState(state)) {
     const config = data.targetData.parent.data.config;
+
+    if (config.longPress && !state.longPress) {
+      clearTimeout(state.longPressTimeout);
+
+      state.longPress = false;
+
+      return;
+    }
 
     const nodes = config.draggedNodes(data);
 
@@ -1932,10 +1944,6 @@ function initSynthDrag<T>(
     synthDragScrolling: false,
   };
 
-  addEvents(document, {
-    contextmenu: noDefault,
-  });
-
   const synthDragState = setDragState({
     ...dragStateProps(data, draggedNodes),
     ...synthDragStateProps,
@@ -2007,14 +2015,6 @@ export function synthMove<T>(
   data: NodePointerEventData<T>,
   state: SynthDragState<T>
 ) {
-  const config = state.initialParent.data.config;
-
-  if (config.longPress && !state.longPress) {
-    clearTimeout(state.longPressTimeout);
-
-    return;
-  }
-
   moveNode(data, state);
 
   const elFromPoint = getElFromPoint(eventCoordinates(data.e), data.e, state);
@@ -2783,7 +2783,7 @@ export function isNode(el: unknown): el is Node {
  * @returns - The abort controller used for the event listeners.
  */
 export function addEvents(
-  el: Document | ShadowRoot | Node | HTMLElement,
+  el: Document | ShadowRoot | Node | HTMLElement | Window,
   events: EventHandlers | any
 ): AbortController {
   const abortController = new AbortController();
