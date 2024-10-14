@@ -1760,7 +1760,7 @@ function handleParentScroll(_data) {
 }
 function handleDragstart(data, state2) {
   const config = data.targetData.parent.data.config;
-  if (!validateDragstart(data) || !validateDragHandle({
+  if (touchDevice || !validateDragstart(data) || !validateDragHandle({
     x: data.e.clientX,
     y: data.e.clientY,
     node: data.targetData.node,
@@ -2073,6 +2073,7 @@ function handleNodeDrop(data, state2) {
 }
 function handleDragend(data, state2) {
   data.e.preventDefault();
+  data.e.stopPropagation();
   if (dropped) {
     dropped = false;
     return;
