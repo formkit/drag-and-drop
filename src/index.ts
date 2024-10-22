@@ -60,8 +60,6 @@ let documentController: AbortController | undefined;
 
 let windowController: AbortController | undefined;
 
-let animationFrameId: number | null = null;
-
 let touchDevice: boolean = false;
 
 export const nodes: NodesData<any> = new WeakMap<Node, NodeData<unknown>>();
@@ -1725,7 +1723,7 @@ export function handlePointercancel<T>(
 }
 
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
-  cancelSynthScroll();
+  if (isSynthDragState(state)) cancelSynthScroll(state);
 
   if ("longPressTimeout" in state && state.longPressTimeout)
     clearTimeout(state.longPressTimeout);
@@ -1988,11 +1986,11 @@ function pointermoveClasses<T>(
       config?.longPressClass
     );
 }
-function cancelSynthScroll() {
-  if (animationFrameId !== null) {
-    cancelAnimationFrame(animationFrameId);
+function cancelSynthScroll(state: SynthDragState<any>) {
+  if (state.animationFrameId !== undefined) {
+    cancelAnimationFrame(state.animationFrameId);
 
-    animationFrameId = null;
+    state.animationFrameId = undefined;
   }
 }
 

@@ -881,7 +881,6 @@ var isBrowser = typeof window !== "undefined";
 var dropped = false;
 var documentController3;
 var windowController;
-var animationFrameId = null;
 var touchDevice = false;
 var nodes = /* @__PURE__ */ new WeakMap();
 var parents = /* @__PURE__ */ new WeakMap();
@@ -2000,7 +1999,7 @@ function handlePointercancel(data, state2) {
   config?.handleEnd(state2);
 }
 function handleEnd3(state2) {
-  cancelSynthScroll();
+  if (isSynthDragState(state2)) cancelSynthScroll(state2);
   if ("longPressTimeout" in state2 && state2.longPressTimeout)
     clearTimeout(state2.longPressTimeout);
   const config = parents.get(state2.initialParent.el)?.config;
@@ -2165,10 +2164,10 @@ function pointermoveClasses(state2, config) {
       config?.longPressClass
     );
 }
-function cancelSynthScroll() {
-  if (animationFrameId !== null) {
-    cancelAnimationFrame(animationFrameId);
-    animationFrameId = null;
+function cancelSynthScroll(state2) {
+  if (state2.animationFrameId !== void 0) {
+    cancelAnimationFrame(state2.animationFrameId);
+    state2.animationFrameId = void 0;
   }
 }
 function moveNode(data, state2) {
