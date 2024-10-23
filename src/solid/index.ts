@@ -1,5 +1,5 @@
 import { dragAndDrop as initParent, isBrowser, ParentConfig, tearDown } from "../index";
-import { createEffect, createSignal, on, type Accessor, type Signal } from "solid-js";
+import { createEffect, createSignal, on, type Accessor, type Signal, type Setter } from "solid-js";
 import type { SolidDragAndDropConfig } from "./types";
 import { handleSolidElements } from "./utils";
 
@@ -83,7 +83,7 @@ export function dragAndDrop<E extends HTMLElement, I>(
 export function useDragAndDrop<E extends HTMLElement, T = unknown>(
   list: T[],
   options: Partial<ParentConfig<T>> = {}
-) {
+): [Accessor<E | null>, Accessor<T[]>, Setter<T[]>, (config?: Partial<ParentConfig<T>>) => void] {
   const [parent] = createSignal<E | null>(null);
 
   const [values, setValues] = createSignal(list);

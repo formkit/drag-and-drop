@@ -1,3 +1,4 @@
+import { For } from "solid-js";
 import { useDragAndDrop } from "../../../src/solid/index";
 
 function Test2(props: { id: string; testDescription: string }) {
@@ -17,15 +18,19 @@ function Test2(props: { id: string; testDescription: string }) {
     any
   >(playingCardAssets);
 
-  const playingCards = values.map((card: { id: string; src: string }) => (
-    <li class="item" key={card.id} id={props.id + "_" + card.id}>
-      <img src={card.src} />
-    </li>
-  ));
+  const playingCards = (
+    <For each={values()}>
+      {card=>(
+        <li class="item" id={props.id + "_" + card.id}>
+          <img src={card.src} />
+        </li>
+      )}
+    </For>
+  )
 
   function addValue() {
     setValues([
-      ...values,
+      ...values(),
       { id: "queen_of_spades", src: "/cards/queen_of_spades.png" },
     ]);
   }
@@ -48,7 +53,7 @@ function Test2(props: { id: string; testDescription: string }) {
         Disable
       </button>
       <span id={props.id + "_values"}>
-        {values.map((x: { id: string; src: string }) => x.id).join(" ")}
+        {values().map((x: { id: string; src: string }) => x.id).join(" ")}
       </span>
     </>
   );
