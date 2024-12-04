@@ -1364,6 +1364,7 @@ function updateConfig(parent, config) {
   });
 }
 function handleParentDrop(data, state2) {
+  data.e.stopPropagation();
   dropped = true;
   const config = data.targetData.parent.data.config;
   config.handleEnd(state2);
