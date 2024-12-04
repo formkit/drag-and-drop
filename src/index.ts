@@ -797,6 +797,8 @@ export function handleParentDrop<T>(
   data: ParentEventData<T>,
   state: DragState<T>
 ) {
+  data.e.stopPropagation();
+
   dropped = true;
 
   const config = data.targetData.parent.data.config;
