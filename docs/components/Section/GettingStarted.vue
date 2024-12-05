@@ -96,13 +96,13 @@
       <span class="indent"
         >state: [<span class="var">values</span>,
         <span class="var">setValues</span>]</span
-      >, <br /><span class="indent">config</span><br />})
+      >, <br /><span class="indent">...config</span><br />})
       <div class="comment"><br />// Vue:</div>
       <span class="fn">dragAndDrop</span>({<br />
       <span class="indent">parent: <span class="var">parentRef</span></span
       >,<br />
       <span class="indent">values: <span class="var">valueRef</span>,</span
-      ><br /><span class="indent">config</span><br />})
+      ><br /><span class="indent">...config</span><br />})
       <div>
         <br /><span class="comment"
           >// Vanilla JS: (import from core, not subpath)</span
@@ -119,7 +119,7 @@
         ><br /><span class="indent">}, </span><br /><span class="indent"
           >setValues:</span
         ><span class="var">
-          (newValues) =>
+          (newValues) => {
           <br />
           <span class="indent" /> <span class="indent" /><span class="comment"
             >// Do something with updated values</span
