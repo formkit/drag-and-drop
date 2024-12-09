@@ -1952,7 +1952,6 @@ function initSynthDrag<T>(
       zIndex: 9999,
       pointerEvents: "none",
       margin: 0,
-      padding: 0,
       overflow: "hidden",
       display: "none",
     });
@@ -1967,9 +1966,11 @@ function initSynthDrag<T>(
       dragImage.setAttribute("popover", "manual");
 
       Object.assign(dragImage.style, {
+        position: "absolute",
         height: node.el.getBoundingClientRect().height + "px",
         width: node.el.getBoundingClientRect().width + "px",
         overflow: "hidden",
+        margin: 0,
         pointerEvents: "none",
         zIndex: 9999,
       });

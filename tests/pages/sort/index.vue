@@ -19,7 +19,7 @@ const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
 <template>
   <h1>Sort</h1>
   <div>
-    <ul ref="parent" class="list">
+    <ul ref="parent" class="list" id="test">
       <li v-for="value in values" :id="value" :key="value" class="item">
         {{ value }}
       </li>
@@ -34,6 +34,10 @@ const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
 </template>
 
 <style scoped>
+#test {
+  overflow-y: scroll;
+  height: 200px;
+}
 .blue {
   background-color: lightblue !important;
   color: yellow !important;
