@@ -123,7 +123,6 @@ export interface ParentConfig<T> {
    * parents to transfer nodes between each other.
    */
   group?: string;
-  handleParentBlur: (data: ParentEventData<T>, state: BaseDragState<T>) => void;
   handleParentFocus: (
     data: ParentEventData<T>,
     state: BaseDragState<T>

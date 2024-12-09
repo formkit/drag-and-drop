@@ -50,7 +50,6 @@ __export(src_exports, {
   handleNodePointerdown: () => handleNodePointerdown,
   handleNodePointerover: () => handleNodePointerover2,
   handleNodePointerup: () => handleNodePointerup,
-  handleParentBlur: () => handleParentBlur,
   handleParentDragover: () => handleParentDragover3,
   handleParentDrop: () => handleParentDrop,
   handleParentFocus: () => handleParentFocus,
@@ -1214,7 +1213,7 @@ function handleRootPointermove(e) {
   if (!state.pointerDown) return;
   e.preventDefault();
   const config = state.pointerDown.parent.data.config;
-  if (!isSynthDragState(state)) {
+  if (!isSynthDragState(state) && (touchDevice || !touchDevice && !config.nativeDrag)) {
     if (config.longPress && !state.longPress) {
       clearTimeout(state.longPressTimeout);
       state.longPress = false;
@@ -1231,7 +1230,7 @@ function handleRootPointermove(e) {
     );
     document.body.style.userSelect = "none";
     synthMove(e, synthDragState);
-  } else {
+  } else if (isSynthDragState(state)) {
     synthMove(e, state);
   }
 }
@@ -1298,7 +1297,6 @@ function dragAndDrop({
       handlePointercancel,
       handleEnd: handleEnd3,
       handleDragend,
-      handleParentBlur,
       handleParentFocus,
       handleNodePointerup,
       handleNodePointerover: handleNodePointerover2,
@@ -1500,8 +1498,6 @@ function clearLiveRegion(parent) {
   if (!liveRegion) return;
   liveRegion.textContent = "";
 }
-function handleParentBlur(_data, _state) {
-}
 function handleParentFocus(data, state2) {
   const firstEnabledNode = data.targetData.parent.data.enabledNodes[0];
   if (!firstEnabledNode) return;
@@ -1620,7 +1616,6 @@ function setup(parent, parentData) {
       if (!parent2) return;
       parent2.nestedParent = e.detail.parent;
     },
-    blur: parentEventData(parentData.config.handleParentBlur),
     focus: parentEventData(parentData.config.handleParentFocus)
   });
   if (parentData.config.externalDragHandle && parentData.config.externalDragHandle.el && parentData.config.externalDragHandle.callback) {
@@ -2362,19 +2357,19 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
       pointerEvents: "none",
       margin: 0,
       padding: 0,
-      overflow: "hidden"
+      overflow: "hidden",
+      display: "none"
     });
   } else {
     if (!config.multiDrag || draggedNodes2.length === 1) {
       dragImage = node.el.cloneNode(true);
-      display = dragImage.style.display;
       dragImage.id = "dnd-dragged-node-clone";
+      display = dragImage.style.display;
       dragImage.setAttribute("popover", "manual");
       Object.assign(dragImage.style, {
         height: node.el.getBoundingClientRect().height + "px",
         width: node.el.getBoundingClientRect().width + "px",
         overflow: "hidden",
-        display: "none",
         pointerEvents: "none",
         margin: 0,
         padding: 0,
@@ -2401,6 +2396,7 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
     }
   }
   dragImage.style.position = "absolute";
+  console.log("dragImage", dragImage);
   parent.el.appendChild(dragImage);
   dragImage.showPopover();
   const synthDragStateProps = {
@@ -2421,6 +2417,7 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
     ),
     ...synthDragStateProps
   });
+  console.log("synthDragState", synthDragState);
   synthDragState.clonedDraggedNode.style.display = synthDragState.draggedNodeDisplay || "";
   return synthDragState;
 }
@@ -3017,7 +3014,6 @@ function getRealCoords2(el) {
   handleNodePointerdown,
   handleNodePointerover,
   handleNodePointerup,
-  handleParentBlur,
   handleParentDragover,
   handleParentDrop,
   handleParentFocus,

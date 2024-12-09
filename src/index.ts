@@ -237,7 +237,10 @@ function handleRootPointermove(e: PointerEvent) {
 
   const config = state.pointerDown.parent.data.config;
 
-  if (!isSynthDragState(state)) {
+  if (
+    !isSynthDragState(state) &&
+    (touchDevice || (!touchDevice && !config.nativeDrag))
+  ) {
     if (config.longPress && !state.longPress) {
       clearTimeout(state.longPressTimeout);
 
@@ -260,9 +263,8 @@ function handleRootPointermove(e: PointerEvent) {
 
     // TODO
     document.body.style.userSelect = "none";
-
     synthMove(e, synthDragState);
-  } else {
+  } else if (isSynthDragState(state)) {
     synthMove(e, state);
   }
 }
@@ -347,7 +349,6 @@ export function dragAndDrop<T>({
       handlePointercancel,
       handleEnd,
       handleDragend,
-      handleParentBlur,
       handleParentFocus,
       handleNodePointerup,
       handleNodePointerover,
@@ -643,11 +644,6 @@ function clearLiveRegion<T>(parent: ParentRecord<T>) {
   liveRegion.textContent = "";
 }
 
-export function handleParentBlur<T>(
-  _data: ParentEventData<T>,
-  _state: BaseDragState<T> | DragState<T> | SynthDragState<T>
-) {}
-
 export function handleParentFocus<T>(
   data: ParentEventData<T>,
   state: BaseDragState<T> | DragState<T> | SynthDragState<T>
@@ -836,7 +832,6 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
 
       parent.nestedParent = e.detail.parent;
     },
-    blur: parentEventData(parentData.config.handleParentBlur),
     focus: parentEventData(parentData.config.handleParentFocus),
   });
 
@@ -988,7 +983,8 @@ export function tearDownNode<T>(data: TearDownNodeData<T>) {
  * @internal
  */
 function nodesMutated(mutationList: MutationRecord[]) {
-  // This could be better, but using it as a way to ignore comments and text nodes
+  // This could be better, but using it as a way to ignore comments and text
+  // nodes.
   if (
     mutationList.length === 1 &&
     mutationList[0].addedNodes.length === 1 &&
@@ -1958,14 +1954,15 @@ function initSynthDrag<T>(
       margin: 0,
       padding: 0,
       overflow: "hidden",
+      display: "none",
     });
   } else {
     if (!config.multiDrag || draggedNodes.length === 1) {
       dragImage = node.el.cloneNode(true) as HTMLElement;
 
-      display = dragImage.style.display;
-
       dragImage.id = "dnd-dragged-node-clone";
+
+      display = dragImage.style.display;
 
       dragImage.setAttribute("popover", "manual");
 
@@ -1973,7 +1970,6 @@ function initSynthDrag<T>(
         height: node.el.getBoundingClientRect().height + "px",
         width: node.el.getBoundingClientRect().width + "px",
         overflow: "hidden",
-        display: "none",
         pointerEvents: "none",
         margin: 0,
         padding: 0,
@@ -2006,9 +2002,10 @@ function initSynthDrag<T>(
       dragImage = wrapper;
     }
   }
-  //dragImage.style.display = "none";
 
   dragImage.style.position = "absolute";
+
+  console.log("dragImage", dragImage);
 
   parent.el.appendChild(dragImage);
 
@@ -2033,6 +2030,8 @@ function initSynthDrag<T>(
     ),
     ...synthDragStateProps,
   }) as SynthDragState<T>;
+
+  console.log("synthDragState", synthDragState);
 
   synthDragState.clonedDraggedNode.style.display =
     synthDragState.draggedNodeDisplay || "";
@@ -2752,9 +2751,6 @@ function scrollX<T>(
 
   const rect = el.getBoundingClientRect();
 
-  //el.style.scrollBehavior = 'auto';
-  //  el.style.scrollSnapType = 'none';
-
   if (
     e.clientX > rect.right - (rect.right - rect.left) * 0.05 &&
     el.scrollLeft + el.clientWidth < el.scrollWidth
@@ -2782,14 +2778,10 @@ function scrollX<T>(
       state.emit("scrollStarted", state);
     }
 
-    //console.log("SCROLLING X", el);
-
     state.animationFrameIdX = requestAnimationFrame(() => {
       scrollX(el, e, state);
     });
   } else {
-    //const logger = document.getElementById("log-x");
-    //if (logger) logger.innerText = "no sscrolling anymore";
     if (state.scrolling) state.emit("scrollEnded", state);
 
     state.scrolling = false;
