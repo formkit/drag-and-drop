@@ -2078,21 +2078,21 @@ function cancelSynthScroll<T>(state: SynthDragState<T>) {
     state.animationFrameIdY = undefined;
   }
 }
-
 function moveNode<T>(e: PointerEvent, state: SynthDragState<T>) {
   const { x, y } = eventCoordinates(e);
 
   state.coordinates.y = y;
-
   state.coordinates.x = x;
 
   const startLeft = state.startLeft ?? 0;
-
   const startTop = state.startTop ?? 0;
 
-  state.clonedDraggedNode.style.top = `${y - startTop + window.scrollY}px`;
+  // Calculate the translation values
+  const translateX = x - startLeft + window.scrollX;
+  const translateY = y - startTop + window.scrollY;
 
-  state.clonedDraggedNode.style.left = `${x - startLeft + window.scrollX}px`;
+  // Apply the transform using translate
+  state.clonedDraggedNode.style.transform = `translate(${translateX}px, ${translateY}px)`;
 
   if (e.cancelable) e.preventDefault();
 
