@@ -543,6 +543,8 @@ function setActive<T>(
     parent,
   };
 
+  addNodeClass([newActiveNode.el], activeDescendantClass);
+
   state.activeState.parent.el.setAttribute(
     "aria-activedescendant",
     state.activeState.node.el.id
@@ -627,11 +629,11 @@ function setSelected<T>(
 }
 
 function updateLiveRegion<T>(parent: ParentRecord<T>, message: string) {
-  const parentId = parent.el.id;
-
-  const liveRegion = document.getElementById(parentId + "-live-region");
+  const liveRegion = document.querySelector('[data-dnd-live-region="true"]');
 
   if (!liveRegion) return;
+
+  liveRegion.id = parent.el.id + "-live-region";
 
   liveRegion.textContent = message;
 }
