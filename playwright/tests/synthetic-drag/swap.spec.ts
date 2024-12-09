@@ -9,7 +9,7 @@ test.beforeEach(async ({ browser }) => {
 
 // Not ready yet.
 test.describe("Synthetic swap", async () => {
-  test.only("Test #1: Swapping within list.", async () => {
+  test("Test #1: Swapping within list.", async () => {
     await page.goto("http://localhost:3001/swap");
     await new Promise((r) => setTimeout(r, 1000));
 
