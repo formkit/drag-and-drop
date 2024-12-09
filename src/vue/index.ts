@@ -42,9 +42,10 @@ function getValues(parent: HTMLElement): Array<any> {
 function setValues(newValues: Array<any>, parent: HTMLElement): void {
   const currentValues = parentValues.get(parent);
 
+  // Only update reactive values. If static, let's not update.
   if (currentValues && "value" in currentValues)
     currentValues.value = newValues;
-  else if (currentValues) parentValues.set(parent, newValues);
+  //else if (currentValues) parentValues.set(parent, newValues);
 }
 /**
  * Entry point for Vue drag and drop.

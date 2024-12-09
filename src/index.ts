@@ -71,8 +71,6 @@ export const parents: ParentsData<any> = new WeakMap<
 
 export const treeAncestors: Record<string, HTMLElement> = {};
 
-let synthNodePointerDown = false;
-
 export function createEmitter() {
   const callbacks = new Map<string, CallableFunction[]>();
 
@@ -99,6 +97,10 @@ export const [emit, on] = createEmitter();
 const baseDragState = {
   activeDescendant: undefined,
   affectedNodes: [],
+  coordinates: {
+    x: 0,
+    y: 0,
+  },
   currentTargetValue: undefined,
   on,
   emit,
@@ -106,12 +108,15 @@ const baseDragState = {
   originalZIndex: undefined,
   pointerSelection: false,
   preventEnter: false,
+  nodePointerdown: undefined,
   longPress: false,
-  longPressTimeout: 0,
+  scrolling: false,
+  longPressTimeout: undefined,
   remapJustFinished: false,
-  selectednodes: [],
+  selectedNodes: [],
   selectedParent: undefined,
   preventSynthDrag: false,
+  pointerDown: undefined,
 };
 
 /**
@@ -123,6 +128,10 @@ export function resetState() {
   const baseDragState = {
     activeDescendant: undefined,
     affectedNodes: [],
+    coordinates: {
+      x: 0,
+      y: 0,
+    },
     on,
     emit,
     currentTargetValue: undefined,
@@ -130,15 +139,18 @@ export function resetState() {
     pointerId: undefined,
     preventEnter: false,
     remapJustFinished: false,
-    selectednodes: [],
+    selectedNodes: [],
+    nodePointerdown: undefined,
     preventSynthDrag: false,
+    scrolling: false,
     selectedParent: undefined,
     pointerSelection: false,
     synthScrollDirection: undefined,
     draggedNodeDisplay: undefined,
     synthDragScrolling: false,
     longPress: false,
-    longPressTimeout: 0,
+    pointerDown: undefined,
+    longPressTimeout: undefined,
   };
 
   state = { ...baseDragState } as BaseDragState<unknown>;
@@ -177,7 +189,11 @@ function handleRootPointerdown(_e: PointerEvent) {
   state.selectedState = state.activeState = undefined;
 }
 
-function handleRootPointerup(_e: PointerEvent) {
+function handleRootPointerup(e: PointerEvent) {
+  e.preventDefault();
+
+  state.pointerDown = undefined;
+
   if (!isSynthDragState(state)) return;
 
   const config = state.currentParent.data.config;
@@ -214,6 +230,43 @@ function handleRootDragover(e: DragEvent) {
   e.preventDefault();
 }
 
+function handleRootPointermove(e: PointerEvent) {
+  if (!state.pointerDown) return;
+
+  e.preventDefault();
+
+  const config = state.pointerDown.parent.data.config;
+
+  if (!isSynthDragState(state)) {
+    if (config.longPress && !state.longPress) {
+      clearTimeout(state.longPressTimeout);
+
+      state.longPress = false;
+
+      return;
+    }
+
+    const nodes = config.draggedNodes(state.pointerDown);
+
+    config.dragstartClasses(state.pointerDown.node, nodes, config, true);
+
+    const synthDragState = initSynthDrag(
+      state.pointerDown.node,
+      state.pointerDown.parent,
+      e,
+      state,
+      nodes
+    );
+
+    // TODO
+    document.body.style.userSelect = "none";
+
+    synthMove(e, synthDragState);
+  } else {
+    synthMove(e, state);
+  }
+}
+
 /**
  * Initializes the drag and drop functionality for a given parent.
  *
@@ -231,14 +284,39 @@ export function dragAndDrop<T>({
 
   touchDevice = checkTouchSupport();
 
-  if (!documentController)
+  if (!documentController) {
     documentController = addEvents(document, {
       dragover: handleRootDragover,
       pointerdown: handleRootPointerdown,
       pointerup: handleRootPointerup,
       keydown: handleRootKeydown,
       drop: handleRootDrop,
+      pointermove: handleRootPointermove,
     });
+
+    const liveRegion = document.createElement("div");
+
+    setAttrs(liveRegion, {
+      "aria-live": "polite",
+      "aria-atomic": "true",
+      "data-dnd-live-region": "true",
+    });
+
+    Object.assign(liveRegion.style, {
+      position: "absolute",
+      top: "0px",
+      left: "-9999px",
+      width: "1px",
+      height: "1px",
+      padding: "0",
+      overflow: "hidden",
+      clip: "rect(0, 0, 0, 0)",
+      whiteSpace: "nowrap",
+      border: "0",
+    });
+
+    document.body.appendChild(liveRegion);
+  }
 
   if (!windowController)
     windowController = addEvents(window, {
@@ -276,7 +354,6 @@ export function dragAndDrop<T>({
       handleParentPointerover,
       handleParentScroll,
       handleNodePointerdown,
-      handleNodePointermove,
       handleNodeDragenter,
       handleNodeDragleave,
       handleParentDrop,
@@ -314,8 +391,7 @@ export function dragAndDrop<T>({
 
   parents.set(parent, parentData);
 
-  if (config.treeAncestor && config.treeGroup)
-    treeAncestors[config.treeGroup] = parent;
+  if (config.treeGroup) treeAncestors[config.treeGroup] = parent;
 
   config.plugins?.forEach((plugin) => {
     plugin(parent)?.tearDown?.();
@@ -335,44 +411,48 @@ export function dragAndDrop<T>({
 }
 
 export function dragStateProps<T>(
-  data: NodeDragEventData<T> | NodePointerEventData<T>,
-  draggedNodes: Array<NodeRecord<T>>
+  node: NodeRecord<T>,
+  parent: ParentRecord<T>,
+  e: PointerEvent | DragEvent,
+  draggedNodes: Array<NodeRecord<T>>,
+  offsetX?: number,
+  offsetY?: number
 ): DragStateProps<T> {
-  const { x, y } = eventCoordinates(data.e);
+  const { x, y } = eventCoordinates(e);
 
-  const rect = data.targetData.node.el.getBoundingClientRect();
+  const rect = node.el.getBoundingClientRect();
 
   return {
     affectedNodes: [],
     ascendingDirection: false,
     clonedDraggedEls: [],
-    dynamicValues: [],
     coordinates: {
       x,
       y,
     },
     draggedNode: {
-      el: data.targetData.node.el,
-      data: data.targetData.node.data,
+      el: node.el,
+      data: node.data,
     },
     draggedNodes,
     incomingDirection: undefined,
-    initialIndex: data.targetData.node.data.index,
+    initialIndex: node.data.index,
     initialParent: {
-      el: data.targetData.parent.el,
-      data: data.targetData.parent.data,
+      el: parent.el,
+      data: parent.data,
     },
     currentParent: {
-      el: data.targetData.parent.el,
-      data: data.targetData.parent.data,
+      el: parent.el,
+      data: parent.data,
     },
-    longPress: data.targetData.parent.data.config.longPress ?? false,
-    longPressTimeout: 0,
-    currentTargetValue: data.targetData.node.data.value,
+    longPress: parent.data.config.longPress ?? false,
+    longPressTimeout: undefined,
+    currentTargetValue: node.data.value,
     scrollEls: [],
-    startLeft: x - rect.left,
-    startTop: y - rect.top,
-    targetIndex: data.targetData.node.data.index,
+    // Need to account for if the explicity offset is positive or negative
+    startLeft: offsetX ? offsetX : x - rect.left,
+    startTop: offsetY ? offsetY : y - rect.top,
+    targetIndex: node.data.index,
     transferred: false,
   };
 }
@@ -380,12 +460,14 @@ export function dragStateProps<T>(
 export function performSort<T>({
   parent,
   draggedNodes,
-  targetNode,
+  targetNodes,
 }: {
   parent: ParentRecord<T>;
   draggedNodes: Array<NodeRecord<T>>;
-  targetNode: NodeRecord<T>;
+  targetNodes: Array<NodeRecord<T>>;
 }) {
+  remapNodes(parent.el);
+
   const draggedValues = draggedNodes.map((x) => x.data.value);
 
   const targetParentValues = parentValues(parent.el, parent.data);
@@ -398,9 +480,10 @@ export function performSort<T>({
     ...targetParentValues.filter((x) => !draggedValues.includes(x)),
   ];
 
-  newParentValues.splice(targetNode.data.index, 0, ...draggedValues);
+  newParentValues.splice(targetNodes[0].data.index, 0, ...draggedValues);
 
-  if ("draggedNode" in state) state.currentTargetValue = targetNode.data.value;
+  if ("draggedNode" in state)
+    state.currentTargetValue = targetNodes[0].data.value;
 
   setParentValues(parent.el, parent.data, [...newParentValues]);
 
@@ -409,14 +492,16 @@ export function performSort<T>({
       parent: {
         el: parent.el,
         data: parent.data,
-      },
+      } as ParentRecord<unknown>,
       previousValues: [...targetParentValues],
       previousNodes: [...enabledNodes],
       nodes: [...parent.data.enabledNodes],
       values: [...newParentValues],
-      draggedNode: draggedNodes[0],
+      draggedNodes: draggedNodes,
       previousPosition: originalIndex,
-      position: targetNode.data.index,
+      position: targetNodes[0].data.index,
+      targetNodes,
+      state,
     });
 }
 
@@ -456,8 +541,6 @@ function setActive<T>(
     node: newActiveNode,
     parent,
   };
-
-  addNodeClass([newActiveNode.el], activeDescendantClass);
 
   state.activeState.parent.el.setAttribute(
     "aria-activedescendant",
@@ -600,6 +683,8 @@ export function performTransfer<T>({
   state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
   targetNode?: NodeRecord<T>;
 }) {
+  remapNodes(initialParent.el);
+
   const draggedValues = draggedNodes.map((x) => x.data.value);
 
   const currentParentValues = parentValues(
@@ -643,6 +728,7 @@ export function performTransfer<T>({
       draggedNodes,
       targetIndex,
       state,
+      targetNodes: targetNode ? [targetNode] : [],
     });
   }
 
@@ -654,6 +740,7 @@ export function performTransfer<T>({
       draggedNodes,
       targetIndex,
       state,
+      targetNodes: targetNode ? [targetNode] : [],
     });
   }
 }
@@ -665,103 +752,11 @@ export function parentValues<T>(
   return [...parentData.getValues(parent)];
 }
 
-function findArrayCoordinates(
-  obj: any,
-  targetArray: Array<any>,
-  path: Array<any> = []
-) {
-  let result: Array<any> = [];
-
-  if (obj === targetArray) result.push(path);
-
-  if (Array.isArray(obj)) {
-    const index = obj.findIndex((el) => el === targetArray);
-
-    if (index !== -1) {
-      result.push([...path, index]);
-    } else {
-      for (let i = 0; i < obj.length; i++) {
-        result = result.concat(
-          findArrayCoordinates(obj[i], targetArray, [...path, i])
-        );
-      }
-    }
-  } else if (typeof obj === "object" && obj !== null) {
-    for (const key in obj) {
-      result = result.concat(
-        findArrayCoordinates(obj[key], targetArray, [...path, key])
-      );
-    }
-  }
-
-  return result;
-}
-
-function setValueAtCoordinatesUsingFindIndex(
-  obj: Array<any>,
-  targetArray: Array<any>,
-  newArray: Array<any>
-) {
-  const coordinates = findArrayCoordinates(obj, targetArray);
-
-  let newValues;
-
-  coordinates.forEach((coords) => {
-    let current = obj;
-
-    for (let i = 0; i < coords.length - 1; i++) {
-      const index = coords[i];
-
-      current = current[index];
-    }
-
-    const lastIndex = coords[coords.length - 1];
-
-    current[lastIndex] = newArray;
-
-    // We want to access getter of object we are setting to set the new values
-    // of the nested parent element (should be a part of the original structure of
-    // ancestor values).
-    newValues = current[lastIndex];
-  });
-
-  return newValues;
-}
-
 export function setParentValues<T>(
   parent: HTMLElement,
   parentData: ParentData<T>,
   values: Array<any>
 ): void {
-  const treeGroup = parentData.config.treeGroup;
-
-  if (treeGroup) {
-    const ancestorEl = treeAncestors[treeGroup];
-
-    const ancestorData = parents.get(ancestorEl);
-
-    if (!ancestorData) return;
-
-    const ancestorValues = ancestorData.getValues(ancestorEl);
-
-    const initialParentValues = parentData.getValues(parent);
-
-    const updatedValues = setValueAtCoordinatesUsingFindIndex(
-      ancestorValues,
-      initialParentValues,
-      values
-    );
-    if (!updatedValues) {
-      console.warn("No updated value found");
-
-      return;
-    }
-
-    parentData.setValues(updatedValues, parent);
-
-    return;
-  }
-
   parentData.setValues(values, parent);
 }
 
@@ -801,9 +796,9 @@ export function handleParentDrop<T>(
 
   dropped = true;
 
-  const config = data.targetData.parent.data.config;
+  const handleEnd = state.initialParent.data.config.handleEnd;
 
-  config.handleEnd(state);
+  handleEnd(state);
 }
 
 export function tearDown(parent: HTMLElement) {
@@ -824,7 +819,7 @@ export function isDragState<T>(
 export function isSynthDragState<T>(
   state: BaseDragState<T>
 ): state is SynthDragState<T> {
-  return "pointerId" in state && !!state.pointerId;
+  return "synthDragging" in state && !!state.synthDragging;
 }
 
 function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
@@ -832,6 +827,7 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
     keydown: parentEventData(parentData.config.handleParentKeydown),
     dragover: parentEventData(parentData.config.handleParentDragover),
     handleParentPointerover: parentData.config.handleParentPointerover,
+    scroll: parentEventData(parentData.config.handleParentScroll),
     drop: parentEventData(parentData.config.handleParentDrop),
     hasNestedParent: (e: CustomEvent) => {
       const parent = parents.get(e.target as HTMLElement);
@@ -844,35 +840,68 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
     focus: parentEventData(parentData.config.handleParentFocus),
   });
 
-  setAttrs(parent, {
-    role: "listbox",
-    tabindex: "0",
-    "aria-multiselectable": parentData.config.multiDrag ? "true" : "false",
-    "aria-activedescendant": "",
-    "aria-describedby": parent.id + "-live-region",
-  });
+  if (
+    parentData.config.externalDragHandle &&
+    parentData.config.externalDragHandle.el &&
+    parentData.config.externalDragHandle.callback
+  ) {
+    parentData.abortControllers.externalDragHandle = addEvents(
+      parentData.config.externalDragHandle.el,
+      {
+        pointerdown: (_e: PointerEvent) => {
+          if (
+            !parentData.config.externalDragHandle ||
+            !parentData.config.externalDragHandle.callback
+          )
+            return;
 
-  const liveRegion = document.createElement("div");
+          const draggableItem = parentData.config.externalDragHandle.callback();
 
-  setAttrs(liveRegion, {
-    "aria-live": "polite",
-    "aria-atomic": "true",
-    "data-drag-and-drop-live-region": "true",
-    id: parent.id.toString() + "-live-region",
-  });
+          if (!isNode(draggableItem)) {
+            console.warn(
+              "No draggable item found from external drag handle callback"
+            );
 
-  Object.assign(liveRegion.style, {
-    position: "absolute",
-    width: "1px",
-    height: "1px",
-    padding: "0",
-    overflow: "hidden",
-    clip: "rect(0, 0, 0, 0)",
-    whiteSpace: "nowrap",
-    border: "0",
-  });
+            return;
+          }
 
-  document.body.appendChild(liveRegion);
+          const nodeData = nodes.get(draggableItem);
+
+          if (!nodeData) return;
+
+          const parentNode = draggableItem.parentNode;
+
+          if (!(parentNode instanceof HTMLElement)) return;
+
+          const parent = parents.get(parentNode);
+
+          if (!parent) return;
+
+          state.pointerDown = {
+            parent: {
+              el: parentNode,
+              data: parent,
+            },
+            node: {
+              el: draggableItem,
+              data: nodeData,
+            },
+          };
+
+          draggableItem.draggable = true;
+        },
+      }
+    );
+  }
+
+  if (parent.id)
+    setAttrs(parent, {
+      role: "listbox",
+      tabindex: "0",
+      "aria-multiselectable": parentData.config.multiDrag ? "true" : "false",
+      "aria-activedescendant": "",
+      "aria-describedby": parent.id + "-live-region",
+    });
 }
 
 export function setAttrs(el: HTMLElement, attrs: Record<string, string>) {
@@ -881,8 +910,6 @@ export function setAttrs(el: HTMLElement, attrs: Record<string, string>) {
 
 export function setupNode<T>(data: SetupNodeData<T>) {
   const config = data.parent.data.config;
-
-  data.node.el.draggable = true;
 
   data.node.data.abortControllers.mainNode = addEvents(data.node.el, {
     keydown: nodeEventData(config.handleNodeKeydown),
@@ -894,9 +921,10 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     drop: nodeEventData(config.handleNodeDrop),
     pointercancel: nodeEventData(config.handlePointercancel),
     pointerdown: nodeEventData(config.handleNodePointerdown),
-    pointerup: nodeEventData(config.handleNodePointerup),
-    pointermove: nodeEventData(config.handleNodePointermove),
     handleNodePointerover: config.handleNodePointerover,
+    touchmove: (e: TouchEvent) => {
+      if (isDragState(state) && e.cancelable) e.preventDefault();
+    },
     contextmenu: (e: Event) => {
       if (touchDevice) e.preventDefault();
     },
@@ -905,8 +933,6 @@ export function setupNode<T>(data: SetupNodeData<T>) {
   data.node.el.setAttribute("role", "option");
 
   data.node.el.setAttribute("aria-selected", "false");
-
-  data.node.el.style.touchAction = "none";
 
   config.reapplyDragClasses(data.node.el, data.parent.data);
 
@@ -962,6 +988,14 @@ export function tearDownNode<T>(data: TearDownNodeData<T>) {
  * @internal
  */
 function nodesMutated(mutationList: MutationRecord[]) {
+  // This could be better, but using it as a way to ignore comments and text nodes
+  if (
+    mutationList.length === 1 &&
+    mutationList[0].addedNodes.length === 1 &&
+    !(mutationList[0].addedNodes[0] instanceof HTMLElement)
+  )
+    return;
+
   const parentEl = mutationList[0].target;
 
   if (!(parentEl instanceof HTMLElement)) return;
@@ -983,6 +1017,60 @@ function nodesMutated(mutationList: MutationRecord[]) {
   }
 
   remapNodes(parentEl);
+}
+
+/**
+ * A regular expression to test for a valid date string.
+ * @param x - A RegExp to compare.
+ * @param y - A RegExp to compare.
+ * @public
+ */
+export function eqRegExp(x: RegExp, y: RegExp): boolean {
+  return (
+    x.source === y.source &&
+    x.flags.split("").sort().join("") === y.flags.split("").sort().join("")
+  );
+}
+
+/**
+ * Compare two values for equality, optionally at depth.
+ *
+ * @param valA - First value.
+ * @param valB - Second value.
+ * @param deep - If it will compare deeply if it's an object.
+ * @param explicit - An array of keys to explicity check.
+ *
+ * @returns `boolean`
+ *
+ * @public
+ */
+export function eq(
+  valA: any, // eslint-disable-line
+  valB: any, // eslint-disable-line
+  deep = true,
+  explicit: string[] = ["__key"]
+): boolean {
+  if (valA === valB) return true;
+  if (typeof valB === "object" && typeof valA === "object") {
+    if (valA instanceof Map) return false;
+    if (valA instanceof Set) return false;
+    if (valA instanceof Date && valB instanceof Date)
+      return valA.getTime() === valB.getTime();
+    if (valA instanceof RegExp && valB instanceof RegExp)
+      return eqRegExp(valA, valB);
+    if (valA === null || valB === null) return false;
+    if (Object.keys(valA).length !== Object.keys(valB).length) return false;
+    for (const k of explicit) {
+      if ((k in valA || k in valB) && valA[k] !== valB[k]) return false;
+    }
+    for (const key in valA) {
+      if (!(key in valB)) return false;
+      if (valA[key] !== valB[key] && !deep) return false;
+      if (deep && !eq(valA[key], valB[key], deep, explicit)) return false;
+    }
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -1008,7 +1096,7 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
   for (let x = 0; x < parent.children.length; x++) {
     const node = parent.children[x];
 
-    if (!isNode(node)) continue;
+    if (!isNode(node) || node.id === "dnd-dragged-node-clone") continue;
 
     const nodeData = nodes.get(node);
 
@@ -1043,10 +1131,8 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     return;
   }
 
-  if (parentData.config.treeGroup && !parentData.config.treeAncestor) {
+  if (parentData.config.treeGroup) {
     let nextAncestorEl = parent.parentElement;
-
-    let eventDispatched = false;
 
     while (nextAncestorEl) {
       if (!parents.has(nextAncestorEl as HTMLElement)) {
@@ -1063,12 +1149,8 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
         })
       );
 
-      eventDispatched = true;
-
       nextAncestorEl = null;
     }
-
-    if (!eventDispatched) console.warn("No ancestor found for tree group");
   }
 
   const values = parentData.getValues(parent);
@@ -1079,6 +1161,8 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     const node = enabledNodes[x];
 
     const prevNodeData = nodes.get(node);
+
+    if (config.draggableValue && !config.draggableValue(values[x])) continue;
 
     const nodeData = Object.assign(
       prevNodeData ?? {
@@ -1094,7 +1178,7 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     if (
       !isDragState(state) &&
       state.newActiveDescendant &&
-      state.newActiveDescendant.data.value === nodeData.value
+      eq(state.newActiveDescendant.data.value, nodeData.value)
     ) {
       setActive(
         {
@@ -1112,7 +1196,7 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     if (
       !isDragState(state) &&
       state.activeState &&
-      state.activeState.node.data.value === nodeData.value
+      eq(state.activeState.node.data.value, nodeData.value)
     ) {
       setActive(
         {
@@ -1127,7 +1211,10 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
       );
     }
 
-    if (isDragState(state) && nodeData.value === state.draggedNode.data.value) {
+    if (
+      isDragState(state) &&
+      eq(state.draggedNode.data.value, nodeData.value)
+    ) {
       state.draggedNode.data = nodeData;
 
       state.draggedNode.el = node;
@@ -1137,10 +1224,6 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
       );
 
       if (draggedNode) draggedNode.el = node;
-
-      if (isSynthDragState(state)) {
-        state.draggedNode.el.setPointerCapture(state.pointerId);
-      }
     }
 
     enabledNodeRecords.push({
@@ -1191,14 +1274,17 @@ export function validateDragstart(data: NodeEventData<any>): boolean {
   return !!data.targetData.parent.data.config.nativeDrag;
 }
 
-function draggedNodes<T>(data: NodeEventData<T>): Array<NodeRecord<T>> {
-  if (!data.targetData.parent.data.config.multiDrag) {
-    return [data.targetData.node];
+function draggedNodes<T>(pointerDown: {
+  parent: ParentRecord<T>;
+  node: NodeRecord<T>;
+}): Array<NodeRecord<T>> {
+  if (!pointerDown.parent.data.config.multiDrag) {
+    return [pointerDown.node];
   } else if (state.selectedState) {
     return [
-      data.targetData.node,
+      pointerDown.node,
       ...(state.selectedState?.nodes.filter(
-        (x) => x.el !== data.targetData.node.el
+        (x) => x.el !== pointerDown.node.el
       ) as Array<NodeRecord<T>>),
     ];
   }
@@ -1206,10 +1292,12 @@ function draggedNodes<T>(data: NodeEventData<T>): Array<NodeRecord<T>> {
   return [];
 }
 
-let scrollTimeout: number | undefined;
+let scrollTimeout: ReturnType<typeof setTimeout>;
 
 function handleParentScroll<T>(_data: ParentEventData<T>) {
   if (!isDragState(state)) return;
+
+  state.emit("scrollStarted", state);
 
   if (isSynthDragState(state)) return;
 
@@ -1219,6 +1307,8 @@ function handleParentScroll<T>(_data: ParentEventData<T>) {
 
   scrollTimeout = setTimeout(() => {
     state.preventEnter = false;
+
+    state.emit("scrollEnded", state);
   }, 100);
 }
 
@@ -1227,12 +1317,12 @@ function handleParentScroll<T>(_data: ParentEventData<T>) {
  */
 export function handleDragstart<T>(
   data: NodeDragEventData<T>,
-  state: BaseDragState<T>
+  _state: BaseDragState<T>
 ) {
   const config = data.targetData.parent.data.config;
 
   if (
-    touchDevice ||
+    !config.nativeDrag ||
     !validateDragstart(data) ||
     !validateDragHandle({
       x: data.e.clientX,
@@ -1246,26 +1336,27 @@ export function handleDragstart<T>(
     return;
   }
 
-  const nodes = config.draggedNodes(data);
+  const nodes = config.draggedNodes({
+    parent: data.targetData.parent,
+    node: data.targetData.node,
+  });
 
   config.dragstartClasses(data.targetData.node, nodes, config);
 
   const dragState = initDrag(data, nodes);
 
   if (config.onDragstart)
-    config.onDragstart(
-      {
-        parent: data.targetData.parent,
-        values: parentValues(
-          data.targetData.parent.el,
-          data.targetData.parent.data
-        ),
-        draggedNode: dragState.draggedNode,
-        draggedNodes: dragState.draggedNodes,
-        position: dragState.initialIndex,
-      },
-      state as DragState<T>
-    );
+    config.onDragstart({
+      parent: data.targetData.parent,
+      values: parentValues(
+        data.targetData.parent.el,
+        data.targetData.parent.data
+      ),
+      draggedNode: dragState.draggedNode,
+      draggedNodes: dragState.draggedNodes,
+      position: dragState.initialIndex,
+      state: dragState,
+    });
 }
 
 export function handleNodePointerdown<T>(
@@ -1282,9 +1373,23 @@ export function handleNodePointerdown<T>(
   )
     return;
 
-  data.e.stopPropagation();
+  state.pointerDown = {
+    parent: data.targetData.parent,
+    node: data.targetData.node,
+  };
 
-  synthNodePointerDown = true;
+  data.targetData.node.el.draggable = true;
+  if (
+    !validateDragHandle({
+      x: data.e.clientX,
+      y: data.e.clientY,
+      node: data.targetData.node,
+      config: data.targetData.parent.data.config,
+    })
+  )
+    return;
+
+  data.e.stopPropagation();
 
   handleLongPress(data, state, data.targetData.node);
 
@@ -1438,7 +1543,14 @@ export function initDrag<T>(
 ): DragState<T> {
   data.e.stopPropagation();
 
-  const dragState = setDragState(dragStateProps(data, draggedNodes));
+  const dragState = setDragState(
+    dragStateProps(
+      data.targetData.node,
+      data.targetData.parent,
+      data.e,
+      draggedNodes
+    )
+  );
 
   if (data.e.dataTransfer) {
     const config = data.targetData.parent.data.config;
@@ -1520,6 +1632,8 @@ export function validateDragHandle<T>({
   node: NodeRecord<T>;
   config: ParentConfig<T>;
 }): boolean {
+  if (config.externalDragHandle) return false;
+
   if (!config.dragHandle) return true;
 
   const dragHandles = node.el.querySelectorAll(config.dragHandle);
@@ -1554,6 +1668,7 @@ export function handleParentKeydown<T>(
 
   const enabledNodes = parentData.enabledNodes;
 
+  if (!(data.e.target instanceof HTMLElement)) return;
   const index = enabledNodes.findIndex((x) => x.el === activeDescendant.el);
 
   if (index === -1) return;
@@ -1589,9 +1704,6 @@ export function handleParentKeydown<T>(
           activeDescendant,
           state
         );
-
-    //if (!state.selectedState)
-    //  updateLiveRegion(data.targetData.parent, "", true);
   } else if (data.e.key === "Enter" && state.selectedState) {
     if (
       state.selectedState.parent.el === data.targetData.parent.el &&
@@ -1608,7 +1720,7 @@ export function handleParentKeydown<T>(
       parentData.config.performSort({
         parent: data.targetData.parent,
         draggedNodes: state.selectedState.nodes,
-        targetNode: state.activeState.node,
+        targetNodes: [state.activeState.node],
       });
 
       deselect([], data.targetData.parent, state);
@@ -1632,7 +1744,7 @@ export function handleParentKeydown<T>(
         draggedNodes: state.selectedState.nodes,
         initialIndex: state.selectedState.nodes[0].data.index,
         state,
-        targetNode: state.activeState.node,
+        targetNodes: [state.activeState.node],
       });
 
       state.newActiveDescendant = state.selectedState.nodes[0];
@@ -1668,11 +1780,13 @@ export function handleNodeDrop<T>(
   data: NodeDragEventData<T>,
   state: DragState<T> | SynthDragState<T>
 ) {
+  const config = data.targetData.parent.data.config;
+
+  if (!config.nativeDrag) return;
+
   data.e.stopPropagation();
 
   dropped = true;
-
-  const config = data.targetData.parent.data.config;
 
   config.handleEnd(state);
 }
@@ -1681,6 +1795,10 @@ export function handleDragend<T>(
   data: NodeDragEventData<T>,
   state: DragState<T>
 ) {
+  const config = data.targetData.parent.data.config;
+
+  if (!config.nativeDrag) return;
+
   data.e.preventDefault();
 
   data.e.stopPropagation();
@@ -1691,8 +1809,6 @@ export function handleDragend<T>(
     return;
   }
 
-  const config = data.targetData.parent.data.config;
-
   config.handleEnd(state);
 }
 
@@ -1701,7 +1817,6 @@ export function handlePointercancel<T>(
   state: DragState<T> | SynthDragState<T> | BaseDragState<T>
 ) {
   if (!isSynthDragState(state)) return;
-
   data.e.preventDefault();
 
   if (dropped) {
@@ -1718,6 +1833,7 @@ export function handlePointercancel<T>(
       values: parentValues(state.currentParent.el, state.currentParent.data),
       draggedNode: state.draggedNode,
       draggedNodes: state.draggedNodes,
+      state,
     });
   }
 
@@ -1725,6 +1841,10 @@ export function handlePointercancel<T>(
 }
 
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
+  if (state.draggedNode) state.draggedNode.el.draggable = false;
+
+  document.body.style.userSelect = "";
+
   if (isSynthDragState(state)) cancelSynthScroll(state);
 
   if ("longPressTimeout" in state && state.longPressTimeout)
@@ -1768,13 +1888,12 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
 
   state.selectedState = undefined;
 
-  synthNodePointerDown = false;
-
   config?.onDragend?.({
     parent: state.currentParent,
     values: parentValues(state.currentParent.el, state.currentParent.data),
     draggedNode: state.draggedNode,
     draggedNodes: state.draggedNodes,
+    state,
   });
 
   state.emit("dragEnded", state);
@@ -1784,7 +1903,9 @@ export function handleNodePointerup<T>(
   data: NodePointerEventData<T>,
   state: DragState<T> | SynthDragState<T> | BaseDragState<T>
 ) {
-  state.preventSynthDrag = false;
+  data.e.stopPropagation();
+
+  state.pointerDown = undefined;
 
   if (!state.pointerSelection && state.selectedState)
     deselect(state.selectedState.nodes, data.targetData.parent, state);
@@ -1792,8 +1913,6 @@ export function handleNodePointerup<T>(
   const config = data.targetData.parent.data.config;
 
   state.pointerSelection = false;
-
-  synthNodePointerDown = false;
 
   if ("longPressTimeout" in state && state.longPressTimeout)
     clearTimeout(state.longPressTimeout);
@@ -1808,151 +1927,121 @@ export function handleNodePointerup<T>(
   config.handleEnd(state as DragState<T> | SynthDragState<T>);
 }
 
-export function handleNodePointermove<T>(
-  data: NodePointerEventData<T>,
-  state: SynthDragState<T> | BaseDragState<T>
-) {
-  if (data.targetData.parent.data.config.nativeDrag && !touchDevice) return;
-
-  if (state.preventSynthDrag) return;
-
-  const { x, y } = eventCoordinates(data.e as PointerEvent);
-
-  if (
-    !synthNodePointerDown ||
-    (!isSynthDragState(state) &&
-      !validateDragHandle({
-        x,
-        y,
-        node: data.targetData.node,
-        config: data.targetData.parent.data.config,
-      }))
-  )
-    return;
-
-  if (!isSynthDragState(state)) {
-    const config = data.targetData.parent.data.config;
-
-    if (config.longPress && !state.longPress) {
-      clearTimeout(state.longPressTimeout);
-
-      state.longPress = false;
-
-      return;
-    }
-
-    const nodes = config.draggedNodes(data);
-
-    config.dragstartClasses(data.targetData.node, nodes, config, true);
-
-    const synthDragState = initSynthDrag(data, state, nodes);
-
-    synthDragState.clonedDraggedNode.style.display =
-      synthDragState.draggedNodeDisplay || "";
-
-    synthMove(data, synthDragState);
-
-    if (config.onDragstart)
-      config.onDragstart(
-        {
-          parent: data.targetData.parent,
-          values: parentValues(
-            data.targetData.parent.el,
-            data.targetData.parent.data
-          ),
-          draggedNode: synthDragState.draggedNode,
-          draggedNodes: synthDragState.draggedNodes,
-          position: synthDragState.initialIndex,
-        },
-        synthDragState
-      );
-
-    synthDragState.draggedNode.el.setPointerCapture(data.e.pointerId);
-
-    synthDragState.pointerId = data.e.pointerId;
-
-    return;
-  }
-
-  synthMove(data, state as SynthDragState<T>);
-}
-
 function initSynthDrag<T>(
-  data: NodePointerEventData<T>,
+  node: NodeRecord<T>,
+  parent: ParentRecord<T>,
+  e: PointerEvent,
   _state: BaseDragState<T>,
   draggedNodes: Array<NodeRecord<T>>
 ): SynthDragState<T> {
-  const config = data.targetData.parent.data.config;
+  const config = parent.data.config;
 
   let dragImage: HTMLElement | undefined;
 
+  let display = node.el.style.display;
+
+  let result = undefined;
+
   if (config.synthDragImage) {
-    dragImage = config.synthDragImage(data, draggedNodes);
+    result = config.synthDragImage(node, parent, e, draggedNodes);
+
+    dragImage = result.dragImage;
+
+    dragImage.setAttribute("popover", "manual");
+
+    dragImage.id = "dnd-dragged-node-clone";
+
+    display = dragImage.style.display;
+
+    Object.assign(dragImage.style, {
+      position: "absolute",
+      zIndex: 9999,
+      pointerEvents: "none",
+      margin: 0,
+      padding: 0,
+      overflow: "hidden",
+    });
   } else {
     if (!config.multiDrag || draggedNodes.length === 1) {
-      dragImage = data.targetData.node.el.cloneNode(true) as HTMLElement;
+      dragImage = node.el.cloneNode(true) as HTMLElement;
 
-      dragImage.id = data.targetData.node.el.id + "-clone";
+      display = dragImage.style.display;
 
-      copyNodeStyle(data.targetData.node.el, dragImage);
+      dragImage.id = "dnd-dragged-node-clone";
+
+      dragImage.setAttribute("popover", "manual");
 
       Object.assign(dragImage.style, {
-        width: data.targetData.node.el.getBoundingClientRect().width,
-        zIndex: 9999,
+        height: node.el.getBoundingClientRect().height + "px",
+        width: node.el.getBoundingClientRect().width + "px",
+        overflow: "hidden",
+        display: "none",
         pointerEvents: "none",
+        margin: 0,
+        padding: 0,
+        zIndex: 9999,
       });
-
-      document.body.appendChild(dragImage);
     } else {
       const wrapper = document.createElement("div");
+
+      wrapper.setAttribute("popover", "");
 
       for (const node of draggedNodes) {
         const clonedNode = node.el.cloneNode(true) as HTMLElement;
 
-        copyNodeStyle(node.el, clonedNode);
+        //copyNodeStyle(node.el, clonedNode);
 
         clonedNode.style.pointerEvents = "none";
 
-        clonedNode.id = node.el.id + "-clone";
+        //clonedNode.id = node.el.id + "-clone";
 
         wrapper.append(clonedNode);
       }
 
-      const { width } = draggedNodes[0].el.getBoundingClientRect();
-
       Object.assign(wrapper.style, {
         display: "flex",
         flexDirection: "column",
-        width: `${width}px`,
-        position: "fixed",
-        pointerEvents: "none",
-        zIndex: "9999",
         left: "-9999px",
+        position: "absolute",
+        pointerEvents: "none",
+        zIndex: 9999,
       });
+
+      wrapper.id = "dnd-dragged-node-clone";
 
       dragImage = wrapper;
     }
   }
-
-  const display = dragImage.style.display;
-
-  dragImage.style.display = "none";
-
-  document.body.append(dragImage);
+  //dragImage.style.display = "none";
 
   dragImage.style.position = "absolute";
+
+  parent.el.appendChild(dragImage);
+
+  dragImage.showPopover();
 
   const synthDragStateProps = {
     clonedDraggedEls: [],
     clonedDraggedNode: dragImage,
     draggedNodeDisplay: display,
     synthDragScrolling: false,
+    synthDragging: true,
   };
 
   const synthDragState = setDragState({
-    ...dragStateProps(data, draggedNodes),
+    ...dragStateProps(
+      node,
+      parent,
+      e,
+      draggedNodes,
+      result?.offsetX,
+      result?.offsetY
+    ),
     ...synthDragStateProps,
   }) as SynthDragState<T>;
+
+  synthDragState.clonedDraggedNode.style.display =
+    synthDragState.draggedNodeDisplay || "";
 
   return synthDragState;
 }
@@ -1988,16 +2077,22 @@ function pointermoveClasses<T>(
       config?.longPressClass
     );
 }
-function cancelSynthScroll(state: SynthDragState<any>) {
-  if (state.animationFrameId !== undefined) {
-    cancelAnimationFrame(state.animationFrameId);
+function cancelSynthScroll<T>(state: SynthDragState<T>) {
+  if (state.animationFrameIdX !== undefined) {
+    cancelAnimationFrame(state.animationFrameIdX);
 
-    state.animationFrameId = undefined;
+    state.animationFrameIdX = undefined;
+  }
+
+  if (state.animationFrameIdY !== undefined) {
+    cancelAnimationFrame(state.animationFrameIdY);
+
+    state.animationFrameIdY = undefined;
   }
 }
 
-function moveNode<T>(data: NodePointerEventData<T>, state: SynthDragState<T>) {
-  const { x, y } = eventCoordinates(data.e);
+function moveNode<T>(e: PointerEvent, state: SynthDragState<T>) {
+  const { x, y } = eventCoordinates(e);
 
   state.coordinates.y = y;
 
@@ -2011,24 +2106,25 @@ function moveNode<T>(data: NodePointerEventData<T>, state: SynthDragState<T>) {
 
   state.clonedDraggedNode.style.left = `${x - startLeft + window.scrollX}px`;
 
-  if (data.e.cancelable) data.e.preventDefault();
+  if (e.cancelable) e.preventDefault();
 
-  pointermoveClasses(state, data.targetData.parent.data.config);
+  pointermoveClasses(state, state.initialParent.data.config);
 }
 
-export function synthMove<T>(
-  data: NodePointerEventData<T>,
-  state: SynthDragState<T>
-) {
-  moveNode(data, state);
+export function synthMove<T>(e: PointerEvent, state: SynthDragState<T>) {
+  moveNode(e, state);
 
-  const elFromPoint = getElFromPoint(eventCoordinates(data.e), data.e, state);
+  const coordinates = eventCoordinates(e);
+
+  handleSynthScroll(coordinates, e, state);
+
+  const elFromPoint = getElFromPoint(coordinates);
 
   if (!elFromPoint) {
     document.dispatchEvent(
       new CustomEvent("handleRootPointerover", {
         detail: {
-          e: data.e,
+          e,
           state,
         },
       })
@@ -2037,7 +2133,7 @@ export function synthMove<T>(
     return;
   }
   const pointerMoveEventData = {
-    e: data.e,
+    e,
     targetData: elFromPoint,
     state,
   };
@@ -2061,6 +2157,10 @@ export function handleNodeDragover<T>(
   data: NodeDragEventData<T>,
   state: DragState<T>
 ) {
+  const config = data.targetData.parent.data.config;
+
+  if (!config.nativeDrag) return;
+
   const { x, y } = eventCoordinates(data.e);
 
   state.coordinates.y = y;
@@ -2080,6 +2180,10 @@ export function handleParentDragover<T>(
   data: ParentDragEventData<T>,
   state: DragState<T>
 ) {
+  const config = data.targetData.parent.data.config;
+
+  if (!config.nativeDrag) return;
+
   data.e.preventDefault();
 
   data.e.stopPropagation();
@@ -2285,7 +2389,7 @@ export function sort<T>(
   data.targetData.parent.data.config.performSort({
     parent: data.targetData.parent,
     draggedNodes: state.draggedNodes,
-    targetNode: data.targetData.node,
+    targetNodes: [data.targetData.node],
   });
 }
 
@@ -2359,7 +2463,7 @@ export function transfer<T>(
     draggedNodes: state.draggedNodes,
     initialIndex: state.initialIndex,
     state,
-    targetNode: "node" in data.targetData ? data.targetData.node : undefined,
+    targetNodes: "node" in data.targetData ? [data.targetData.node] : [],
   });
 
   state.currentParent = data.targetData.parent;
@@ -2527,151 +2631,113 @@ export function removeClass(
   }
 }
 
-function isScrollable(element: HTMLElement) {
-  if (element === document.documentElement || element === document.body) {
-    return (
-      element.scrollHeight > element.clientHeight ||
-      element.scrollWidth > element.clientWidth
-    );
-  }
-
+function scrollableX(element: HTMLElement): boolean {
   const style = window.getComputedStyle(element);
-
+  if (
+    (element === document.documentElement || element === document.body) &&
+    (style.overflowX === "auto" || style.overflowX === "scroll")
+  )
+    return element.scrollWidth > element.clientWidth;
   return (
-    ((style.overflowY === "auto" || style.overflowY === "scroll") &&
-      element.scrollHeight > element.clientHeight) ||
-    ((style.overflowX === "auto" || style.overflowX === "scroll") &&
-      element.scrollWidth > element.clientWidth)
+    (style.overflowX === "auto" || style.overflowX === "scroll") &&
+    element.scrollWidth > element.clientWidth
   );
 }
 
-function getScrollableUnderPointer(x: number, y: number): HTMLElement {
+function scrollableY(element: HTMLElement): boolean {
+  // First check if element is scrollable
+  if (element === document.documentElement || element === document.body) {
+    return element.scrollHeight > element.clientHeight;
+  }
+
+  const style = window.getComputedStyle(element);
+  const isScrollable =
+    (style.overflowY === "auto" || style.overflowY === "scroll") &&
+    element.scrollHeight > element.clientHeight;
+
+  if (!isScrollable) return false;
+
+  // Now check if majority is in viewport
+  const rect = element.getBoundingClientRect();
+  const elementHeight = rect.height;
+  const visibleHeight =
+    Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+
+  // Calculate percentage visible (0 to 1)
+  const percentVisible = visibleHeight / elementHeight;
+
+  // Return true only if element is scrollable AND more than 50% visible
+  return percentVisible > 0.5;
+}
+
+export function getScrollablesUnderPointer(
+  x: number,
+  y: number
+): Record<"x" | "y", HTMLElement | null> {
+  const scrollables: Record<"x" | "y", HTMLElement | null> = {
+    x: null,
+    y: null,
+  };
+
   const elements = document.elementsFromPoint(x, y);
+
   for (const el of elements) {
-    if (el instanceof HTMLElement && isScrollable(el)) {
-      return el;
+    if (!scrollables.x && el instanceof HTMLElement && scrollableX(el)) {
+      scrollables.x = el;
+    }
+
+    if (!scrollables.y && el instanceof HTMLElement && scrollableY(el)) {
+      scrollables.y = el;
     }
   }
 
-  return document.documentElement;
+  return scrollables;
 }
 
-function scrollContainer<T>(
+function scrollY<T>(
+  el: HTMLElement,
   e: PointerEvent,
-  scrollElement: HTMLElement,
   state: SynthDragState<T>
 ) {
-  const rect = scrollElement.getBoundingClientRect();
-  const { clientX, clientY } = e;
-
-  let scrollX = 0;
-  let scrollY = 0;
   let shouldScroll = false;
-  let difference = 0;
+  let scroll = 0;
 
-  state.preventEnter = true;
+  const rect = el.getBoundingClientRect();
 
-  // Handle scrolling for the document body
   if (
-    scrollElement === document.body ||
-    scrollElement === document.documentElement
+    e.clientY > rect.bottom - (rect.bottom - rect.top) * 0.05 &&
+    el.scrollTop + el.clientHeight < el.scrollHeight
   ) {
-    const documentElement = document.documentElement;
+    shouldScroll = true;
 
-    // Calculate how far from the bottom of the document the scroll position is
-    difference =
-      documentElement.scrollHeight -
-      (documentElement.scrollTop + window.innerHeight);
+    scroll = 5;
+  } else if (
+    e.clientY < rect.top + (rect.bottom - rect.top) * 0.05 &&
+    el.scrollTop > 0
+  ) {
+    shouldScroll = true;
 
-    // Check if the pointer is near the bottom of the viewport (5% of viewport height)
-    if (clientY > window.innerHeight * 0.95 && difference > 0) {
-      shouldScroll = true;
-
-      scrollY = 5;
-    } else if (
-      clientY < window.innerHeight * 0.05 &&
-      documentElement.scrollTop > 0
-    ) {
-      shouldScroll = true;
-
-      scrollY = -5;
-    } else if (clientX > window.innerWidth * 0.95) {
-      shouldScroll = true;
-
-      scrollX = 5;
-    } else if (
-      clientX < window.innerWidth * 0.05 &&
-      documentElement.scrollLeft > 0
-    ) {
-      shouldScroll = true;
-
-      scrollX = -5;
-    }
-  } else {
-    if (
-      clientY > rect.bottom - (rect.bottom - rect.top) * 0.05 &&
-      scrollElement.scrollTop + scrollElement.clientHeight <
-        scrollElement.scrollHeight
-    ) {
-      shouldScroll = true;
-
-      scrollY = 5;
-    } else if (
-      clientY < rect.top + (rect.bottom - rect.top) * 0.05 &&
-      scrollElement.scrollTop > 0
-    ) {
-      shouldScroll = true;
-
-      scrollY = -5;
-    } else if (
-      clientX > rect.right - (rect.right - rect.left) * 0.05 &&
-      scrollElement.scrollLeft + scrollElement.clientWidth <
-        scrollElement.scrollWidth
-    ) {
-      shouldScroll = true;
-
-      scrollX = 5;
-    } else if (
-      clientX < rect.left + (rect.right - rect.left) * 0.05 &&
-      scrollElement.scrollLeft > 0
-    ) {
-      shouldScroll = true;
-
-      scrollX = -5;
-    }
+    scroll = -5;
   }
 
   if (shouldScroll) {
-    if (
-      scrollElement === document.body ||
-      scrollElement === document.documentElement
-    ) {
-      window.scrollBy({ left: scrollX, top: scrollY });
+    if (!state.scrolling) {
+      state.scrolling = true;
 
-      const startLeft = state.startLeft ?? 0;
-
-      const startTop = state.startTop ?? 0;
-
-      state.clonedDraggedNode.style.top = `${
-        clientY - startTop + window.scrollY
-      }px`;
-
-      state.clonedDraggedNode.style.left = `${
-        clientX - startLeft + window.scrollX
-      }px`;
-    } else {
-      scrollElement.scrollBy({ left: scrollX, top: scrollY });
+      state.emit("scrollStarted", state);
     }
 
-    state.animationFrameId = requestAnimationFrame(() =>
-      scrollContainer(e, scrollElement, state)
+    el.scrollBy({ top: scroll });
+
+    //state.clonedDraggedNode.style.top = `${e.clientY}px`;
+
+    state.animationFrameIdY = requestAnimationFrame(() =>
+      scrollY(el, e, state)
     );
   } else {
-    if (state.animationFrameId) {
-      cancelAnimationFrame(state.animationFrameId);
+    if (state.scrolling) state.emit("scrollEnded", state);
 
-      state.animationFrameId = undefined;
-    }
+    state.scrolling = false;
   }
 
   setTimeout(() => {
@@ -2679,41 +2745,145 @@ function scrollContainer<T>(
   });
 }
 
-// Function to start the scroll interval when pointer is near the edge
-function startScrolling<T>(e: PointerEvent, state: SynthDragState<T>) {
-  if (!state.scrollElement) return;
+let count = 0;
 
-  state.animationFrameId = requestAnimationFrame(() => {
-    if (!state.scrollElement && state.animationFrameId) {
-      cancelAnimationFrame(state.animationFrameId);
+function scrollX<T>(
+  el: HTMLElement,
+  e: PointerEvent,
+  state: SynthDragState<T>
+) {
+  if (count > 500) return;
+  let shouldScroll = false;
+  let scroll = 0;
 
-      return;
+  const rect = el.getBoundingClientRect();
+
+  //el.style.scrollBehavior = 'auto';
+  //  el.style.scrollSnapType = 'none';
+
+  if (
+    e.clientX > rect.right - (rect.right - rect.left) * 0.05 &&
+    el.scrollLeft + el.clientWidth < el.scrollWidth
+  ) {
+    count++;
+
+    shouldScroll = true;
+
+    scroll = 5;
+  } else if (
+    e.clientX < rect.left + (rect.right - rect.left) * 0.05 &&
+    el.scrollLeft > 0
+  ) {
+    shouldScroll = true;
+
+    scroll = -5;
+  }
+
+  if (shouldScroll) {
+    el.scrollBy({ left: scroll, behavior: "smooth" });
+
+    if (!state.scrolling) {
+      state.scrolling = true;
+
+      state.emit("scrollStarted", state);
     }
 
-    if (state.scrollElement) scrollContainer(e, state.scrollElement, state);
+    //console.log("SCROLLING X", el);
+
+    state.animationFrameIdX = requestAnimationFrame(() => {
+      scrollX(el, e, state);
+    });
+  } else {
+    //const logger = document.getElementById("log-x");
+    //if (logger) logger.innerText = "no sscrolling anymore";
+    if (state.scrolling) state.emit("scrollEnded", state);
+
+    state.scrolling = false;
+  }
+
+  setTimeout(() => {
+    state.preventEnter = false;
   });
 }
 
-export function getElFromPoint<T>(
-  coordinates: {
-    x: number;
-    y: number;
-  },
+function isMostlyInViewByHeight(element: HTMLElement) {
+  const rect = element.getBoundingClientRect();
+
+  // Get the height of the viewport
+  const viewportHeight =
+    window.innerHeight || document.documentElement.clientHeight;
+
+  // Calculate the visible height of the element within the viewport
+  const visibleHeight =
+    Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0);
+
+  // Return true if more than 50% of the element's height is visible
+  return visibleHeight >= rect.height / 2;
+}
+
+function isMostlyInViewByWidth(element: HTMLElement) {
+  const rect = element.getBoundingClientRect();
+
+  const viewportWidth =
+    window.innerWidth || document.documentElement.clientWidth;
+
+  const visibleWidth =
+    Math.min(rect.right, viewportWidth) - Math.max(rect.left, 0);
+
+  return visibleWidth >= rect.width / 2;
+}
+
+function handleSynthScroll<T>(
+  coordinates: { x: number; y: number },
   e: PointerEvent,
   state: SynthDragState<T>
-): NodeFromPoint<T> | ParentFromPoint<T> | undefined {
-  const scrollable = getScrollableUnderPointer(coordinates.x, coordinates.y);
+) {
+  cancelSynthScroll(state);
 
-  if (state.animationFrameId) {
-    cancelAnimationFrame(state.animationFrameId);
+  const scrollables: Record<"x" | "y", HTMLElement | null> = {
+    x: null,
+    y: null,
+  };
 
-    state.preventEnter = false;
+  const els = document.elementsFromPoint(
+    coordinates.x,
+    coordinates.y
+  ) as HTMLElement[];
+
+  for (const el of els) {
+    // Exit early if both scrollable elements are found
+    if (scrollables.x && scrollables.y) break;
+
+    const styles = window.getComputedStyle(el);
+
+    const isScrollableX =
+      !scrollables.x &&
+      (styles.overflowX === "auto" || styles.overflowX === "scroll") &&
+      el.scrollWidth > el.clientWidth;
+
+    const isScrollableY =
+      !scrollables.y &&
+      (styles.overflowY === "auto" || styles.overflowY === "scroll") &&
+      el.scrollHeight > el.clientHeight;
+
+    if (isScrollableY && isMostlyInViewByHeight(el)) {
+      scrollables.y = el as HTMLElement;
+    }
+
+    if (isScrollableX && isMostlyInViewByWidth(el)) {
+      scrollables.x = el as HTMLElement;
+    }
   }
 
-  state.scrollElement = scrollable;
+  if (scrollables.y) scrollY(scrollables.y, e, state);
 
-  startScrolling(e, state);
+  if (scrollables.x) scrollX(scrollables.x, e, state);
+}
 
+export function getElFromPoint<T>(coordinates: {
+  x: number;
+  y: number;
+}): NodeFromPoint<T> | ParentFromPoint<T> | undefined {
   let target = document.elementFromPoint(coordinates.x, coordinates.y);
 
   if (!isNode(target)) return;
@@ -2811,8 +2981,7 @@ export function copyNodeStyle(
   omitKeys = false
 ) {
   const computedStyle = window.getComputedStyle(sourceNode);
-
-  const omittedKeys = [
+  const omittedKeysSet = new Set([
     "position",
     "z-index",
     "top",
@@ -2823,27 +2992,30 @@ export function copyNodeStyle(
     "transform-origin",
     "filter",
     "-webkit-text-fill-color",
-  ];
+  ]);
 
+  // Batch style updates
+  let styles = "";
   for (const key of Array.from(computedStyle)) {
-    if (omitKeys === false && key && omittedKeys.includes(key)) continue;
-
-    targetNode.style.setProperty(
-      key,
-      computedStyle.getPropertyValue(key),
-      computedStyle.getPropertyPriority(key)
-    );
+    if (omitKeys === false && key && omittedKeysSet.has(key)) continue;
+    const value = computedStyle.getPropertyValue(key);
+    const priority = computedStyle.getPropertyPriority(key);
+    styles += `${key}: ${value}${priority ? " !important" : ""}; `;
   }
+  targetNode.style.cssText += styles;
+  targetNode.style.pointerEvents = "none";
 
-  for (const child of Array.from(sourceNode.children)) {
-    if (!isNode(child)) continue;
+  const sourceChildren = Array.from(sourceNode.children);
+  const targetChildren = Array.from(targetNode.children);
 
-    const targetChild = targetNode.children[
-      Array.from(sourceNode.children).indexOf(child)
-    ] as Node;
+  if (sourceChildren.length === 0 || targetChildren.length === 0) return;
 
-    copyNodeStyle(child, targetChild, omitKeys);
-  }
+  //sourceChildren.forEach((child, index) => {
+  //  const targetChild = targetChildren[index];
+  //  if (!isNode(child) || !isNode(targetChild)) return;
+
+  //  copyNodeStyle(child as HTMLElement, targetChild as HTMLElement, omitKeys);
+  //});
 }
 
 export function eventCoordinates(data: DragEvent | PointerEvent) {

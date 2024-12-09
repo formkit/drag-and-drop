@@ -62,14 +62,29 @@ export interface ParentConfig<T> {
    */
   disabled?: boolean;
   /**
-   * A selector for the drag handle. Will search at any depth within the node.
+   * A selector for the drag handle. Will search at any depth within the
+   * draggable element.
    */
   dragHandle?: string;
+  /**
+   * External drag handle
+   */
+  externalDragHandle?: {
+    el: HTMLElement;
+    callback: () => HTMLElement;
+  };
   /**
    * A function that returns whether a given node is draggable.
    */
   draggable?: (child: HTMLElement) => boolean;
-  draggedNodes: (data: NodeEventData<T>) => Array<NodeRecord<T>>;
+  /**
+   * A function that returns whether a given value is draggable
+   */
+  draggableValue?: (values: T) => boolean;
+  draggedNodes: (pointerDown: {
+    parent: ParentRecord<T>;
+    node: NodeRecord<T>;
+  }) => Array<NodeRecord<T>>;
   /**
    * The class to add to a node when it is being dragged.
    */
@@ -177,14 +192,6 @@ export interface ParentConfig<T> {
     state: DragState<T>
   ) => void;
   /**
-   * Function that is called when either a pointermove or touchmove event is fired
-   * where now the "dragged" node is being moved programatically.
-   */
-  handleNodePointermove: (
-    data: NodePointerEventData<T>,
-    state: DragState<T>
-  ) => void;
-  /**
    * Function that is called when a node that is being moved by touchmove event
    * is over a given node (similar to dragover).
    */
@@ -231,11 +238,11 @@ export interface ParentConfig<T> {
   performSort: ({
     parent,
     draggedNodes,
-    targetNode,
+    targetNodes,
   }: {
     parent: ParentRecord<T>;
     draggedNodes: Array<NodeRecord<T>>;
-    targetNode: NodeRecord<T>;
+    targetNodes: Array<NodeRecord<T>>;
   }) => void;
   /**
    * Function that is called when a transfer operation is to be performed.
@@ -247,7 +254,7 @@ export interface ParentConfig<T> {
     draggedNodes,
     initialIndex,
     state,
-    targetNode,
+    targetNodes,
   }: {
     currentParent: ParentRecord<T>;
     targetParent: ParentRecord<T>;
@@ -255,7 +262,7 @@ export interface ParentConfig<T> {
     draggedNodes: Array<NodeRecord<T>>;
     initialIndex: number;
     state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
-    targetNode?: NodeRecord<T>;
+    targetNodes?: Array<NodeRecord<T>>;
   }) => void;
   /**
    * An array of functions to use for a given parent.
@@ -310,9 +317,15 @@ export interface ParentConfig<T> {
    * be set as the drag image, but this can be updated.
    */
   synthDragImage?: (
-    data: NodePointerEventData<T>,
+    node: NodeRecord<T>,
+    parent: ParentRecord<T>,
+    e: PointerEvent,
     draggedNodes: Array<NodeRecord<T>>
-  ) => HTMLElement;
+  ) => {
+    dragImage: HTMLElement;
+    offsetX?: number;
+    offsetY?: number;
+  };
   /**
    * Function that is called when a node is torn down.
    */
@@ -764,8 +777,9 @@ export interface SynthDragStateProps {
    * Pointer id of dragged el
    */
   pointerId: number;
-  scrollElement: HTMLElement | undefined;
-  animationFrameId: number | undefined;
+  scrollElements: Record<"x" | "y", HTMLElement | null>;
+  animationFrameIdX: number | undefined;
+  animationFrameIdY: number | undefined;
 }
 
 export type DragState<T> = DragStateProps<T> & BaseDragState<T>;
@@ -788,8 +802,13 @@ export type BaseDragState<T> = {
   newActiveDescendant?: NodeRecord<T>;
   preventSynthDrag: boolean;
   longPress: boolean;
-  longPressTimeout: number;
-
+  longPressTimeout: ReturnType<typeof setTimeout> | undefined;
+  pointerDown:
+    | {
+        parent: ParentRecord<T>;
+        node: NodeRecord<T>;
+      }
+    | undefined;
   /**
    * The original z-index of the dragged node.
    */
@@ -804,6 +823,7 @@ export type BaseDragState<T> = {
     nodes: Array<NodeRecord<T>>;
     parent: ParentRecord<T>;
   };
+  scrolling: boolean;
 };
 
 export interface DragStateProps<T> {
@@ -842,10 +862,6 @@ export interface DragStateProps<T> {
    */
   draggedNodes: Array<NodeRecord<T>>;
   /**
-   * Values to be inserted during sort and transfer operations.
-   */
-  dynamicValues: Array<T>;
-  /**
    * The direction that the dragged node is moving into a dragover node.
    */
   incomingDirection: "above" | "below" | "left" | "right" | undefined;
@@ -864,7 +880,7 @@ export interface DragStateProps<T> {
   /**
    * Long press timeout
    */
-  longPressTimeout: number;
+  longPressTimeout: ReturnType<typeof setTimeout> | undefined;
   /**
    * scrollEls
    */
@@ -891,10 +907,7 @@ export type SortEvent = <T>(data: SortEventData<T>) => void;
 
 export type TransferEvent = <T>(data: TransferEventData<T>) => void;
 
-export type DragstartEvent = <T>(
-  data: DragstartEventData<T>,
-  state: DragState<T>
-) => void;
+export type DragstartEvent = <T>(data: DragstartEventData<T>) => void;
 
 export type DragendEvent = <T>(data: DragendEventData<T>) => void;
 
@@ -904,9 +917,11 @@ export interface SortEventData<T> {
   values: Array<T>;
   previousNodes: Array<NodeRecord<T>>;
   nodes: Array<NodeRecord<T>>;
-  draggedNode: NodeRecord<T>;
+  draggedNodes: Array<NodeRecord<T>>;
+  targetNodes: Array<NodeRecord<T>>;
   previousPosition: number;
   position: number;
+  state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
 }
 
 export interface TransferEventData<T> {
@@ -914,9 +929,9 @@ export interface TransferEventData<T> {
   targetParent: ParentRecord<T>;
   initialParent: ParentRecord<T>;
   draggedNodes: Array<NodeRecord<T>>;
+  targetNodes: Array<NodeRecord<T>>;
   targetIndex: number;
   state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
-  targetNode?: NodeRecord<T>;
 }
 
 export interface DragstartEventData<T> {
@@ -925,6 +940,7 @@ export interface DragstartEventData<T> {
   draggedNode: NodeRecord<T>;
   draggedNodes: Array<NodeRecord<T>>;
   position: number;
+  state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
 }
 
 export interface DragendEventData<T> {
@@ -932,6 +948,7 @@ export interface DragendEventData<T> {
   values: Array<T>;
   draggedNode: NodeRecord<T>;
   draggedNodes: Array<NodeRecord<T>>;
+  state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
 }
 
 export interface ScrollData {
@@ -1012,16 +1029,29 @@ export interface InsertConfig<T> {
   ) => void;
   handleParentPointerover?: (data: PointeroverParentEvent<T>) => void;
   handleNodePointerover?: (data: PointeroverNodeEvent<T>) => void;
-  handleEnd?: (data: NodeDragEventData<T> | NodePointerEventData<T>) => void;
+  handleEnd?: (
+    state: BaseDragState<T> | DragState<T> | SynthDragState<T>
+  ) => void;
+  dynamicValues?: (data: DynamicValuesData<T>) => Array<T>;
 }
 
+export type DynamicValuesData<T> = {
+  sourceParent: ParentRecord<T>;
+  targetParent: ParentRecord<T>;
+  draggedNodes: Array<NodeRecord<T>>;
+  targetNodes: Array<NodeRecord<T>>;
+  targetIndex?: number;
+};
+
 export interface InsertState<T> {
-  insertPoint: HTMLElement | null;
+  insertPoint: {
+    el: HTMLElement;
+    parent: ParentRecord<T>;
+  } | null;
   draggedOverNodes: Array<NodeRecord<T>>;
   draggedOverParent: ParentRecord<T> | null;
   targetIndex: number;
   ascending: boolean;
-  coordinates: { x: number; y: number };
   dragging: boolean;
 }
 

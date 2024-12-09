@@ -8,6 +8,7 @@ import type {
   ParentRecord,
   SynthDragState,
   InsertEvent,
+  BaseDragState,
   InsertState,
 } from "../../types";
 
@@ -22,6 +23,8 @@ import {
   eventCoordinates,
   removeClass,
   addEvents,
+  eq,
+  remapNodes,
 } from "../../index";
 
 export const insertState: InsertState<unknown> = {
@@ -29,7 +32,6 @@ export const insertState: InsertState<unknown> = {
   draggedOverParent: null,
   targetIndex: 0,
   ascending: false,
-  coordinates: { x: 0, y: 0 },
   insertPoint: null,
   dragging: false,
 };
@@ -91,34 +93,61 @@ export function insert<T>(insertConfig: InsertConfig<T>) {
         parentData.config = insertParentConfig;
 
         state.on("dragStarted", () => {
-          const insertPoint = parentData.config.insertConfig?.insertPoint({
-            el: parent,
-            data: parentData,
-          });
-
-          if (!insertPoint) return;
-
-          if (!document.body.contains(insertPoint))
-            document.body.appendChild(insertPoint);
-
-          Object.assign(insertPoint, {
-            position: "absolute",
-            display: "none",
-          });
-
-          insertState.insertPoint = insertPoint;
+          defineRanges(parent);
         });
 
-        window.addEventListener("scroll", defineRanges.bind(null, parent));
+        state.on("scrollStarted", () => {
+          if (insertState.insertPoint)
+            insertState.insertPoint.el.style.display = "none";
+        });
+
+        state.on("scrollEnded", () => {
+          defineRanges(parent);
+        });
+
+        const firstScrollableParent = findFirstOverflowingParent(parent);
+
+        if (firstScrollableParent) {
+          firstScrollableParent.addEventListener(
+            "scroll",
+            defineRanges.bind(null, parent)
+          );
+        }
+
+        //window.addEventListener("scroll", defineRanges.bind(null, parent));
 
         window.addEventListener("resize", defineRanges.bind(null, parent));
       },
-
-      remapFinished() {
-        defineRanges(parent);
-      },
     };
   };
+}
+
+function findFirstOverflowingParent(element: HTMLElement): HTMLElement | null {
+  let parent = element.parentElement;
+
+  while (parent) {
+    const { overflow, overflowY, overflowX } = getComputedStyle(parent);
+
+    // Check if the overflow property is set to scroll, auto, or hidden (anything other than visible)
+    const isOverflowSet =
+      overflow !== "visible" ||
+      overflowY !== "visible" ||
+      overflowX !== "visible";
+
+    // Check if there is actual overflow (scrolling)
+    const isOverflowing =
+      parent.scrollHeight > parent.clientHeight ||
+      parent.scrollWidth > parent.clientWidth;
+    const hasScrollPosition = parent.scrollTop > 0 || parent.scrollLeft > 0;
+
+    if (isOverflowSet && (isOverflowing || hasScrollPosition)) {
+      return parent;
+    }
+
+    parent = parent.parentElement;
+  }
+
+  return null; // No overflowing parent found
 }
 
 function checkPosition(e: DragEvent | PointerEvent) {
@@ -131,9 +160,9 @@ function checkPosition(e: DragEvent | PointerEvent) {
   if (!parents.has(el)) {
     const insertPoint = insertState.insertPoint;
 
-    if (insertPoint && insertPoint === el) return;
+    if (insertPoint?.el === el) return;
 
-    if (insertPoint) insertPoint.style.display = "none";
+    if (insertPoint) insertPoint.el.style.display = "none";
 
     if (insertState.draggedOverParent) {
       removeClass(
@@ -288,6 +317,8 @@ function getRealCoords(el: HTMLElement): Coordinates {
 }
 
 function defineRanges(parent: HTMLElement) {
+  if (!isDragState(state)) return;
+
   const parentData = parents.get(parent);
 
   if (!parentData) return;
@@ -367,55 +398,77 @@ function defineRanges(parent: HTMLElement) {
 }
 
 export function handleNodeDragover<T>(data: NodeDragEventData<T>) {
+  const config = data.targetData.parent.data.config;
+
+  if (!config.nativeDrag) return;
+
   data.e.preventDefault();
+}
+
+function processParentDragEvent<T>(
+  event: DragEvent | PointerEvent,
+  targetData: ParentEventData<T>["targetData"],
+  state: DragState<T>,
+  isNativeDrag: boolean
+) {
+  const config = targetData.parent.data.config;
+
+  if (!isNativeDrag && config.nativeDrag) return;
+
+  event.stopPropagation();
+
+  if (isNativeDrag) event.preventDefault();
+
+  const { x, y } = eventCoordinates(event);
+
+  // Calculate global coordinates
+  const clientX = x;
+  const clientY = y;
+
+  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+
+  state.coordinates.x = clientX + scrollLeft;
+  state.coordinates.y = clientY + scrollTop;
+
+  const nestedParent = targetData.parent.data.nestedParent;
+
+  let realTargetParent = targetData.parent;
+
+  if (nestedParent) {
+    const rect = nestedParent.el.getBoundingClientRect();
+
+    if (state.coordinates.y > rect.top && state.coordinates.y < rect.bottom)
+      realTargetParent = nestedParent;
+  }
+
+  if (realTargetParent.el === state.currentParent?.el) {
+    moveBetween(realTargetParent, state);
+  } else {
+    moveOutside(realTargetParent, state);
+  }
+
+  state.currentParent = realTargetParent;
 }
 
 export function handleParentDragover<T>(
   data: ParentEventData<T>,
   state: DragState<T>
 ) {
-  if (!state || !insertState) return;
-
-  data.e.stopPropagation();
-
-  data.e.preventDefault();
-
-  const { x, y } = eventCoordinates(data.e as DragEvent | PointerEvent);
-
-  // Get the client coordinates
-  const clientX = x;
-  const clientY = y;
-
-  // Get the scroll positions
-  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-  const scrollTop = window.scrollY || document.documentElement.scrollTop;
-
-  // Calculate the coordinates relative to the entire document
-  insertState.coordinates.x = clientX + scrollLeft;
-  insertState.coordinates.y = clientY + scrollTop;
-
-  const nestedParent = data.targetData.parent.data.nestedParent;
-
-  let realTargetParent = data.targetData.parent;
-
-  if (nestedParent) {
-    const rect = nestedParent.el.getBoundingClientRect();
-
-    if (
-      insertState.coordinates.y > rect.top &&
-      insertState.coordinates.y < rect.bottom
-    )
-      realTargetParent = nestedParent;
-  }
-
-  realTargetParent.el === state.currentParent?.el
-    ? moveBetween(realTargetParent)
-    : moveOutside(realTargetParent, state);
-
-  state.currentParent = realTargetParent;
+  processParentDragEvent(data.e as DragEvent, data.targetData, state, true);
 }
 
-export function moveBetween<T>(data: ParentRecord<T>) {
+export function handleParentPointerover<T>(data: PointeroverParentEvent<T>) {
+  const { detail } = data;
+
+  const { state, targetData } = detail;
+
+  if (state.scrolling) return;
+
+  processParentDragEvent(detail.e, targetData, state, false);
+}
+
+export function moveBetween<T>(data: ParentRecord<T>, state: DragState<T>) {
   if (data.data.config.sortable === false) return;
 
   if (
@@ -431,7 +484,7 @@ export function moveBetween<T>(data: ParentRecord<T>) {
     insertState.draggedOverParent = null;
   }
 
-  const foundRange = findClosest(data.data.enabledNodes);
+  const foundRange = findClosest(data.data.enabledNodes, state);
 
   if (!foundRange) return;
 
@@ -444,9 +497,11 @@ export function moveBetween<T>(data: ParentRecord<T>) {
 
     if (position)
       positioninsertPoint(
+        data,
         position,
         foundRange[1] === "ascending",
-        foundRange[0]
+        foundRange[0],
+        insertState as InsertState<T>
       );
   }
 }
@@ -459,7 +514,7 @@ function moveOutside<T>(data: ParentRecord<T>, state: DragState<T>) {
   if (targetConfig.treeGroup && state.draggedNode.el.contains(data.el))
     return false;
 
-  if (targetConfig.dropZone === false) return false;
+  if (targetConfig.dropZone === false) return;
 
   const initialParentConfig = state.initialParent.data.config;
 
@@ -486,13 +541,13 @@ function moveOutside<T>(data: ParentRecord<T>, state: DragState<T>) {
 
     const insertPoint = insertState.insertPoint;
 
-    if (insertPoint) insertPoint.style.display = "none";
+    if (insertPoint) insertPoint.el.style.display = "none";
   } else {
     removeClass([state.currentParent.el], targetConfig.dropZoneClass);
 
     const enabledNodes = data.data.enabledNodes;
 
-    const foundRange = findClosest(enabledNodes);
+    const foundRange = findClosest(enabledNodes, state);
 
     if (!foundRange) return;
 
@@ -505,15 +560,17 @@ function moveOutside<T>(data: ParentRecord<T>, state: DragState<T>) {
 
       if (position)
         positioninsertPoint(
+          data,
           position,
           foundRange[1] === "ascending",
-          foundRange[0]
+          foundRange[0],
+          insertState as InsertState<T>
         );
     }
   }
 }
 
-function findClosest<T>(enabledNodes: NodeRecord<T>[]) {
+function findClosest<T>(enabledNodes: NodeRecord<T>[], state: DragState<T>) {
   let foundRange: [NodeRecord<T>, string] | null = null;
 
   for (let x = 0; x < enabledNodes.length; x++) {
@@ -521,13 +578,10 @@ function findClosest<T>(enabledNodes: NodeRecord<T>[]) {
 
     if (enabledNodes[x].data.range!.ascending) {
       if (
-        insertState.coordinates.y >
-          enabledNodes[x].data.range!.ascending!.y[0] &&
-        insertState.coordinates.y <
-          enabledNodes[x].data.range!.ascending!.y[1] &&
-        insertState.coordinates.x >
-          enabledNodes[x].data.range!.ascending!.x[0] &&
-        insertState.coordinates.x < enabledNodes[x].data.range!.ascending!.x[1]
+        state.coordinates.y > enabledNodes[x].data.range!.ascending!.y[0] &&
+        state.coordinates.y < enabledNodes[x].data.range!.ascending!.y[1] &&
+        state.coordinates.x > enabledNodes[x].data.range!.ascending!.x[0] &&
+        state.coordinates.x < enabledNodes[x].data.range!.ascending!.x[1]
       ) {
         foundRange = [enabledNodes[x], "ascending"];
 
@@ -537,13 +591,10 @@ function findClosest<T>(enabledNodes: NodeRecord<T>[]) {
 
     if (enabledNodes[x].data.range!.descending) {
       if (
-        insertState.coordinates.y >
-          enabledNodes[x].data.range!.descending!.y[0] &&
-        insertState.coordinates.y <
-          enabledNodes[x].data.range!.descending!.y[1] &&
-        insertState.coordinates.x >
-          enabledNodes[x].data.range!.descending!.x[0] &&
-        insertState.coordinates.x < enabledNodes[x].data.range!.descending!.x[1]
+        state.coordinates.y > enabledNodes[x].data.range!.descending!.y[0] &&
+        state.coordinates.y < enabledNodes[x].data.range!.descending!.y[1] &&
+        state.coordinates.x > enabledNodes[x].data.range!.descending!.x[0] &&
+        state.coordinates.x < enabledNodes[x].data.range!.descending!.x[1]
       ) {
         foundRange = [enabledNodes[x], "descending"];
 
@@ -553,61 +604,49 @@ function findClosest<T>(enabledNodes: NodeRecord<T>[]) {
   }
 }
 
-export function handleParentPointerover<T>(
-  data: PointeroverParentEvent<T>,
-  state: SynthDragState<T>
+function createInsertPoint<T>(
+  parent: ParentRecord<T>,
+  insertState: InsertState<T>
 ) {
-  data.detail.e.stopPropagation();
+  const insertPoint = parent.data.config.insertConfig?.insertPoint({
+    el: parent.el,
+    data: parent.data,
+  });
 
-  const { x, y } = eventCoordinates(data.detail.e as PointerEvent);
+  if (!insertPoint)
+    throw new Error("Insert point not found", { cause: parent });
 
-  state.coordinates.y = y;
+  insertState.insertPoint = {
+    parent,
+    el: insertPoint,
+  };
 
-  state.coordinates.x = x;
+  document.body.appendChild(insertPoint);
 
-  const nestedParent = data.detail.targetData.parent.data.nestedParent;
+  Object.assign(insertPoint, {
+    position: "absolute",
+    display: "none",
+  });
+}
 
-  let realTargetParent = data.detail.targetData.parent;
+function removeInsertPoint<T>(insertState: InsertState<T>) {
+  if (insertState.insertPoint?.el) insertState.insertPoint.el.remove();
 
-  if (nestedParent) {
-    const rect = nestedParent.el.getBoundingClientRect();
-
-    if (state.coordinates.y > rect.top && state.coordinates.y < rect.bottom)
-      realTargetParent = nestedParent;
-  }
-
-  const enabledNodes = realTargetParent.data.enabledNodes;
-
-  const foundRange = findClosest(enabledNodes);
-
-  if (!foundRange) return;
-
-  const key = foundRange[1] as "ascending" | "descending";
-
-  if (foundRange) {
-    const position = foundRange[0].data.range
-      ? foundRange[0].data.range[key]
-      : undefined;
-
-    if (position)
-      positioninsertPoint(
-        position,
-        foundRange[1] === "ascending",
-        foundRange[0]
-      );
-  }
-
-  data.detail.targetData.parent.el === state.currentParent.el
-    ? moveBetween(realTargetParent)
-    : moveOutside(realTargetParent, state);
+  insertState.insertPoint = null;
 }
 
 function positioninsertPoint<T>(
+  parent: ParentRecord<T>,
   position: { x: number[]; y: number[]; vertical: boolean },
   ascending: boolean,
-  node: NodeRecord<T>
+  node: NodeRecord<T>,
+  insertState: InsertState<T>
 ) {
-  if (!state) return;
+  if (insertState.insertPoint?.el !== parent.el) {
+    removeInsertPoint(insertState);
+
+    createInsertPoint(parent, insertState);
+  }
 
   insertState.draggedOverNodes = [node];
 
@@ -616,52 +655,43 @@ function positioninsertPoint<T>(
   if (position.vertical) {
     const topPosition =
       position.y[ascending ? 1 : 0] -
-      insertState.insertPoint.getBoundingClientRect().height / 2;
+      insertState.insertPoint.el.getBoundingClientRect().height / 2;
 
-    insertState.insertPoint.style.top = `${topPosition}px`;
-
-    const leftCoordinate = position.x[0];
-
-    const rightCoordinate = position.x[1];
-
-    insertState.insertPoint.style.left = `${leftCoordinate}px`;
-
-    insertState.insertPoint.style.right = `${rightCoordinate}px`;
-
-    insertState.insertPoint.style.height = "4px";
-
-    insertState.insertPoint.style.width =
-      rightCoordinate - leftCoordinate + "px";
+    Object.assign(insertState.insertPoint.el.style, {
+      top: `${topPosition}px`,
+      left: `${position.x[0]}px`,
+      right: `${position.x[1]}px`,
+      height: "4px",
+      width: `${position.x[1] - position.x[0]}px`,
+    });
   } else {
     const leftPosition =
       position.x[ascending ? 1 : 0] -
-      insertState.insertPoint.getBoundingClientRect().width / 2;
-    insertState.insertPoint.style.left = `${leftPosition}px`;
+      insertState.insertPoint.el.getBoundingClientRect().width / 2;
+    insertState.insertPoint.el.style.left = `${leftPosition}px`;
 
-    const topCoordinate = position.y[0];
-
-    const bottomCoordinate = position.y[1];
-
-    insertState.insertPoint.style.top = `${topCoordinate}px`;
-
-    insertState.insertPoint.style.bottom = `${bottomCoordinate}px`;
-
-    insertState.insertPoint.style.width = "4px";
-
-    insertState.insertPoint.style.height =
-      bottomCoordinate - topCoordinate + "px";
+    Object.assign(insertState.insertPoint.el.style, {
+      top: `${position.y[0]}px`,
+      bottom: `${position.y[1]}px`,
+      width: "4px",
+      height: `${position.y[1] - position.y[0]}px`,
+    });
   }
 
   insertState.targetIndex = node.data.index;
 
   insertState.ascending = ascending;
 
-  insertState.insertPoint.style.display = "block";
+  insertState.insertPoint.el.style.display = "block";
 }
 
 export function handleParentDrop<T>(_data: NodeDragEventData<T>) {}
 
-export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
+export function handleEnd<T>(
+  state: DragState<T> | SynthDragState<T> | BaseDragState<T>
+) {
+  if (!isDragState(state)) return;
+
   const insertPoint = insertState.insertPoint;
 
   if (!insertState.draggedOverParent) {
@@ -672,11 +702,15 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
 
     const transferred = state.initialParent.el !== state.currentParent.el;
 
+    remapNodes(state.initialParent.el);
+
     const draggedValues = state.draggedNodes.map((node) => node.data.value);
 
-    //const originalIndex = state.draggedNodes[0].data.index;
+    const enabledNodes = [...state.initialParent.data.enabledNodes];
 
-    //const targetIndex = insertState.targetIndex;
+    const originalIndex = state.draggedNodes[0].data.index;
+
+    const targetIndex = insertState.targetIndex;
 
     if (
       !transferred &&
@@ -684,7 +718,9 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
       insertState.draggedOverNodes[0].el !== state.draggedNodes[0].el
     ) {
       const newParentValues = [
-        ...draggedParentValues.filter((x) => !draggedValues.includes(x)),
+        ...draggedParentValues.filter(
+          (x) => !draggedValues.some((y) => eq(x, y))
+        ),
       ];
 
       let index = insertState.draggedOverNodes[0].data.index;
@@ -708,25 +744,25 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
       ]);
 
       if (state.initialParent.data.config.onSort) {
-        //const sortEventData = {
-        //  parent: {
-        //    state.initialParent.el,
-        //    state.initialParent.data,
-        //  },
-        //  previousValues: [...draggedParentValues],
-        //  state.initialParent.data.enabledNodes],
-        //  values: [...newParentValues],
-        //  draggedNode: state.draggedNode,
-        //  previousPosition: originalIndex,
-        //  position: index,
-        //};
-        //state.initialParent.data.config.onSort(sortEventData);
+        const sortEventData = {
+          parent: {
+            el: state.initialParent.el,
+            data: state.initialParent.data,
+          } as ParentRecord<unknown>,
+          previousValues: [...draggedParentValues],
+          previousNodes: [...enabledNodes],
+          nodes: [...state.initialParent.data.enabledNodes],
+          values: [...newParentValues],
+          draggedNodes: state.draggedNodes,
+          targetNodes: insertState.draggedOverNodes,
+          previousPosition: originalIndex,
+          position: index,
+          state: state as DragState<unknown>,
+        };
+
+        state.initialParent.data.config.onSort(sortEventData);
       }
     } else if (transferred && insertState.draggedOverNodes.length) {
-      const targetParentValues = parentValues(
-        state.currentParent.el,
-        state.currentParent.data
-      );
       const draggedParentValues = parentValues(
         state.initialParent.el,
         state.initialParent.data
@@ -737,65 +773,153 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
 
       if (insertState.ascending) index++;
 
-      const insertValues = state.dynamicValues.length
-        ? state.dynamicValues
+      const insertValues = state.initialParent.data.config.insertConfig
+        ?.dynamicValues
+        ? state.initialParent.data.config.insertConfig.dynamicValues({
+            sourceParent: state.initialParent,
+            targetParent: state.currentParent,
+            draggedNodes: state.draggedNodes,
+            targetNodes: insertState.draggedOverNodes as NodeRecord<T>[],
+            targetIndex: index,
+          })
         : draggedValues;
 
-      targetParentValues.splice(index, 0, ...insertValues);
+      const newParentValues = [
+        ...draggedParentValues.filter(
+          (x) => !draggedValues.some((y) => eq(x, y))
+        ),
+      ];
 
-      setParentValues(state.currentParent.el, state.currentParent.data, [
-        ...targetParentValues,
-      ]);
+      if (state.currentParent.el.contains(state.initialParent.el)) {
+        // Update initial parent values first
+        setParentValues(state.initialParent.el, state.initialParent.data, [
+          ...newParentValues,
+        ]);
 
-      draggedParentValues.splice(state.initialIndex, draggedValues.length);
+        // Now get the target parent values.
+        const targetParentValues = parentValues(
+          state.currentParent.el,
+          state.currentParent.data
+        );
 
-      setParentValues(state.initialParent.el, state.initialParent.data, [
-        ...draggedParentValues,
-      ]);
+        targetParentValues.splice(index, 0, ...insertValues);
 
-      const data: InsertEvent<T> = {
+        setParentValues(state.currentParent.el, state.currentParent.data, [
+          ...targetParentValues,
+        ]);
+      } else {
+        setParentValues(state.initialParent.el, state.initialParent.data, [
+          ...newParentValues,
+        ]);
+
+        const targetParentValues = parentValues(
+          state.currentParent.el,
+          state.currentParent.data
+        );
+
+        targetParentValues.splice(index, 0, ...insertValues);
+
+        setParentValues(state.currentParent.el, state.currentParent.data, [
+          ...targetParentValues,
+        ]);
+      }
+
+      const data = {
         sourceParent: state.initialParent,
         targetParent: state.currentParent,
+        initialParent: state.initialParent,
         draggedNodes: state.draggedNodes,
+        targetIndex,
         targetNodes: insertState.draggedOverNodes as NodeRecord<T>[],
         state,
       };
 
-      if (state.initialParent.data.config.insertConfig?.insertEvent)
-        state.initialParent.data.config.insertConfig.insertEvent(data);
-      if (state.currentParent.data.config.insertConfig?.insertEvent)
-        state.currentParent.data.config.insertConfig.insertEvent(data);
+      if (state.initialParent.data.config.onTransfer)
+        state.initialParent.data.config.onTransfer(data);
+      if (state.currentParent.data.config.onTransfer)
+        state.currentParent.data.config.onTransfer(data);
     }
   } else if (insertState.draggedOverParent) {
-    const draggedValues = state.draggedNodes.map((node) => node.data.value);
+    if (state.currentParent.el.contains(state.initialParent.el)) {
+      const draggedParentValues = parentValues(
+        state.initialParent.el,
+        state.initialParent.data
+      );
 
-    const draggedParentValues = parentValues(
-      state.initialParent.el,
-      state.initialParent.data
-    );
-    const newParentValues = [
-      ...draggedParentValues.filter((x) => !draggedValues.includes(x)),
-    ];
-    const draggedOverParentValues = parentValues(
-      insertState.draggedOverParent.el,
-      insertState.draggedOverParent.data
-    );
+      const newParentValues = [
+        ...draggedParentValues.filter(
+          (x) => !draggedValues.some((y) => eq(x, y))
+        ),
+      ];
 
-    const insertValues = state.dynamicValues.length
-      ? state.dynamicValues
-      : draggedValues;
+      setParentValues(state.initialParent.el, state.initialParent.data, [
+        ...newParentValues,
+      ]);
 
-    draggedOverParentValues.push(...insertValues);
+      const draggedOverParentValues = parentValues(
+        insertState.draggedOverParent.el,
+        insertState.draggedOverParent.data
+      );
 
-    setParentValues(
-      insertState.draggedOverParent.el,
-      insertState.draggedOverParent.data,
-      [...draggedOverParentValues]
-    );
+      const draggedValues = state.draggedNodes.map((node) => node.data.value);
 
-    setParentValues(state.initialParent.el, state.initialParent.data, [
-      ...newParentValues,
-    ]);
+      const insertValues = state.initialParent.data.config.insertConfig
+        ?.dynamicValues
+        ? state.initialParent.data.config.insertConfig.dynamicValues({
+            sourceParent: state.initialParent,
+            targetParent: state.currentParent,
+            draggedNodes: state.draggedNodes,
+            targetNodes: insertState.draggedOverNodes as NodeRecord<T>[],
+          })
+        : draggedValues;
+
+      draggedOverParentValues.push(...insertValues);
+
+      setParentValues(
+        insertState.draggedOverParent.el,
+        insertState.draggedOverParent.data,
+        [...draggedOverParentValues]
+      );
+    } else {
+      const draggedValues = state.draggedNodes.map((node) => node.data.value);
+
+      const draggedOverParentValues = parentValues(
+        insertState.draggedOverParent.el,
+        insertState.draggedOverParent.data
+      );
+
+      const insertValues = state.initialParent.data.config.insertConfig
+        ?.dynamicValues
+        ? state.initialParent.data.config.insertConfig.dynamicValues({
+            sourceParent: state.initialParent,
+            targetParent: state.currentParent,
+            draggedNodes: state.draggedNodes,
+            targetNodes: insertState.draggedOverNodes as NodeRecord<T>[],
+          })
+        : draggedValues;
+
+      draggedOverParentValues.push(...insertValues);
+
+      setParentValues(
+        insertState.draggedOverParent.el,
+        insertState.draggedOverParent.data,
+        [...draggedOverParentValues]
+      );
+      const draggedParentValues = parentValues(
+        state.initialParent.el,
+        state.initialParent.data
+      );
+
+      const newParentValues = [
+        ...draggedParentValues.filter(
+          (x) => !draggedValues.some((y) => eq(x, y))
+        ),
+      ];
+
+      setParentValues(state.initialParent.el, state.initialParent.data, [
+        ...newParentValues,
+      ]);
+    }
 
     const data: InsertEvent<T> = {
       sourceParent: state.initialParent,
@@ -816,7 +940,7 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
     );
   }
 
-  if (insertPoint) insertPoint.style.display = "none";
+  if (insertPoint) insertPoint.el.style.display = "none";
 
   const dropZoneClass = isSynthDragState(state)
     ? state.initialParent.data.config.synthDropZoneClass
