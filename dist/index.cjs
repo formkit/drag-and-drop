@@ -25,7 +25,6 @@ __export(src_exports, {
   addNodeClass: () => addNodeClass,
   addParentClass: () => addParentClass,
   animations: () => animations,
-  copyNodeStyle: () => copyNodeStyle,
   createEmitter: () => createEmitter,
   dragAndDrop: () => dragAndDrop,
   dragStateProps: () => dragStateProps,
@@ -2133,7 +2132,6 @@ function initDrag(data, draggedNodes2) {
           const clonedNode = node.el.cloneNode(true);
           clonedNode.style.pointerEvents = "none";
           clonedNode.id = node.el.id + "-clone";
-          copyNodeStyle(node.el, clonedNode, true);
           wrapper.append(clonedNode);
         }
         const { width } = draggedNodes2[0].el.getBoundingClientRect();
@@ -2967,33 +2965,6 @@ function addEvents(el, events) {
   }
   return abortController;
 }
-function copyNodeStyle(sourceNode, targetNode, omitKeys = false) {
-  const computedStyle = window.getComputedStyle(sourceNode);
-  const omittedKeysSet = /* @__PURE__ */ new Set([
-    "position",
-    "z-index",
-    "top",
-    "left",
-    "x",
-    "pointer-events",
-    "y",
-    "transform-origin",
-    "filter",
-    "-webkit-text-fill-color"
-  ]);
-  let styles = "";
-  for (const key of Array.from(computedStyle)) {
-    if (omitKeys === false && key && omittedKeysSet.has(key)) continue;
-    const value = computedStyle.getPropertyValue(key);
-    const priority = computedStyle.getPropertyPriority(key);
-    styles += `${key}: ${value}${priority ? " !important" : ""}; `;
-  }
-  targetNode.style.cssText += styles;
-  targetNode.style.pointerEvents = "none";
-  const sourceChildren = Array.from(sourceNode.children);
-  const targetChildren = Array.from(targetNode.children);
-  if (sourceChildren.length === 0 || targetChildren.length === 0) return;
-}
 function eventCoordinates(data) {
   return { x: data.clientX, y: data.clientY };
 }
@@ -3021,7 +2992,6 @@ function getRealCoords2(el) {
   addNodeClass,
   addParentClass,
   animations,
-  copyNodeStyle,
   createEmitter,
   dragAndDrop,
   dragStateProps,

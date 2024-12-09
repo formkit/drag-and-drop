@@ -1588,8 +1588,6 @@ export function initDrag<T>(
 
           clonedNode.id = node.el.id + "-clone";
 
-          copyNodeStyle(node.el, clonedNode, true);
-
           wrapper.append(clonedNode);
         }
 
@@ -1989,11 +1987,7 @@ function initSynthDrag<T>(
       for (const node of draggedNodes) {
         const clonedNode = node.el.cloneNode(true) as HTMLElement;
 
-        //copyNodeStyle(node.el, clonedNode);
-
         clonedNode.style.pointerEvents = "none";
-
-        //clonedNode.id = node.el.id + "-clone";
 
         wrapper.append(clonedNode);
       }
@@ -2973,49 +2967,6 @@ export function addEvents(
   }
 
   return abortController;
-}
-
-export function copyNodeStyle(
-  sourceNode: HTMLElement,
-  targetNode: HTMLElement,
-  omitKeys = false
-) {
-  const computedStyle = window.getComputedStyle(sourceNode);
-  const omittedKeysSet = new Set([
-    "position",
-    "z-index",
-    "top",
-    "left",
-    "x",
-    "pointer-events",
-    "y",
-    "transform-origin",
-    "filter",
-    "-webkit-text-fill-color",
-  ]);
-
-  // Batch style updates
-  let styles = "";
-  for (const key of Array.from(computedStyle)) {
-    if (omitKeys === false && key && omittedKeysSet.has(key)) continue;
-    const value = computedStyle.getPropertyValue(key);
-    const priority = computedStyle.getPropertyPriority(key);
-    styles += `${key}: ${value}${priority ? " !important" : ""}; `;
-  }
-  targetNode.style.cssText += styles;
-  targetNode.style.pointerEvents = "none";
-
-  const sourceChildren = Array.from(sourceNode.children);
-  const targetChildren = Array.from(targetNode.children);
-
-  if (sourceChildren.length === 0 || targetChildren.length === 0) return;
-
-  //sourceChildren.forEach((child, index) => {
-  //  const targetChild = targetChildren[index];
-  //  if (!isNode(child) || !isNode(targetChild)) return;
-
-  //  copyNodeStyle(child as HTMLElement, targetChild as HTMLElement, omitKeys);
-  //});
 }
 
 export function eventCoordinates(data: DragEvent | PointerEvent) {
