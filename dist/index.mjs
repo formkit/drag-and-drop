@@ -1338,6 +1338,7 @@ function setActive(parent, newActiveNode, state2) {
     node: newActiveNode,
     parent
   };
+  addNodeClass([newActiveNode.el], activeDescendantClass);
   state2.activeState.parent.el.setAttribute(
     "aria-activedescendant",
     state2.activeState.node.el.id
@@ -1388,9 +1389,9 @@ function setSelected(parent, selectedNodes, newActiveNode, state2, pointerdown =
   );
 }
 function updateLiveRegion(parent, message) {
-  const parentId = parent.el.id;
-  const liveRegion = document.getElementById(parentId + "-live-region");
+  const liveRegion = document.querySelector('[data-dnd-live-region="true"]');
   if (!liveRegion) return;
+  liveRegion.id = parent.el.id + "-live-region";
   liveRegion.textContent = message;
 }
 function clearLiveRegion(parent) {
@@ -1575,6 +1576,7 @@ function setupNode(data) {
     dragleave: nodeEventData(config.handleNodeDragleave),
     dragend: nodeEventData(config.handleDragend),
     drop: nodeEventData(config.handleNodeDrop),
+    pointerup: nodeEventData(config.handleNodePointerup),
     pointercancel: nodeEventData(config.handlePointercancel),
     pointerdown: nodeEventData(config.handleNodePointerdown),
     handleNodePointerover: config.handleNodePointerover,
@@ -1854,6 +1856,7 @@ function handleDragstart(data, _state) {
     });
 }
 function handleNodePointerdown(data, state2) {
+  data.e.stopPropagation();
   if (!validateDragHandle({
     x: data.e.clientX,
     y: data.e.clientY,
@@ -1866,14 +1869,6 @@ function handleNodePointerdown(data, state2) {
     node: data.targetData.node
   };
   data.targetData.node.el.draggable = true;
-  if (!validateDragHandle({
-    x: data.e.clientX,
-    y: data.e.clientY,
-    node: data.targetData.node,
-    config: data.targetData.parent.data.config
-  }))
-    return;
-  data.e.stopPropagation();
   handleLongPress(data, state2, data.targetData.node);
   const parentData = data.targetData.parent.data;
   let selectedNodes = [data.targetData.node];
@@ -2256,7 +2251,6 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
       zIndex: 9999,
       pointerEvents: "none",
       margin: 0,
-      padding: 0,
       overflow: "hidden",
       display: "none"
     });
@@ -2267,12 +2261,12 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
       display = dragImage.style.display;
       dragImage.setAttribute("popover", "manual");
       Object.assign(dragImage.style, {
+        position: "absolute",
         height: node.el.getBoundingClientRect().height + "px",
         width: node.el.getBoundingClientRect().width + "px",
         overflow: "hidden",
-        pointerEvents: "none",
         margin: 0,
-        padding: 0,
+        pointerEvents: "none",
         zIndex: 9999
       });
     } else {
@@ -2296,7 +2290,6 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
     }
   }
   dragImage.style.position = "absolute";
-  console.log("dragImage", dragImage);
   parent.el.appendChild(dragImage);
   dragImage.showPopover();
   const synthDragStateProps = {
@@ -2317,7 +2310,6 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
     ),
     ...synthDragStateProps
   });
-  console.log("synthDragState", synthDragState);
   synthDragState.clonedDraggedNode.style.display = synthDragState.draggedNodeDisplay || "";
   return synthDragState;
 }
@@ -2355,8 +2347,9 @@ function moveNode(e, state2) {
   state2.coordinates.x = x;
   const startLeft = state2.startLeft ?? 0;
   const startTop = state2.startTop ?? 0;
-  state2.clonedDraggedNode.style.top = `${y - startTop + window.scrollY}px`;
-  state2.clonedDraggedNode.style.left = `${x - startLeft + window.scrollX}px`;
+  const translateX = x - startLeft + window.scrollX;
+  const translateY = y - startTop + window.scrollY;
+  state2.clonedDraggedNode.style.transform = `translate(${translateX}px, ${translateY}px)`;
   if (e.cancelable) e.preventDefault();
   pointermoveClasses(state2, state2.initialParent.data.config);
 }
@@ -2869,15 +2862,11 @@ function getRealCoords2(el) {
   const { top, bottom, left, right, height, width } = el.getBoundingClientRect();
   const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
   const scrollTop = window.scrollY || document.documentElement.scrollTop;
-  const adjustedTop = top + scrollTop;
-  const adjustedBottom = bottom + scrollTop;
-  const adjustedLeft = left + scrollLeft;
-  const adjustedRight = right + scrollLeft;
   return {
-    top: adjustedTop,
-    bottom: adjustedBottom,
-    left: adjustedLeft,
-    right: adjustedRight,
+    top: top + scrollTop,
+    bottom: bottom + scrollTop,
+    left: left + scrollLeft,
+    right: right + scrollLeft,
     height,
     width
   };

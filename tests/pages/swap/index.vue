@@ -8,7 +8,6 @@ const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
       shouldSwap: (data) => {
         return true;
       },
-      test: "hello",
     }),
   ],
   dropZoneClass: "dropZone",
@@ -24,11 +23,7 @@ const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
 });
 
 const [parent2, values2] = useDragAndDrop(["Tomato", "Potato", "Onion"], {
-  plugins: [
-    dropOrSwap({
-      mode: "swap",
-    }),
-  ],
+  plugins: [dropOrSwap()],
   dropZoneClass: "dropZone",
   group: "transfer",
   dragPlaceholderClass: "dragPlaceholder",
@@ -120,7 +115,6 @@ const [parent2, values2] = useDragAndDrop(["Tomato", "Potato", "Onion"], {
   text-align: center;
   background-color: #f9f9f9;
   box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
   width: 400px;
   height: 50px;
 }

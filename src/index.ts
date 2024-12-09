@@ -2709,9 +2709,6 @@ function scrollY<T>(
     }
 
     el.scrollBy({ top: scroll });
-
-    //state.clonedDraggedNode.style.top = `${e.clientY}px`;
-
     state.animationFrameIdY = requestAnimationFrame(() =>
       scrollY(el, e, state)
     );
@@ -2960,16 +2957,11 @@ export function getRealCoords(el: HTMLElement): Coordinates {
   const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
   const scrollTop = window.scrollY || document.documentElement.scrollTop;
 
-  const adjustedTop = top + scrollTop;
-  const adjustedBottom = bottom + scrollTop;
-  const adjustedLeft = left + scrollLeft;
-  const adjustedRight = right + scrollLeft;
-
   return {
-    top: adjustedTop,
-    bottom: adjustedBottom,
-    left: adjustedLeft,
-    right: adjustedRight,
+    top: top + scrollTop,
+    bottom: bottom + scrollTop,
+    left: left + scrollLeft,
+    right: right + scrollLeft,
     height,
     width,
   };

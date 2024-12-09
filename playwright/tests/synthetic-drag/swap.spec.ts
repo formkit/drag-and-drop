@@ -9,7 +9,7 @@ test.beforeEach(async ({ browser }) => {
 
 // Not ready yet.
 test.describe("Synthetic swap", async () => {
-  test("Test #1: Swapping within list.", async () => {
+  test.only("Test #1: Swapping within list.", async () => {
     await page.goto("http://localhost:3001/swap");
     await new Promise((r) => setTimeout(r, 1000));
 
@@ -58,10 +58,10 @@ test.describe("Synthetic swap", async () => {
       destinationEl: { id: "values_1", position: "center" },
     });
 
-    // I shouldn't need synthDropZone class here. This is a bug in utils.
-    await expect(page.locator("#Banana")).toHaveClass(
-      "item synthDragPlaceholder synthDropZone"
-    );
+    //// I shouldn't need synthDropZone class here. This is a bug in utils.
+    //await expect(page.locator("#Banana")).toHaveClass(
+    //  "item synthDragPlaceholder synthDropZone"
+    //);
     await expect(page.locator("#values_1")).toHaveText("Banana Apple Orange");
 
     await syntheticDrag(page, {

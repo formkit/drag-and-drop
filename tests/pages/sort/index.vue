@@ -3,16 +3,6 @@ import { useDragAndDrop } from "../../../src/vue/index";
 
 const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   draggingClass: "blue",
-  onDragstart: (data) => {
-    //console.log("data", data);
-    //console.trace();
-  },
-  onSort: (data) => {
-    //console.log("data", data);
-  },
-  onDragend: (data) => {
-    //console.log("data", data);
-  },
 });
 </script>
 
@@ -34,10 +24,10 @@ const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
 </template>
 
 <style scoped>
-#test {
+/*#test {
   overflow-y: scroll;
   height: 200px;
-}
+}*/
 .blue {
   background-color: lightblue !important;
   color: yellow !important;
