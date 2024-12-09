@@ -916,6 +916,7 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     dragleave: nodeEventData(config.handleNodeDragleave),
     dragend: nodeEventData(config.handleDragend),
     drop: nodeEventData(config.handleNodeDrop),
+    pointerup: nodeEventData(config.handleNodePointerup),
     pointercancel: nodeEventData(config.handlePointercancel),
     pointerdown: nodeEventData(config.handleNodePointerdown),
     handleNodePointerover: config.handleNodePointerover,
@@ -1361,6 +1362,8 @@ export function handleNodePointerdown<T>(
   data: NodePointerEventData<T>,
   state: BaseDragState<T>
 ) {
+  data.e.stopPropagation();
+
   if (
     !validateDragHandle({
       x: data.e.clientX,
@@ -1377,17 +1380,6 @@ export function handleNodePointerdown<T>(
   };
 
   data.targetData.node.el.draggable = true;
-  if (
-    !validateDragHandle({
-      x: data.e.clientX,
-      y: data.e.clientY,
-      node: data.targetData.node,
-      config: data.targetData.parent.data.config,
-    })
-  )
-    return;
-
-  data.e.stopPropagation();
 
   handleLongPress(data, state, data.targetData.node);
 
@@ -1902,7 +1894,6 @@ export function handleNodePointerup<T>(
   data.e.stopPropagation();
 
   state.pointerDown = undefined;
-
   if (!state.pointerSelection && state.selectedState)
     deselect(state.selectedState.nodes, data.targetData.parent, state);
 
