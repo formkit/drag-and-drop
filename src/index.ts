@@ -1971,8 +1971,6 @@ function initSynthDrag<T>(
         width: node.el.getBoundingClientRect().width + "px",
         overflow: "hidden",
         pointerEvents: "none",
-        margin: 0,
-        padding: 0,
         zIndex: 9999,
       });
     } else {
@@ -2005,8 +2003,6 @@ function initSynthDrag<T>(
 
   dragImage.style.position = "absolute";
 
-  console.log("dragImage", dragImage);
-
   parent.el.appendChild(dragImage);
 
   dragImage.showPopover();
@@ -2030,8 +2026,6 @@ function initSynthDrag<T>(
     ),
     ...synthDragStateProps,
   }) as SynthDragState<T>;
-
-  console.log("synthDragState", synthDragState);
 
   synthDragState.clonedDraggedNode.style.display =
     synthDragState.draggedNodeDisplay || "";
