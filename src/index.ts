@@ -392,8 +392,6 @@ export function dragAndDrop<T>({
 
   parents.set(parent, parentData);
 
-  if (config.treeGroup) treeAncestors[config.treeGroup] = parent;
-
   config.plugins?.forEach((plugin) => {
     plugin(parent)?.tearDown?.();
   });
@@ -670,7 +668,7 @@ export function performTransfer<T>({
   initialParent,
   draggedNodes,
   initialIndex,
-  targetNode,
+  targetNodes,
   state,
 }: {
   currentParent: ParentRecord<T>;
@@ -679,11 +677,16 @@ export function performTransfer<T>({
   draggedNodes: Array<NodeRecord<T>>;
   initialIndex: number;
   state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
-  targetNode?: NodeRecord<T>;
+  targetNodes: Array<NodeRecord<T>>;
 }) {
+  console.log("perform transfer target node", targetNodes);
   remapNodes(initialParent.el);
 
   const draggedValues = draggedNodes.map((x) => x.data.value);
+
+  console.log("currentParent el", currentParent.el);
+  console.log("targetParent el", targetParent.el);
+  console.log("initialParent el", initialParent.el);
 
   const currentParentValues = parentValues(
     currentParent.el,
@@ -692,19 +695,23 @@ export function performTransfer<T>({
 
   const targetParentValues = parentValues(targetParent.el, targetParent.data);
 
+  console.log("currentParentValues", currentParentValues);
+  console.log("targetParentValues", targetParentValues);
+
   const reset =
     initialParent.el === targetParent.el &&
     targetParent.data.config.sortable === false;
 
   let targetIndex: number;
 
-  if (targetNode) {
+  if (targetNodes.length) {
+    console.log("targetNodes", targetNodes);
     if (reset) {
       targetIndex = initialIndex;
     } else if (targetParent.data.config.sortable === false) {
       targetIndex = targetParent.data.enabledNodes.length;
     } else {
-      targetIndex = targetNode.data.index;
+      targetIndex = targetNodes[0].data.index;
     }
 
     targetParentValues.splice(targetIndex, 0, ...draggedValues);
@@ -726,7 +733,7 @@ export function performTransfer<T>({
       draggedNodes,
       targetIndex,
       state,
-      targetNodes: targetNode ? [targetNode] : [],
+      targetNodes,
     });
   }
 
@@ -738,7 +745,7 @@ export function performTransfer<T>({
       draggedNodes,
       targetIndex,
       state,
-      targetNodes: targetNode ? [targetNode] : [],
+      targetNodes: targetNodes ? targetNodes : [],
     });
   }
 }
@@ -1128,28 +1135,6 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     );
 
     return;
-  }
-
-  if (parentData.config.treeGroup) {
-    let nextAncestorEl = parent.parentElement;
-
-    while (nextAncestorEl) {
-      if (!parents.has(nextAncestorEl as HTMLElement)) {
-        nextAncestorEl = nextAncestorEl.parentElement;
-
-        continue;
-      }
-
-      nextAncestorEl.dispatchEvent(
-        new CustomEvent("hasNestedParent", {
-          detail: {
-            parent: { data: parentData, el: parent },
-          },
-        })
-      );
-
-      nextAncestorEl = null;
-    }
   }
 
   const values = parentData.getValues(parent);
@@ -2196,8 +2181,7 @@ export function validateTransfer<T>({
 
   const targetConfig = targetParent.data.config;
 
-  if (targetConfig.treeGroup && draggedNodes[0].el.contains(targetParent.el))
-    return false;
+  if (draggedNodes[0].el.contains(targetParent.el)) return false;
 
   if (targetConfig.dropZone === false) return false;
 
@@ -2278,11 +2262,7 @@ export function validateSort<T>(
   )
     return false;
 
-  if (
-    data.targetData.parent.data.config.treeGroup &&
-    data.targetData.node.el.contains(state.draggedNodes[0].el)
-  )
-    return false;
+  if (data.targetData.node.el.contains(state.draggedNodes[0].el)) return false;
 
   const targetRect = data.targetData.node.el.getBoundingClientRect();
 
@@ -2437,6 +2417,8 @@ export function transfer<T>(
   )
     return;
 
+  console.log("data", data);
+  console.trace();
   data.targetData.parent.data.config.performTransfer({
     currentParent: state.currentParent,
     targetParent: data.targetData.parent,
@@ -2709,6 +2691,9 @@ function scrollY<T>(
     }
 
     el.scrollBy({ top: scroll });
+
+    //state.clonedDraggedNode.style.top = `${e.clientY}px`;
+
     state.animationFrameIdY = requestAnimationFrame(() =>
       scrollY(el, e, state)
     );

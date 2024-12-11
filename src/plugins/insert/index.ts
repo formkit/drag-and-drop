@@ -511,8 +511,7 @@ function moveOutside<T>(data: ParentRecord<T>, state: DragState<T>) {
 
   const targetConfig = data.data.config;
 
-  if (targetConfig.treeGroup && state.draggedNode.el.contains(data.el))
-    return false;
+  if (state.draggedNode.el.contains(data.el)) return false;
 
   if (targetConfig.dropZone === false) return;
 
@@ -905,6 +904,7 @@ export function handleEnd<T>(
         insertState.draggedOverParent.data,
         [...draggedOverParentValues]
       );
+
       const draggedParentValues = parentValues(
         state.initialParent.el,
         state.initialParent.data

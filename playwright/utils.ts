@@ -101,97 +101,103 @@ export async function syntheticDrag(
   await new Promise((resolve) => setTimeout(resolve, 25));
   return page.evaluate(async (data) => {
     const originElement = document.getElementById(data.originEl.id);
-
     const destinationElement = document.getElementById(data.destinationEl.id);
 
     if (!originElement || !destinationElement) return;
 
-    const dataTransfer = new DataTransfer();
-
-    const getEventProps = (element: Element) => {
+    const getEventProps = (element: Element, position: string) => {
       const rect = element.getBoundingClientRect();
+      let x = rect.x;
+      let y = rect.y;
 
-      const [x, y] = [rect.x + rect.width / 2, rect.y + rect.height / 2];
+      // Calculate position based on requested position
+      switch (position) {
+        case "center":
+          x += rect.width / 2;
+          y += rect.height / 2;
+          break;
+        case "top":
+          x += rect.width / 2;
+          y += 5;
+          break;
+        case "bottom":
+          x += rect.width / 2;
+          y += rect.height - 5;
+          break;
+        case "left":
+          x += 5;
+          y += rect.height / 2;
+          break;
+        case "right":
+          x += rect.width - 5;
+          y += rect.height / 2;
+          break;
+      }
 
       return {
         bubbles: true,
         cancelable: true,
         clientX: x,
         clientY: y,
-        dataTransfer,
         screenX: x,
         screenY: y,
       };
     };
 
-    let pointerStartObj;
-
-    if (originElement) {
-      pointerStartObj = new PointerEvent("pointerdown", {
-        pointerId: 1,
-        ...getEventProps(originElement),
-      });
-    }
-
-    if (!destinationElement) return;
-
-    const pointerMoveObj = new PointerEvent("pointermove", {
-      pointerId: 1,
-      ...getEventProps(destinationElement),
-    });
+    // Initial touch position
+    const startProps = getEventProps(originElement, data.originEl.position);
 
     if (data.dragStart) {
+      // Start the touch
       originElement.dispatchEvent(
         new PointerEvent("pointerdown", {
           pointerId: 1,
-          clientX: pointerStartObj.clientX,
-          clientY: pointerStartObj.clientY,
-          cancelable: true,
-          bubbles: true,
+          ...startProps,
         })
       );
     }
 
+    // Small movement to trigger drag
     originElement.dispatchEvent(
       new PointerEvent("pointermove", {
         pointerId: 1,
-        cancelable: true,
-        bubbles: true,
+        ...startProps,
+        clientX: startProps.clientX + 5,
+        clientY: startProps.clientY + 5,
       })
     );
 
     await new Promise((resolve) => setTimeout(resolve, 100));
 
+    // Move to destination
+    const destProps = getEventProps(
+      destinationElement,
+      data.destinationEl.position
+    );
+
     destinationElement.dispatchEvent(
       new PointerEvent("pointermove", {
         pointerId: 1,
-        clientX: pointerMoveObj.clientX,
-        clientY: pointerMoveObj.clientY,
-        cancelable: true,
-        bubbles: true,
+        ...destProps,
       })
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
+    // Additional move at destination to ensure hover state
     destinationElement.dispatchEvent(
       new PointerEvent("pointermove", {
         pointerId: 1,
-        clientX: pointerMoveObj.clientX,
-        clientY: pointerMoveObj.clientY,
-        cancelable: true,
-        bubbles: true,
+        ...destProps,
       })
     );
 
     if (data.drop) {
+      // End the touch
       destinationElement.dispatchEvent(
         new PointerEvent("pointerup", {
           pointerId: 1,
-          clientX: pointerMoveObj.clientX,
-          clientY: pointerMoveObj.clientY,
-          cancelable: true,
-          bubbles: true,
+          ...destProps,
         })
       );
     }
