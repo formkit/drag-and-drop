@@ -440,8 +440,7 @@ function moveBetween(data, state2) {
 function moveOutside(data, state2) {
   if (data.el === state2.currentParent.el) return false;
   const targetConfig = data.data.config;
-  if (targetConfig.treeGroup && state2.draggedNode.el.contains(data.el))
-    return false;
+  if (state2.draggedNode.el.contains(data.el)) return false;
   if (targetConfig.dropZone === false) return;
   const initialParentConfig = state2.initialParent.data.config;
   if (targetConfig.accepts) {
@@ -1236,7 +1235,6 @@ function dragAndDrop({
   const nodesObserver = new MutationObserver(nodesMutated);
   nodesObserver.observe(parent, { childList: true });
   parents.set(parent, parentData);
-  if (config.treeGroup) treeAncestors[config.treeGroup] = parent;
   config.plugins?.forEach((plugin) => {
     plugin(parent)?.tearDown?.();
   });
@@ -1414,25 +1412,32 @@ function performTransfer({
   initialParent,
   draggedNodes: draggedNodes2,
   initialIndex,
-  targetNode,
+  targetNodes,
   state: state2
 }) {
+  console.log("perform transfer target node", targetNodes);
   remapNodes(initialParent.el);
   const draggedValues = draggedNodes2.map((x) => x.data.value);
+  console.log("currentParent el", currentParent.el);
+  console.log("targetParent el", targetParent.el);
+  console.log("initialParent el", initialParent.el);
   const currentParentValues = parentValues(
     currentParent.el,
     currentParent.data
   ).filter((x) => !draggedValues.includes(x));
   const targetParentValues = parentValues(targetParent.el, targetParent.data);
+  console.log("currentParentValues", currentParentValues);
+  console.log("targetParentValues", targetParentValues);
   const reset = initialParent.el === targetParent.el && targetParent.data.config.sortable === false;
   let targetIndex;
-  if (targetNode) {
+  if (targetNodes.length) {
+    console.log("targetNodes", targetNodes);
     if (reset) {
       targetIndex = initialIndex;
     } else if (targetParent.data.config.sortable === false) {
       targetIndex = targetParent.data.enabledNodes.length;
     } else {
-      targetIndex = targetNode.data.index;
+      targetIndex = targetNodes[0].data.index;
     }
     targetParentValues.splice(targetIndex, 0, ...draggedValues);
   } else {
@@ -1449,7 +1454,7 @@ function performTransfer({
       draggedNodes: draggedNodes2,
       targetIndex,
       state: state2,
-      targetNodes: targetNode ? [targetNode] : []
+      targetNodes
     });
   }
   if (currentParent.data.config.onTransfer) {
@@ -1460,7 +1465,7 @@ function performTransfer({
       draggedNodes: draggedNodes2,
       targetIndex,
       state: state2,
-      targetNodes: targetNode ? [targetNode] : []
+      targetNodes: targetNodes ? targetNodes : []
     });
   }
 }
@@ -1693,23 +1698,6 @@ function remapNodes(parent, force) {
       "The number of draggable items defined in the parent element does not match the number of values. This may cause unexpected behavior."
     );
     return;
-  }
-  if (parentData.config.treeGroup) {
-    let nextAncestorEl = parent.parentElement;
-    while (nextAncestorEl) {
-      if (!parents.has(nextAncestorEl)) {
-        nextAncestorEl = nextAncestorEl.parentElement;
-        continue;
-      }
-      nextAncestorEl.dispatchEvent(
-        new CustomEvent("hasNestedParent", {
-          detail: {
-            parent: { data: parentData, el: parent }
-          }
-        })
-      );
-      nextAncestorEl = null;
-    }
   }
   const values = parentData.getValues(parent);
   const enabledNodeRecords = [];
@@ -2419,8 +2407,7 @@ function validateTransfer({
 }) {
   if (targetParent.el === currentParent.el) return false;
   const targetConfig = targetParent.data.config;
-  if (targetConfig.treeGroup && draggedNodes2[0].el.contains(targetParent.el))
-    return false;
+  if (draggedNodes2[0].el.contains(targetParent.el)) return false;
   if (targetConfig.dropZone === false) return false;
   const initialParentConfig = initialParent.data.config;
   if (targetConfig.accepts) {
@@ -2461,8 +2448,7 @@ function validateSort(data, state2, x, y) {
     return false;
   if (data.targetData.parent.el !== state2.currentParent?.el || data.targetData.parent.data.config.sortable === false)
     return false;
-  if (data.targetData.parent.data.config.treeGroup && data.targetData.node.el.contains(state2.draggedNodes[0].el))
-    return false;
+  if (data.targetData.node.el.contains(state2.draggedNodes[0].el)) return false;
   const targetRect = data.targetData.node.el.getBoundingClientRect();
   const dragRect = state2.draggedNode.el.getBoundingClientRect();
   const yDiff = targetRect.y - dragRect.y;
@@ -2558,6 +2544,8 @@ function transfer(data, state2) {
     state: state2
   }))
     return;
+  console.log("data", data);
+  console.trace();
   data.targetData.parent.data.config.performTransfer({
     currentParent: state2.currentParent,
     targetParent: data.targetData.parent,

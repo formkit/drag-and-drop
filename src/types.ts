@@ -261,7 +261,7 @@ export interface ParentConfig<T> {
     draggedNodes: Array<NodeRecord<T>>;
     initialIndex: number;
     state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
-    targetNodes?: Array<NodeRecord<T>>;
+    targetNodes: Array<NodeRecord<T>>;
   }) => void;
   /**
    * An array of functions to use for a given parent.

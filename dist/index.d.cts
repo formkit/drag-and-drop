@@ -194,7 +194,7 @@ interface ParentConfig<T> {
         draggedNodes: Array<NodeRecord<T>>;
         initialIndex: number;
         state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
-        targetNodes?: Array<NodeRecord<T>>;
+        targetNodes: Array<NodeRecord<T>>;
     }) => void;
     /**
      * An array of functions to use for a given parent.
@@ -968,14 +968,14 @@ declare function performSort<T>({ parent, draggedNodes, targetNodes, }: {
     targetNodes: Array<NodeRecord<T>>;
 }): void;
 declare function handleParentFocus<T>(data: ParentEventData<T>, state: BaseDragState<T> | DragState<T> | SynthDragState<T>): void;
-declare function performTransfer<T>({ currentParent, targetParent, initialParent, draggedNodes, initialIndex, targetNode, state, }: {
+declare function performTransfer<T>({ currentParent, targetParent, initialParent, draggedNodes, initialIndex, targetNodes, state, }: {
     currentParent: ParentRecord<T>;
     targetParent: ParentRecord<T>;
     initialParent: ParentRecord<T>;
     draggedNodes: Array<NodeRecord<T>>;
     initialIndex: number;
     state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
-    targetNode?: NodeRecord<T>;
+    targetNodes: Array<NodeRecord<T>>;
 }): void;
 declare function parentValues<T>(parent: HTMLElement, parentData: ParentData<T>): Array<T>;
 declare function setParentValues<T>(parent: HTMLElement, parentData: ParentData<T>, values: Array<any>): void;
