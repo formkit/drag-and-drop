@@ -1,3 +1,55 @@
+// src/utils.ts
+function pd(e) {
+  e.preventDefault();
+}
+function sp(e) {
+  e.stopPropagation();
+}
+function createEmitter() {
+  const callbacks = /* @__PURE__ */ new Map();
+  const emit2 = function(eventName, data) {
+    if (!callbacks.get(eventName)) return;
+    callbacks.get(eventName).forEach((cb) => {
+      cb(data);
+    });
+  };
+  const on2 = function(eventName, callback) {
+    const cbs = callbacks.get(eventName) ?? [];
+    cbs.push(callback);
+    callbacks.set(eventName, cbs);
+  };
+  return [emit2, on2];
+}
+var [emit, on] = createEmitter();
+function eqRegExp(x, y) {
+  return x.source === y.source && x.flags.split("").sort().join("") === y.flags.split("").sort().join("");
+}
+function eq(valA, valB, deep = true, explicit = ["__key"]) {
+  if (valA === valB) return true;
+  if (typeof valB === "object" && typeof valA === "object" && valA !== null && valB !== null) {
+    if (valA instanceof Map) return false;
+    if (valA instanceof Set) return false;
+    if (valA instanceof Date && valB instanceof Date)
+      return valA.getTime() === valB.getTime();
+    if (valA instanceof RegExp && valB instanceof RegExp)
+      return eqRegExp(valA, valB);
+    if (valA === null || valB === null) return false;
+    const objA = valA;
+    const objB = valB;
+    if (Object.keys(objA).length !== Object.keys(objB).length) return false;
+    for (const k of explicit) {
+      if ((k in objA || k in objB) && objA[k] !== objB[k]) return false;
+    }
+    for (const key in objA) {
+      if (!(key in objB)) return false;
+      if (objA[key] !== objB[key] && !deep) return false;
+      if (deep && !eq(objA[key], objB[key], deep, explicit)) return false;
+    }
+    return true;
+  }
+  return false;
+}
+
 // src/plugins/animations/index.ts
 function animations(animationsConfig = {}) {
   const slideUp = [
@@ -990,34 +1042,14 @@ function handleEnd2(state2) {
 }
 
 // src/index.ts
+var isBrowser = typeof window !== "undefined";
+var parents = /* @__PURE__ */ new WeakMap();
+var nodes = /* @__PURE__ */ new WeakMap();
+var treeAncestors = {};
 function checkTouchSupport() {
   if (!isBrowser) return false;
   return "ontouchstart" in window || navigator.maxTouchPoints > 0;
 }
-var isBrowser = typeof window !== "undefined";
-var dropped = false;
-var documentController3;
-var windowController;
-var touchDevice = false;
-var nodes = /* @__PURE__ */ new WeakMap();
-var parents = /* @__PURE__ */ new WeakMap();
-var treeAncestors = {};
-function createEmitter() {
-  const callbacks = /* @__PURE__ */ new Map();
-  const emit2 = function(eventName, data) {
-    if (!callbacks.get(eventName)) return;
-    callbacks.get(eventName).forEach((cb) => {
-      cb(data);
-    });
-  };
-  const on2 = function(eventName, callback) {
-    const cbs = callbacks.get(eventName) ?? [];
-    cbs.push(callback);
-    callbacks.set(eventName, cbs);
-  };
-  return [emit2, on2];
-}
-var [emit, on] = createEmitter();
 var baseDragState = {
   activeDescendant: void 0,
   affectedNodes: [],
@@ -1043,6 +1075,10 @@ var baseDragState = {
   pointerDown: void 0
 };
 var state = baseDragState;
+var dropped = false;
+var documentController3;
+var windowController;
+var touchDevice = false;
 function resetState() {
   const baseDragState2 = {
     activeDescendant: void 0,
@@ -1087,7 +1123,7 @@ function handleRootPointerdown(_e) {
   state.selectedState = state.activeState = void 0;
 }
 function handleRootPointerup(e) {
-  e.preventDefault();
+  pd(e);
   state.pointerDown = void 0;
   if (!isSynthDragState(state)) return;
   const config = state.currentParent.data.config;
@@ -1106,11 +1142,11 @@ function handleRootDrop(_e) {
 }
 function handleRootDragover(e) {
   if (!isDragState(state)) return;
-  e.preventDefault();
+  pd(e);
 }
 function handleRootPointermove(e) {
   if (!state.pointerDown) return;
-  e.preventDefault();
+  pd(e);
   const config = state.pointerDown.parent.data.config;
   if (!isSynthDragState(state) && (touchDevice || !touchDevice && !config.nativeDrag)) {
     if (config.longPress && !state.longPress) {
@@ -1295,7 +1331,7 @@ function performSort({
   const originalIndex = draggedNodes2[0].data.index;
   const enabledNodes = [...parent.data.enabledNodes];
   const newParentValues = [
-    ...targetParentValues.filter((x) => !draggedValues.includes(x))
+    ...targetParentValues.filter((x) => !draggedValues.some((y) => eq(x, y)))
   ];
   newParentValues.splice(targetNodes[0].data.index, 0, ...draggedValues);
   if ("draggedNode" in state)
@@ -1415,23 +1451,17 @@ function performTransfer({
   targetNodes,
   state: state2
 }) {
-  console.log("perform transfer target node", targetNodes);
   remapNodes(initialParent.el);
   const draggedValues = draggedNodes2.map((x) => x.data.value);
-  console.log("currentParent el", currentParent.el);
-  console.log("targetParent el", targetParent.el);
-  console.log("initialParent el", initialParent.el);
-  const currentParentValues = parentValues(
-    currentParent.el,
-    currentParent.data
-  ).filter((x) => !draggedValues.includes(x));
+  const currentParentValues = [
+    ...parentValues(currentParent.el, currentParent.data).filter(
+      (x) => !draggedValues.some((y) => eq(x, y))
+    )
+  ];
   const targetParentValues = parentValues(targetParent.el, targetParent.data);
-  console.log("currentParentValues", currentParentValues);
-  console.log("targetParentValues", targetParentValues);
   const reset = initialParent.el === targetParent.el && targetParent.data.config.sortable === false;
   let targetIndex;
   if (targetNodes.length) {
-    console.log("targetNodes", targetNodes);
     if (reset) {
       targetIndex = initialIndex;
     } else if (targetParent.data.config.sortable === false) {
@@ -1493,7 +1523,7 @@ function updateConfig(parent, config) {
   });
 }
 function handleParentDrop(data, state2) {
-  data.e.stopPropagation();
+  sp(data.e);
   dropped = true;
   const handleEnd4 = state2.initialParent.data.config.handleEnd;
   handleEnd4(state2);
@@ -1586,10 +1616,10 @@ function setupNode(data) {
     pointerdown: nodeEventData(config.handleNodePointerdown),
     handleNodePointerover: config.handleNodePointerover,
     touchmove: (e) => {
-      if (isDragState(state) && e.cancelable) e.preventDefault();
+      if (isDragState(state) && e.cancelable) pd(e);
     },
     contextmenu: (e) => {
-      if (touchDevice) e.preventDefault();
+      if (touchDevice) pd(e);
     }
   });
   data.node.el.setAttribute("role", "option");
@@ -1640,32 +1670,6 @@ function nodesMutated(mutationList) {
     removeClass([node], parentData.config.selectedClass);
   }
   remapNodes(parentEl);
-}
-function eqRegExp(x, y) {
-  return x.source === y.source && x.flags.split("").sort().join("") === y.flags.split("").sort().join("");
-}
-function eq(valA, valB, deep = true, explicit = ["__key"]) {
-  if (valA === valB) return true;
-  if (typeof valB === "object" && typeof valA === "object") {
-    if (valA instanceof Map) return false;
-    if (valA instanceof Set) return false;
-    if (valA instanceof Date && valB instanceof Date)
-      return valA.getTime() === valB.getTime();
-    if (valA instanceof RegExp && valB instanceof RegExp)
-      return eqRegExp(valA, valB);
-    if (valA === null || valB === null) return false;
-    if (Object.keys(valA).length !== Object.keys(valB).length) return false;
-    for (const k of explicit) {
-      if ((k in valA || k in valB) && valA[k] !== valB[k]) return false;
-    }
-    for (const key in valA) {
-      if (!(key in valB)) return false;
-      if (valA[key] !== valB[key] && !deep) return false;
-      if (deep && !eq(valA[key], valB[key], deep, explicit)) return false;
-    }
-    return true;
-  }
-  return false;
 }
 function remapNodes(parent, force) {
   const parentData = parents.get(parent);
@@ -1821,7 +1825,7 @@ function handleDragstart(data, _state) {
     node: data.targetData.node,
     config
   })) {
-    data.e.preventDefault();
+    pd(data.e);
     return;
   }
   const nodes2 = config.draggedNodes({
@@ -1844,7 +1848,7 @@ function handleDragstart(data, _state) {
     });
 }
 function handleNodePointerdown(data, state2) {
-  data.e.stopPropagation();
+  sp(data.e);
   if (!validateDragHandle({
     x: data.e.clientX,
     y: data.e.clientY,
@@ -1977,7 +1981,7 @@ function dragstartClasses(_node, nodes2, config, isSynth = false) {
   });
 }
 function initDrag(data, draggedNodes2) {
-  data.e.stopPropagation();
+  sp(data.e);
   const dragState = setDragState(
     dragStateProps(
       data.targetData.node,
@@ -2064,13 +2068,13 @@ function handleParentKeydown(data, state2) {
   const index = enabledNodes.findIndex((x) => x.el === activeDescendant.el);
   if (index === -1) return;
   if (["ArrowDown", "ArrowUp", "ArrowRight", "ArrowLeft"].includes(data.e.key)) {
-    data.e.preventDefault();
+    pd(data.e);
     const nextIndex = data.e.key === "ArrowDown" || data.e.key === "ArrowRight" ? index + 1 : index - 1;
     if (nextIndex < 0 || nextIndex >= enabledNodes.length) return;
     const nextNode = enabledNodes[nextIndex];
     setActive(data.targetData.parent, nextNode, state2);
   } else if (data.e.key === " ") {
-    data.e.preventDefault();
+    pd(data.e);
     state2.selectedState && state2.selectedState.nodes.includes(activeDescendant) ? setSelected(
       data.targetData.parent,
       state2.selectedState.nodes.filter((x) => x.el !== activeDescendant.el),
@@ -2136,15 +2140,15 @@ function handleNodePointerover2(e) {
 function handleNodeDrop(data, state2) {
   const config = data.targetData.parent.data.config;
   if (!config.nativeDrag) return;
-  data.e.stopPropagation();
+  sp(data.e);
   dropped = true;
   config.handleEnd(state2);
 }
 function handleDragend(data, state2) {
   const config = data.targetData.parent.data.config;
   if (!config.nativeDrag) return;
-  data.e.preventDefault();
-  data.e.stopPropagation();
+  pd(data.e);
+  sp(data.e);
   if (dropped) {
     dropped = false;
     return;
@@ -2153,7 +2157,7 @@ function handleDragend(data, state2) {
 }
 function handlePointercancel(data, state2) {
   if (!isSynthDragState(state2)) return;
-  data.e.preventDefault();
+  pd(data.e);
   if (dropped) {
     dropped = false;
     return;
@@ -2208,7 +2212,7 @@ function handleEnd3(state2) {
   state2.emit("dragEnded", state2);
 }
 function handleNodePointerup(data, state2) {
-  data.e.stopPropagation();
+  sp(data.e);
   state2.pointerDown = void 0;
   if (!state2.pointerSelection && state2.selectedState)
     deselect(state2.selectedState.nodes, data.targetData.parent, state2);
@@ -2309,7 +2313,7 @@ function handleLongPress(data, state2, node) {
     state2.longPress = true;
     if (config.longPressClass && data.e.cancelable)
       addNodeClass([node.el], config.longPressClass);
-    data.e.preventDefault();
+    pd(data.e);
   }, config.longPressDuration || 200);
 }
 function pointermoveClasses(state2, config) {
@@ -2338,7 +2342,7 @@ function moveNode(e, state2) {
   const translateX = x - startLeft + window.scrollX;
   const translateY = y - startTop + window.scrollY;
   state2.clonedDraggedNode.style.transform = `translate(${translateX}px, ${translateY}px)`;
-  if (e.cancelable) e.preventDefault();
+  if (e.cancelable) pd(e);
   pointermoveClasses(state2, state2.initialParent.data.config);
 }
 function synthMove(e, state2) {
@@ -2382,15 +2386,15 @@ function handleNodeDragover3(data, state2) {
   const { x, y } = eventCoordinates(data.e);
   state2.coordinates.y = y;
   state2.coordinates.x = x;
-  data.e.preventDefault();
-  data.e.stopPropagation();
+  pd(data.e);
+  sp(data.e);
   data.targetData.parent.el === state2.currentParent?.el ? sort(data, state2) : transfer(data, state2);
 }
 function handleParentDragover3(data, state2) {
   const config = data.targetData.parent.data.config;
   if (!config.nativeDrag) return;
-  data.e.preventDefault();
-  data.e.stopPropagation();
+  pd(data.e);
+  sp(data.e);
   Object.assign(eventCoordinates(data.e));
   transfer(data, state2);
 }
@@ -2423,10 +2427,10 @@ function validateTransfer({
   return true;
 }
 function handleNodeDragenter(data, _state) {
-  data.e.preventDefault();
+  pd(data.e);
 }
 function handleNodeDragleave(data, _state) {
-  data.e.preventDefault();
+  pd(data.e);
 }
 function validateSort(data, state2, x, y) {
   if (state2.affectedNodes.map((x2) => x2.data.value).includes(data.targetData.node.data.value)) {
@@ -2544,8 +2548,6 @@ function transfer(data, state2) {
     state: state2
   }))
     return;
-  console.log("data", data);
-  console.trace();
   data.targetData.parent.data.config.performTransfer({
     currentParent: state2.currentParent,
     targetParent: data.targetData.parent,
@@ -2582,7 +2584,7 @@ function parentEventData(callback) {
   };
 }
 function noDefault(e) {
-  e.preventDefault();
+  pd(e);
 }
 function throttle(callback, limit) {
   var wait = false;
@@ -2865,15 +2867,11 @@ export {
   addNodeClass,
   addParentClass,
   animations,
-  createEmitter,
   dragAndDrop,
   dragStateProps,
   dragValues,
   dragstartClasses,
   dropOrSwap,
-  emit,
-  eq,
-  eqRegExp,
   eventCoordinates,
   getElFromPoint,
   getRealCoords2 as getRealCoords,
@@ -2905,7 +2903,6 @@ export {
   noDefault,
   nodeEventData,
   nodes,
-  on,
   parentEventData,
   parentValues,
   parents,

@@ -423,7 +423,7 @@ export interface ParentData<T> {
    */
   nestedParent?: ParentRecord<T>;
   emit: (event: string, data: unknown) => void;
-  on: (event: string, callback: CallableFunction) => void;
+  on: (event: string, callback: (data: unknown) => void) => void;
 }
 
 /**
@@ -797,7 +797,7 @@ export type BaseDragState<T> = {
    */
   currentTargetValue: T | undefined;
   emit: (event: string, data: unknown) => void;
-  on: (event: string, callback: CallableFunction) => void;
+  on: (event: string, callback: (data: unknown) => void) => void;
   newActiveDescendant?: NodeRecord<T>;
   preventSynthDrag: boolean;
   longPress: boolean;

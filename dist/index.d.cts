@@ -350,7 +350,7 @@ interface ParentData<T> {
      */
     nestedParent?: ParentRecord<T>;
     emit: (event: string, data: unknown) => void;
-    on: (event: string, callback: CallableFunction) => void;
+    on: (event: string, callback: (data: unknown) => void) => void;
 }
 /**
  * The data assigned to a given node in the `nodes` weakmap.
@@ -689,7 +689,7 @@ type BaseDragState<T> = {
      */
     currentTargetValue: T | undefined;
     emit: (event: string, data: unknown) => void;
-    on: (event: string, callback: CallableFunction) => void;
+    on: (event: string, callback: (data: unknown) => void) => void;
     newActiveDescendant?: NodeRecord<T>;
     preventSynthDrag: boolean;
     longPress: boolean;
@@ -930,16 +930,22 @@ declare function dropOrSwap<T>(dropSwapConfig?: DropSwapConfig<T>): (parent: HTM
 
 /**
  * Check to see if code is running in a browser.
- *
- * @internal
  */
 declare const isBrowser: boolean;
-declare const nodes: NodesData<any>;
+/**
+ * Parents or "lists" are the containers that nodes or "draggable items" can be
+ * dragged from and into.
+ *
+ * @type {WeakMap<HTMLElement, ParentData<unknown>>}
+ */
 declare const parents: ParentsData<any>;
+/**
+ * Nodes are the draggable items and the direct descendants of the parents.
+ *
+ * @type {WeakMap<Node, NodeData<unknown>>}
+ */
+declare const nodes: NodesData<any>;
 declare const treeAncestors: Record<string, HTMLElement>;
-declare function createEmitter(): ((eventName: string, data: any) => void)[];
-declare const emit: (eventName: string, data: any) => void;
-declare const on: (eventName: string, data: any) => void;
 /**
  * The state of the drag and drop.
  */
@@ -993,28 +999,6 @@ declare function setupNode<T>(data: SetupNodeData<T>): void;
 declare function setupNodeRemap<T>(data: SetupNodeData<T>): void;
 declare function tearDownNodeRemap<T>(data: TearDownNodeData<T>): void;
 declare function tearDownNode<T>(data: TearDownNodeData<T>): void;
-/**
- * A regular expression to test for a valid date string.
- * @param x - A RegExp to compare.
- * @param y - A RegExp to compare.
- * @public
- */
-declare function eqRegExp(x: RegExp, y: RegExp): boolean;
-/**
- * Compare two values for equality, optionally at depth.
- *
- * @param valA - First value.
- * @param valB - Second value.
- * @param deep - If it will compare deeply if it's an object.
- * @param explicit - An array of keys to explicity check.
- *
- * @returns `boolean`
- *
- * @public
- */
-declare function eq(valA: any, // eslint-disable-line
-valB: any, // eslint-disable-line
-deep?: boolean, explicit?: string[]): boolean;
 /**
  * Remaps the data of the parent element's children.
  *
@@ -1081,7 +1065,7 @@ declare function noDefault(e: Event): void;
 declare function throttle(callback: any, limit: number): (...args: any[]) => void;
 declare function addNodeClass<T>(els: Array<Node | HTMLElement | Element>, className: string | undefined, omitAppendPrivateClass?: boolean): void;
 declare function addParentClass<T>(els: Array<HTMLElement>, className: string | undefined, omitAppendPrivateClass?: boolean): void;
-declare function addClass(el: Node | HTMLElement | Element, className: string | undefined, data: NodeData<any> | ParentData<any> | undefined, omitAppendPrivateClass?: boolean): NodeData<any> | ParentData<any> | undefined;
+declare function addClass(el: Node | HTMLElement | Element, className: string | undefined, data: NodeData<any> | ParentData<any> | undefined, omitAppendPrivateClass?: boolean): ParentData<any> | NodeData<any> | undefined;
 declare function removeClass(els: Array<Node | HTMLElement | Element>, className: string | undefined): void;
 declare function getScrollablesUnderPointer(x: number, y: number): Record<"x" | "y", HTMLElement | null>;
 declare function getElFromPoint<T>(coordinates: {
@@ -1112,4 +1096,4 @@ declare function eventCoordinates(data: DragEvent | PointerEvent): {
 };
 declare function getRealCoords(el: HTMLElement): Coordinates;
 
-export { type BaseDragState, type Coordinates, type DNDPlugin, type DNDPluginData, type DragAndDrop, type DragAndDropData, type DragState, type DragStateProps, type DragendEvent, type DragendEventData, type DragstartEvent, type DragstartEventData, type DropSwapConfig, type DropSwapState, type DynamicValuesData, type EventHandlers, type InsertConfig, type InsertEvent, type InsertState, type NativeDragEffects, type Node, type NodeData, type NodeDragEventData, type NodeEvent, type NodeEventData, type NodeFromPoint, type NodePointerEventData, type NodeRecord, type NodeTargetData, type NodesData, type ParentConfig, type ParentData, type ParentDragEventData, type ParentEventData, type ParentFromPoint, type ParentKeydownEventData, type ParentObservers, type ParentPointerEventData, type ParentRecord, type ParentTargetData, type ParentsData, type PluginData, type PointeroverNodeEvent, type PointeroverParentEvent, type RemapFinished, type RemapFinishedData, type ScrollData, type SetupNode, type SetupNodeData, type ShouldSwapData, type SortEvent, type SortEventData, type StateEvents, type SynthDragState, type SynthDragStateProps, type TearDownNode, type TearDownNodeData, type TransferEvent, type TransferEventData, addClass, addEvents, addNodeClass, addParentClass, animations, createEmitter, dragAndDrop, dragStateProps, dragValues, dragstartClasses, dropOrSwap, emit, eq, eqRegExp, eventCoordinates, getElFromPoint, getRealCoords, getScrollablesUnderPointer, handleClickNode, handleClickParent, handleDragend, handleDragstart, handleEnd, handleLongPress, handleNodeDragover, handleNodeDrop, handleNodeKeydown, handleNodePointerdown, handleNodePointerover, handleNodePointerup, handleParentDragover, handleParentDrop, handleParentFocus, handleParentKeydown, handleParentPointerover, handlePointercancel, initDrag, insert, isBrowser, isDragState, isNode, isSynthDragState, noDefault, nodeEventData, nodes, on, parentEventData, parentValues, parents, performSort, performTransfer, preventSortOnScroll, remapFinished, remapNodes, removeClass, resetState, setAttrs, setDragState, setParentValues, setupNode, setupNodeRemap, sort, state, synthMove, tearDown, tearDownNode, tearDownNodeRemap, throttle, transfer, treeAncestors, updateConfig, validateDragHandle, validateDragstart, validateSort, validateTransfer };
+export { type BaseDragState, type Coordinates, type DNDPlugin, type DNDPluginData, type DragAndDrop, type DragAndDropData, type DragState, type DragStateProps, type DragendEvent, type DragendEventData, type DragstartEvent, type DragstartEventData, type DropSwapConfig, type DropSwapState, type DynamicValuesData, type EventHandlers, type InsertConfig, type InsertEvent, type InsertState, type NativeDragEffects, type Node, type NodeData, type NodeDragEventData, type NodeEvent, type NodeEventData, type NodeFromPoint, type NodePointerEventData, type NodeRecord, type NodeTargetData, type NodesData, type ParentConfig, type ParentData, type ParentDragEventData, type ParentEventData, type ParentFromPoint, type ParentKeydownEventData, type ParentObservers, type ParentPointerEventData, type ParentRecord, type ParentTargetData, type ParentsData, type PluginData, type PointeroverNodeEvent, type PointeroverParentEvent, type RemapFinished, type RemapFinishedData, type ScrollData, type SetupNode, type SetupNodeData, type ShouldSwapData, type SortEvent, type SortEventData, type StateEvents, type SynthDragState, type SynthDragStateProps, type TearDownNode, type TearDownNodeData, type TransferEvent, type TransferEventData, addClass, addEvents, addNodeClass, addParentClass, animations, dragAndDrop, dragStateProps, dragValues, dragstartClasses, dropOrSwap, eventCoordinates, getElFromPoint, getRealCoords, getScrollablesUnderPointer, handleClickNode, handleClickParent, handleDragend, handleDragstart, handleEnd, handleLongPress, handleNodeDragover, handleNodeDrop, handleNodeKeydown, handleNodePointerdown, handleNodePointerover, handleNodePointerup, handleParentDragover, handleParentDrop, handleParentFocus, handleParentKeydown, handleParentPointerover, handlePointercancel, initDrag, insert, isBrowser, isDragState, isNode, isSynthDragState, noDefault, nodeEventData, nodes, parentEventData, parentValues, parents, performSort, performTransfer, preventSortOnScroll, remapFinished, remapNodes, removeClass, resetState, setAttrs, setDragState, setParentValues, setupNode, setupNodeRemap, sort, state, synthMove, tearDown, tearDownNode, tearDownNodeRemap, throttle, transfer, treeAncestors, updateConfig, validateDragHandle, validateDragstart, validateSort, validateTransfer };

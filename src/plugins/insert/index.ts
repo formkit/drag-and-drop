@@ -23,9 +23,10 @@ import {
   eventCoordinates,
   removeClass,
   addEvents,
-  eq,
   remapNodes,
 } from "../../index";
+
+import { eq } from "../../utils";
 
 export const insertState: InsertState<unknown> = {
   draggedOverNodes: [],

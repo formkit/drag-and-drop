@@ -331,7 +331,7 @@ interface ParentData<T> {
      */
     nestedParent?: ParentRecord<T>;
     emit: (event: string, data: unknown) => void;
-    on: (event: string, callback: CallableFunction) => void;
+    on: (event: string, callback: (data: unknown) => void) => void;
 }
 /**
  * The data assigned to a given node in the `nodes` weakmap.
@@ -605,7 +605,7 @@ type BaseDragState<T> = {
      */
     currentTargetValue: T | undefined;
     emit: (event: string, data: unknown) => void;
-    on: (event: string, callback: CallableFunction) => void;
+    on: (event: string, callback: (data: unknown) => void) => void;
     newActiveDescendant?: NodeRecord<T>;
     preventSynthDrag: boolean;
     longPress: boolean;
