@@ -319,6 +319,9 @@ export function dragAndDrop<T>({
       keydown: handleRootKeydown,
       drop: handleRootDrop,
       pointermove: handleRootPointermove,
+      touchmove: (e: TouchEvent) => {
+        if (isDragState(state) && e.cancelable) pd(e);
+      },
     });
 
     const liveRegion = document.createElement("div");
