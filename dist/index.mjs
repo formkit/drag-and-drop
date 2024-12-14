@@ -1058,6 +1058,7 @@ var baseDragState = {
   originalZIndex: void 0,
   pointerSelection: false,
   preventEnter: false,
+  rootUserSelect: void 0,
   nodePointerdown: void 0,
   longPress: false,
   scrolling: false,
@@ -1091,6 +1092,7 @@ function resetState() {
     remapJustFinished: false,
     selectedNodes: [],
     nodePointerdown: void 0,
+    rootUserSelect: void 0,
     preventSynthDrag: false,
     scrolling: false,
     selectedParent: void 0,
@@ -1158,6 +1160,10 @@ function handleRootPointermove(e) {
       state,
       nodes2
     );
+    state.rootUserSelect = window.getComputedStyle(
+      document.documentElement
+    ).userSelect;
+    document.body.style.userSelect = "none";
     synthMove(e, synthDragState);
   } else if (isSynthDragState(state)) {
     synthMove(e, state);
@@ -2169,7 +2175,7 @@ function handlePointercancel(data, state2) {
 }
 function handleEnd3(state2) {
   if (state2.draggedNode) state2.draggedNode.el.draggable = false;
-  document.body.style.userSelect = "";
+  document.body.style.userSelect = state2.rootUserSelect || "";
   if (isSynthDragState(state2)) cancelSynthScroll(state2);
   if ("longPressTimeout" in state2 && state2.longPressTimeout)
     clearTimeout(state2.longPressTimeout);

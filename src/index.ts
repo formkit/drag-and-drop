@@ -100,6 +100,7 @@ const baseDragState = {
   originalZIndex: undefined,
   pointerSelection: false,
   preventEnter: false,
+  rootUserSelect: undefined,
   nodePointerdown: undefined,
   longPress: false,
   scrolling: false,
@@ -160,6 +161,7 @@ export function resetState() {
     remapJustFinished: false,
     selectedNodes: [],
     nodePointerdown: undefined,
+    rootUserSelect: undefined,
     preventSynthDrag: false,
     scrolling: false,
     selectedParent: undefined,
@@ -279,6 +281,12 @@ function handleRootPointermove(e: PointerEvent) {
       state,
       nodes
     );
+
+    state.rootUserSelect = window.getComputedStyle(
+      document.documentElement
+    ).userSelect;
+
+    document.body.style.userSelect = "none";
 
     synthMove(e, synthDragState);
   } else if (isSynthDragState(state)) {
@@ -1992,7 +2000,7 @@ export function handlePointercancel<T>(
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   if (state.draggedNode) state.draggedNode.el.draggable = false;
 
-  document.body.style.userSelect = "";
+  document.body.style.userSelect = state.rootUserSelect || "";
 
   if (isSynthDragState(state)) cancelSynthScroll(state);
 

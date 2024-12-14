@@ -823,6 +823,7 @@ export type BaseDragState<T> = {
     parent: ParentRecord<T>;
   };
   scrolling: boolean;
+  rootUserSelect: string | undefined;
 };
 
 export interface DragStateProps<T> {

@@ -629,6 +629,7 @@ type BaseDragState<T> = {
         parent: ParentRecord<T>;
     };
     scrolling: boolean;
+    rootUserSelect: string | undefined;
 };
 interface DragStateProps<T> {
     /**
