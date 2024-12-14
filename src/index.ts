@@ -2974,7 +2974,7 @@ function scrollY<T>(
 
   const isDocumentElement = el === document.documentElement;
 
-  const threshold = isDocumentElement ? window.innerHeight * 0.1 : 0.5;
+  const threshold = isDocumentElement ? window.innerHeight * 0.05 : 0.05;
 
   const isBottomEdge = e.clientY > window.innerHeight - threshold;
 
@@ -3117,6 +3117,12 @@ function handleSynthScroll<T>(
     coordinates.y
   ) as HTMLElement[];
 
+  if (els.length === 0) {
+    scrollables.y = document.documentElement;
+
+    scrollables.x = document.documentElement;
+  }
+
   for (const el of els) {
     // Exit early if both scrollable elements are found
     if (scrollables.x && scrollables.y) break;
@@ -3125,7 +3131,10 @@ function handleSynthScroll<T>(
 
     const isScrollableX =
       !scrollables.x &&
-      (styles.overflowX === "auto" || styles.overflowX === "scroll") &&
+      (styles.overflowX === "auto" ||
+        styles.overflowX === "scroll" ||
+        el === document.body ||
+        el === document.documentElement) &&
       el.scrollWidth > el.clientWidth;
 
     const isScrollableY =
@@ -3136,7 +3145,12 @@ function handleSynthScroll<T>(
         el === document.documentElement) &&
       el.scrollHeight > el.clientHeight;
 
-    if (isScrollableY && isMostlyInViewByHeight(el)) {
+    if (
+      isScrollableY &&
+      (isMostlyInViewByHeight(el) ||
+        el === document.body ||
+        el === document.documentElement)
+    ) {
       scrollables.y = el as HTMLElement;
     }
 

@@ -2675,7 +2675,7 @@ function scrollY(el, e, state2) {
   let shouldScroll = false;
   let scroll = 0;
   const isDocumentElement = el === document.documentElement;
-  const threshold = isDocumentElement ? window.innerHeight * 0.1 : 0.5;
+  const threshold = isDocumentElement ? window.innerHeight * 0.05 : 0.05;
   const isBottomEdge = e.clientY > window.innerHeight - threshold;
   const isTopEdge = e.clientY < threshold;
   if (isBottomEdge && el.scrollTop + el.clientHeight < el.scrollHeight) {
@@ -2754,12 +2754,16 @@ function handleSynthScroll(coordinates, e, state2) {
     coordinates.x,
     coordinates.y
   );
+  if (els.length === 0) {
+    scrollables.y = document.documentElement;
+    scrollables.x = document.documentElement;
+  }
   for (const el of els) {
     if (scrollables.x && scrollables.y) break;
     const styles = window.getComputedStyle(el);
-    const isScrollableX = !scrollables.x && (styles.overflowX === "auto" || styles.overflowX === "scroll") && el.scrollWidth > el.clientWidth;
+    const isScrollableX = !scrollables.x && (styles.overflowX === "auto" || styles.overflowX === "scroll" || el === document.body || el === document.documentElement) && el.scrollWidth > el.clientWidth;
     const isScrollableY = !scrollables.y && (styles.overflowY === "auto" || styles.overflowY === "scroll" || el === document.body || el === document.documentElement) && el.scrollHeight > el.clientHeight;
-    if (isScrollableY && isMostlyInViewByHeight(el)) {
+    if (isScrollableY && (isMostlyInViewByHeight(el) || el === document.body || el === document.documentElement)) {
       scrollables.y = el;
     }
     if (isScrollableX && isMostlyInViewByWidth(el)) {
