@@ -1184,7 +1184,10 @@ function dragAndDrop({
       pointerup: handleRootPointerup,
       keydown: handleRootKeydown,
       drop: handleRootDrop,
-      pointermove: handleRootPointermove
+      pointermove: handleRootPointermove,
+      touchmove: (e) => {
+        if (isDragState(state) && e.cancelable) pd(e);
+      }
     });
     const liveRegion = document.createElement("div");
     setAttrs(liveRegion, {
