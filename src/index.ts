@@ -28,11 +28,19 @@ import type {
   EventHandlers,
   NodeFromPoint,
   ParentFromPoint,
-  Coordinates,
   ParentDragEventData,
 } from "./types";
 
-import { pd, sp, on, emit, createEmitter, eq } from "./utils";
+import {
+  pd,
+  sp,
+  on,
+  emit,
+  createEmitter,
+  eq,
+  splitClass,
+  eventCoordinates,
+} from "./utils";
 
 export * from "./types";
 export { animations } from "./plugins/animations";
@@ -62,8 +70,6 @@ export const parents: ParentsData<any> = new WeakMap<
  */
 export const nodes: NodesData<any> = new WeakMap<Node, NodeData<unknown>>();
 
-export const treeAncestors: Record<string, HTMLElement> = {};
-
 /**
  * Function to check if touch support is enabled.
  *
@@ -75,6 +81,11 @@ function checkTouchSupport() {
   return "ontouchstart" in window || navigator.maxTouchPoints > 0;
 }
 
+/**
+ * The base drag state.
+ *
+ * @type {BaseDragState<unknown>}
+ */
 const baseDragState = {
   activeDescendant: undefined,
   affectedNodes: [],
@@ -102,6 +113,8 @@ const baseDragState = {
 
 /**
  * The state of the drag and drop.
+ *
+ * @type {BaseDragState<unknown>}
  */
 export let state: BaseDragState<unknown> = baseDragState;
 
@@ -119,6 +132,11 @@ let documentController: AbortController | undefined;
  * Abort controller for the window.
  */
 let windowController: AbortController | undefined;
+
+/**
+ * Timeout for the scroll.
+ */
+let scrollTimeout: ReturnType<typeof setTimeout>;
 
 /**
  * Variable to check if the device is touch.
@@ -262,8 +280,6 @@ function handleRootPointermove(e: PointerEvent) {
       nodes
     );
 
-    // TODO
-    document.body.style.userSelect = "none";
     synthMove(e, synthDragState);
   } else if (isSynthDragState(state)) {
     synthMove(e, state);
@@ -676,6 +692,14 @@ export function handleParentFocus<T>(
   }
 }
 
+/**
+ * Perform the transfer of the nodes.
+ *
+ * @param data - The transfer data.
+ * @param state - The drag state.
+ *
+ * @returns void
+ */
 export function performTransfer<T>({
   currentParent,
   targetParent,
@@ -756,6 +780,14 @@ export function performTransfer<T>({
   }
 }
 
+/**
+ * Get the values of the parent.
+ *
+ * @param parent - The parent element.
+ * @param parentData - The parent data.
+ *
+ * @returns The values of the parent.
+ */
 export function parentValues<T>(
   parent: HTMLElement,
   parentData: ParentData<T>
@@ -763,6 +795,15 @@ export function parentValues<T>(
   return [...parentData.getValues(parent)];
 }
 
+/**
+ * Set the values of the parent.
+ *
+ * @param parent - The parent element.
+ * @param parentData - The parent data.
+ * @param values - The values to set.
+ *
+ * @returns void
+ */
 export function setParentValues<T>(
   parent: HTMLElement,
   parentData: ParentData<T>,
@@ -771,12 +812,24 @@ export function setParentValues<T>(
   parentData.setValues(values, parent);
 }
 
+/**
+ * Get the values of the dragged nodes.
+ *
+ * @param state - The drag state.
+ *
+ * @returns The values of the dragged nodes.
+ */
 export function dragValues<T>(state: DragState<T>): Array<T> {
   return [...state.draggedNodes.map((x) => x.data.value)];
 }
 
 /**
  * Utility function to update parent config.
+ *
+ * @param parent - The parent element.
+ * @param config - The config to update.
+ *
+ * @returns void
  */
 export function updateConfig<T>(
   parent: HTMLElement,
@@ -799,6 +852,14 @@ export function updateConfig<T>(
   });
 }
 
+/**
+ * Handle the parent drop event.
+ *
+ * @param data - The parent event data.
+ * @param state - The drag state.
+ *
+ * @returns void
+ */
 export function handleParentDrop<T>(
   data: ParentEventData<T>,
   state: DragState<T>
@@ -812,6 +873,13 @@ export function handleParentDrop<T>(
   handleEnd(state);
 }
 
+/**
+ * Tear down the parent.
+ *
+ * @param parent - The parent element.
+ *
+ * @returns void
+ */
 export function tearDown(parent: HTMLElement) {
   const parentData = parents.get(parent);
 
@@ -821,18 +889,40 @@ export function tearDown(parent: HTMLElement) {
     parentData.abortControllers.mainParent.abort();
 }
 
+/**
+ * Check if the state is a drag state.
+ *
+ * @param state - The state to check.
+ *
+ * @returns Whether the state is a drag state.
+ */
 export function isDragState<T>(
   state: BaseDragState<T>
 ): state is DragState<T> | SynthDragState<T> {
   return "draggedNode" in state && !!state.draggedNode;
 }
 
+/**
+ * Check if the state is a synth drag state.
+ *
+ * @param state - The state to check.
+ *
+ * @returns Whether the state is a synth drag state.
+ */
 export function isSynthDragState<T>(
   state: BaseDragState<T>
 ): state is SynthDragState<T> {
   return "synthDragging" in state && !!state.synthDragging;
 }
 
+/**
+ * Setup the parent.
+ *
+ * @param parent - The parent element.
+ * @param parentData - The parent data.
+ *
+ * @returns void
+ */
 function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
   parentData.abortControllers.mainParent = addEvents(parent, {
     keydown: parentEventData(parentData.config.handleParentKeydown),
@@ -914,10 +1004,25 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
     });
 }
 
+/**
+ * Set the attributes of the element.
+ *
+ * @param el - The element.
+ * @param attrs - The attributes to set.
+ *
+ * @returns void
+ */
 export function setAttrs(el: HTMLElement, attrs: Record<string, string>) {
   for (const key in attrs) el.setAttribute(key, attrs[key]);
 }
 
+/**
+ * Setup the node.
+ *
+ * @param data - The setup node data.
+ *
+ * @returns void
+ */
 export function setupNode<T>(data: SetupNodeData<T>) {
   const config = data.parent.data.config;
 
@@ -952,6 +1057,13 @@ export function setupNode<T>(data: SetupNodeData<T>) {
   });
 }
 
+/**
+ * Setup the node remap.
+ *
+ * @param data - The setup node data.
+ *
+ * @returns void
+ */
 export function setupNodeRemap<T>(data: SetupNodeData<T>) {
   nodes.set(data.node.el, data.node.data);
 
@@ -960,6 +1072,14 @@ export function setupNodeRemap<T>(data: SetupNodeData<T>) {
   });
 }
 
+/**
+ * Reapply the drag classes to the node.
+ *
+ * @param node - The node.
+ * @param parentData - The parent data.
+ *
+ * @returns void
+ */
 function reapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
   if (!isDragState(state)) return;
 
@@ -972,12 +1092,26 @@ function reapplyDragClasses<T>(node: Node, parentData: ParentData<T>) {
   addNodeClass([node], dropZoneClass, true);
 }
 
+/**
+ * Tear down the node remap.
+ *
+ * @param data - The tear down node data.
+ *
+ * @returns void
+ */
 export function tearDownNodeRemap<T>(data: TearDownNodeData<T>) {
   data.parent.data.config.plugins?.forEach((plugin: DNDPlugin) => {
     plugin(data.parent.el)?.tearDownNodeRemap?.(data);
   });
 }
 
+/**
+ * Tear down the node.
+ *
+ * @param data - The tear down node data.
+ *
+ * @returns void
+ */
 export function tearDownNode<T>(data: TearDownNodeData<T>) {
   data.parent.data.config.plugins?.forEach((plugin: DNDPlugin) => {
     plugin(data.parent.el)?.tearDownNode?.(data);
@@ -999,8 +1133,7 @@ export function tearDownNode<T>(data: TearDownNodeData<T>) {
  * @internal
  */
 function nodesMutated(mutationList: MutationRecord[]) {
-  // This could be better, but using it as a way to ignore comments and text
-  // nodes.
+  // TODO: This could be better, but using it as a way to ignore comments and text
   if (
     mutationList.length === 1 &&
     mutationList[0].addedNodes.length === 1 &&
@@ -1200,16 +1333,35 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
   });
 }
 
+/**
+ * Set the remap just finished flag.
+ *
+ * @returns void
+ */
 export function remapFinished() {
   state.remapJustFinished = true;
 
   if ("draggedNode" in state) state.affectedNodes = [];
 }
 
+/**
+ * Validate the drag start.
+ *
+ * @param data - The node event data.
+ *
+ * @returns Whether the drag start is valid.
+ */
 export function validateDragstart(data: NodeEventData<any>): boolean {
   return !!data.targetData.parent.data.config.nativeDrag;
 }
 
+/**
+ * Get the dragged nodes.
+ *
+ * @param pointerDown - The pointer down data.
+ *
+ * @returns The dragged nodes.
+ */
 function draggedNodes<T>(pointerDown: {
   parent: ParentRecord<T>;
   node: NodeRecord<T>;
@@ -1228,8 +1380,13 @@ function draggedNodes<T>(pointerDown: {
   return [];
 }
 
-let scrollTimeout: ReturnType<typeof setTimeout>;
-
+/**
+ * Handle the parent scroll.
+ *
+ * @param data - The parent event data.
+ *
+ * @returns void
+ */
 function handleParentScroll<T>(_data: ParentEventData<T>) {
   if (!isDragState(state)) return;
 
@@ -1359,10 +1516,13 @@ export function handleNodePointerdown<T>(
 
   if (shiftKey && parentData.config.multiDrag) {
     const nodes = data.targetData.parent.data.enabledNodes;
+
     if (state.selectedState && state.activeState) {
       if (state.selectedState.parent.el !== data.targetData.parent.el) {
         deselect(state.selectedState.nodes, state.selectedState.parent, state);
+
         state.selectedState = undefined;
+
         for (let x = 0; x <= targetNode.data.index; x++)
           selectedNodes.push(nodes[x]);
       } else {
@@ -1376,12 +1536,14 @@ export function handleNodePointerdown<T>(
                 data.targetData.node.data.index,
                 state.activeState.node.data.index,
               ];
+
         selectedNodes = nodes.slice(minIndex, maxIndex + 1);
       }
     } else {
       for (let x = 0; x <= targetNode.data.index; x++)
         selectedNodes.push(nodes[x]);
     }
+
     setSelected(
       data.targetData.parent,
       selectedNodes,
@@ -1406,6 +1568,7 @@ export function handleNodePointerdown<T>(
       } else {
         deselect(state.selectedState.nodes, data.targetData.parent, state);
       }
+
       setSelected(
         data.targetData.parent,
         selectedNodes,
@@ -1425,6 +1588,16 @@ export function handleNodePointerdown<T>(
   }
 }
 
+/**
+ * Add dragstart classes to the nodes.
+ *
+ * @param node - The node.
+ * @param nodes - The nodes.
+ * @param config - The parent config.
+ * @param isSynth - Whether the drag is synthetic.
+ *
+ * @returns void
+ */
 export function dragstartClasses<T>(
   _node: NodeRecord<T>,
   nodes: Array<NodeRecord<T>>,
@@ -1464,6 +1637,14 @@ export function dragstartClasses<T>(
   });
 }
 
+/**
+ * Initialize the drag state.
+ *
+ * @param data - The node drag event data.
+ * @param draggedNodes - The dragged nodes.
+ *
+ * @returns The drag state.
+ */
 export function initDrag<T>(
   data: NodeDragEventData<T>,
   draggedNodes: Array<NodeRecord<T>>
@@ -1681,6 +1862,11 @@ export function handleParentKeydown<T>(
   }
 }
 
+/**
+ * Prevent the sort on scroll.
+ *
+ * @returns A function to prevent the sort on scroll.
+ */
 export function preventSortOnScroll() {
   let scrollTimeout: ReturnType<typeof setTimeout>;
 
@@ -1695,12 +1881,27 @@ export function preventSortOnScroll() {
   };
 }
 
+/**
+ * Handle the node pointer over.
+ *
+ * @param e - The node pointer over event.
+ *
+ * @returns void
+ */
 export function handleNodePointerover<T>(e: PointeroverNodeEvent<T>) {
   if (e.detail.targetData.parent.el === e.detail.state.currentParent.el)
     sort(e.detail, e.detail.state);
   else transfer(e.detail, e.detail.state);
 }
 
+/**
+ * Handle the node drop.
+ *
+ * @param data - The node drag event data.
+ * @param state - The drag state.
+ *
+ * @returns void
+ */
 export function handleNodeDrop<T>(
   data: NodeDragEventData<T>,
   state: DragState<T> | SynthDragState<T>
@@ -1716,6 +1917,14 @@ export function handleNodeDrop<T>(
   config.handleEnd(state);
 }
 
+/**
+ * Handle the drag end.
+ *
+ * @param data - The node drag event data.
+ * @param state - The drag state.
+ *
+ * @returns void
+ */
 export function handleDragend<T>(
   data: NodeDragEventData<T>,
   state: DragState<T>
@@ -1737,6 +1946,14 @@ export function handleDragend<T>(
   config.handleEnd(state);
 }
 
+/**
+ * Handle the pointer cancel.
+ *
+ * @param data - The node event data.
+ * @param state - The drag state.
+ *
+ * @returns void
+ */
 export function handlePointercancel<T>(
   data: NodeEventData<T>,
   state: DragState<T> | SynthDragState<T> | BaseDragState<T>
@@ -1765,6 +1982,13 @@ export function handlePointercancel<T>(
   config?.handleEnd(state);
 }
 
+/**
+ * Handle the drag end.
+ *
+ * @param state - The drag state.
+ *
+ * @returns void
+ */
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   if (state.draggedNode) state.draggedNode.el.draggable = false;
 
@@ -1824,6 +2048,14 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   state.emit("dragEnded", state);
 }
 
+/**
+ * Handle the node pointer up.
+ *
+ * @param data - The node pointer event data.
+ * @param state - The drag state.
+ *
+ * @returns void
+ */
 export function handleNodePointerup<T>(
   data: NodePointerEventData<T>,
   state: DragState<T> | SynthDragState<T> | BaseDragState<T>
@@ -1851,6 +2083,17 @@ export function handleNodePointerup<T>(
   config.handleEnd(state as DragState<T> | SynthDragState<T>);
 }
 
+/**
+ * Initialize the synth drag.
+ *
+ * @param node - The node.
+ * @param parent - The parent.
+ * @param e - The pointer event.
+ * @param _state - The drag state.
+ * @param draggedNodes - The dragged nodes.
+ *
+ * @returns The synth drag state.
+ */
 function initSynthDrag<T>(
   node: NodeRecord<T>,
   parent: ParentRecord<T>,
@@ -1964,6 +2207,15 @@ function initSynthDrag<T>(
   return synthDragState;
 }
 
+/**
+ * Handle the long press.
+ *
+ * @param data - The node pointer event data.
+ * @param state - The drag state.
+ * @param node - The node.
+ *
+ * @returns void
+ */
 export function handleLongPress<T>(
   data: NodePointerEventData<T>,
   state: BaseDragState<T>,
@@ -2008,7 +2260,12 @@ function cancelSynthScroll<T>(state: SynthDragState<T>) {
     state.animationFrameIdY = undefined;
   }
 }
-function moveNode<T>(e: PointerEvent, state: SynthDragState<T>) {
+function moveNode<T>(
+  e: PointerEvent,
+  state: SynthDragState<T>,
+  scrollX = 0,
+  scrollY = 0
+) {
   const { x, y } = eventCoordinates(e);
 
   state.coordinates.y = y;
@@ -2022,13 +2279,23 @@ function moveNode<T>(e: PointerEvent, state: SynthDragState<T>) {
   const translateY = y - startTop + window.scrollY;
 
   // Apply the transform using translate
-  state.clonedDraggedNode.style.transform = `translate(${translateX}px, ${translateY}px)`;
+  state.clonedDraggedNode.style.transform = `translate(${
+    translateX + scrollX
+  }px, ${translateY + scrollY}px)`;
 
   if (e.cancelable) pd(e);
 
   pointermoveClasses(state, state.initialParent.data.config);
 }
 
+/**
+ * Handle the synth move.
+ *
+ * @param e - The pointer event.
+ * @param state - The synth drag state.
+ *
+ * @returns void
+ */
 export function synthMove<T>(e: PointerEvent, state: SynthDragState<T>) {
   moveNode(e, state);
 
@@ -2071,6 +2338,14 @@ export function synthMove<T>(e: PointerEvent, state: SynthDragState<T>) {
   }
 }
 
+/**
+ * Handle the node drag over.
+ *
+ * @param data - The node drag event data.
+ * @param state - The drag state.
+ *
+ * @returns void
+ */
 export function handleNodeDragover<T>(
   data: NodeDragEventData<T>,
   state: DragState<T>
@@ -2094,6 +2369,14 @@ export function handleNodeDragover<T>(
     : transfer(data, state);
 }
 
+/**
+ * Handle the parent drag over.
+ *
+ * @param data - The parent drag event data.
+ * @param state - The drag state.
+ *
+ * @returns void
+ */
 export function handleParentDragover<T>(
   data: ParentDragEventData<T>,
   state: DragState<T>
@@ -2111,11 +2394,25 @@ export function handleParentDragover<T>(
   transfer(data, state);
 }
 
+/**
+ * Handle the parent pointer over.
+ *
+ * @param e - The parent pointer over event.
+ *
+ * @returns void
+ */
 export function handleParentPointerover<T>(e: PointeroverParentEvent<T>) {
   if (e.detail.targetData.parent.el !== e.detail.state.currentParent.el)
     transfer(e.detail, e.detail.state);
 }
 
+/**
+ * Validate the transfer.
+ *
+ * @param data - The transfer data.
+ *
+ * @returns Whether the transfer is valid.
+ */
 export function validateTransfer<T>({
   currentParent,
   targetParent,
@@ -2156,6 +2453,14 @@ export function validateTransfer<T>({
   return true;
 }
 
+/**
+ * Handle the node drag enter.
+ *
+ * @param data - The node drag event data.
+ * @param _state - The drag state.
+ *
+ * @returns void
+ */
 function handleNodeDragenter<T>(
   data: NodeDragEventData<T>,
   _state: DragState<T>
@@ -2163,6 +2468,14 @@ function handleNodeDragenter<T>(
   pd(data.e);
 }
 
+/**
+ * Handle the node drag leave.
+ *
+ * @param data - The node drag event data.
+ * @param _state - The drag state.
+ *
+ * @returns void
+ */
 function handleNodeDragleave<T>(
   data: NodeDragEventData<T>,
   _state: DragState<T>
@@ -2170,6 +2483,16 @@ function handleNodeDragleave<T>(
   pd(data.e);
 }
 
+/**
+ * Validate the sort.
+ *
+ * @param data - The node drag event data or node pointer event data.
+ * @param state - The drag state.
+ * @param x - The x coordinate.
+ * @param y - The y coordinate.
+ *
+ * @returns Whether the sort is valid.
+ */
 export function validateSort<T>(
   data: NodeDragEventData<T> | NodePointerEventData<T>,
   state: DragState<T>,
@@ -2274,6 +2597,14 @@ export function validateSort<T>(
   return false;
 }
 
+/**
+ * Sort the nodes.
+ *
+ * @param data - The node drag event data or node pointer event data.
+ * @param state - The drag state.
+ *
+ * @returns void
+ */
 export function sort<T>(
   data: NodeDragEventData<T> | NodePointerEventData<T>,
   state: DragState<T>
@@ -2352,7 +2683,12 @@ export function nodeEventData<T>(
 }
 
 /**
- * Used when the dragged element enters into a parent other than its own.
+ * Transfer the nodes.
+ *
+ * @param data - The node event data or parent event data.
+ * @param state - The drag state.
+ *
+ * @returns void
  */
 export function transfer<T>(
   data: NodeEventData<T> | ParentEventData<T>,
@@ -2384,6 +2720,13 @@ export function transfer<T>(
   state.transferred = true;
 }
 
+/**
+ * Event listener used for all parents.
+ *
+ * @param callback - The callback.
+ *
+ * @returns A function to get the parent event data.
+ */
 export function parentEventData<T>(
   callback: any
 ): (e: Event) => NodeEventData<T> | undefined {
@@ -2417,27 +2760,6 @@ export function parentEventData<T>(
   };
 }
 
-export function noDefault(e: Event) {
-  pd(e);
-}
-
-export function throttle(callback: any, limit: number) {
-  var wait = false;
-  return function (...args: any[]) {
-    if (!wait) {
-      callback.call(null, ...args);
-      wait = true;
-      setTimeout(function () {
-        wait = false;
-      }, limit);
-    }
-  };
-}
-
-function splitClass(className: string): Array<string> {
-  return className.split(" ").filter((x) => x);
-}
-
 export function addNodeClass<T>(
   els: Array<Node | HTMLElement | Element>,
   className: string | undefined,
@@ -2458,6 +2780,15 @@ export function addNodeClass<T>(
   }
 }
 
+/**
+ * Add class to the parent.
+ *
+ * @param els - The parents.
+ * @param className - The class name.
+ * @param omitAppendPrivateClass - Whether to omit append private class.
+ *
+ * @returns void
+ */
 export function addParentClass<T>(
   els: Array<HTMLElement>,
   className: string | undefined,
@@ -2478,6 +2809,16 @@ export function addParentClass<T>(
   }
 }
 
+/**
+ * Add class to the node.
+ *
+ * @param el - The node.
+ * @param className - The class name.
+ * @param data - The node data.
+ * @param omitAppendPrivateClass - Whether to omit append private class.
+ *
+ * @returns void
+ */
 export function addClass(
   el: Node | HTMLElement | Element,
   className: string | undefined,
@@ -2516,6 +2857,14 @@ export function addClass(
   return data;
 }
 
+/**
+ * Remove class from the nodes.
+ *
+ * @param els - The nodes.
+ * @param className - The class name.
+ *
+ * @returns void
+ */
 export function removeClass(
   els: Array<Node | HTMLElement | Element>,
   className: string | undefined
@@ -2544,6 +2893,13 @@ export function removeClass(
   }
 }
 
+/**
+ * Check if the element is scrollable.
+ *
+ * @param element - The element.
+ *
+ * @returns Whether the element is scrollable.
+ */
 function scrollableX(element: HTMLElement): boolean {
   const style = window.getComputedStyle(element);
   if (
@@ -2613,23 +2969,22 @@ function scrollY<T>(
   state: SynthDragState<T>
 ) {
   let shouldScroll = false;
+
   let scroll = 0;
 
-  const rect = el.getBoundingClientRect();
+  const isDocumentElement = el === document.documentElement;
 
-  if (
-    e.clientY > rect.bottom - (rect.bottom - rect.top) * 0.05 &&
-    el.scrollTop + el.clientHeight < el.scrollHeight
-  ) {
+  const threshold = isDocumentElement ? window.innerHeight * 0.1 : 0.5;
+
+  const isBottomEdge = e.clientY > window.innerHeight - threshold;
+
+  const isTopEdge = e.clientY < threshold;
+
+  if (isBottomEdge && el.scrollTop + el.clientHeight < el.scrollHeight) {
     shouldScroll = true;
-
     scroll = 5;
-  } else if (
-    e.clientY < rect.top + (rect.bottom - rect.top) * 0.05 &&
-    el.scrollTop > 0
-  ) {
+  } else if (isTopEdge && el.scrollTop > 0) {
     shouldScroll = true;
-
     scroll = -5;
   }
 
@@ -2642,7 +2997,7 @@ function scrollY<T>(
 
     el.scrollBy({ top: scroll });
 
-    //state.clonedDraggedNode.style.top = `${e.clientY}px`;
+    moveNode(e, state, 0, scroll);
 
     state.animationFrameIdY = requestAnimationFrame(() =>
       scrollY(el, e, state)
@@ -2653,44 +3008,35 @@ function scrollY<T>(
     state.scrolling = false;
   }
 
+  // Allow further interactions after a timeout
   setTimeout(() => {
     state.preventEnter = false;
   });
 }
-
-let count = 0;
 
 function scrollX<T>(
   el: HTMLElement,
   e: PointerEvent,
   state: SynthDragState<T>
 ) {
-  if (count > 500) return;
   let shouldScroll = false;
   let scroll = 0;
 
-  const rect = el.getBoundingClientRect();
+  // Use window.innerWidth for documentElement calculations
+  const isRightEdge = e.clientX > window.innerWidth - window.innerWidth * 0.05;
 
-  if (
-    e.clientX > rect.right - (rect.right - rect.left) * 0.05 &&
-    el.scrollLeft + el.clientWidth < el.scrollWidth
-  ) {
-    count++;
+  const isLeftEdge = e.clientX < window.innerWidth * 0.05;
 
+  if (isRightEdge && el.scrollLeft + el.clientWidth < el.scrollWidth) {
     shouldScroll = true;
-
     scroll = 5;
-  } else if (
-    e.clientX < rect.left + (rect.right - rect.left) * 0.05 &&
-    el.scrollLeft > 0
-  ) {
+  } else if (isLeftEdge && el.scrollLeft > 0) {
     shouldScroll = true;
-
     scroll = -5;
   }
 
   if (shouldScroll) {
-    el.scrollBy({ left: scroll, behavior: "smooth" });
+    el.scrollBy({ left: scroll });
 
     if (!state.scrolling) {
       state.scrolling = true;
@@ -2698,20 +3044,28 @@ function scrollX<T>(
       state.emit("scrollStarted", state);
     }
 
-    state.animationFrameIdX = requestAnimationFrame(() => {
-      scrollX(el, e, state);
-    });
+    state.animationFrameIdX = requestAnimationFrame(() =>
+      scrollX(el, e, state)
+    );
   } else {
     if (state.scrolling) state.emit("scrollEnded", state);
 
     state.scrolling = false;
   }
 
+  // Allow further interactions after a timeout
   setTimeout(() => {
     state.preventEnter = false;
   });
 }
 
+/**
+ * Check if the element is mostly in view by height.
+ *
+ * @param element - The element.
+ *
+ * @returns Whether the element is mostly in view by height.
+ */
 function isMostlyInViewByHeight(element: HTMLElement) {
   const rect = element.getBoundingClientRect();
 
@@ -2727,6 +3081,13 @@ function isMostlyInViewByHeight(element: HTMLElement) {
   return visibleHeight >= rect.height / 2;
 }
 
+/**
+ * Check if the element is mostly in view by width.
+ *
+ * @param element - The element.
+ *
+ * @returns Whether the element is mostly in view by width.
+ */
 function isMostlyInViewByWidth(element: HTMLElement) {
   const rect = element.getBoundingClientRect();
 
@@ -2769,7 +3130,10 @@ function handleSynthScroll<T>(
 
     const isScrollableY =
       !scrollables.y &&
-      (styles.overflowY === "auto" || styles.overflowY === "scroll") &&
+      (styles.overflowY === "auto" ||
+        styles.overflowY === "scroll" ||
+        el === document.body ||
+        el === document.documentElement) &&
       el.scrollHeight > el.clientHeight;
 
     if (isScrollableY && isMostlyInViewByHeight(el)) {
@@ -2879,25 +3243,4 @@ export function addEvents(
   }
 
   return abortController;
-}
-
-export function eventCoordinates(data: DragEvent | PointerEvent) {
-  return { x: data.clientX, y: data.clientY };
-}
-
-export function getRealCoords(el: HTMLElement): Coordinates {
-  const { top, bottom, left, right, height, width } =
-    el.getBoundingClientRect();
-
-  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-  const scrollTop = window.scrollY || document.documentElement.scrollTop;
-
-  return {
-    top: top + scrollTop,
-    bottom: bottom + scrollTop,
-    left: left + scrollLeft,
-    right: right + scrollLeft,
-    height,
-    width,
-  };
 }

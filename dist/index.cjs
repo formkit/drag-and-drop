@@ -30,9 +30,7 @@ __export(src_exports, {
   dragValues: () => dragValues,
   dragstartClasses: () => dragstartClasses,
   dropOrSwap: () => dropOrSwap,
-  eventCoordinates: () => eventCoordinates,
   getElFromPoint: () => getElFromPoint,
-  getRealCoords: () => getRealCoords2,
   getScrollablesUnderPointer: () => getScrollablesUnderPointer,
   handleClickNode: () => handleClickNode,
   handleClickParent: () => handleClickParent,
@@ -58,7 +56,6 @@ __export(src_exports, {
   isDragState: () => isDragState,
   isNode: () => isNode,
   isSynthDragState: () => isSynthDragState,
-  noDefault: () => noDefault,
   nodeEventData: () => nodeEventData,
   nodes: () => nodes,
   parentEventData: () => parentEventData,
@@ -82,9 +79,7 @@ __export(src_exports, {
   tearDown: () => tearDown,
   tearDownNode: () => tearDownNode,
   tearDownNodeRemap: () => tearDownNodeRemap,
-  throttle: () => throttle,
   transfer: () => transfer,
-  treeAncestors: () => treeAncestors,
   updateConfig: () => updateConfig,
   validateDragHandle: () => validateDragHandle,
   validateDragstart: () => validateDragstart,
@@ -143,6 +138,12 @@ function eq(valA, valB, deep = true, explicit = ["__key"]) {
     return true;
   }
   return false;
+}
+function splitClass(className) {
+  return className.split(" ").filter((x) => x);
+}
+function eventCoordinates(data) {
+  return { x: data.clientX, y: data.clientY };
 }
 
 // src/plugins/animations/index.ts
@@ -364,97 +365,76 @@ function checkPosition(e) {
     state.currentParent = state.initialParent;
   }
 }
-function ascendingVertical(nodeCoords, nextNodeCoords) {
+function createVerticalRange(nodeCoords, otherCoords, isAscending) {
   const center = nodeCoords.top + nodeCoords.height / 2;
-  if (!nextNodeCoords) {
+  if (!otherCoords) {
+    const offset = nodeCoords.height / 2 + 10;
     return {
-      y: [center, center + nodeCoords.height / 2 + 10],
+      y: isAscending ? [center, center + offset] : [center - offset, center],
       x: [nodeCoords.left, nodeCoords.right],
       vertical: true
     };
   }
+  const otherEdge = isAscending ? otherCoords.top : otherCoords.bottom;
+  const nodeEdge = isAscending ? nodeCoords.bottom : nodeCoords.top;
+  const midpoint = nodeEdge + Math.abs(nodeEdge - otherEdge) / 2;
   return {
-    y: [
-      center,
-      nodeCoords.bottom + Math.abs(nodeCoords.bottom - nextNodeCoords.top) / 2
-    ],
+    y: isAscending ? [center, midpoint] : [midpoint, center],
     x: [nodeCoords.left, nodeCoords.right],
     vertical: true
   };
 }
-function descendingVertical(nodeCoords, prevNodeCoords) {
-  const center = nodeCoords.top + nodeCoords.height / 2;
-  if (!prevNodeCoords) {
-    return {
-      y: [center - nodeCoords.height / 2 - 10, center],
-      x: [nodeCoords.left, nodeCoords.right],
-      vertical: true
-    };
-  }
-  return {
-    y: [
-      prevNodeCoords.bottom + Math.abs(prevNodeCoords.bottom - nodeCoords.top) / 2,
-      center
-    ],
-    x: [nodeCoords.left, nodeCoords.right],
-    vertical: true
-  };
-}
-function ascendingHorizontal(nodeCoords, nextNodeCoords, lastInRow = false) {
+function createHorizontalRange(nodeCoords, otherCoords, isAscending, lastInRow = false) {
   const center = nodeCoords.left + nodeCoords.width / 2;
-  if (!nextNodeCoords) {
-    return {
-      x: [center, center + nodeCoords.width],
-      y: [nodeCoords.top, nodeCoords.bottom],
-      vertical: false
-    };
+  if (!otherCoords) {
+    if (isAscending) {
+      return {
+        x: [center, center + nodeCoords.width],
+        y: [nodeCoords.top, nodeCoords.bottom],
+        vertical: false
+      };
+    } else {
+      return {
+        x: [nodeCoords.left - 10, center],
+        y: [nodeCoords.top, nodeCoords.bottom],
+        vertical: false
+      };
+    }
   }
-  if (lastInRow) {
+  if (isAscending && lastInRow) {
     return {
       x: [center, nodeCoords.right + 10],
       y: [nodeCoords.top, nodeCoords.bottom],
       vertical: false
     };
-  } else {
-    const nextNodeCenter = nextNodeCoords.left + nextNodeCoords.width / 2;
+  }
+  if (isAscending) {
+    const nextNodeCenter = otherCoords.left + otherCoords.width / 2;
     return {
       x: [center, center + Math.abs(center - nextNodeCenter) / 2],
       y: [nodeCoords.top, nodeCoords.bottom],
       vertical: false
     };
-  }
-}
-function descendingHorizontal(nodeCoords, prevNodeCoords) {
-  const center = nodeCoords.left + nodeCoords.width / 2;
-  if (!prevNodeCoords) {
+  } else {
     return {
-      x: [nodeCoords.left - 10, center],
+      x: [
+        otherCoords.right + Math.abs(otherCoords.right - nodeCoords.left) / 2,
+        center
+      ],
       y: [nodeCoords.top, nodeCoords.bottom],
       vertical: false
     };
   }
-  return {
-    x: [
-      prevNodeCoords.right + Math.abs(prevNodeCoords.right - nodeCoords.left) / 2,
-      center
-    ],
-    y: [nodeCoords.top, nodeCoords.bottom],
-    vertical: false
-  };
 }
 function getRealCoords(el) {
   const { top, bottom, left, right, height, width } = el.getBoundingClientRect();
   const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
   const scrollTop = window.scrollY || document.documentElement.scrollTop;
-  const adjustedTop = top + scrollTop;
-  const adjustedBottom = bottom + scrollTop;
-  const adjustedLeft = left + scrollLeft;
-  const adjustedRight = right + scrollLeft;
   return {
-    top: adjustedTop,
-    bottom: adjustedBottom,
-    left: adjustedLeft,
-    right: adjustedRight,
+    top: top + scrollTop,
+    bottom: bottom + scrollTop,
+    left: left + scrollLeft,
+    right: right + scrollLeft,
     height,
     width
   };
@@ -466,55 +446,65 @@ function defineRanges(parent) {
   const enabledNodes = parentData.enabledNodes;
   enabledNodes.forEach((node, index) => {
     node.data.range = {};
-    let aboveOrBelowPrevious = false;
-    let aboveOrBelowAfter = false;
-    let prevNodeCoords = void 0;
-    let nextNodeCoords = void 0;
-    if (enabledNodes[index - 1])
-      prevNodeCoords = getRealCoords(enabledNodes[index - 1].el);
-    if (enabledNodes[index + 1])
-      nextNodeCoords = getRealCoords(enabledNodes[index + 1].el);
+    const prevNode = enabledNodes[index - 1];
+    const nextNode = enabledNodes[index + 1];
     const nodeCoords = getRealCoords(node.el);
-    if (prevNodeCoords) {
-      aboveOrBelowPrevious = nodeCoords.top > prevNodeCoords.bottom || nodeCoords.bottom < prevNodeCoords.top;
-    }
-    if (nextNodeCoords) {
-      aboveOrBelowAfter = nodeCoords.top > nextNodeCoords.bottom || nodeCoords.bottom < nextNodeCoords.top;
-    }
+    const prevNodeCoords = prevNode ? getRealCoords(prevNode.el) : void 0;
+    const nextNodeCoords = nextNode ? getRealCoords(nextNode.el) : void 0;
+    const aboveOrBelowPrevious = prevNodeCoords && (nodeCoords.top > prevNodeCoords.bottom || nodeCoords.bottom < prevNodeCoords.top);
+    const aboveOrBelowAfter = nextNodeCoords && (nodeCoords.top > nextNodeCoords.bottom || nodeCoords.bottom < nextNodeCoords.top);
     const fullishWidth = parent.getBoundingClientRect().width * 0.8 < nodeCoords.width;
     if (fullishWidth) {
-      node.data.range.ascending = ascendingVertical(nodeCoords, nextNodeCoords);
-      node.data.range.descending = descendingVertical(
-        nodeCoords,
-        prevNodeCoords
-      );
-    } else if (aboveOrBelowAfter && !aboveOrBelowPrevious) {
-      node.data.range.ascending = ascendingHorizontal(
+      node.data.range.ascending = createVerticalRange(
         nodeCoords,
         nextNodeCoords,
         true
       );
-      node.data.range.descending = descendingHorizontal(
+      node.data.range.descending = createVerticalRange(
         nodeCoords,
-        prevNodeCoords
+        prevNodeCoords,
+        false
+      );
+    } else if (aboveOrBelowAfter && !aboveOrBelowPrevious) {
+      node.data.range.ascending = createHorizontalRange(
+        nodeCoords,
+        nextNodeCoords,
+        true,
+        true
+      );
+      node.data.range.descending = createHorizontalRange(
+        nodeCoords,
+        prevNodeCoords,
+        false
       );
     } else if (!aboveOrBelowPrevious && !aboveOrBelowAfter) {
-      node.data.range.ascending = ascendingHorizontal(
+      node.data.range.ascending = createHorizontalRange(
         nodeCoords,
-        nextNodeCoords
+        nextNodeCoords,
+        true
       );
-      node.data.range.descending = descendingHorizontal(
+      node.data.range.descending = createHorizontalRange(
         nodeCoords,
-        prevNodeCoords
+        prevNodeCoords,
+        false
       );
     } else if (aboveOrBelowPrevious && !nextNodeCoords) {
-      node.data.range.ascending = ascendingHorizontal(nodeCoords);
-    } else if (aboveOrBelowPrevious && !aboveOrBelowAfter) {
-      node.data.range.ascending = ascendingHorizontal(
+      node.data.range.ascending = createHorizontalRange(
         nodeCoords,
-        nextNodeCoords
+        void 0,
+        true
       );
-      node.data.range.descending = descendingHorizontal(nodeCoords);
+    } else if (aboveOrBelowPrevious && !aboveOrBelowAfter) {
+      node.data.range.ascending = createHorizontalRange(
+        nodeCoords,
+        nextNodeCoords,
+        true
+      );
+      node.data.range.descending = createHorizontalRange(
+        nodeCoords,
+        void 0,
+        false
+      );
     }
   });
 }
@@ -523,12 +513,12 @@ function handleNodeDragover(data) {
   if (!config.nativeDrag) return;
   data.e.preventDefault();
 }
-function processParentDragEvent(event, targetData, state2, isNativeDrag) {
+function processParentDragEvent(e, targetData, state2, isNativeDrag) {
   const config = targetData.parent.data.config;
   if (!isNativeDrag && config.nativeDrag) return;
-  event.stopPropagation();
-  if (isNativeDrag) event.preventDefault();
-  const { x, y } = eventCoordinates(event);
+  pd(e);
+  if (isNativeDrag) pd(e);
+  const { x, y } = eventCoordinates(e);
   const clientX = x;
   const clientY = y;
   const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
@@ -1140,7 +1130,6 @@ function handleEnd2(state2) {
 var isBrowser = typeof window !== "undefined";
 var parents = /* @__PURE__ */ new WeakMap();
 var nodes = /* @__PURE__ */ new WeakMap();
-var treeAncestors = {};
 function checkTouchSupport() {
   if (!isBrowser) return false;
   return "ontouchstart" in window || navigator.maxTouchPoints > 0;
@@ -1173,6 +1162,7 @@ var state = baseDragState;
 var dropped = false;
 var documentController3;
 var windowController;
+var scrollTimeout;
 var touchDevice = false;
 function resetState() {
   const baseDragState2 = {
@@ -1258,7 +1248,6 @@ function handleRootPointermove(e) {
       state,
       nodes2
     );
-    document.body.style.userSelect = "none";
     synthMove(e, synthDragState);
   } else if (isSynthDragState(state)) {
     synthMove(e, state);
@@ -1900,7 +1889,6 @@ function draggedNodes(pointerDown) {
   }
   return [];
 }
-var scrollTimeout;
 function handleParentScroll(_data) {
   if (!isDragState(state)) return;
   state.emit("scrollStarted", state);
@@ -2428,7 +2416,7 @@ function cancelSynthScroll(state2) {
     state2.animationFrameIdY = void 0;
   }
 }
-function moveNode(e, state2) {
+function moveNode(e, state2, scrollX2 = 0, scrollY2 = 0) {
   const { x, y } = eventCoordinates(e);
   state2.coordinates.y = y;
   state2.coordinates.x = x;
@@ -2436,7 +2424,7 @@ function moveNode(e, state2) {
   const startTop = state2.startTop ?? 0;
   const translateX = x - startLeft + window.scrollX;
   const translateY = y - startTop + window.scrollY;
-  state2.clonedDraggedNode.style.transform = `translate(${translateX}px, ${translateY}px)`;
+  state2.clonedDraggedNode.style.transform = `translate(${translateX + scrollX2}px, ${translateY + scrollY2}px)`;
   if (e.cancelable) pd(e);
   pointermoveClasses(state2, state2.initialParent.data.config);
 }
@@ -2678,24 +2666,6 @@ function parentEventData(callback) {
     );
   };
 }
-function noDefault(e) {
-  pd(e);
-}
-function throttle(callback, limit) {
-  var wait = false;
-  return function(...args) {
-    if (!wait) {
-      callback.call(null, ...args);
-      wait = true;
-      setTimeout(function() {
-        wait = false;
-      }, limit);
-    }
-  };
-}
-function splitClass(className) {
-  return className.split(" ").filter((x) => x);
-}
 function addNodeClass(els, className, omitAppendPrivateClass = false) {
   function nodeSetter(node, nodeData) {
     nodes.set(node, nodeData);
@@ -2794,11 +2764,14 @@ function getScrollablesUnderPointer(x, y) {
 function scrollY(el, e, state2) {
   let shouldScroll = false;
   let scroll = 0;
-  const rect = el.getBoundingClientRect();
-  if (e.clientY > rect.bottom - (rect.bottom - rect.top) * 0.05 && el.scrollTop + el.clientHeight < el.scrollHeight) {
+  const isDocumentElement = el === document.documentElement;
+  const threshold = isDocumentElement ? window.innerHeight * 0.1 : 0.5;
+  const isBottomEdge = e.clientY > window.innerHeight - threshold;
+  const isTopEdge = e.clientY < threshold;
+  if (isBottomEdge && el.scrollTop + el.clientHeight < el.scrollHeight) {
     shouldScroll = true;
     scroll = 5;
-  } else if (e.clientY < rect.top + (rect.bottom - rect.top) * 0.05 && el.scrollTop > 0) {
+  } else if (isTopEdge && el.scrollTop > 0) {
     shouldScroll = true;
     scroll = -5;
   }
@@ -2808,6 +2781,7 @@ function scrollY(el, e, state2) {
       state2.emit("scrollStarted", state2);
     }
     el.scrollBy({ top: scroll });
+    moveNode(e, state2, 0, scroll);
     state2.animationFrameIdY = requestAnimationFrame(
       () => scrollY(el, e, state2)
     );
@@ -2819,29 +2793,27 @@ function scrollY(el, e, state2) {
     state2.preventEnter = false;
   });
 }
-var count = 0;
 function scrollX(el, e, state2) {
-  if (count > 500) return;
   let shouldScroll = false;
   let scroll = 0;
-  const rect = el.getBoundingClientRect();
-  if (e.clientX > rect.right - (rect.right - rect.left) * 0.05 && el.scrollLeft + el.clientWidth < el.scrollWidth) {
-    count++;
+  const isRightEdge = e.clientX > window.innerWidth - window.innerWidth * 0.05;
+  const isLeftEdge = e.clientX < window.innerWidth * 0.05;
+  if (isRightEdge && el.scrollLeft + el.clientWidth < el.scrollWidth) {
     shouldScroll = true;
     scroll = 5;
-  } else if (e.clientX < rect.left + (rect.right - rect.left) * 0.05 && el.scrollLeft > 0) {
+  } else if (isLeftEdge && el.scrollLeft > 0) {
     shouldScroll = true;
     scroll = -5;
   }
   if (shouldScroll) {
-    el.scrollBy({ left: scroll, behavior: "smooth" });
+    el.scrollBy({ left: scroll });
     if (!state2.scrolling) {
       state2.scrolling = true;
       state2.emit("scrollStarted", state2);
     }
-    state2.animationFrameIdX = requestAnimationFrame(() => {
-      scrollX(el, e, state2);
-    });
+    state2.animationFrameIdX = requestAnimationFrame(
+      () => scrollX(el, e, state2)
+    );
   } else {
     if (state2.scrolling) state2.emit("scrollEnded", state2);
     state2.scrolling = false;
@@ -2876,7 +2848,7 @@ function handleSynthScroll(coordinates, e, state2) {
     if (scrollables.x && scrollables.y) break;
     const styles = window.getComputedStyle(el);
     const isScrollableX = !scrollables.x && (styles.overflowX === "auto" || styles.overflowX === "scroll") && el.scrollWidth > el.clientWidth;
-    const isScrollableY = !scrollables.y && (styles.overflowY === "auto" || styles.overflowY === "scroll") && el.scrollHeight > el.clientHeight;
+    const isScrollableY = !scrollables.y && (styles.overflowY === "auto" || styles.overflowY === "scroll" || el === document.body || el === document.documentElement) && el.scrollHeight > el.clientHeight;
     if (isScrollableY && isMostlyInViewByHeight(el)) {
       scrollables.y = el;
     }
@@ -2940,22 +2912,6 @@ function addEvents(el, events) {
   }
   return abortController;
 }
-function eventCoordinates(data) {
-  return { x: data.clientX, y: data.clientY };
-}
-function getRealCoords2(el) {
-  const { top, bottom, left, right, height, width } = el.getBoundingClientRect();
-  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-  const scrollTop = window.scrollY || document.documentElement.scrollTop;
-  return {
-    top: top + scrollTop,
-    bottom: bottom + scrollTop,
-    left: left + scrollLeft,
-    right: right + scrollLeft,
-    height,
-    width
-  };
-}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   addClass,
@@ -2968,9 +2924,7 @@ function getRealCoords2(el) {
   dragValues,
   dragstartClasses,
   dropOrSwap,
-  eventCoordinates,
   getElFromPoint,
-  getRealCoords,
   getScrollablesUnderPointer,
   handleClickNode,
   handleClickParent,
@@ -2996,7 +2950,6 @@ function getRealCoords2(el) {
   isDragState,
   isNode,
   isSynthDragState,
-  noDefault,
   nodeEventData,
   nodes,
   parentEventData,
@@ -3020,9 +2973,7 @@ function getRealCoords2(el) {
   tearDown,
   tearDownNode,
   tearDownNodeRemap,
-  throttle,
   transfer,
-  treeAncestors,
   updateConfig,
   validateDragHandle,
   validateDragstart,

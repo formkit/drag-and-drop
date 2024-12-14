@@ -1061,3 +1061,12 @@ export interface InsertEvent<T> {
   targetNodes: Array<NodeRecord<T>>;
   state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
 }
+
+export interface Coordinates {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+  height: number;
+  width: number;
+}

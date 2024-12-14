@@ -10,6 +10,7 @@ import type {
   InsertEvent,
   BaseDragState,
   InsertState,
+  Coordinates,
 } from "../../types";
 
 import {
@@ -20,13 +21,12 @@ import {
   addParentClass,
   isDragState,
   isSynthDragState,
-  eventCoordinates,
   removeClass,
   addEvents,
   remapNodes,
 } from "../../index";
 
-import { eq } from "../../utils";
+import { eq, pd, eventCoordinates } from "../../utils";
 
 export const insertState: InsertState<unknown> = {
   draggedOverNodes: [],
@@ -115,8 +115,6 @@ export function insert<T>(insertConfig: InsertConfig<T>) {
           );
         }
 
-        //window.addEventListener("scroll", defineRanges.bind(null, parent));
-
         window.addEventListener("resize", defineRanges.bind(null, parent));
       },
     };
@@ -180,119 +178,88 @@ function checkPosition(e: DragEvent | PointerEvent) {
   }
 }
 
-function ascendingVertical(
+interface Range {
+  x: [number, number];
+  y: [number, number];
+  vertical: boolean;
+}
+
+function createVerticalRange(
   nodeCoords: Coordinates,
-  nextNodeCoords?: Coordinates
-) {
+  otherCoords: Coordinates | undefined,
+  isAscending: boolean
+): Range {
   const center = nodeCoords.top + nodeCoords.height / 2;
 
-  if (!nextNodeCoords) {
+  if (!otherCoords) {
+    const offset = nodeCoords.height / 2 + 10;
     return {
-      y: [center, center + nodeCoords.height / 2 + 10],
+      y: isAscending ? [center, center + offset] : [center - offset, center],
       x: [nodeCoords.left, nodeCoords.right],
       vertical: true,
     };
   }
 
+  const otherEdge = isAscending ? otherCoords.top : otherCoords.bottom;
+  const nodeEdge = isAscending ? nodeCoords.bottom : nodeCoords.top;
+  const midpoint = nodeEdge + Math.abs(nodeEdge - otherEdge) / 2;
+
   return {
-    y: [
-      center,
-      nodeCoords.bottom + Math.abs(nodeCoords.bottom - nextNodeCoords.top) / 2,
-    ],
+    y: isAscending ? [center, midpoint] : [midpoint, center],
     x: [nodeCoords.left, nodeCoords.right],
     vertical: true,
   };
 }
 
-function descendingVertical(
+function createHorizontalRange(
   nodeCoords: Coordinates,
-  prevNodeCoords?: Coordinates
-) {
-  const center = nodeCoords.top + nodeCoords.height / 2;
-
-  if (!prevNodeCoords) {
-    return {
-      y: [center - nodeCoords.height / 2 - 10, center],
-      x: [nodeCoords.left, nodeCoords.right],
-      vertical: true,
-    };
-  }
-
-  return {
-    y: [
-      prevNodeCoords.bottom +
-        Math.abs(prevNodeCoords.bottom - nodeCoords.top) / 2,
-      center,
-    ],
-    x: [nodeCoords.left, nodeCoords.right],
-    vertical: true,
-  };
-}
-
-function ascendingHorizontal(
-  nodeCoords: Coordinates,
-  nextNodeCoords?: Coordinates,
+  otherCoords: Coordinates | undefined,
+  isAscending: boolean,
   lastInRow = false
-) {
+): Range {
   const center = nodeCoords.left + nodeCoords.width / 2;
 
-  if (!nextNodeCoords) {
-    return {
-      x: [center, center + nodeCoords.width],
-      y: [nodeCoords.top, nodeCoords.bottom],
-      vertical: false,
-    };
+  if (!otherCoords) {
+    if (isAscending) {
+      return {
+        x: [center, center + nodeCoords.width],
+        y: [nodeCoords.top, nodeCoords.bottom],
+        vertical: false,
+      };
+    } else {
+      return {
+        x: [nodeCoords.left - 10, center],
+        y: [nodeCoords.top, nodeCoords.bottom],
+        vertical: false,
+      };
+    }
   }
 
-  if (lastInRow) {
+  if (isAscending && lastInRow) {
     return {
       x: [center, nodeCoords.right + 10],
       y: [nodeCoords.top, nodeCoords.bottom],
       vertical: false,
     };
-  } else {
-    const nextNodeCenter = nextNodeCoords.left + nextNodeCoords.width / 2;
+  }
 
+  if (isAscending) {
+    const nextNodeCenter = otherCoords.left + otherCoords.width / 2;
     return {
       x: [center, center + Math.abs(center - nextNodeCenter) / 2],
       y: [nodeCoords.top, nodeCoords.bottom],
       vertical: false,
     };
-  }
-}
-
-function descendingHorizontal(
-  nodeCoords: Coordinates,
-  prevNodeCoords?: Coordinates
-) {
-  const center = nodeCoords.left + nodeCoords.width / 2;
-
-  if (!prevNodeCoords) {
+  } else {
     return {
-      x: [nodeCoords.left - 10, center],
+      x: [
+        otherCoords.right + Math.abs(otherCoords.right - nodeCoords.left) / 2,
+        center,
+      ],
       y: [nodeCoords.top, nodeCoords.bottom],
       vertical: false,
     };
   }
-
-  return {
-    x: [
-      prevNodeCoords.right +
-        Math.abs(prevNodeCoords.right - nodeCoords.left) / 2,
-      center,
-    ],
-    y: [nodeCoords.top, nodeCoords.bottom],
-    vertical: false,
-  };
-}
-
-interface Coordinates {
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
-  height: number;
-  width: number;
 }
 
 function getRealCoords(el: HTMLElement): Coordinates {
@@ -302,16 +269,11 @@ function getRealCoords(el: HTMLElement): Coordinates {
   const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
   const scrollTop = window.scrollY || document.documentElement.scrollTop;
 
-  const adjustedTop = top + scrollTop;
-  const adjustedBottom = bottom + scrollTop;
-  const adjustedLeft = left + scrollLeft;
-  const adjustedRight = right + scrollLeft;
-
   return {
-    top: adjustedTop,
-    bottom: adjustedBottom,
-    left: adjustedLeft,
-    right: adjustedRight,
+    top: top + scrollTop,
+    bottom: bottom + scrollTop,
+    left: left + scrollLeft,
+    right: right + scrollLeft,
     height,
     width,
   };
@@ -321,7 +283,6 @@ function defineRanges(parent: HTMLElement) {
   if (!isDragState(state)) return;
 
   const parentData = parents.get(parent);
-
   if (!parentData) return;
 
   const enabledNodes = parentData.enabledNodes;
@@ -329,71 +290,76 @@ function defineRanges(parent: HTMLElement) {
   enabledNodes.forEach((node, index) => {
     node.data.range = {};
 
-    let aboveOrBelowPrevious = false;
-
-    let aboveOrBelowAfter = false;
-
-    let prevNodeCoords = undefined;
-
-    let nextNodeCoords = undefined;
-
-    if (enabledNodes[index - 1])
-      prevNodeCoords = getRealCoords(enabledNodes[index - 1].el);
-
-    if (enabledNodes[index + 1])
-      nextNodeCoords = getRealCoords(enabledNodes[index + 1].el);
-
+    const prevNode = enabledNodes[index - 1];
+    const nextNode = enabledNodes[index + 1];
     const nodeCoords = getRealCoords(node.el);
+    const prevNodeCoords = prevNode ? getRealCoords(prevNode.el) : undefined;
+    const nextNodeCoords = nextNode ? getRealCoords(nextNode.el) : undefined;
 
-    if (prevNodeCoords) {
-      aboveOrBelowPrevious =
-        nodeCoords.top > prevNodeCoords.bottom ||
-        nodeCoords.bottom < prevNodeCoords.top;
-    }
+    const aboveOrBelowPrevious =
+      prevNodeCoords &&
+      (nodeCoords.top > prevNodeCoords.bottom ||
+        nodeCoords.bottom < prevNodeCoords.top);
 
-    if (nextNodeCoords) {
-      aboveOrBelowAfter =
-        nodeCoords.top > nextNodeCoords.bottom ||
-        nodeCoords.bottom < nextNodeCoords.top;
-    }
+    const aboveOrBelowAfter =
+      nextNodeCoords &&
+      (nodeCoords.top > nextNodeCoords.bottom ||
+        nodeCoords.bottom < nextNodeCoords.top);
 
     const fullishWidth =
       parent.getBoundingClientRect().width * 0.8 < nodeCoords.width;
 
     if (fullishWidth) {
-      node.data.range.ascending = ascendingVertical(nodeCoords, nextNodeCoords);
-      node.data.range.descending = descendingVertical(
-        nodeCoords,
-        prevNodeCoords
-      );
-    } else if (aboveOrBelowAfter && !aboveOrBelowPrevious) {
-      node.data.range.ascending = ascendingHorizontal(
+      node.data.range.ascending = createVerticalRange(
         nodeCoords,
         nextNodeCoords,
         true
       );
-      node.data.range.descending = descendingHorizontal(
+      node.data.range.descending = createVerticalRange(
         nodeCoords,
-        prevNodeCoords
+        prevNodeCoords,
+        false
+      );
+    } else if (aboveOrBelowAfter && !aboveOrBelowPrevious) {
+      node.data.range.ascending = createHorizontalRange(
+        nodeCoords,
+        nextNodeCoords,
+        true,
+        true
+      );
+      node.data.range.descending = createHorizontalRange(
+        nodeCoords,
+        prevNodeCoords,
+        false
       );
     } else if (!aboveOrBelowPrevious && !aboveOrBelowAfter) {
-      node.data.range.ascending = ascendingHorizontal(
+      node.data.range.ascending = createHorizontalRange(
         nodeCoords,
-        nextNodeCoords
+        nextNodeCoords,
+        true
       );
-      node.data.range.descending = descendingHorizontal(
+      node.data.range.descending = createHorizontalRange(
         nodeCoords,
-        prevNodeCoords
+        prevNodeCoords,
+        false
       );
     } else if (aboveOrBelowPrevious && !nextNodeCoords) {
-      node.data.range.ascending = ascendingHorizontal(nodeCoords);
-    } else if (aboveOrBelowPrevious && !aboveOrBelowAfter) {
-      node.data.range.ascending = ascendingHorizontal(
+      node.data.range.ascending = createHorizontalRange(
         nodeCoords,
-        nextNodeCoords
+        undefined,
+        true
       );
-
-      node.data.range.descending = descendingHorizontal(nodeCoords);
+    } else if (aboveOrBelowPrevious && !aboveOrBelowAfter) {
+      node.data.range.ascending = createHorizontalRange(
+        nodeCoords,
+        nextNodeCoords,
+        true
+      );
+      node.data.range.descending = createHorizontalRange(
+        nodeCoords,
+        undefined,
+        false
+      );
     }
   });
 }
@@ -407,7 +373,7 @@ export function handleNodeDragover<T>(data: NodeDragEventData<T>) {
 }
 
 function processParentDragEvent<T>(
-  event: DragEvent | PointerEvent,
+  e: DragEvent | PointerEvent,
   targetData: ParentEventData<T>["targetData"],
   state: DragState<T>,
   isNativeDrag: boolean
@@ -416,11 +382,11 @@ function processParentDragEvent<T>(
 
   if (!isNativeDrag && config.nativeDrag) return;
 
-  event.stopPropagation();
+  pd(e);
 
-  if (isNativeDrag) event.preventDefault();
+  if (isNativeDrag) pd(e);
 
-  const { x, y } = eventCoordinates(event);
+  const { x, y } = eventCoordinates(e);
 
   // Calculate global coordinates
   const clientX = x;
@@ -687,6 +653,11 @@ function positioninsertPoint<T>(
 
 export function handleParentDrop<T>(_data: NodeDragEventData<T>) {}
 
+/**
+ * Performs the actual insertion of the dragged nodes into the target parent.
+ *
+ * @param state - The current drag state.
+ */
 export function handleEnd<T>(
   state: DragState<T> | SynthDragState<T> | BaseDragState<T>
 ) {

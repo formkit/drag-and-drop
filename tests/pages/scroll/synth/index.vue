@@ -1,5 +1,21 @@
+<template>
+  <div class="modal-container">
+    <div class="modal">
+      <div class="modal-content" ref="parent">
+        <div v-for="item in items" :key="item.id" class="list-item">
+          <div class="long-content">{{ item.text }} - {{ item.longText }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script setup lang="ts">
-import { useDragAndDrop } from "../../../../src/vue/index";
+import { ref } from "vue";
+
+import { dragAndDrop } from "../../../../src/vue/index";
+
+const parent = ref<HTMLElement | null>(null);
 
 const fruits = [
   "Apple",
@@ -47,54 +63,70 @@ const vegetables = [
   "Asparagus",
 ];
 
-const [parent, values] = useDragAndDrop(fruits, {
-  group: "fruits",
-});
+const items = ref(
+  Array.from({ length: 100 }, (_, i) => {
+    const fruit = fruits[i % fruits.length];
+    const vegetable = vegetables[i % vegetables.length];
+    return {
+      id: i + 1,
+      text: `${fruit} & ${vegetable}`,
+      longText:
+        `This delicious combination of ${fruit} and ${vegetable} creates an amazing flavor profile. `.repeat(
+          5
+        ),
+    };
+  })
+);
 
-const [parent2, values2] = useDragAndDrop(vegetables, {
-  group: "fruits",
+dragAndDrop({
+  parent,
+  values: items,
 });
 </script>
 
-<template>
-  <h2 class="mb-4">
-    Synthetic scroll. Should be able to scroll synthetically.
-  </h2>
-  <div class="container">
-    <div class="scroll">
-      <div
-        style="height: 400px; overflow: scroll"
-        ref="parent"
-        class="parent"
-        id="parent"
-      >
-        <div v-for="i in values" :key="i" class="item">{{ i }}</div>
-      </div>
-    </div>
-    <div class="scroll">
-      <div
-        style="height: 400px; overflow: scroll"
-        ref="parent2"
-        class="parent"
-        id="parent2"
-      >
-        <div v-for="i in values2" :key="i" class="item">{{ i }}</div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <style scoped>
-.container {
+.modal-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
 }
-.mb-4 {
-  margin-bottom: 2rem;
+
+.modal {
+  background: white;
+  width: 300px;
+  height: 400px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
-.item {
-  padding: 10px;
-  margin: 5px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+
+.modal-content {
+  padding: 20px;
+  height: 100%;
+  overflow: auto;
+}
+
+.list-item {
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.long-content {
+  display: inline-block;
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.list-item:hover {
+  background-color: #f5f5f5;
 }
 </style>

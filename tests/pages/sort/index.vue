@@ -4,6 +4,13 @@ import { useDragAndDrop } from "../../../src/vue/index";
 const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   draggingClass: "blue",
 });
+
+onMounted(() => {
+  console.log(document.body.style.overflowY);
+  // scroll element for testing
+  const scrollable = document.documentElement;
+  //scrollable?.scrollTo({ top: 1000, behavior: "smooth" });
+});
 </script>
 
 <template>
@@ -21,9 +28,13 @@ const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
       </span>
     </div>
   </div>
+  <div class="spacer"></div>
 </template>
 
 <style scoped>
+.spacer {
+  height: 1000px;
+}
 /*#test {
   overflow-y: scroll;
   height: 200px;

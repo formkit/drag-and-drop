@@ -119,3 +119,66 @@ export function eq(
   }
   return false;
 }
+
+///**
+// * Throttle a function.
+// *
+// * @param callback - The callback function to throttle.
+// * @param limit - The minimum time in milliseconds between function calls.
+// *
+// * @returns A throttled version of the callback function.
+// */
+//export function throttle<Args extends unknown[], Return>(
+//  callback: (...args: Args) => Return,
+//  limit: number
+//): (...args: Args) => void {
+//  let wait = false;
+//  return function (...args: Args) {
+//    if (!wait) {
+//      callback.apply(null, args);
+//      wait = true;
+//      setTimeout(function () {
+//        wait = false;
+//      }, limit);
+//    }
+//  };
+//}
+
+/**
+ * Split a class name into an array of class names.
+ *
+ * @param className - The class name to split.
+ *
+ * @returns An array of class names.
+ */
+export function splitClass(className: string): Array<string> {
+  return className.split(" ").filter((x) => x);
+}
+
+export function getRealCoords(el: HTMLElement): {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+  height: number;
+  width: number;
+} {
+  const { top, bottom, left, right, height, width } =
+    el.getBoundingClientRect();
+
+  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+
+  return {
+    top: top + scrollTop,
+    bottom: bottom + scrollTop,
+    left: left + scrollLeft,
+    right: right + scrollLeft,
+    height,
+    width,
+  };
+}
+
+export function eventCoordinates(data: DragEvent | PointerEvent) {
+  return { x: data.clientX, y: data.clientY };
+}
