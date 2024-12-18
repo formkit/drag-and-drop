@@ -254,7 +254,7 @@ function handleRootDragover(e: DragEvent) {
 function handleRootPointermove(e: PointerEvent) {
   if (!state.pointerDown) return;
 
-  pd(e);
+  //pd(e);
 
   const config = state.pointerDown.parent.data.config;
 
@@ -319,6 +319,7 @@ export function dragAndDrop<T>({
       keydown: handleRootKeydown,
       drop: handleRootDrop,
       pointermove: handleRootPointermove,
+      pointercancel: nodeEventData(config.handlePointercancel),
       touchmove: (e: TouchEvent) => {
         if (isDragState(state) && e.cancelable) pd(e);
       },
@@ -1047,6 +1048,7 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     drop: nodeEventData(config.handleNodeDrop),
     pointerup: nodeEventData(config.handleNodePointerup),
     pointercancel: nodeEventData(config.handlePointercancel),
+
     pointerdown: nodeEventData(config.handleNodePointerdown),
     handleNodePointerover: config.handleNodePointerover,
     touchmove: (e: TouchEvent) => {
@@ -2112,6 +2114,9 @@ function initSynthDrag<T>(
   _state: BaseDragState<T>,
   draggedNodes: Array<NodeRecord<T>>
 ): SynthDragState<T> {
+  document.documentElement.style.overscrollBehavior = "none";
+  document.documentElement.style.touchAction = "none";
+
   const config = parent.data.config;
 
   let dragImage: HTMLElement | undefined;
@@ -2258,19 +2263,29 @@ function pointermoveClasses<T>(
       config?.longPressClass
     );
 }
-function cancelSynthScroll<T>(state: SynthDragState<T>) {
-  if (state.animationFrameIdX !== undefined) {
+
+function cancelSynthScroll<T>(
+  state: SynthDragState<T>,
+  cancelX = true,
+  cancelY = true
+) {
+  if (cancelX && state.animationFrameIdX !== undefined) {
     cancelAnimationFrame(state.animationFrameIdX);
 
     state.animationFrameIdX = undefined;
   }
 
-  if (state.animationFrameIdY !== undefined) {
+  if (cancelY && state.animationFrameIdY !== undefined) {
     cancelAnimationFrame(state.animationFrameIdY);
 
     state.animationFrameIdY = undefined;
   }
+
+  if (!state.animationFrameIdX && !state.animationFrameIdY) {
+    state.preventEnter = false;
+  }
 }
+
 function moveNode<T>(
   e: PointerEvent,
   state: SynthDragState<T>,
@@ -2904,6 +2919,26 @@ export function removeClass(
   }
 }
 
+function isNearEdge(el, clientX, clientY, edgeThreshold = 30) {
+  const rect = el.getBoundingClientRect();
+
+  const nearTop = clientY - rect.top <= edgeThreshold;
+  const nearBottom = rect.bottom - clientY <= edgeThreshold;
+  const nearLeft = clientX - rect.left <= edgeThreshold;
+  const nearRight = rect.right - clientX <= edgeThreshold;
+
+  return { nearTop, nearBottom, nearLeft, nearRight };
+}
+
+function hasRoomToScroll(el) {
+  const canScrollDown = el.scrollTop < el.scrollHeight - el.clientHeight;
+  const canScrollUp = el.scrollTop > 0;
+  const canScrollRight = el.scrollLeft < el.scrollWidth - el.clientWidth;
+  const canScrollLeft = el.scrollLeft > 0;
+
+  return { canScrollDown, canScrollUp, canScrollRight, canScrollLeft };
+}
+
 /**
  * Check if the element is scrollable.
  *
@@ -2950,30 +2985,15 @@ function scrollableY(element: HTMLElement): boolean {
   return percentVisible > 0.5;
 }
 
-export function getScrollablesUnderPointer(
-  x: number,
-  y: number
-): Record<"x" | "y", HTMLElement | null> {
-  const scrollables: Record<"x" | "y", HTMLElement | null> = {
-    x: null,
-    y: null,
-  };
-
-  const elements = document.elementsFromPoint(x, y);
-
-  for (const el of elements) {
-    if (!scrollables.x && el instanceof HTMLElement && scrollableX(el)) {
-      scrollables.x = el;
-    }
-
-    if (!scrollables.y && el instanceof HTMLElement && scrollableY(el)) {
-      scrollables.y = el;
-    }
-  }
-
-  return scrollables;
-}
-
+/**
+ * Scroll the element.
+ *
+ * @param el - The element.
+ * @param e - The event.
+ * @param state - The state.
+ *
+ * @returns void
+ */
 function scrollY<T>(
   el: HTMLElement,
   e: PointerEvent,
@@ -3024,7 +3044,17 @@ function scrollY<T>(
     state.preventEnter = false;
   });
 }
+let count = 0;
 
+/**
+ * Scroll the element.
+ *
+ * @param el - The element.
+ * @param e - The event.
+ * @param state - The state.
+ *
+ * @returns void
+ */
 function scrollX<T>(
   el: HTMLElement,
   e: PointerEvent,
@@ -3033,15 +3063,49 @@ function scrollX<T>(
   let shouldScroll = false;
   let scroll = 0;
 
-  // Use window.innerWidth for documentElement calculations
-  const isRightEdge = e.clientX > window.innerWidth - window.innerWidth * 0.05;
+  const isDocumentElement = el === document.documentElement;
 
-  const isLeftEdge = e.clientX < window.innerWidth * 0.05;
+  const scrollbarWidth = isDocumentElement
+    ? window.innerWidth - document.documentElement.clientWidth
+    : 0;
 
-  if (isRightEdge && el.scrollLeft + el.clientWidth < el.scrollWidth) {
+  const threshold = isDocumentElement ? 0.05 * window.innerWidth : 0.05;
+
+  // Calculate if we're near the edges
+  const isRightEdge =
+    e.clientX >
+    window.innerWidth - window.innerWidth * threshold - scrollbarWidth;
+
+  const isLeftEdge = e.clientX < window.innerWidth * threshold;
+
+  // Check if there is scrollable space
+  const canScrollRight =
+    el.scrollLeft + el.clientWidth < el.scrollWidth &&
+    e.clientX < el.clientWidth;
+
+  const canScrollLeft = el.scrollLeft > 0;
+
+  //console.log(canScrollRight, isRightEdge, count);
+
+  if (canScrollRight && isRightEdge && count === 0) {
+    console.log(
+      "scroll left",
+      el.scrollLeft,
+      el.clientWidth,
+      el.scrollWidth,
+      el.tagName
+    );
+    count++;
+  }
+
+  if (canScrollLeft) {
+    //console.log("can scroll left");
+  }
+
+  if (isRightEdge && canScrollRight) {
     shouldScroll = true;
     scroll = 5;
-  } else if (isLeftEdge && el.scrollLeft > 0) {
+  } else if (isLeftEdge && canScrollLeft) {
     shouldScroll = true;
     scroll = -5;
   }
@@ -3049,17 +3113,23 @@ function scrollX<T>(
   if (shouldScroll) {
     el.scrollBy({ left: scroll });
 
+    moveNode(e, state, 0, scroll);
+
+    // Emit scroll started event if not already scrolling
     if (!state.scrolling) {
       state.scrolling = true;
-
       state.emit("scrollStarted", state);
     }
 
+    // Request the next animation frame
     state.animationFrameIdX = requestAnimationFrame(() =>
       scrollX(el, e, state)
     );
   } else {
-    if (state.scrolling) state.emit("scrollEnded", state);
+    // Emit scroll ended event if we were scrolling
+    if (state.scrolling) {
+      state.emit("scrollEnded", state);
+    }
 
     state.scrolling = false;
   }
@@ -3100,6 +3170,10 @@ function isMostlyInViewByHeight(element: HTMLElement) {
  * @returns Whether the element is mostly in view by width.
  */
 function isMostlyInViewByWidth(element: HTMLElement) {
+  //if (element.tagName === "HTML" || element.tagName === "BODY") {
+  //  return true;
+  //}
+
   const rect = element.getBoundingClientRect();
 
   const viewportWidth =
@@ -3111,6 +3185,144 @@ function isMostlyInViewByWidth(element: HTMLElement) {
   return visibleWidth >= rect.width / 2;
 }
 
+// Usage
+
+let thisCount = 0;
+
+function scrollXDocumentElement<T>(
+  el: Element,
+  e: PointerEvent,
+  style: CSSStyleDeclaration,
+  rect: DOMRect,
+  threshold: number,
+  state: SynthDragState<T>
+) {
+  if (e.clientX > el.clientWidth * (1 - threshold)) {
+    el.scrollTo({ left: el.scrollLeft + 1 });
+  } else if (e.clientX < el.clientWidth * threshold) {
+    el.scrollTo({ left: el.scrollLeft - 1 });
+  } else {
+    return false;
+  }
+
+  return true;
+}
+function isScrollX(
+  el: Element,
+  e: PointerEvent,
+  style: CSSStyleDeclaration,
+  rect: DOMRect
+): { left: boolean; right: boolean } {
+  const threshold = 0.1;
+
+  if (el === document.scrollingElement) {
+    return {
+      right: e.clientX > el.clientWidth * (1 - threshold),
+      left: e.clientX < el.clientWidth * threshold,
+    };
+  }
+
+  if (
+    (style.overflowX === "auto" || style.overflowX === "scroll") &&
+    el !== document.body &&
+    el !== document.documentElement
+  ) {
+    return {
+      right: e.clientX > rect.left + el.clientWidth * (1 - threshold),
+      left: e.clientX < rect.left + el.clientWidth * threshold,
+    };
+  }
+
+  return {
+    right: false,
+    left: false,
+  };
+}
+
+function isScrollY(
+  el: Element,
+  e: PointerEvent,
+  style: CSSStyleDeclaration,
+  rect: DOMRect
+): { up: boolean; down: boolean } {
+  const threshold = 0.1;
+
+  if (el === document.scrollingElement) {
+    return {
+      down: e.clientY > el.clientHeight * (1 - threshold),
+      up: e.clientY < el.clientHeight * threshold,
+    };
+  }
+
+  if (
+    (style.overflowY === "auto" || style.overflowY === "scroll") &&
+    el !== document.body &&
+    el !== document.documentElement
+  ) {
+    return {
+      down: e.clientY > rect.top + el.clientHeight * (1 - threshold),
+      up: e.clientY < rect.top + el.clientHeight * threshold,
+    };
+  }
+
+  return {
+    down: false,
+    up: false,
+  };
+}
+
+function realScrollX<T>(
+  el: Element,
+  e: PointerEvent,
+  state: SynthDragState<T>,
+  right = true
+) {
+  state.preventEnter = true;
+
+  const incr = right ? 5 : -5;
+
+  function scroll(el: Element) {
+    el.scrollTo({ left: el.scrollLeft + incr });
+
+    console.log("scroll left", el.tagName, el.scrollLeft, incr);
+
+    moveNode(e, state, incr, 0);
+
+    state.animationFrameIdX = requestAnimationFrame(scroll.bind(null, el));
+  }
+
+  state.animationFrameIdX = requestAnimationFrame(scroll.bind(null, el));
+}
+
+function realScrollY<T>(
+  el: Element,
+  e: PointerEvent,
+  state: SynthDragState<T>,
+  up = true
+) {
+  state.preventEnter = true;
+  const incr = up ? -5 : 5;
+
+  function scroll() {
+    el.scrollTo({ top: el.scrollTop + incr });
+
+    moveNode(e, state, 0, incr);
+
+    state.animationFrameIdY = requestAnimationFrame(scroll);
+  }
+
+  state.animationFrameIdY = requestAnimationFrame(scroll);
+}
+
+/**
+ * Handle the synth scroll.
+ *
+ * @param coordinates - The coordinates.
+ * @param e - The event.
+ * @param state - The state.
+ *
+ * @returns void
+ */
 function handleSynthScroll<T>(
   coordinates: { x: number; y: number },
   e: PointerEvent,
@@ -3123,56 +3335,117 @@ function handleSynthScroll<T>(
     y: null,
   };
 
-  const els = document.elementsFromPoint(
-    coordinates.x,
-    coordinates.y
-  ) as HTMLElement[];
-
-  if (els.length === 0) {
-    scrollables.y = document.documentElement;
-
-    scrollables.x = document.documentElement;
-  }
+  const els = document.elementsFromPoint(coordinates.x, coordinates.y);
 
   for (const el of els) {
-    // Exit early if both scrollable elements are found
     if (scrollables.x && scrollables.y) break;
 
-    const styles = window.getComputedStyle(el);
+    const rect = el.getBoundingClientRect();
 
-    const isScrollableX =
-      !scrollables.x &&
-      (styles.overflowX === "auto" ||
-        styles.overflowX === "scroll" ||
-        el === document.body ||
-        el === document.documentElement) &&
-      el.scrollWidth > el.clientWidth;
+    const style = window.getComputedStyle(el);
 
-    const isScrollableY =
-      !scrollables.y &&
-      (styles.overflowY === "auto" ||
-        styles.overflowY === "scroll" ||
-        el === document.body ||
-        el === document.documentElement) &&
-      el.scrollHeight > el.clientHeight;
+    if (!scrollables.x) {
+      const { left, right } = isScrollX(el, e, style, rect, state);
 
-    if (
-      isScrollableY &&
-      (isMostlyInViewByHeight(el) ||
-        el === document.body ||
-        el === document.documentElement)
-    ) {
-      scrollables.y = el as HTMLElement;
+      if (left || right) {
+        scrollables.x = el;
+
+        console.log("scroll x", el.tagName, "right", right, "left", left);
+
+        realScrollX(el, e, state, right);
+
+        continue;
+      }
     }
 
-    if (isScrollableX && isMostlyInViewByWidth(el)) {
-      scrollables.x = el as HTMLElement;
+    if (!scrollables.y) {
+      const { up, down } = isScrollY(el, e, style, rect, state);
+
+      if (up || down) {
+        scrollables.y = el;
+
+        console.log("scroll y", el.tagName, "down", down, "up", up);
+
+        realScrollY(el, e, state, up);
+
+        continue;
+      }
+
+      continue;
     }
   }
 
-  if (scrollables.y) scrollY(scrollables.y, e, state);
+  //for (const el of els) {
+  //  if (!scrollables.x) {
+  //    const { xScroll, yScroll } = isScrollable(el);
+  //    console.log("el", el.tagName, "xScroll", xScroll, "yScroll", yScroll);
+  //  }
+  //  const { xScroll, yScroll } = isScrollable(el);
 
-  if (scrollables.x) scrollX(scrollables.x, e, state);
+  //  console.log("el", el.tagName, "xScroll", xScroll, "yScroll", yScroll);
+
+  //  if (xScroll) {
+  //    scrollables.x = el;
+  //  }
+
+  //  if (yScroll) {
+  //    scrollables.y = el;
+  //  }
+  //}
+
+  //if (scrollables.y) scrollY(scrollables.y, e, state);
+
+  //if (scrollables.x) scrollX(scrollables.x, e, state);
+
+  //if (els.length === 0) {
+  //  scrollables.y = document.documentElement;
+
+  //  scrollables.x = document.documentElement;
+  //}
+
+  //for (const el of els) {
+  //  // Exit early if both scrollable elements are found
+  //  if (scrollables.x && scrollables.y) break;
+
+  //  const styles = window.getComputedStyle(el);
+
+  //  const isScrollableX =
+  //    !scrollables.x &&
+  //    (styles.overflowX === "auto" ||
+  //      styles.overflowX === "scroll" ||
+  //      el === document.body ||
+  //      el === document.documentElement) &&
+  //    el.scrollWidth > el.clientWidth;
+
+  //  const isScrollableY =
+  //    !scrollables.y &&
+  //    (styles.overflowY === "auto" ||
+  //      styles.overflowY === "scroll" ||
+  //      el === document.body ||
+  //      el === document.documentElement) &&
+  //    el.scrollHeight > el.clientHeight;
+
+  //  if (
+  //    isScrollableY &&
+  //    (isMostlyInViewByHeight(el) ||
+  //      el === document.body ||
+  //      el === document.documentElement)
+  //  ) {
+  //    scrollables.y = el as HTMLElement;
+  //  }
+
+  //  if (isScrollableX && isMostlyInViewByWidth(el)) {
+  //    scrollables.x = el as HTMLElement;
+  //  }
+  //}
+
+  //console.log("scrollables", scrollables);
+
+  //return;
+
+  //if (scrollables.y) scrollY(scrollables.y, e, state);
+
+  //if (scrollables.x) scrollX(scrollables.x, e, state);
 }
 
 export function getElFromPoint<T>(coordinates: {

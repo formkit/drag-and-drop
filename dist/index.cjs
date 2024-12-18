@@ -1233,7 +1233,6 @@ function handleRootDragover(e) {
 }
 function handleRootPointermove(e) {
   if (!state.pointerDown) return;
-  pd(e);
   const config = state.pointerDown.parent.data.config;
   if (!isSynthDragState(state) && (touchDevice || !touchDevice && !config.nativeDrag)) {
     if (config.longPress && !state.longPress) {
@@ -1275,6 +1274,7 @@ function dragAndDrop({
       keydown: handleRootKeydown,
       drop: handleRootDrop,
       pointermove: handleRootPointermove,
+      pointercancel: nodeEventData(config.handlePointercancel),
       touchmove: (e) => {
         if (isDragState(state) && e.cancelable) pd(e);
       }
@@ -1705,7 +1705,6 @@ function setupNode(data) {
     dragend: nodeEventData(config.handleDragend),
     drop: nodeEventData(config.handleNodeDrop),
     pointerup: nodeEventData(config.handleNodePointerup),
-    pointercancel: nodeEventData(config.handlePointercancel),
     pointerdown: nodeEventData(config.handleNodePointerdown),
     handleNodePointerover: config.handleNodePointerover,
     touchmove: (e) => {
@@ -1743,7 +1742,7 @@ function tearDownNode(data) {
   data.parent.data.config.plugins?.forEach((plugin) => {
     plugin(data.parent.el)?.tearDownNode?.(data);
   });
-  data.node.el.draggable = false;
+  data.node.el.draggable = true;
   if (data.node.data?.abortControllers?.mainNode)
     data.node.data?.abortControllers?.mainNode.abort();
 }
@@ -1911,6 +1910,7 @@ function handleParentScroll(_data) {
 }
 function handleDragstart(data, _state) {
   const config = data.targetData.parent.data.config;
+  console.log("handleDragstart", data);
   if (!config.nativeDrag || !validateDragstart(data) || !validateDragHandle({
     x: data.e.clientX,
     y: data.e.clientY,
@@ -2320,6 +2320,10 @@ function handleNodePointerup(data, state2) {
   config.handleEnd(state2);
 }
 function initSynthDrag(node, parent, e, _state, draggedNodes2) {
+  document.documentElement.style.overscrollBehavior = "none";
+  document.documentElement.style.touchAction = "none";
+  document.body.style.overscrollBehavior = "none";
+  document.body.style.touchAction = "none";
   const config = parent.data.config;
   let dragImage;
   let display = node.el.style.display;
@@ -2802,15 +2806,34 @@ function scrollY(el, e, state2) {
     state2.preventEnter = false;
   });
 }
+var count = 0;
 function scrollX(el, e, state2) {
   let shouldScroll = false;
   let scroll = 0;
-  const isRightEdge = e.clientX > window.innerWidth - window.innerWidth * 0.05;
-  const isLeftEdge = e.clientX < window.innerWidth * 0.05;
-  if (isRightEdge && el.scrollLeft + el.clientWidth < el.scrollWidth) {
+  const isDocumentElement = el === document.documentElement;
+  const scrollbarWidth = isDocumentElement ? window.innerWidth - document.documentElement.clientWidth : 0;
+  const threshold = isDocumentElement ? 0 : 0.05;
+  const isRightEdge = e.clientX > window.innerWidth - window.innerWidth * threshold - scrollbarWidth;
+  const isLeftEdge = e.clientX < window.innerWidth * threshold;
+  const canScrollRight = el.scrollLeft + el.clientWidth < el.scrollWidth;
+  const canScrollLeft = el.scrollLeft > 0;
+  if (canScrollRight && isRightEdge && count === 0) {
+    console.log("el", el);
+    console.log("client x", e.clientX);
+    console.log("window inner width", window.innerWidth);
+    console.log(
+      "window inner width * threshold",
+      window.innerWidth * threshold
+    );
+    console.log("scrollbar width", scrollbarWidth);
+    count++;
+  }
+  if (canScrollLeft) {
+  }
+  if (isRightEdge && canScrollRight) {
     shouldScroll = true;
     scroll = 5;
-  } else if (isLeftEdge && el.scrollLeft > 0) {
+  } else if (isLeftEdge && canScrollLeft) {
     shouldScroll = true;
     scroll = -5;
   }
@@ -2824,7 +2847,9 @@ function scrollX(el, e, state2) {
       () => scrollX(el, e, state2)
     );
   } else {
-    if (state2.scrolling) state2.emit("scrollEnded", state2);
+    if (state2.scrolling) {
+      state2.emit("scrollEnded", state2);
+    }
     state2.scrolling = false;
   }
   setTimeout(() => {
