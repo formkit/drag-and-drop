@@ -203,20 +203,6 @@ interface ParentConfig<T> {
      */
     setupNodeRemap: SetupNode;
     /**
-     * The scroll behavior of the parent.
-     *
-     * If a parent of the dragged element is scrollable, the parent will scroll on its x and y axis.
-     *
-     * I.e. Setting x: 0.9 will begin scrolling the parent when the dragged element is 90% horizontally.
-     *
-     * Scroll Outside determines whether or not the parent will scroll when the dragged element is outside of the parent.
-     */
-    scrollBehavior: {
-        x: number;
-        y: number;
-        scrollOutside?: boolean;
-    };
-    /**
      * Flag for whether or not to allow sorting within a given parent.
      */
     sortable?: boolean;
@@ -586,9 +572,12 @@ interface SynthDragStateProps {
      * Pointer id of dragged el
      */
     pointerId: number;
-    scrollElements: Record<"x" | "y", HTMLElement | null>;
     animationFrameIdX: number | undefined;
     animationFrameIdY: number | undefined;
+    lastScrollX: HTMLElement | null;
+    lastScrollY: HTMLElement | null;
+    rootScrollWidth: number | undefined;
+    rootScrollHeight: number | undefined;
 }
 type DragState<T> = DragStateProps<T> & BaseDragState<T>;
 type BaseDragState<T> = {

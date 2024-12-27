@@ -398,10 +398,6 @@ export function dragAndDrop<T>({
       tearDownNode,
       tearDownNodeRemap,
       remapFinished,
-      scrollBehavior: {
-        x: 0.95,
-        y: 0.95,
-      },
       threshold: {
         horizontal: 0,
         vertical: 0,
@@ -2203,6 +2199,8 @@ function initSynthDrag<T>(
     draggedNodeDisplay: display,
     synthDragScrolling: false,
     synthDragging: true,
+    rootScrollWidth: document.scrollingElement?.scrollWidth,
+    rootScrollHeight: document.scrollingElement?.scrollHeight,
   };
 
   const synthDragState = setDragState({
@@ -2919,306 +2917,23 @@ export function removeClass(
   }
 }
 
-function isNearEdge(el, clientX, clientY, edgeThreshold = 30) {
-  const rect = el.getBoundingClientRect();
-
-  const nearTop = clientY - rect.top <= edgeThreshold;
-  const nearBottom = rect.bottom - clientY <= edgeThreshold;
-  const nearLeft = clientX - rect.left <= edgeThreshold;
-  const nearRight = rect.right - clientX <= edgeThreshold;
-
-  return { nearTop, nearBottom, nearLeft, nearRight };
-}
-
-function hasRoomToScroll(el) {
-  const canScrollDown = el.scrollTop < el.scrollHeight - el.clientHeight;
-  const canScrollUp = el.scrollTop > 0;
-  const canScrollRight = el.scrollLeft < el.scrollWidth - el.clientWidth;
-  const canScrollLeft = el.scrollLeft > 0;
-
-  return { canScrollDown, canScrollUp, canScrollRight, canScrollLeft };
-}
-
-/**
- * Check if the element is scrollable.
- *
- * @param element - The element.
- *
- * @returns Whether the element is scrollable.
- */
-function scrollableX(element: HTMLElement): boolean {
-  const style = window.getComputedStyle(element);
-  if (
-    (element === document.documentElement || element === document.body) &&
-    (style.overflowX === "auto" || style.overflowX === "scroll")
-  )
-    return element.scrollWidth > element.clientWidth;
-  return (
-    (style.overflowX === "auto" || style.overflowX === "scroll") &&
-    element.scrollWidth > element.clientWidth
-  );
-}
-
-function scrollableY(element: HTMLElement): boolean {
-  // First check if element is scrollable
-  if (element === document.documentElement || element === document.body) {
-    return element.scrollHeight > element.clientHeight;
-  }
-
-  const style = window.getComputedStyle(element);
-  const isScrollable =
-    (style.overflowY === "auto" || style.overflowY === "scroll") &&
-    element.scrollHeight > element.clientHeight;
-
-  if (!isScrollable) return false;
-
-  // Now check if majority is in viewport
-  const rect = element.getBoundingClientRect();
-  const elementHeight = rect.height;
-  const visibleHeight =
-    Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
-
-  // Calculate percentage visible (0 to 1)
-  const percentVisible = visibleHeight / elementHeight;
-
-  // Return true only if element is scrollable AND more than 50% visible
-  return percentVisible > 0.5;
-}
-
-/**
- * Scroll the element.
- *
- * @param el - The element.
- * @param e - The event.
- * @param state - The state.
- *
- * @returns void
- */
-function scrollY<T>(
-  el: HTMLElement,
-  e: PointerEvent,
-  state: SynthDragState<T>
-) {
-  let shouldScroll = false;
-
-  let scroll = 0;
-
-  const isDocumentElement = el === document.documentElement;
-
-  const threshold = isDocumentElement ? window.innerHeight * 0.05 : 0.05;
-
-  const isBottomEdge = e.clientY > window.innerHeight - threshold;
-
-  const isTopEdge = e.clientY < threshold;
-
-  if (isBottomEdge && el.scrollTop + el.clientHeight < el.scrollHeight) {
-    shouldScroll = true;
-    scroll = 5;
-  } else if (isTopEdge && el.scrollTop > 0) {
-    shouldScroll = true;
-    scroll = -5;
-  }
-
-  if (shouldScroll) {
-    if (!state.scrolling) {
-      state.scrolling = true;
-
-      state.emit("scrollStarted", state);
-    }
-
-    el.scrollBy({ top: scroll });
-
-    moveNode(e, state, 0, scroll);
-
-    state.animationFrameIdY = requestAnimationFrame(() =>
-      scrollY(el, e, state)
-    );
-  } else {
-    if (state.scrolling) state.emit("scrollEnded", state);
-
-    state.scrolling = false;
-  }
-
-  // Allow further interactions after a timeout
-  setTimeout(() => {
-    state.preventEnter = false;
-  });
-}
-let count = 0;
-
-/**
- * Scroll the element.
- *
- * @param el - The element.
- * @param e - The event.
- * @param state - The state.
- *
- * @returns void
- */
-function scrollX<T>(
-  el: HTMLElement,
-  e: PointerEvent,
-  state: SynthDragState<T>
-) {
-  let shouldScroll = false;
-  let scroll = 0;
-
-  const isDocumentElement = el === document.documentElement;
-
-  const scrollbarWidth = isDocumentElement
-    ? window.innerWidth - document.documentElement.clientWidth
-    : 0;
-
-  const threshold = isDocumentElement ? 0.05 * window.innerWidth : 0.05;
-
-  // Calculate if we're near the edges
-  const isRightEdge =
-    e.clientX >
-    window.innerWidth - window.innerWidth * threshold - scrollbarWidth;
-
-  const isLeftEdge = e.clientX < window.innerWidth * threshold;
-
-  // Check if there is scrollable space
-  const canScrollRight =
-    el.scrollLeft + el.clientWidth < el.scrollWidth &&
-    e.clientX < el.clientWidth;
-
-  const canScrollLeft = el.scrollLeft > 0;
-
-  //console.log(canScrollRight, isRightEdge, count);
-
-  if (canScrollRight && isRightEdge && count === 0) {
-    console.log(
-      "scroll left",
-      el.scrollLeft,
-      el.clientWidth,
-      el.scrollWidth,
-      el.tagName
-    );
-    count++;
-  }
-
-  if (canScrollLeft) {
-    //console.log("can scroll left");
-  }
-
-  if (isRightEdge && canScrollRight) {
-    shouldScroll = true;
-    scroll = 5;
-  } else if (isLeftEdge && canScrollLeft) {
-    shouldScroll = true;
-    scroll = -5;
-  }
-
-  if (shouldScroll) {
-    el.scrollBy({ left: scroll });
-
-    moveNode(e, state, 0, scroll);
-
-    // Emit scroll started event if not already scrolling
-    if (!state.scrolling) {
-      state.scrolling = true;
-      state.emit("scrollStarted", state);
-    }
-
-    // Request the next animation frame
-    state.animationFrameIdX = requestAnimationFrame(() =>
-      scrollX(el, e, state)
-    );
-  } else {
-    // Emit scroll ended event if we were scrolling
-    if (state.scrolling) {
-      state.emit("scrollEnded", state);
-    }
-
-    state.scrolling = false;
-  }
-
-  // Allow further interactions after a timeout
-  setTimeout(() => {
-    state.preventEnter = false;
-  });
-}
-
-/**
- * Check if the element is mostly in view by height.
- *
- * @param element - The element.
- *
- * @returns Whether the element is mostly in view by height.
- */
-function isMostlyInViewByHeight(element: HTMLElement) {
-  const rect = element.getBoundingClientRect();
-
-  // Get the height of the viewport
-  const viewportHeight =
-    window.innerHeight || document.documentElement.clientHeight;
-
-  // Calculate the visible height of the element within the viewport
-  const visibleHeight =
-    Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0);
-
-  // Return true if more than 50% of the element's height is visible
-  return visibleHeight >= rect.height / 2;
-}
-
-/**
- * Check if the element is mostly in view by width.
- *
- * @param element - The element.
- *
- * @returns Whether the element is mostly in view by width.
- */
-function isMostlyInViewByWidth(element: HTMLElement) {
-  //if (element.tagName === "HTML" || element.tagName === "BODY") {
-  //  return true;
-  //}
-
-  const rect = element.getBoundingClientRect();
-
-  const viewportWidth =
-    window.innerWidth || document.documentElement.clientWidth;
-
-  const visibleWidth =
-    Math.min(rect.right, viewportWidth) - Math.max(rect.left, 0);
-
-  return visibleWidth >= rect.width / 2;
-}
-
-// Usage
-
-let thisCount = 0;
-
-function scrollXDocumentElement<T>(
+function isScrollX<T>(
   el: Element,
   e: PointerEvent,
   style: CSSStyleDeclaration,
   rect: DOMRect,
-  threshold: number,
   state: SynthDragState<T>
-) {
-  if (e.clientX > el.clientWidth * (1 - threshold)) {
-    el.scrollTo({ left: el.scrollLeft + 1 });
-  } else if (e.clientX < el.clientWidth * threshold) {
-    el.scrollTo({ left: el.scrollLeft - 1 });
-  } else {
-    return false;
-  }
-
-  return true;
-}
-function isScrollX(
-  el: Element,
-  e: PointerEvent,
-  style: CSSStyleDeclaration,
-  rect: DOMRect
 ): { left: boolean; right: boolean } {
   const threshold = 0.1;
 
   if (el === document.scrollingElement) {
+    const canScrollLeft = el.scrollLeft > 0;
+    const canScrollRight =
+      el.scrollLeft + window.innerWidth < (state.rootScrollWidth || 0);
+
     return {
-      right: e.clientX > el.clientWidth * (1 - threshold),
-      left: e.clientX < el.clientWidth * threshold,
+      right: canScrollRight && e.clientX > el.clientWidth * (1 - threshold),
+      left: canScrollLeft && e.clientX < el.clientWidth * threshold,
     };
   }
 
@@ -3239,18 +2954,23 @@ function isScrollX(
   };
 }
 
-function isScrollY(
+function isScrollY<T>(
   el: Element,
   e: PointerEvent,
   style: CSSStyleDeclaration,
-  rect: DOMRect
+  rect: DOMRect,
+  state: SynthDragState<T>
 ): { up: boolean; down: boolean } {
   const threshold = 0.1;
 
   if (el === document.scrollingElement) {
+    const canScrollUp = el.scrollTop > 0;
+    const canScrollDown =
+      el.scrollTop + window.innerHeight < (state.rootScrollHeight || 0);
+
     return {
-      down: e.clientY > el.clientHeight * (1 - threshold),
-      up: e.clientY < el.clientHeight * threshold,
+      down: canScrollDown && e.clientY > el.clientHeight * (1 - threshold),
+      up: canScrollUp && e.clientY < el.clientHeight * threshold,
     };
   }
 
@@ -3271,7 +2991,7 @@ function isScrollY(
   };
 }
 
-function realScrollX<T>(
+function scrollX<T>(
   el: Element,
   e: PointerEvent,
   state: SynthDragState<T>,
@@ -3284,8 +3004,6 @@ function realScrollX<T>(
   function scroll(el: Element) {
     el.scrollTo({ left: el.scrollLeft + incr });
 
-    console.log("scroll left", el.tagName, el.scrollLeft, incr);
-
     moveNode(e, state, incr, 0);
 
     state.animationFrameIdX = requestAnimationFrame(scroll.bind(null, el));
@@ -3294,13 +3012,14 @@ function realScrollX<T>(
   state.animationFrameIdX = requestAnimationFrame(scroll.bind(null, el));
 }
 
-function realScrollY<T>(
+function scrollY<T>(
   el: Element,
   e: PointerEvent,
   state: SynthDragState<T>,
   up = true
 ) {
   state.preventEnter = true;
+
   const incr = up ? -5 : 5;
 
   function scroll() {
@@ -3340,6 +3059,8 @@ function handleSynthScroll<T>(
   for (const el of els) {
     if (scrollables.x && scrollables.y) break;
 
+    if (!(el instanceof HTMLElement)) continue;
+
     const rect = el.getBoundingClientRect();
 
     const style = window.getComputedStyle(el);
@@ -3350,11 +3071,7 @@ function handleSynthScroll<T>(
       if (left || right) {
         scrollables.x = el;
 
-        console.log("scroll x", el.tagName, "right", right, "left", left);
-
-        realScrollX(el, e, state, right);
-
-        continue;
+        scrollX(el, e, state, right);
       }
     }
 
@@ -3364,88 +3081,10 @@ function handleSynthScroll<T>(
       if (up || down) {
         scrollables.y = el;
 
-        console.log("scroll y", el.tagName, "down", down, "up", up);
-
-        realScrollY(el, e, state, up);
-
-        continue;
+        scrollY(el, e, state, up);
       }
-
-      continue;
     }
   }
-
-  //for (const el of els) {
-  //  if (!scrollables.x) {
-  //    const { xScroll, yScroll } = isScrollable(el);
-  //    console.log("el", el.tagName, "xScroll", xScroll, "yScroll", yScroll);
-  //  }
-  //  const { xScroll, yScroll } = isScrollable(el);
-
-  //  console.log("el", el.tagName, "xScroll", xScroll, "yScroll", yScroll);
-
-  //  if (xScroll) {
-  //    scrollables.x = el;
-  //  }
-
-  //  if (yScroll) {
-  //    scrollables.y = el;
-  //  }
-  //}
-
-  //if (scrollables.y) scrollY(scrollables.y, e, state);
-
-  //if (scrollables.x) scrollX(scrollables.x, e, state);
-
-  //if (els.length === 0) {
-  //  scrollables.y = document.documentElement;
-
-  //  scrollables.x = document.documentElement;
-  //}
-
-  //for (const el of els) {
-  //  // Exit early if both scrollable elements are found
-  //  if (scrollables.x && scrollables.y) break;
-
-  //  const styles = window.getComputedStyle(el);
-
-  //  const isScrollableX =
-  //    !scrollables.x &&
-  //    (styles.overflowX === "auto" ||
-  //      styles.overflowX === "scroll" ||
-  //      el === document.body ||
-  //      el === document.documentElement) &&
-  //    el.scrollWidth > el.clientWidth;
-
-  //  const isScrollableY =
-  //    !scrollables.y &&
-  //    (styles.overflowY === "auto" ||
-  //      styles.overflowY === "scroll" ||
-  //      el === document.body ||
-  //      el === document.documentElement) &&
-  //    el.scrollHeight > el.clientHeight;
-
-  //  if (
-  //    isScrollableY &&
-  //    (isMostlyInViewByHeight(el) ||
-  //      el === document.body ||
-  //      el === document.documentElement)
-  //  ) {
-  //    scrollables.y = el as HTMLElement;
-  //  }
-
-  //  if (isScrollableX && isMostlyInViewByWidth(el)) {
-  //    scrollables.x = el as HTMLElement;
-  //  }
-  //}
-
-  //console.log("scrollables", scrollables);
-
-  //return;
-
-  //if (scrollables.y) scrollY(scrollables.y, e, state);
-
-  //if (scrollables.x) scrollX(scrollables.x, e, state);
 }
 
 export function getElFromPoint<T>(coordinates: {
@@ -3506,8 +3145,8 @@ export function getElFromPoint<T>(coordinates: {
 }
 
 /**
- * Checks to see that a given element and its parent node are instances of
- * HTML Elements.
+ * Checks to see that a given element and its parent node is instance of
+ * HTMLElement.
  *
  * @param {unknown} el - The element to check.
  *

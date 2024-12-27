@@ -766,6 +766,8 @@ export interface SynthDragStateProps {
   animationFrameIdY: number | undefined;
   lastScrollX: HTMLElement | null;
   lastScrollY: HTMLElement | null;
+  rootScrollWidth: number | undefined;
+  rootScrollHeight: number | undefined;
 }
 
 export type DragState<T> = DragStateProps<T> & BaseDragState<T>;

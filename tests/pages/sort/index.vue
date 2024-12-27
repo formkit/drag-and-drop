@@ -86,6 +86,7 @@ onMounted(() => {
   padding: 1em;
 }
 
+html,
 body {
   width: 5000px;
   height: 5000px;
@@ -94,10 +95,6 @@ body {
 .spacer {
   height: 1000px;
 }
-/*#test {
-  overflow-y: scroll;
-  height: 200px;
-}*/
 .blue {
   background-color: lightblue !important;
   color: yellow !important;
