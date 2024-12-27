@@ -1137,6 +1137,34 @@ function handleRootKeydown(e) {
 }
 function handleRootDrop(_e) {
 }
+function copyNodeStyle(sourceNode, targetNode, omitKeys = false) {
+  const computedStyle = window.getComputedStyle(sourceNode);
+  const omittedKeys = [
+    "position",
+    "z-index",
+    "top",
+    "left",
+    "x",
+    "pointer-events",
+    "y",
+    "transform-origin",
+    "filter",
+    "-webkit-text-fill-color"
+  ];
+  for (const key of Array.from(computedStyle)) {
+    if (omitKeys === false && key && omittedKeys.includes(key)) continue;
+    targetNode.style.setProperty(
+      key,
+      computedStyle.getPropertyValue(key),
+      computedStyle.getPropertyPriority(key)
+    );
+  }
+  for (const child of Array.from(sourceNode.children)) {
+    if (!isNode(child)) continue;
+    const targetChild = targetNode.children[Array.from(sourceNode.children).indexOf(child)];
+    copyNodeStyle(child, targetChild, omitKeys);
+  }
+}
 function handleRootDragover(e) {
   if (!isDragState(state)) return;
   pd(e);
@@ -2797,6 +2825,7 @@ export {
   addNodeClass,
   addParentClass,
   animations,
+  copyNodeStyle,
   dragAndDrop,
   dragStateProps,
   dragValues,

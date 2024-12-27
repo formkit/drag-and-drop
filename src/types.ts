@@ -768,6 +768,8 @@ export interface SynthDragStateProps {
   lastScrollY: HTMLElement | null;
   rootScrollWidth: number | undefined;
   rootScrollHeight: number | undefined;
+  rootOverScrollBehavior: string | undefined;
+  rootTouchAction: string | undefined;
 }
 
 export type DragState<T> = DragStateProps<T> & BaseDragState<T>;

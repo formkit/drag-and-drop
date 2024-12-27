@@ -241,6 +241,47 @@ function handleRootKeydown(e: KeyboardEvent) {
 
 function handleRootDrop(_e: DragEvent) {}
 
+export function copyNodeStyle(
+  sourceNode: HTMLElement,
+  targetNode: HTMLElement,
+  omitKeys = false
+) {
+  const computedStyle = window.getComputedStyle(sourceNode);
+
+  const omittedKeys = [
+    "position",
+    "z-index",
+    "top",
+    "left",
+    "x",
+    "pointer-events",
+    "y",
+    "transform-origin",
+    "filter",
+    "-webkit-text-fill-color",
+  ];
+
+  for (const key of Array.from(computedStyle)) {
+    if (omitKeys === false && key && omittedKeys.includes(key)) continue;
+
+    targetNode.style.setProperty(
+      key,
+      computedStyle.getPropertyValue(key),
+      computedStyle.getPropertyPriority(key)
+    );
+  }
+
+  for (const child of Array.from(sourceNode.children)) {
+    if (!isNode(child)) continue;
+
+    const targetChild = targetNode.children[
+      Array.from(sourceNode.children).indexOf(child)
+    ] as Node;
+
+    copyNodeStyle(child, targetChild, omitKeys);
+  }
+}
+
 /**
  * If we are currently dragging, then let's prevent default on dragover to avoid
  * the default behavior of the browser on drop.
@@ -2003,6 +2044,13 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
 
   document.body.style.userSelect = state.rootUserSelect || "";
 
+  if (isSynthDragState(state)) {
+    document.documentElement.style.overscrollBehavior =
+      state.rootOverScrollBehavior || "";
+
+    document.documentElement.style.touchAction = state.rootTouchAction || "";
+  }
+
   if (isSynthDragState(state)) cancelSynthScroll(state);
 
   if ("longPressTimeout" in state && state.longPressTimeout)
@@ -2110,9 +2158,6 @@ function initSynthDrag<T>(
   _state: BaseDragState<T>,
   draggedNodes: Array<NodeRecord<T>>
 ): SynthDragState<T> {
-  document.documentElement.style.overscrollBehavior = "none";
-  document.documentElement.style.touchAction = "none";
-
   const config = parent.data.config;
 
   let dragImage: HTMLElement | undefined;
@@ -2201,7 +2246,13 @@ function initSynthDrag<T>(
     synthDragging: true,
     rootScrollWidth: document.scrollingElement?.scrollWidth,
     rootScrollHeight: document.scrollingElement?.scrollHeight,
+    rootOverScrollBehavior: document.documentElement.style.overscrollBehavior,
+    rootTouchAction: document.documentElement.style.touchAction,
   };
+
+  document.documentElement.style.overscrollBehavior = "none";
+
+  document.documentElement.style.touchAction = "none";
 
   const synthDragState = setDragState({
     ...dragStateProps(
