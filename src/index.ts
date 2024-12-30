@@ -2969,7 +2969,7 @@ export function removeClass(
 }
 
 function isScrollX<T>(
-  el: Element,
+  el: HTMLElement,
   e: PointerEvent,
   style: CSSStyleDeclaration,
   rect: DOMRect,
@@ -2993,9 +2993,15 @@ function isScrollX<T>(
     el !== document.body &&
     el !== document.documentElement
   ) {
+    const scrollWidth = el.scrollWidth;
+    const offsetWidth = el.offsetWidth;
+    const scrollLeft = el.scrollLeft;
+
     return {
-      right: e.clientX > rect.left + el.clientWidth * (1 - threshold),
-      left: e.clientX < rect.left + el.clientWidth * threshold,
+      right:
+        e.clientX > rect.left + offsetWidth * (1 - threshold) &&
+        scrollLeft < scrollWidth - offsetWidth,
+      left: e.clientX < rect.left + offsetWidth * threshold && scrollLeft > 0,
     };
   }
 
@@ -3005,23 +3011,18 @@ function isScrollX<T>(
   };
 }
 
-function isScrollY<T>(
-  el: Element,
+function isScrollY(
+  el: HTMLElement,
   e: PointerEvent,
   style: CSSStyleDeclaration,
-  rect: DOMRect,
-  state: SynthDragState<T>
+  rect: DOMRect
 ): { up: boolean; down: boolean } {
   const threshold = 0.1;
 
   if (el === document.scrollingElement) {
-    const canScrollUp = el.scrollTop > 0;
-    const canScrollDown =
-      el.scrollTop + window.innerHeight < (state.rootScrollHeight || 0);
-
     return {
-      down: canScrollDown && e.clientY > el.clientHeight * (1 - threshold),
-      up: canScrollUp && e.clientY < el.clientHeight * threshold,
+      down: e.clientY > el.clientHeight * (1 - threshold),
+      up: e.clientY < el.clientHeight * threshold,
     };
   }
 
@@ -3030,9 +3031,15 @@ function isScrollY<T>(
     el !== document.body &&
     el !== document.documentElement
   ) {
+    const scrollHeight = el.scrollHeight;
+    const offsetHeight = el.offsetHeight;
+    const scrollTop = el.scrollTop;
+
     return {
-      down: e.clientY > rect.top + el.clientHeight * (1 - threshold),
-      up: e.clientY < rect.top + el.clientHeight * threshold,
+      down:
+        e.clientY > rect.top + offsetHeight * (1 - threshold) &&
+        scrollTop < scrollHeight - offsetHeight,
+      up: e.clientY < rect.top + offsetHeight * threshold && scrollTop > 0,
     };
   }
 
@@ -3043,7 +3050,7 @@ function isScrollY<T>(
 }
 
 function scrollX<T>(
-  el: Element,
+  el: HTMLElement,
   e: PointerEvent,
   state: SynthDragState<T>,
   right = true
@@ -3052,8 +3059,8 @@ function scrollX<T>(
 
   const incr = right ? 5 : -5;
 
-  function scroll(el: Element) {
-    el.scrollTo({ left: el.scrollLeft + incr });
+  function scroll(el: HTMLElement) {
+    el.scrollBy({ left: incr });
 
     moveNode(e, state, incr, 0);
 
@@ -3074,7 +3081,7 @@ function scrollY<T>(
   const incr = up ? -5 : 5;
 
   function scroll() {
-    el.scrollTo({ top: el.scrollTop + incr });
+    el.scrollBy({ top: incr });
 
     moveNode(e, state, 0, incr);
 
@@ -3127,7 +3134,7 @@ function handleSynthScroll<T>(
     }
 
     if (!scrollables.y) {
-      const { up, down } = isScrollY(el, e, style, rect, state);
+      const { up, down } = isScrollY(el, e, style, rect);
 
       if (up || down) {
         scrollables.y = el;

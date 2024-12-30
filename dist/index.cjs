@@ -2293,6 +2293,10 @@ function handlePointercancel(data, state2) {
 function handleEnd3(state2) {
   if (state2.draggedNode) state2.draggedNode.el.draggable = false;
   document.body.style.userSelect = state2.rootUserSelect || "";
+  if (isSynthDragState(state2)) {
+    document.documentElement.style.overscrollBehavior = state2.rootOverScrollBehavior || "";
+    document.documentElement.style.touchAction = state2.rootTouchAction || "";
+  }
   if (isSynthDragState(state2)) cancelSynthScroll(state2);
   if ("longPressTimeout" in state2 && state2.longPressTimeout)
     clearTimeout(state2.longPressTimeout);
@@ -2344,8 +2348,6 @@ function handleNodePointerup(data, state2) {
   config.handleEnd(state2);
 }
 function initSynthDrag(node, parent, e, _state, draggedNodes2) {
-  document.documentElement.style.overscrollBehavior = "none";
-  document.documentElement.style.touchAction = "none";
   const config = parent.data.config;
   let dragImage;
   let display = node.el.style.display;
@@ -2409,8 +2411,12 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
     synthDragScrolling: false,
     synthDragging: true,
     rootScrollWidth: document.scrollingElement?.scrollWidth,
-    rootScrollHeight: document.scrollingElement?.scrollHeight
+    rootScrollHeight: document.scrollingElement?.scrollHeight,
+    rootOverScrollBehavior: document.documentElement.style.overscrollBehavior,
+    rootTouchAction: document.documentElement.style.touchAction
   };
+  document.documentElement.style.overscrollBehavior = "none";
+  document.documentElement.style.touchAction = "none";
   const synthDragState = setDragState({
     ...dragStateProps(
       node,
@@ -2777,9 +2783,12 @@ function isScrollX(el, e, style, rect, state2) {
     };
   }
   if ((style.overflowX === "auto" || style.overflowX === "scroll") && el !== document.body && el !== document.documentElement) {
+    const scrollWidth = el.scrollWidth;
+    const offsetWidth = el.offsetWidth;
+    const scrollLeft = el.scrollLeft;
     return {
-      right: e.clientX > rect.left + el.clientWidth * (1 - threshold),
-      left: e.clientX < rect.left + el.clientWidth * threshold
+      right: e.clientX > rect.left + offsetWidth * (1 - threshold) && scrollLeft < scrollWidth - offsetWidth,
+      left: e.clientX < rect.left + offsetWidth * threshold && scrollLeft > 0
     };
   }
   return {
@@ -2787,20 +2796,21 @@ function isScrollX(el, e, style, rect, state2) {
     left: false
   };
 }
-function isScrollY(el, e, style, rect, state2) {
+function isScrollY(el, e, style, rect) {
   const threshold = 0.1;
   if (el === document.scrollingElement) {
-    const canScrollUp = el.scrollTop > 0;
-    const canScrollDown = el.scrollTop + window.innerHeight < (state2.rootScrollHeight || 0);
     return {
-      down: canScrollDown && e.clientY > el.clientHeight * (1 - threshold),
-      up: canScrollUp && e.clientY < el.clientHeight * threshold
+      down: e.clientY > el.clientHeight * (1 - threshold),
+      up: e.clientY < el.clientHeight * threshold
     };
   }
   if ((style.overflowY === "auto" || style.overflowY === "scroll") && el !== document.body && el !== document.documentElement) {
+    const scrollHeight = el.scrollHeight;
+    const offsetHeight = el.offsetHeight;
+    const scrollTop = el.scrollTop;
     return {
-      down: e.clientY > rect.top + el.clientHeight * (1 - threshold),
-      up: e.clientY < rect.top + el.clientHeight * threshold
+      down: e.clientY > rect.top + offsetHeight * (1 - threshold) && scrollTop < scrollHeight - offsetHeight,
+      up: e.clientY < rect.top + offsetHeight * threshold && scrollTop > 0
     };
   }
   return {
@@ -2812,7 +2822,7 @@ function scrollX(el, e, state2, right = true) {
   state2.preventEnter = true;
   const incr = right ? 5 : -5;
   function scroll(el2) {
-    el2.scrollTo({ left: el2.scrollLeft + incr });
+    el2.scrollBy({ left: incr });
     moveNode(e, state2, incr, 0);
     state2.animationFrameIdX = requestAnimationFrame(scroll.bind(null, el2));
   }
@@ -2822,7 +2832,7 @@ function scrollY(el, e, state2, up = true) {
   state2.preventEnter = true;
   const incr = up ? -5 : 5;
   function scroll() {
-    el.scrollTo({ top: el.scrollTop + incr });
+    el.scrollBy({ top: incr });
     moveNode(e, state2, 0, incr);
     state2.animationFrameIdY = requestAnimationFrame(scroll);
   }
@@ -2848,7 +2858,7 @@ function handleSynthScroll(coordinates, e, state2) {
       }
     }
     if (!scrollables.y) {
-      const { up, down } = isScrollY(el, e, style, rect, state2);
+      const { up, down } = isScrollY(el, e, style, rect);
       if (up || down) {
         scrollables.y = el;
         scrollY(el, e, state2, up);
