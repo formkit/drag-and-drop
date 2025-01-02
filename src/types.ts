@@ -320,13 +320,8 @@ export interface ParentConfig<T> {
    */
   tearDownNodeRemap: TearDownNode;
   /**
-   * Property to identify the parent record who is the ancestor of the current parent.
-   */
-  treeAncestor?: boolean;
-  /**
    * Property to identify which group of tree descendants the current parent belongs to.
    */
-  treeGroup?: string;
   /**
    * The threshold for a drag to be considered a valid sort
    * operation.

@@ -61,14 +61,29 @@ export interface ParentConfig<T> {
    */
   disabled?: boolean;
   /**
-   * A selector for the drag handle. Will search at any depth within the node.
+   * A selector for the drag handle. Will search at any depth within the
+   * draggable element.
    */
   dragHandle?: string;
+  /**
+   * External drag handle
+   */
+  externalDragHandle?: {
+    el: HTMLElement;
+    callback: () => HTMLElement;
+  };
   /**
    * A function that returns whether a given node is draggable.
    */
   draggable?: (child: HTMLElement) => boolean;
-  draggedNodes: (data: NodeEventData<T>) => Array<NodeRecord<T>>;
+  /**
+   * A function that returns whether a given value is draggable
+   */
+  draggableValue?: (values: T) => boolean;
+  draggedNodes: (pointerDown: {
+    parent: ParentRecord<T>;
+    node: NodeRecord<T>;
+  }) => Array<NodeRecord<T>>;
   /**
    * The class to add to a node when it is being dragged.
    */
@@ -107,7 +122,6 @@ export interface ParentConfig<T> {
    * parents to transfer nodes between each other.
    */
   group?: string;
-  handleParentBlur: (data: ParentEventData<T>, state: BaseDragState<T>) => void;
   handleParentFocus: (
     data: ParentEventData<T>,
     state: BaseDragState<T>
@@ -134,13 +148,6 @@ export interface ParentConfig<T> {
   handleParentScroll: (
     data: ParentEventData<T>,
     state: DragState<T> | BaseDragState<T> | SynthDragState<T>
-  ) => void;
-  /**
-   * Function that is called when touchstart event occurs.
-   */
-  handleNodeTouchstart: (
-    data: NodePointerEventData<T>,
-    state: DragState<T>
   ) => void;
   /**
    * Function that is called when a dragenter event is triggered on the node.
@@ -179,14 +186,6 @@ export interface ParentConfig<T> {
    * Function that is called when a pointerdown is triggered on node.
    */
   handleNodePointerdown: (
-    data: NodePointerEventData<T>,
-    state: DragState<T>
-  ) => void;
-  /**
-   * Function that is called when either a pointermove or touchmove event is fired
-   * where now the "dragged" node is being moved programatically.
-   */
-  handleNodePointermove: (
     data: NodePointerEventData<T>,
     state: DragState<T>
   ) => void;
@@ -237,11 +236,11 @@ export interface ParentConfig<T> {
   performSort: ({
     parent,
     draggedNodes,
-    targetNode,
+    targetNodes,
   }: {
     parent: ParentRecord<T>;
     draggedNodes: Array<NodeRecord<T>>;
-    targetNode: NodeRecord<T>;
+    targetNodes: Array<NodeRecord<T>>;
   }) => void;
   /**
    * Function that is called when a transfer operation is to be performed.
@@ -253,7 +252,7 @@ export interface ParentConfig<T> {
     draggedNodes,
     initialIndex,
     state,
-    targetNode,
+    targetNodes,
   }: {
     currentParent: ParentRecord<T>;
     targetParent: ParentRecord<T>;
@@ -261,7 +260,7 @@ export interface ParentConfig<T> {
     draggedNodes: Array<NodeRecord<T>>;
     initialIndex: number;
     state: BaseDragState<T> | DragState<T> | SynthDragState<T>;
-    targetNode?: NodeRecord<T>;
+    targetNodes: Array<NodeRecord<T>>;
   }) => void;
   /**
    * An array of functions to use for a given parent.
@@ -289,20 +288,6 @@ export interface ParentConfig<T> {
    */
   setupNodeRemap: SetupNode;
   /**
-   * The scroll behavior of the parent.
-   *
-   * If a parent of the dragged element is scrollable, the parent will scroll on its x and y axis.
-   *
-   * I.e. Setting x: 0.9 will begin scrolling the parent when the dragged element is 90% horizontally.
-   *
-   * Scroll Outside determines whether or not the parent will scroll when the dragged element is outside of the parent.
-   */
-  scrollBehavior: {
-    x: number;
-    y: number;
-    scrollOutside?: boolean;
-  };
-  /**
    * Flag for whether or not to allow sorting within a given parent.
    */
   sortable?: boolean;
@@ -316,9 +301,15 @@ export interface ParentConfig<T> {
    * be set as the drag image, but this can be updated.
    */
   synthDragImage?: (
-    data: NodePointerEventData<T>,
+    node: NodeRecord<T>,
+    parent: ParentRecord<T>,
+    e: PointerEvent,
     draggedNodes: Array<NodeRecord<T>>
-  ) => HTMLElement;
+  ) => {
+    dragImage: HTMLElement;
+    offsetX?: number;
+    offsetY?: number;
+  };
   /**
    * Function that is called when a node is torn down.
    */
@@ -328,13 +319,8 @@ export interface ParentConfig<T> {
    */
   tearDownNodeRemap: TearDownNode;
   /**
-   * Property to identify the parent record who is the ancestor of the current parent.
-   */
-  treeAncestor?: boolean;
-  /**
    * Property to identify which group of tree descendants the current parent belongs to.
    */
-  treeGroup?: string;
   /**
    * The threshold for a drag to be considered a valid sort
    * operation.
