@@ -1,52 +1,9 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../../src/vue/index";
 
-const [parent, values] = useDragAndDrop(
-  [
-    "Apple",
-    "Banana",
-    "Orange",
-    "Pear",
-    "Grape",
-    "Kiwi",
-    "Mango",
-    "Pineapple",
-    "Strawberry",
-    "Blueberry",
-    "Raspberry",
-    "Blackberry",
-    "Cherry",
-    "Peach",
-    "Plum",
-    "Pomegranate",
-    "Watermelon",
-    "Melon",
-    "Lemon",
-    "Lime",
-    "Grapefruit",
-    "Tangerine",
-    "Papaya",
-    "Passionfruit",
-    "Carrot",
-    "Broccoli",
-    "Spinach",
-    "Lettuce",
-    "Cucumber",
-    "Tomato",
-    "Celery",
-    "Asparagus",
-    "Bell Pepper",
-    "Cauliflower",
-    "Eggplant",
-    "Zucchini",
-    "Onion",
-    "Garlic",
-    "Potato",
-  ],
-  {
-    draggingClass: "blue",
-  }
-);
+const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
+  draggingClass: "blue",
+});
 
 onMounted(() => {
   // Set initial scroll positions for testing
@@ -59,41 +16,23 @@ onMounted(() => {
     <h1>Sort</h1>
 
     <!-- Horizontal scrollable container -->
-    <div class="horizontal-scroll">
-      <div class="scroll-content">
-        <div class="outer">
-          <ul ref="parent" class="list" id="test">
-            <li v-for="value in values" :id="value" :key="value" class="item">
-              {{ value }}
-            </li>
-          </ul>
-          <div class="values">
-            Values:
-            <span id="sort_values">
-              {{ values.map((x) => x).join(" ") }}
-            </span>
-          </div>
-        </div>
-
-        <!-- Additional scrollable containers -->
-        <div class="outer">
-          <div class="placeholder-content">Scrollable Container 2</div>
-        </div>
-
-        <div class="outer">
-          <div class="placeholder-content">Scrollable Container 3</div>
-        </div>
-      </div>
+    <ul ref="parent" class="list" id="test">
+      <li v-for="value in values" :id="value" :key="value" class="item">
+        {{ value }}
+      </li>
+    </ul>
+    <div class="values">
+      Values:
+      <span id="sort_values">
+        {{ values.map((x) => x).join(" ") }}
+      </span>
     </div>
   </div>
 </template>
 
-<style>
+<style scoped>
 /* Make the HTML tag scrollable in both directions */
 html {
-  min-width: 5000px;
-  min-height: 5000px;
-  overflow: auto;
 }
 
 body {
@@ -118,16 +57,6 @@ body {
   padding: 1em;
   min-width: 150%;
 }
-
-.outer {
-  min-width: 300px;
-  height: 400px;
-  overflow: auto;
-  border: 1px solid #ccc;
-  padding: 1em;
-  background: white;
-}
-
 .placeholder-content {
   min-height: 1000px;
   padding: 1em;
