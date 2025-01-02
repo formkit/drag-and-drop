@@ -481,6 +481,15 @@ export function dragStateProps<T>(
   };
 }
 
+/**
+ * Perform the sort of the nodes.
+ *
+ * @param {ParentRecord<T>} parent - The parent record.
+ * @param {Array<NodeRecord<T>>} draggedNodes - The dragged nodes.
+ * @param {Array<NodeRecord<T>>} targetNodes - The target nodes.
+ *
+ * @returns void
+ */
 export function performSort<T>({
   parent,
   draggedNodes,
@@ -664,6 +673,14 @@ function setSelected<T>(
   );
 }
 
+/**
+ * Update the live region.
+ *
+ * @param {ParentRecord<T>} parent - The parent record.
+ * @param {string} message - The message to update the live region with.
+ *
+ * @returns void
+ */
 function updateLiveRegion<T>(parent: ParentRecord<T>, message: string) {
   const liveRegion = document.querySelector('[data-dnd-live-region="true"]');
 
@@ -674,6 +691,13 @@ function updateLiveRegion<T>(parent: ParentRecord<T>, message: string) {
   liveRegion.textContent = message;
 }
 
+/**
+ * Clear the live region.
+ *
+ * @param {ParentRecord<T>} parent - The parent record.
+ *
+ * @returns void
+ */
 function clearLiveRegion<T>(parent: ParentRecord<T>) {
   const liveRegion = document.getElementById(parent.el.id + "-live-region");
 
@@ -682,6 +706,14 @@ function clearLiveRegion<T>(parent: ParentRecord<T>) {
   liveRegion.textContent = "";
 }
 
+/**
+ * Handle the parent focus event.
+ *
+ * @param {ParentEventData<T>} data - The parent event data.
+ * @param {BaseDragState<T> | DragState<T> | SynthDragState<T>} state - The drag state.
+ *
+ * @returns void
+ */
 export function handleParentFocus<T>(
   data: ParentEventData<T>,
   state: BaseDragState<T> | DragState<T> | SynthDragState<T>
@@ -2174,6 +2206,8 @@ function initSynthDrag<T>(
         const clonedNode = node.el.cloneNode(true) as HTMLElement;
 
         clonedNode.style.pointerEvents = "none";
+
+        clonedNode.style.margin = "0";
 
         wrapper.append(clonedNode);
       }
