@@ -248,13 +248,8 @@ interface ParentConfig<T> {
      */
     tearDownNodeRemap: TearDownNode;
     /**
-     * Property to identify the parent record who is the ancestor of the current parent.
-     */
-    treeAncestor?: boolean;
-    /**
      * Property to identify which group of tree descendants the current parent belongs to.
      */
-    treeGroup?: string;
     /**
      * The threshold for a drag to be considered a valid sort
      * operation.
@@ -280,11 +275,6 @@ interface ParentConfig<T> {
      * When a node receives focus, this class is applied to the node.
      */
     synthActiveDescendantClass?: string;
-    /**
-     * Config option to allow recursive copying of computed styles of dragged
-     * element to the cloned one that will be dragged (only for synthetic drag).
-     */
-    deepCopyStyles?: boolean;
     /**
      * Callback function for when a sort operation is performed.
      */
@@ -969,11 +959,28 @@ declare function setDragState<T>(dragStateProps: (SynthDragStateProps & DragStat
  */
 declare function dragAndDrop<T>({ parent, getValues, setValues, config, }: DragAndDrop<T>): void;
 declare function dragStateProps<T>(node: NodeRecord<T>, parent: ParentRecord<T>, e: PointerEvent | DragEvent, draggedNodes: Array<NodeRecord<T>>, offsetX?: number, offsetY?: number): DragStateProps<T>;
+/**
+ * Perform the sort of the nodes.
+ *
+ * @param {ParentRecord<T>} parent - The parent record.
+ * @param {Array<NodeRecord<T>>} draggedNodes - The dragged nodes.
+ * @param {Array<NodeRecord<T>>} targetNodes - The target nodes.
+ *
+ * @returns void
+ */
 declare function performSort<T>({ parent, draggedNodes, targetNodes, }: {
     parent: ParentRecord<T>;
     draggedNodes: Array<NodeRecord<T>>;
     targetNodes: Array<NodeRecord<T>>;
 }): void;
+/**
+ * Handle the parent focus event.
+ *
+ * @param {ParentEventData<T>} data - The parent event data.
+ * @param {BaseDragState<T> | DragState<T> | SynthDragState<T>} state - The drag state.
+ *
+ * @returns void
+ */
 declare function handleParentFocus<T>(data: ParentEventData<T>, state: BaseDragState<T> | DragState<T> | SynthDragState<T>): void;
 /**
  * Perform the transfer of the nodes.

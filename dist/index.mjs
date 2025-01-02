@@ -1225,7 +1225,6 @@ function dragAndDrop({
       dragEffectAllowed: config.dragEffectAllowed ?? "move",
       draggedNodes,
       dragstartClasses,
-      deepCopyStyles: config.deepCopyStyles ?? false,
       handleNodeKeydown,
       handleParentKeydown,
       handleDragstart,
@@ -2271,6 +2270,7 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
       for (const node2 of draggedNodes2) {
         const clonedNode = node2.el.cloneNode(true);
         clonedNode.style.pointerEvents = "none";
+        clonedNode.style.margin = "0";
         wrapper.append(clonedNode);
       }
       display = wrapper.style.display;
@@ -2355,12 +2355,9 @@ function moveNode(e, state2, scrollX2 = 0, scrollY2 = 0) {
   state2.coordinates.x = x;
   const startLeft = state2.startLeft ?? 0;
   const startTop = state2.startTop ?? 0;
-  console.log("window scroll y", window.scrollY);
-  console.log("start top", startTop);
   const translateX = x - startLeft + window.scrollX;
   const translateY = y - startTop + window.scrollY;
   state2.clonedDraggedNode.style.transform = `translate(${translateX + scrollX2}px, ${translateY + scrollY2}px)`;
-  console.log("translate y", translateY + scrollY2);
   if (e.cancelable) pd(e);
   pointermoveClasses(state2, state2.initialParent.data.config);
 }
