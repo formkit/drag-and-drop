@@ -348,11 +348,6 @@ export interface ParentConfig<T> {
    */
   synthActiveDescendantClass?: string;
   /**
-   * Config option to allow recursive copying of computed styles of dragged
-   * element to the cloned one that will be dragged (only for synthetic drag).
-   */
-  deepCopyStyles?: boolean;
-  /**
    * Callback function for when a sort operation is performed.
    */
   onSort?: SortEvent;

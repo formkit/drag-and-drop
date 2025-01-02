@@ -368,7 +368,6 @@ export function dragAndDrop<T>({
       dragEffectAllowed: config.dragEffectAllowed ?? "move",
       draggedNodes,
       dragstartClasses,
-      deepCopyStyles: config.deepCopyStyles ?? false,
       handleNodeKeydown,
       handleParentKeydown,
       handleDragstart,
