@@ -270,16 +270,6 @@ export function copyNodeStyle(
       computedStyle.getPropertyPriority(key)
     );
   }
-
-  for (const child of Array.from(sourceNode.children)) {
-    if (!isNode(child)) continue;
-
-    const targetChild = targetNode.children[
-      Array.from(sourceNode.children).indexOf(child)
-    ] as Node;
-
-    copyNodeStyle(child, targetChild, omitKeys);
-  }
 }
 
 /**
@@ -2187,7 +2177,10 @@ function initSynthDrag<T>(
     });
   } else {
     if (!config.multiDrag || draggedNodes.length === 1) {
+      console.log("boom");
       dragImage = node.el.cloneNode(true) as HTMLElement;
+
+      copyNodeStyle(node.el, dragImage);
 
       dragImage.id = "dnd-dragged-node-clone";
 
@@ -2206,29 +2199,36 @@ function initSynthDrag<T>(
       });
     } else {
       const wrapper = document.createElement("div");
+      console.log("getting here");
 
-      wrapper.setAttribute("popover", "");
+      wrapper.setAttribute("popover", "manual");
 
       for (const node of draggedNodes) {
         const clonedNode = node.el.cloneNode(true) as HTMLElement;
+
+        copyNodeStyle(node.el, clonedNode);
 
         clonedNode.style.pointerEvents = "none";
 
         wrapper.append(clonedNode);
       }
 
-      Object.assign(wrapper.style, {
-        display: "flex",
-        flexDirection: "column",
-        left: "-9999px",
-        position: "absolute",
-        pointerEvents: "none",
-        zIndex: 9999,
-      });
+      display = wrapper.style.display;
 
       wrapper.id = "dnd-dragged-node-clone";
 
       dragImage = wrapper;
+
+      Object.assign(dragImage.style, {
+        display: "flex",
+        flexDirection: "column",
+        position: "absolute",
+        overflow: "hidden",
+        margin: 0,
+        padding: 0,
+        pointerEvents: "none",
+        zIndex: 9999,
+      });
     }
   }
 
@@ -2835,6 +2835,15 @@ export function parentEventData<T>(
   };
 }
 
+/**
+ * Add class to the node.
+ *
+ * @param els - The nodes.
+ * @param className - The class name.
+ * @param omitAppendPrivateClass - Whether to omit append private class.
+ *
+ * @returns void
+ */
 export function addNodeClass<T>(
   els: Array<Node | HTMLElement | Element>,
   className: string | undefined,
@@ -2968,6 +2977,17 @@ export function removeClass(
   }
 }
 
+/**
+ * Check if the element is scrollable on the x axis.
+ *
+ * @param el - The element.
+ * @param e - The event.
+ * @param style - The style.
+ * @param rect - The rect.
+ * @param state - The state.
+ *
+ * @returns void
+ */
 function isScrollX<T>(
   el: HTMLElement,
   e: PointerEvent,
@@ -3011,6 +3031,16 @@ function isScrollX<T>(
   };
 }
 
+/**
+ * Check if the element is scrollable on the y axis.
+ *
+ * @param el - The element.
+ * @param e - The event.
+ * @param style - The style.
+ * @param rect - The rect.
+ *
+ * @returns void
+ */
 function isScrollY(
   el: HTMLElement,
   e: PointerEvent,
@@ -3049,6 +3079,16 @@ function isScrollY(
   };
 }
 
+/**
+ * Scroll the element on the x axis.
+ *
+ * @param el - The element.
+ * @param e - The event.
+ * @param state - The state.
+ * @param right - Whether to scroll right.
+ *
+ * @returns void
+ */
 function scrollX<T>(
   el: HTMLElement,
   e: PointerEvent,
@@ -3070,6 +3110,16 @@ function scrollX<T>(
   state.animationFrameIdX = requestAnimationFrame(scroll.bind(null, el));
 }
 
+/**
+ * Scroll the element on the y axis.
+ *
+ * @param el - The element.
+ * @param e - The event.
+ * @param state - The state.
+ * @param up - Whether to scroll up.
+ *
+ * @returns void
+ */
 function scrollY<T>(
   el: Element,
   e: PointerEvent,

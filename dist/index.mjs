@@ -1159,11 +1159,6 @@ function copyNodeStyle(sourceNode, targetNode, omitKeys = false) {
       computedStyle.getPropertyPriority(key)
     );
   }
-  for (const child of Array.from(sourceNode.children)) {
-    if (!isNode(child)) continue;
-    const targetChild = targetNode.children[Array.from(sourceNode.children).indexOf(child)];
-    copyNodeStyle(child, targetChild, omitKeys);
-  }
 }
 function handleRootDragover(e) {
   if (!isDragState(state)) return;
@@ -2278,7 +2273,9 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
     });
   } else {
     if (!config.multiDrag || draggedNodes2.length === 1) {
+      console.log("boom");
       dragImage = node.el.cloneNode(true);
+      copyNodeStyle(node.el, dragImage);
       dragImage.id = "dnd-dragged-node-clone";
       display = dragImage.style.display;
       dragImage.setAttribute("popover", "manual");
@@ -2293,22 +2290,27 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
       });
     } else {
       const wrapper = document.createElement("div");
-      wrapper.setAttribute("popover", "");
+      console.log("getting here");
+      wrapper.setAttribute("popover", "manual");
       for (const node2 of draggedNodes2) {
         const clonedNode = node2.el.cloneNode(true);
+        copyNodeStyle(node2.el, clonedNode);
         clonedNode.style.pointerEvents = "none";
         wrapper.append(clonedNode);
       }
-      Object.assign(wrapper.style, {
+      display = wrapper.style.display;
+      wrapper.id = "dnd-dragged-node-clone";
+      dragImage = wrapper;
+      Object.assign(dragImage.style, {
         display: "flex",
         flexDirection: "column",
-        left: "-9999px",
         position: "absolute",
+        overflow: "hidden",
+        margin: 0,
+        padding: 0,
         pointerEvents: "none",
         zIndex: 9999
       });
-      wrapper.id = "dnd-dragged-node-clone";
-      dragImage = wrapper;
     }
   }
   dragImage.style.position = "absolute";

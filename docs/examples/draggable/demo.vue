@@ -15,6 +15,8 @@ dragAndDrop({
   parent: dragList,
   values: tapes,
   dropZoneClass: "saturate-0 opacity-20",
+  synthDropZoneClass: "saturate-0 opacity-20",
+  synthDraggingClass: "bg-transparent",
   draggable: (el: HTMLElement) => {
     return el.id !== "no-drag";
   },

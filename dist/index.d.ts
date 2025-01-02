@@ -1323,6 +1323,15 @@ declare function transfer<T>(data: NodeEventData<T> | ParentEventData<T>, state:
  * @returns A function to get the parent event data.
  */
 declare function parentEventData<T>(callback: any): (e: Event) => NodeEventData<T> | undefined;
+/**
+ * Add class to the node.
+ *
+ * @param els - The nodes.
+ * @param className - The class name.
+ * @param omitAppendPrivateClass - Whether to omit append private class.
+ *
+ * @returns void
+ */
 declare function addNodeClass<T>(els: Array<Node | HTMLElement | Element>, className: string | undefined, omitAppendPrivateClass?: boolean): void;
 /**
  * Add class to the parent.

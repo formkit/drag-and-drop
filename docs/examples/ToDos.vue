@@ -60,6 +60,10 @@ const todoConfig = {
   })(),
   dropZoneClass: !props.insert ? "!bg-lime-200" : undefined,
   dropZoneParentClass: !props.insert ? "!border-4 border-lime-300" : undefined,
+  synthDropZoneClass: !props.insert ? "!bg-lime-200" : undefined,
+  synthDropZoneParentClass: !props.insert
+    ? "!border-4 border-lime-300"
+    : undefined,
 };
 
 const doneConfig = {
@@ -94,6 +98,10 @@ const doneConfig = {
   })(),
   dropZoneClass: !props.insert ? "!bg-lime-200" : undefined,
   dropZoneParentClass: !props.insert ? "!border-4 border-lime-300" : undefined,
+  synthDropZoneClass: !props.insert ? "!bg-lime-200" : undefined,
+  synthDropZoneParentClass: !props.insert
+    ? "!border-4 border-lime-300"
+    : undefined,
 };
 
 const [todoList, todos] = useDragAndDrop(
