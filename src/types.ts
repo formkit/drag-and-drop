@@ -157,6 +157,8 @@ export interface ParentConfig<T> {
     data: NodeDragEventData<T>,
     state: DragState<T>
   ) => void;
+  handleNodeBlur: (data: NodeEventData<T>, state: DragState<T>) => void;
+  handleNodeFocus: (data: NodeEventData<T>, state: DragState<T>) => void;
   /**
    * Dragleave event on node
    */

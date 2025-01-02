@@ -37,8 +37,10 @@ __export(src_exports, {
   handleDragstart: () => handleDragstart,
   handleEnd: () => handleEnd3,
   handleLongPress: () => handleLongPress,
+  handleNodeBlur: () => handleNodeBlur,
   handleNodeDragover: () => handleNodeDragover3,
   handleNodeDrop: () => handleNodeDrop,
+  handleNodeFocus: () => handleNodeFocus,
   handleNodeKeydown: () => handleNodeKeydown,
   handleNodePointerdown: () => handleNodePointerdown,
   handleNodePointerover: () => handleNodePointerover2,
@@ -1210,6 +1212,7 @@ function handleRootPointerdown(_e) {
 }
 function handleRootPointerup(e) {
   pd(e);
+  if (state.pointerDown) state.pointerDown.node.el.draggable = true;
   state.pointerDown = void 0;
   if (!isSynthDragState(state)) return;
   const config = state.currentParent.data.config;
@@ -1232,6 +1235,7 @@ function handleRootDragover(e) {
 }
 function handleRootPointermove(e) {
   if (!state.pointerDown) return;
+  pd(e);
   const config = state.pointerDown.parent.data.config;
   if (!isSynthDragState(state) && (touchDevice || !touchDevice && !config.nativeDrag)) {
     if (config.longPress && !state.longPress) {
@@ -1320,6 +1324,8 @@ function dragAndDrop({
       handleNodeDragover: handleNodeDragover3,
       handleParentDragover: handleParentDragover3,
       handleNodeDrop,
+      handleNodeFocus,
+      handleNodeBlur,
       handlePointercancel,
       handleEnd: handleEnd3,
       handleDragend,
@@ -1698,6 +1704,8 @@ function setupNode(data) {
     dragleave: nodeEventData(config.handleNodeDragleave),
     dragend: nodeEventData(config.handleDragend),
     drop: nodeEventData(config.handleNodeDrop),
+    focus: nodeEventData(config.handleNodeFocus),
+    blur: nodeEventData(config.handleNodeBlur),
     pointerup: nodeEventData(config.handleNodePointerup),
     pointercancel: nodeEventData(config.handlePointercancel),
     pointerdown: nodeEventData(config.handleNodePointerdown),
@@ -1711,6 +1719,7 @@ function setupNode(data) {
   });
   data.node.el.setAttribute("role", "option");
   data.node.el.setAttribute("aria-selected", "false");
+  data.node.el.draggable = true;
   config.reapplyDragClasses(data.node.el, data.parent.data);
   data.parent.data.config.plugins?.forEach((plugin) => {
     plugin(data.parent.el)?.setupNode?.(data);
@@ -1946,7 +1955,6 @@ function handleNodePointerdown(data, state2) {
     parent: data.targetData.parent,
     node: data.targetData.node
   };
-  data.targetData.node.el.draggable = true;
   handleLongPress(data, state2, data.targetData.node);
   const parentData = data.targetData.parent.data;
   let selectedNodes = [data.targetData.node];
@@ -2154,13 +2162,11 @@ function handleParentKeydown(data, state2) {
   const index = enabledNodes.findIndex((x) => x.el === activeDescendant.el);
   if (index === -1) return;
   if (["ArrowDown", "ArrowUp", "ArrowRight", "ArrowLeft"].includes(data.e.key)) {
-    pd(data.e);
     const nextIndex = data.e.key === "ArrowDown" || data.e.key === "ArrowRight" ? index + 1 : index - 1;
     if (nextIndex < 0 || nextIndex >= enabledNodes.length) return;
     const nextNode = enabledNodes[nextIndex];
     setActive(data.targetData.parent, nextNode, state2);
   } else if (data.e.key === " ") {
-    pd(data.e);
     state2.selectedState && state2.selectedState.nodes.includes(activeDescendant) ? setSelected(
       data.targetData.parent,
       state2.selectedState.nodes.filter((x) => x.el !== activeDescendant.el),
@@ -2229,6 +2235,12 @@ function handleNodeDrop(data, state2) {
   sp(data.e);
   dropped = true;
   config.handleEnd(state2);
+}
+function handleNodeFocus(_data) {
+  if (state.pointerDown) state.pointerDown.node.el.draggable = false;
+}
+function handleNodeBlur(_data) {
+  if (state.pointerDown) state.pointerDown.node.el.draggable = true;
 }
 function handleDragend(data, state2) {
   const config = data.targetData.parent.data.config;
@@ -2303,7 +2315,6 @@ function handleEnd3(state2) {
 }
 function handleNodePointerup(data, state2) {
   sp(data.e);
-  state2.pointerDown = void 0;
   if (!state2.pointerSelection && state2.selectedState)
     deselect(state2.selectedState.nodes, data.targetData.parent, state2);
   const config = data.targetData.parent.data.config;
@@ -2890,7 +2901,8 @@ function addEvents(el, events) {
     const handler = events[eventName];
     el.addEventListener(eventName, handler, {
       signal: abortController.signal,
-      passive: false
+      passive: false,
+      capture: eventName === "focus" || eventName === "blur"
     });
   }
   return abortController;
@@ -2914,8 +2926,10 @@ function addEvents(el, events) {
   handleDragstart,
   handleEnd,
   handleLongPress,
+  handleNodeBlur,
   handleNodeDragover,
   handleNodeDrop,
+  handleNodeFocus,
   handleNodeKeydown,
   handleNodePointerdown,
   handleNodePointerover,

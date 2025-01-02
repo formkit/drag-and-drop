@@ -104,6 +104,8 @@ interface ParentConfig<T> {
      * Function that is called when a dragenter event is triggered on the node.
      */
     handleNodeDragenter: (data: NodeDragEventData<T>, state: DragState<T>) => void;
+    handleNodeBlur: (data: NodeEventData<T>, state: DragState<T>) => void;
+    handleNodeFocus: (data: NodeEventData<T>, state: DragState<T>) => void;
     /**
      * Dragleave event on node
      */

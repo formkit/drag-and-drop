@@ -18,7 +18,7 @@ onMounted(() => {
     <!-- Horizontal scrollable container -->
     <ul ref="parent" class="list" id="test">
       <li v-for="value in values" :id="value" :key="value" class="item">
-        {{ value }}
+        <input type="text" :value="value" />
       </li>
     </ul>
     <div class="values">

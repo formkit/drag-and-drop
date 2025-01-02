@@ -213,6 +213,8 @@ function handleRootPointerdown(_e: PointerEvent) {
 function handleRootPointerup(e: PointerEvent) {
   pd(e);
 
+  if (state.pointerDown) state.pointerDown.node.el.draggable = true;
+
   state.pointerDown = undefined;
 
   if (!isSynthDragState(state)) return;
@@ -254,7 +256,7 @@ function handleRootDragover(e: DragEvent) {
 function handleRootPointermove(e: PointerEvent) {
   if (!state.pointerDown) return;
 
-  //pd(e);
+  pd(e);
 
   const config = state.pointerDown.parent.data.config;
 
@@ -374,6 +376,8 @@ export function dragAndDrop<T>({
       handleNodeDragover,
       handleParentDragover,
       handleNodeDrop,
+      handleNodeFocus,
+      handleNodeBlur,
       handlePointercancel,
       handleEnd,
       handleDragend,
@@ -1073,9 +1077,10 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     dragleave: nodeEventData(config.handleNodeDragleave),
     dragend: nodeEventData(config.handleDragend),
     drop: nodeEventData(config.handleNodeDrop),
+    focus: nodeEventData(config.handleNodeFocus),
+    blur: nodeEventData(config.handleNodeBlur),
     pointerup: nodeEventData(config.handleNodePointerup),
     pointercancel: nodeEventData(config.handlePointercancel),
-
     pointerdown: nodeEventData(config.handleNodePointerdown),
     handleNodePointerover: config.handleNodePointerover,
     touchmove: (e: TouchEvent) => {
@@ -1089,6 +1094,8 @@ export function setupNode<T>(data: SetupNodeData<T>) {
   data.node.el.setAttribute("role", "option");
 
   data.node.el.setAttribute("aria-selected", "false");
+
+  data.node.el.draggable = true;
 
   config.reapplyDragClasses(data.node.el, data.parent.data);
 
@@ -1513,8 +1520,6 @@ export function handleNodePointerdown<T>(
     node: data.targetData.node,
   };
 
-  data.targetData.node.el.draggable = true;
-
   handleLongPress(data, state, data.targetData.node);
 
   const parentData = data.targetData.parent.data;
@@ -1522,6 +1527,7 @@ export function handleNodePointerdown<T>(
   let selectedNodes = [data.targetData.node];
 
   const commandKey = data.e.ctrlKey || data.e.metaKey;
+
   const shiftKey = data.e.shiftKey;
 
   const targetNode = data.targetData.node;
@@ -1822,8 +1828,6 @@ export function handleParentKeydown<T>(
   if (
     ["ArrowDown", "ArrowUp", "ArrowRight", "ArrowLeft"].includes(data.e.key)
   ) {
-    pd(data.e);
-
     const nextIndex =
       data.e.key === "ArrowDown" || data.e.key === "ArrowRight"
         ? index + 1
@@ -1835,8 +1839,6 @@ export function handleParentKeydown<T>(
 
     setActive(data.targetData.parent, nextNode, state);
   } else if (data.e.key === " ") {
-    pd(data.e);
-
     state.selectedState && state.selectedState.nodes.includes(activeDescendant)
       ? setSelected(
           data.targetData.parent,
@@ -1955,6 +1957,14 @@ export function handleNodeDrop<T>(
   dropped = true;
 
   config.handleEnd(state);
+}
+
+export function handleNodeFocus<T>(_data: NodeEventData<T>) {
+  if (state.pointerDown) state.pointerDown.node.el.draggable = false;
+}
+
+export function handleNodeBlur<T>(_data: NodeEventData<T>) {
+  if (state.pointerDown) state.pointerDown.node.el.draggable = true;
 }
 
 /**
@@ -2109,7 +2119,6 @@ export function handleNodePointerup<T>(
 ) {
   sp(data.e);
 
-  state.pointerDown = undefined;
   if (!state.pointerSelection && state.selectedState)
     deselect(state.selectedState.nodes, data.targetData.parent, state);
 
@@ -3282,6 +3291,7 @@ export function addEvents(
     el.addEventListener(eventName, handler, {
       signal: abortController.signal,
       passive: false,
+      capture: eventName === "focus" || eventName === "blur",
     });
   }
 
