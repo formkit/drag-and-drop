@@ -25,7 +25,6 @@ __export(src_exports, {
   addNodeClass: () => addNodeClass,
   addParentClass: () => addParentClass,
   animations: () => animations,
-  copyNodeStyle: () => copyNodeStyle,
   dragAndDrop: () => dragAndDrop,
   dragStateProps: () => dragStateProps,
   dragValues: () => dragValues,
@@ -1227,29 +1226,6 @@ function handleRootKeydown(e) {
 }
 function handleRootDrop(_e) {
 }
-function copyNodeStyle(sourceNode, targetNode, omitKeys = false) {
-  const computedStyle = window.getComputedStyle(sourceNode);
-  const omittedKeys = [
-    "position",
-    "z-index",
-    "top",
-    "left",
-    "x",
-    "pointer-events",
-    "y",
-    "transform-origin",
-    "filter",
-    "-webkit-text-fill-color"
-  ];
-  for (const key of Array.from(computedStyle)) {
-    if (omitKeys === false && key && omittedKeys.includes(key)) continue;
-    targetNode.style.setProperty(
-      key,
-      computedStyle.getPropertyValue(key),
-      computedStyle.getPropertyPriority(key)
-    );
-  }
-}
 function handleRootDragover(e) {
   if (!isDragState(state)) return;
   pd(e);
@@ -2358,14 +2334,13 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
       zIndex: 9999,
       pointerEvents: "none",
       margin: 0,
+      willChange: "transform",
       overflow: "hidden",
       display: "none"
     });
   } else {
     if (!config.multiDrag || draggedNodes2.length === 1) {
-      console.log("boom");
       dragImage = node.el.cloneNode(true);
-      copyNodeStyle(node.el, dragImage);
       dragImage.id = "dnd-dragged-node-clone";
       display = dragImage.style.display;
       dragImage.setAttribute("popover", "manual");
@@ -2375,16 +2350,15 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
         width: node.el.getBoundingClientRect().width + "px",
         overflow: "hidden",
         margin: 0,
+        willChange: "transform",
         pointerEvents: "none",
         zIndex: 9999
       });
     } else {
       const wrapper = document.createElement("div");
-      console.log("getting here");
       wrapper.setAttribute("popover", "manual");
       for (const node2 of draggedNodes2) {
         const clonedNode = node2.el.cloneNode(true);
-        copyNodeStyle(node2.el, clonedNode);
         clonedNode.style.pointerEvents = "none";
         wrapper.append(clonedNode);
       }
@@ -2470,9 +2444,12 @@ function moveNode(e, state2, scrollX2 = 0, scrollY2 = 0) {
   state2.coordinates.x = x;
   const startLeft = state2.startLeft ?? 0;
   const startTop = state2.startTop ?? 0;
+  console.log("window scroll y", window.scrollY);
+  console.log("start top", startTop);
   const translateX = x - startLeft + window.scrollX;
   const translateY = y - startTop + window.scrollY;
   state2.clonedDraggedNode.style.transform = `translate(${translateX + scrollX2}px, ${translateY + scrollY2}px)`;
+  console.log("translate y", translateY + scrollY2);
   if (e.cancelable) pd(e);
   pointermoveClasses(state2, state2.initialParent.data.config);
 }
@@ -2928,7 +2905,6 @@ function addEvents(el, events) {
   addNodeClass,
   addParentClass,
   animations,
-  copyNodeStyle,
   dragAndDrop,
   dragStateProps,
   dragValues,

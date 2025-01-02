@@ -241,37 +241,6 @@ function handleRootKeydown(e: KeyboardEvent) {
 
 function handleRootDrop(_e: DragEvent) {}
 
-export function copyNodeStyle(
-  sourceNode: HTMLElement,
-  targetNode: HTMLElement,
-  omitKeys = false
-) {
-  const computedStyle = window.getComputedStyle(sourceNode);
-
-  const omittedKeys = [
-    "position",
-    "z-index",
-    "top",
-    "left",
-    "x",
-    "pointer-events",
-    "y",
-    "transform-origin",
-    "filter",
-    "-webkit-text-fill-color",
-  ];
-
-  for (const key of Array.from(computedStyle)) {
-    if (omitKeys === false && key && omittedKeys.includes(key)) continue;
-
-    targetNode.style.setProperty(
-      key,
-      computedStyle.getPropertyValue(key),
-      computedStyle.getPropertyPriority(key)
-    );
-  }
-}
-
 /**
  * If we are currently dragging, then let's prevent default on dragover to avoid
  * the default behavior of the browser on drop.
@@ -2172,15 +2141,13 @@ function initSynthDrag<T>(
       zIndex: 9999,
       pointerEvents: "none",
       margin: 0,
+      willChange: "transform",
       overflow: "hidden",
       display: "none",
     });
   } else {
     if (!config.multiDrag || draggedNodes.length === 1) {
-      console.log("boom");
       dragImage = node.el.cloneNode(true) as HTMLElement;
-
-      copyNodeStyle(node.el, dragImage);
 
       dragImage.id = "dnd-dragged-node-clone";
 
@@ -2194,19 +2161,17 @@ function initSynthDrag<T>(
         width: node.el.getBoundingClientRect().width + "px",
         overflow: "hidden",
         margin: 0,
+        willChange: "transform",
         pointerEvents: "none",
         zIndex: 9999,
       });
     } else {
       const wrapper = document.createElement("div");
-      console.log("getting here");
 
       wrapper.setAttribute("popover", "manual");
 
       for (const node of draggedNodes) {
         const clonedNode = node.el.cloneNode(true) as HTMLElement;
-
-        copyNodeStyle(node.el, clonedNode);
 
         clonedNode.style.pointerEvents = "none";
 
