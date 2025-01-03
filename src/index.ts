@@ -1828,6 +1828,8 @@ export function handleParentKeydown<T>(
   if (
     ["ArrowDown", "ArrowUp", "ArrowRight", "ArrowLeft"].includes(data.e.key)
   ) {
+    if (data.e.target === data.targetData.parent.el) pd(data.e);
+
     const nextIndex =
       data.e.key === "ArrowDown" || data.e.key === "ArrowRight"
         ? index + 1
@@ -1839,6 +1841,8 @@ export function handleParentKeydown<T>(
 
     setActive(data.targetData.parent, nextNode, state);
   } else if (data.e.key === " ") {
+    if (data.e.target === data.targetData.parent.el) pd(data.e);
+
     state.selectedState && state.selectedState.nodes.includes(activeDescendant)
       ? setSelected(
           data.targetData.parent,
