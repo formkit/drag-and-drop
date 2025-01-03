@@ -1963,11 +1963,15 @@ export function handleNodeDrop<T>(
   config.handleEnd(state);
 }
 
-export function handleNodeFocus<T>(_data: NodeEventData<T>) {
+export function handleNodeFocus<T>(data: NodeEventData<T>) {
+  if (data.e.target === data.e.currentTarget) return;
+
   if (state.pointerDown) state.pointerDown.node.el.draggable = false;
 }
 
-export function handleNodeBlur<T>(_data: NodeEventData<T>) {
+export function handleNodeBlur<T>(data: NodeEventData<T>) {
+  if (data.e.target === data.e.currentTarget) return;
+
   if (state.pointerDown) state.pointerDown.node.el.draggable = true;
 }
 
@@ -2044,7 +2048,7 @@ export function handlePointercancel<T>(
  * @returns void
  */
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
-  if (state.draggedNode) state.draggedNode.el.draggable = false;
+  if (state.draggedNode) state.draggedNode.el.draggable = true;
 
   document.body.style.userSelect = state.rootUserSelect || "";
 
