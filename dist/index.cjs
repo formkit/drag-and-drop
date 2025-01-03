@@ -2162,11 +2162,13 @@ function handleParentKeydown(data, state2) {
   const index = enabledNodes.findIndex((x) => x.el === activeDescendant.el);
   if (index === -1) return;
   if (["ArrowDown", "ArrowUp", "ArrowRight", "ArrowLeft"].includes(data.e.key)) {
+    if (data.e.target === data.targetData.parent.el) pd(data.e);
     const nextIndex = data.e.key === "ArrowDown" || data.e.key === "ArrowRight" ? index + 1 : index - 1;
     if (nextIndex < 0 || nextIndex >= enabledNodes.length) return;
     const nextNode = enabledNodes[nextIndex];
     setActive(data.targetData.parent, nextNode, state2);
   } else if (data.e.key === " ") {
+    if (data.e.target === data.targetData.parent.el) pd(data.e);
     state2.selectedState && state2.selectedState.nodes.includes(activeDescendant) ? setSelected(
       data.targetData.parent,
       state2.selectedState.nodes.filter((x) => x.el !== activeDescendant.el),
@@ -2236,10 +2238,12 @@ function handleNodeDrop(data, state2) {
   dropped = true;
   config.handleEnd(state2);
 }
-function handleNodeFocus(_data) {
+function handleNodeFocus(data) {
+  if (data.e.target === data.e.currentTarget) return;
   if (state.pointerDown) state.pointerDown.node.el.draggable = false;
 }
-function handleNodeBlur(_data) {
+function handleNodeBlur(data) {
+  if (data.e.target === data.e.currentTarget) return;
   if (state.pointerDown) state.pointerDown.node.el.draggable = true;
 }
 function handleDragend(data, state2) {
@@ -2273,7 +2277,7 @@ function handlePointercancel(data, state2) {
   config?.handleEnd(state2);
 }
 function handleEnd3(state2) {
-  if (state2.draggedNode) state2.draggedNode.el.draggable = false;
+  if (state2.draggedNode) state2.draggedNode.el.draggable = true;
   document.body.style.userSelect = state2.rootUserSelect || "";
   if (isSynthDragState(state2)) {
     document.documentElement.style.overscrollBehavior = state2.rootOverScrollBehavior || "";

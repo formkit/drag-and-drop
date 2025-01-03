@@ -1193,8 +1193,8 @@ declare function handleNodePointerover<T>(e: PointeroverNodeEvent<T>): void;
  * @returns void
  */
 declare function handleNodeDrop<T>(data: NodeDragEventData<T>, state: DragState<T> | SynthDragState<T>): void;
-declare function handleNodeFocus<T>(_data: NodeEventData<T>): void;
-declare function handleNodeBlur<T>(_data: NodeEventData<T>): void;
+declare function handleNodeFocus<T>(data: NodeEventData<T>): void;
+declare function handleNodeBlur<T>(data: NodeEventData<T>): void;
 /**
  * Handle the drag end.
  *
