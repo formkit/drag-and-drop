@@ -256,14 +256,14 @@ function handleRootDragover(e: DragEvent) {
 function handleRootPointermove(e: PointerEvent) {
   if (!state.pointerDown) return;
 
-  pd(e);
-
   const config = state.pointerDown.parent.data.config;
 
   if (
     !isSynthDragState(state) &&
     (touchDevice || (!touchDevice && !config.nativeDrag))
   ) {
+    pd(e);
+
     if (config.longPress && !state.longPress) {
       clearTimeout(state.longPressTimeout);
 

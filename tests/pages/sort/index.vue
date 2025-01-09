@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../../src/vue/index";
 
-const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
-  draggingClass: "blue",
-});
+const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {});
 
 onMounted(() => {
   // Set initial scroll positions for testing
