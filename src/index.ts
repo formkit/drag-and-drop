@@ -1505,6 +1505,11 @@ export function handleNodePointerdown<T>(
 ) {
   sp(data.e);
 
+  state.pointerDown = {
+    parent: data.targetData.parent,
+    node: data.targetData.node,
+  };
+
   if (
     !validateDragHandle({
       x: data.e.clientX,
@@ -1514,11 +1519,6 @@ export function handleNodePointerdown<T>(
     })
   )
     return;
-
-  state.pointerDown = {
-    parent: data.targetData.parent,
-    node: data.targetData.node,
-  };
 
   handleLongPress(data, state, data.targetData.node);
 
