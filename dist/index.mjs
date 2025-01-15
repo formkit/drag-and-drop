@@ -1853,6 +1853,10 @@ function handleDragstart(data, _state) {
 }
 function handleNodePointerdown(data, state2) {
   sp(data.e);
+  state2.pointerDown = {
+    parent: data.targetData.parent,
+    node: data.targetData.node
+  };
   if (!validateDragHandle({
     x: data.e.clientX,
     y: data.e.clientY,
@@ -1860,10 +1864,6 @@ function handleNodePointerdown(data, state2) {
     config: data.targetData.parent.data.config
   }))
     return;
-  state2.pointerDown = {
-    parent: data.targetData.parent,
-    node: data.targetData.node
-  };
   handleLongPress(data, state2, data.targetData.node);
   const parentData = data.targetData.parent.data;
   let selectedNodes = [data.targetData.node];
