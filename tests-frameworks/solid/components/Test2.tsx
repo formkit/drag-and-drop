@@ -20,13 +20,13 @@ function Test2(props: { id: string; testDescription: string }) {
 
   const playingCards = (
     <For each={values()}>
-      {card=>(
+      {(card) => (
         <li class="item" id={props.id + "_" + card.id}>
           <img src={card.src} />
         </li>
       )}
     </For>
-  )
+  );
 
   function addValue() {
     setValues([
@@ -53,7 +53,9 @@ function Test2(props: { id: string; testDescription: string }) {
         Disable
       </button>
       <span id={props.id + "_values"}>
-        {values().map((x: { id: string; src: string }) => x.id).join(" ")}
+        {values()
+          .map((x: { id: string; src: string }) => x.id)
+          .join(" ")}
       </span>
     </>
   );

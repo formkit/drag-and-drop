@@ -8,5 +8,13 @@ import solid from "vite-plugin-solid";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [vue(), react(), solid()],
+  plugins: [
+    vue(),
+    react({
+      include: "./react/**/*.tsx",
+    }),
+    solid({
+      include: "./solid/**/*.tsx",
+    }),
+  ],
 });

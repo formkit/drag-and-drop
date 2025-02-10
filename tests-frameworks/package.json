@@ -10,6 +10,7 @@
   },
   "devDependencies": {
     "@types/react": "^18.2.55",
+    "@types/react-dom": "^19.0.3",
     "typescript": "^5.2.2",
     "vite": "^5.0.8"
   },
@@ -19,7 +20,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "solid-js": "^1.9.2",
-    "vue": "^3.4.15",
-    "vite-plugin-solid": "^2.10.2"
+    "vite-plugin-solid": "^2.10.2",
+    "vue": "^3.4.15"
   }
 }
