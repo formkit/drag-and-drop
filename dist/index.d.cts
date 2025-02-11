@@ -680,6 +680,7 @@ type BaseDragState<T> = {
     pointerDown: {
         parent: ParentRecord<T>;
         node: NodeRecord<T>;
+        validated: boolean;
     } | undefined;
     /**
      * The original z-index of the dragged node.

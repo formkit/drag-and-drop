@@ -1228,13 +1228,17 @@ function handleRootKeydown(e) {
   }
 }
 function handleRootDrop(_e) {
+  if (!isDragState(state)) return;
+  dropped = true;
+  const handleEnd4 = state.initialParent.data.config.handleEnd;
+  handleEnd4(state);
 }
 function handleRootDragover(e) {
   if (!isDragState(state)) return;
   pd(e);
 }
 function handleRootPointermove(e) {
-  if (!state.pointerDown) return;
+  if (!state.pointerDown || !state.pointerDown.validated) return;
   const config = state.pointerDown.parent.data.config;
   if (!isSynthDragState(state) && (touchDevice || !touchDevice && !config.nativeDrag)) {
     pd(e);
@@ -1675,7 +1679,8 @@ function setup(parent, parentData) {
             node: {
               el: draggableItem,
               data: nodeData
-            }
+            },
+            validated: true
           };
           draggableItem.draggable = true;
         }
@@ -1946,7 +1951,8 @@ function handleNodePointerdown(data, state2) {
   sp(data.e);
   state2.pointerDown = {
     parent: data.targetData.parent,
-    node: data.targetData.node
+    node: data.targetData.node,
+    validated: false
   };
   if (!validateDragHandle({
     x: data.e.clientX,
@@ -1955,6 +1961,11 @@ function handleNodePointerdown(data, state2) {
     config: data.targetData.parent.data.config
   }))
     return;
+  state2.pointerDown = {
+    parent: data.targetData.parent,
+    node: data.targetData.node,
+    validated: true
+  };
   handleLongPress(data, state2, data.targetData.node);
   const parentData = data.targetData.parent.data;
   let selectedNodes = [data.targetData.node];

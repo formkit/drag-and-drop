@@ -789,6 +789,7 @@ export type BaseDragState<T> = {
     | {
         parent: ParentRecord<T>;
         node: NodeRecord<T>;
+        validated: boolean;
       }
     | undefined;
   /**
