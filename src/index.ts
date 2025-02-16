@@ -241,7 +241,15 @@ function handleRootKeydown(e: KeyboardEvent) {
   }
 }
 
-function handleRootDrop(_e: DragEvent) {}
+function handleRootDrop(_e: DragEvent) {
+  if (!isDragState(state)) return;
+
+  dropped = true;
+
+  const handleEnd = state.initialParent.data.config.handleEnd;
+
+  handleEnd(state);
+}
 
 /**
  * If we are currently dragging, then let's prevent default on dragover to avoid
@@ -254,7 +262,7 @@ function handleRootDragover(e: DragEvent) {
 }
 
 function handleRootPointermove(e: PointerEvent) {
-  if (!state.pointerDown) return;
+  if (!state.pointerDown || !state.pointerDown.validated) return;
 
   const config = state.pointerDown.parent.data.config;
 
@@ -1029,6 +1037,7 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
               el: draggableItem,
               data: nodeData,
             },
+            validated: true,
           };
 
           draggableItem.draggable = true;
@@ -1508,6 +1517,7 @@ export function handleNodePointerdown<T>(
   state.pointerDown = {
     parent: data.targetData.parent,
     node: data.targetData.node,
+    validated: false,
   };
 
   if (
@@ -1519,6 +1529,12 @@ export function handleNodePointerdown<T>(
     })
   )
     return;
+
+  state.pointerDown = {
+    parent: data.targetData.parent,
+    node: data.targetData.node,
+    validated: true,
+  };
 
   handleLongPress(data, state, data.targetData.node);
 
@@ -2017,6 +2033,7 @@ export function handlePointercancel<T>(
   state: DragState<T> | SynthDragState<T> | BaseDragState<T>
 ) {
   if (!isSynthDragState(state)) return;
+
   pd(data.e);
 
   if (dropped) {
