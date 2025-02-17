@@ -1,5 +1,6 @@
-import { dragAndDrop as initParent, isBrowser, ParentConfig, tearDown } from "../index";
-import { createEffect, createSignal, on, type Accessor, type Signal, type Setter } from "solid-js";
+import { dragAndDrop as initParent, isBrowser, type ParentConfig, tearDown } from "../index";
+import { createSignal, type Accessor, type Signal, type Setter, onCleanup, onMount } from "solid-js";
+import { createStore, Store } from "solid-js/store";
 import type { SolidDragAndDropConfig } from "./types";
 import { handleSolidElements } from "./utils";
 
@@ -76,24 +77,32 @@ export function dragAndDrop<E extends HTMLElement, I>(
 /**
  * Hook for adding drag and drop/sortable support to a list of items.
  *
- * @param list - Initial list of data.
+ * @param initValues - Initial list of data.
  * @param options - The drag and drop configuration.
  * @returns
  */
 export function useDragAndDrop<E extends HTMLElement, T = unknown>(
-  list: T[],
+  initValues: T[],
   options: Partial<ParentConfig<T>> = {}
-): [Accessor<E | null>, Accessor<T[]>, Setter<T[]>, (config?: Partial<ParentConfig<T>>) => void] {
-  const [parent] = createSignal<E | null>(null);
+): [
+  Setter<E | null>,
+  Accessor<Store<T[]>>,
+  ReturnType<typeof createStore<T[]>>[1], // Return type of `createStore` will change in solid-js 2, so use `ReturnType` util here
+  (config?: Partial<ParentConfig<T>>) => void
+] {
+  const [parent, setParent] = createSignal<E | null>(null);
 
-  const [values, setValues] = createSignal(list);
+  const [values, setValues] = createStore(initValues);
 
   function updateConfig(config: Partial<ParentConfig<T>> = {}) {
-    dragAndDrop({ parent, state: [values, setValues], ...config });
+    dragAndDrop({ parent, state: [() => values, setValues], ...config });
   }
 
-  createEffect(on(values, () => updateConfig(options)));
-  createEffect(on(parent, (e) => e && tearDown(e)))
+  onMount(() => dragAndDrop({ parent, state: [() => values, setValues], ...options }));
+  onCleanup(() => {
+    const p = parent();
+    p && tearDown(p);
+  });
 
-  return [parent, values, setValues, updateConfig];
+  return [setParent, () => values, setValues, updateConfig];
 }

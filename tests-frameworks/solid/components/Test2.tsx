@@ -1,5 +1,6 @@
 import { For } from "solid-js";
 import { useDragAndDrop } from "../../../src/solid/index";
+import { produce } from "solid-js/store";
 
 function Test2(props: { id: string; testDescription: string }) {
   const playingCardAssets = [
@@ -29,10 +30,7 @@ function Test2(props: { id: string; testDescription: string }) {
   )
 
   function addValue() {
-    setValues([
-      ...values(),
-      { id: "queen_of_spades", src: "/cards/queen_of_spades.png" },
-    ]);
+    setValues(produce((cards) => cards.push({ id: "queen_of_spades", src: "/cards/queen_of_spades.png" })));
   }
 
   function disable() {
