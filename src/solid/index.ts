@@ -87,7 +87,7 @@ export function useDragAndDrop<E extends HTMLElement, T = unknown>(
 ): [
   Setter<E | null>,
   Accessor<Store<T[]>>,
-  ReturnType<typeof createStore<T[]>>[1], // Return type of `createStore` will change in solid-js 2, so use `ReturnType` util here
+  ReturnType<typeof createStore<T[]>>[1], // Return type of `createStore` will be changed in solid-js 2, so use `ReturnType` util here
   (config?: Partial<ParentConfig<T>>) => void
 ] {
   const [parent, setParent] = createSignal<E | null>(null);
