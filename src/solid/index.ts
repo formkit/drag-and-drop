@@ -1,13 +1,13 @@
 import { dragAndDrop as initParent, isBrowser, type ParentConfig, tearDown } from "../index";
-import { createSignal, type Accessor, type Signal, type Setter, onCleanup, onMount } from "solid-js";
+import { createSignal, type Accessor, type Setter, onCleanup, onMount } from "solid-js";
 import { createStore, Store } from "solid-js/store";
-import type { SolidDragAndDropConfig } from "./types";
+import type { SolidDragAndDropConfig, SolidState } from "./types";
 import { handleSolidElements } from "./utils";
 
 /**
  * Global store for parent els to values.
  */
-const parentValues: WeakMap<HTMLElement, Signal<Array<any>>> =
+const parentValues: WeakMap<HTMLElement, SolidState<any>> =
   new WeakMap();
 
 /**
@@ -49,7 +49,7 @@ function setValues(newValues: Array<any>, parent: HTMLElement): void {
 
 function handleParent<E extends Accessor<HTMLElement | null> | HTMLElement, T>(
   config: Partial<SolidDragAndDropConfig<E, T[]>>,
-  values: Signal<T[]>
+  values: SolidState<T[]>
 ) {
   return (el: HTMLElement) => {
     parentValues.set(el, values);
