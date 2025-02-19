@@ -7,7 +7,5 @@
     "paths": {
       "~/*": ["./*"]
     }
-  },
-  "files": ["./examples/sorting/sorting-solid.tsx"],
-  "include": ["./examples/**/*"]
+  }
 }

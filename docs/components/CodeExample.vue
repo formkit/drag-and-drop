@@ -1,4 +1,7 @@
 <script lang="ts" setup>
+import { ref } from "vue";
+import type { Component } from "vue";
+
 const props = defineProps<{
   example: string;
 }>();

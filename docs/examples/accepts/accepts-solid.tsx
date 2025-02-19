@@ -24,7 +24,11 @@ export default function MyComponent() {
 
   const config1: Partial<ParentConfig<string>> = {};
   config1.accepts = (_parent, lastParent) => {
-    if (lastParent.el === target2()) {
+    if (
+      target2 &&
+      target2 instanceof HTMLElement &&
+      lastParent.el === target2
+    ) {
       return false;
     }
     return items2().length < 3;
@@ -32,7 +36,11 @@ export default function MyComponent() {
 
   const config2: Partial<ParentConfig<string>> = {};
   config2.accepts = (_parent, lastParent) => {
-    if (lastParent.el === target1()) {
+    if (
+      target1 &&
+      target1 instanceof HTMLElement &&
+      lastParent.el === target1
+    ) {
       return false;
     }
     return items3().length < 5;

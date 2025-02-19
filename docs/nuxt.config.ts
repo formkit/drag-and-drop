@@ -1,5 +1,3 @@
-import { defineNuxtConfig } from "nuxt/config";
-
 const title = "Drag & Drop • by FormKit";
 const description =
   "An open-source JavaScript library for declarative data-first drag & drop.";
