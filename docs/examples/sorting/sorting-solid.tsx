@@ -1,6 +1,6 @@
 /** @jsxImportSource solid-js */
 import { For, type JSX } from "solid-js";
-import { useDragAndDrop } from "../../../src/solid/index";
+import { useDragAndDrop } from "@formkit/drag-and-drop/solid";
 
 export const MyComponent = (): JSX.Element => {
   const [parent, tapes] = useDragAndDrop<HTMLUListElement, string>([
