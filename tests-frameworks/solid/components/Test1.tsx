@@ -1,6 +1,7 @@
-import { createSignal, createEffect, For } from "solid-js";
+import { createSignal, For, onMount } from "solid-js";
 
 import { dragAndDrop } from "../../../src/solid/index";
+import { createStore, produce } from "solid-js/store";
 
 function Test1(props: { id: string; testDescription: string }) {
   const playingCardAssets = [
@@ -14,13 +15,13 @@ function Test1(props: { id: string; testDescription: string }) {
     },
   ];
 
-  const [values, setValues] = createSignal(playingCardAssets);
+  const [values, setValues] = createStore(playingCardAssets);
 
   const [parent, setParent] = createSignal<HTMLElement | null>(null);
 
   const playingCards = (
-    <For each={values()}>
-      {card=>(
+    <For each={values}>
+      {(card) => (
         <li class="item" id={props.id + "_" + card.id}>
           <img src={card.src} />
         </li>
@@ -28,24 +29,21 @@ function Test1(props: { id: string; testDescription: string }) {
     </For>
   )
 
-  createEffect(() => {
+  onMount(() => {
     dragAndDrop({
       parent,
-      state: [values, setValues],
+      state: [() => values, setValues],
     });
   });
 
   function addValue() {
-    setValues([
-      ...values(),
-      { id: "queen_of_spades", src: "/cards/queen_of_spades.png" },
-    ]);
+    setValues(produce((cards) => cards.push({ id: "queen_of_spades", src: "/cards/queen_of_spades.png" })));
   }
 
   function disable() {
     dragAndDrop({
       parent,
-      state: [values, setValues],
+      state: [() => values, setValues],
       disabled: true,
     });
   }
@@ -63,7 +61,7 @@ function Test1(props: { id: string; testDescription: string }) {
         Disable
       </button>
       <span id={props.id + "_values"}>
-        {values().map((x: { id: string; src: string }) => x.id).join(" ")}
+        {values.map((x: { id: string; src: string }) => x.id).join(" ")}
       </span>
     </>
   );
