@@ -22,7 +22,7 @@
       Drag and drop ships two main functions: <code>dragAndDrop</code> and
       <code>useDragAndDrop</code>. These can be imported for your framework of
       choice by using the subpath import
-      <code>@formkit/drag-and-drop/{react/vue}</code>. A native JavaScript
+      <code>@formkit/drag-and-drop/{react/vue/solid}</code>. A native JavaScript
       version of the <code>dragAndDrop</code> function is also available at
       <code>@formkit/drag-and-drop</code>.
     </p>
@@ -34,14 +34,14 @@
     <h3>useDragAndDrop</h3>
     <p>
       The <code>useDragAndDrop</code> hook is the most convenient way to add
-      Drag and Drop to your app and is available for React and Vue. Call this
-      function with an initial array of values and the configuration options. It
-      returns an array of values containing a a template ref, a reactive set of
-      values (and a setter in the case of React), as well as a function to
-      update the parent's config. The template ref should be assigned to the
-      parent DOM element of the items you wish to make draggable. The reactive
-      array of values should be used in your template to render the draggable
-      elements.
+      Drag and Drop to your app and is available for React, Vue, and Solid. Call
+      this function with an initial array of values and the configuration
+      options. It returns an array of values containing a a template ref, a
+      reactive set of values (and a setter in the case of React), as well as a
+      function to update the parent's config. The template ref should be
+      assigned to the parent DOM element of the items you wish to make
+      draggable. The reactive array of values should be used in your template to
+      render the draggable elements.
     </p>
     <code class="block"
       ><div>

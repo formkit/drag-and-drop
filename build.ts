@@ -45,6 +45,19 @@ const __dirname = dirname(__filename);
     outExtension: ({ format }) => ({ js: format === "cjs" ? ".cjs" : ".mjs" }),
   });
 
+  // Build the solid entry
+  await build({
+    entry: ["src/solid/index.ts"],
+    format: ["cjs", "esm"],
+    external: ["solid-js", "../index", "../utils"],
+    splitting: false,
+    sourcemap: true,
+    clean: true,
+    dts: true,
+    outDir: "dist/solid",
+    outExtension: ({ format }) => ({ js: format === "cjs" ? ".cjs" : ".mjs" }),
+  });
+
   async function replaceImports(fileName) {
     const format = fileName.endsWith("mjs") ? "mjs" : "cjs";
     const file = await readFile(resolve(__dirname, `${fileName}`), "utf8");

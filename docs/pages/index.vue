@@ -16,11 +16,11 @@
       <SectionIntroduction />
       <SectionGettingStarted />
       <SectionCoreFeatures />
-      <SectionPlugins />
+      <!--<SectionPlugins />
       <SectionEvents />
       <SectionConfiguration />
       <SectionAccessibility />
-      <SectionSupport />
+      <SectionSupport />-->
     </div>
   </main>
   <TheFooter />

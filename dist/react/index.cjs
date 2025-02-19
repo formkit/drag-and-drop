@@ -18,12 +18,12 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/react/index.ts
-var react_exports = {};
-__export(react_exports, {
+var index_exports = {};
+__export(index_exports, {
   dragAndDrop: () => dragAndDrop,
   useDragAndDrop: () => useDragAndDrop
 });
-module.exports = __toCommonJS(react_exports);
+module.exports = __toCommonJS(index_exports);
 var import_react = require("react");
 var import__ = require("../index.cjs");
 

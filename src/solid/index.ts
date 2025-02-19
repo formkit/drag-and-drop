@@ -1,5 +1,16 @@
-import { dragAndDrop as initParent, isBrowser, type ParentConfig, tearDown } from "../index";
-import { createSignal, type Accessor, type Setter, onCleanup, onMount } from "solid-js";
+import {
+  dragAndDrop as initParent,
+  isBrowser,
+  type ParentConfig,
+  tearDown,
+} from "../index";
+import {
+  createSignal,
+  type Accessor,
+  type Setter,
+  onCleanup,
+  onMount,
+} from "solid-js";
 import { createStore, Store } from "solid-js/store";
 import type { SolidDragAndDropConfig, SolidState } from "./types";
 import { handleSolidElements } from "./utils";
@@ -7,8 +18,7 @@ import { handleSolidElements } from "./utils";
 /**
  * Global store for parent els to values.
  */
-const parentValues: WeakMap<HTMLElement, SolidState<any>> =
-  new WeakMap();
+const parentValues: WeakMap<HTMLElement, SolidState<any>> = new WeakMap();
 
 /**
  * Returns the values of the parent element.
@@ -41,10 +51,7 @@ function getValues<T>(parent: HTMLElement): Array<T> {
 function setValues(newValues: Array<any>, parent: HTMLElement): void {
   const currentValues = parentValues.get(parent);
 
-  if (currentValues)
-    currentValues[1](newValues);
-  
-  // parentValues.set(parent, currentValues!);
+  if (currentValues) currentValues[1](newValues);
 }
 
 function handleParent<E extends Accessor<HTMLElement | null> | HTMLElement, T>(
@@ -60,8 +67,8 @@ function handleParent<E extends Accessor<HTMLElement | null> | HTMLElement, T>(
 
 export function dragAndDrop<E extends HTMLElement, I>(
   data:
-  | SolidDragAndDropConfig<Accessor<E| null> | HTMLElement, I[]>
-  | Array<SolidDragAndDropConfig<Accessor<E| null> | HTMLElement, I[]>>
+    | SolidDragAndDropConfig<Accessor<E | null> | HTMLElement, I[]>
+    | Array<SolidDragAndDropConfig<Accessor<E | null> | HTMLElement, I[]>>
 ): void {
   if (!isBrowser) return;
 
@@ -98,7 +105,9 @@ export function useDragAndDrop<E extends HTMLElement, T = unknown>(
     dragAndDrop({ parent, state: [() => values, setValues], ...config });
   }
 
-  onMount(() => dragAndDrop({ parent, state: [() => values, setValues], ...options }));
+  onMount(() =>
+    dragAndDrop({ parent, state: [() => values, setValues], ...options })
+  );
   onCleanup(() => {
     const p = parent();
     p && tearDown(p);

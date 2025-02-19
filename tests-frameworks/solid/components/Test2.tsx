@@ -2,8 +2,13 @@ import { For } from "solid-js";
 import { useDragAndDrop } from "../../../src/solid/index";
 import { produce } from "solid-js/store";
 
+type PlayingCard = {
+  id: string;
+  src: string;
+};
+
 function Test2(props: { id: string; testDescription: string }) {
-  const playingCardAssets = [
+  const playingCardAssets: PlayingCard[] = [
     {
       id: "10_of_clubs",
       src: "/cards/10_of_clubs.png",
@@ -16,7 +21,7 @@ function Test2(props: { id: string; testDescription: string }) {
 
   const [parent, values, setValues, updateConfig] = useDragAndDrop<
     HTMLUListElement,
-    any
+    PlayingCard
   >(playingCardAssets);
 
   const playingCards = (
@@ -30,7 +35,11 @@ function Test2(props: { id: string; testDescription: string }) {
   );
 
   function addValue() {
-    setValues(produce((cards) => cards.push({ id: "queen_of_spades", src: "/cards/queen_of_spades.png" })));
+    setValues(
+      produce((cards) =>
+        cards.push({ id: "queen_of_spades", src: "/cards/queen_of_spades.png" })
+      )
+    );
   }
 
   function disable() {
@@ -52,7 +61,7 @@ function Test2(props: { id: string; testDescription: string }) {
       </button>
       <span id={props.id + "_values"}>
         {values()
-          .map((x: { id: string; src: string }) => x.id)
+          .map((x: PlayingCard) => x.id)
           .join(" ")}
       </span>
     </>

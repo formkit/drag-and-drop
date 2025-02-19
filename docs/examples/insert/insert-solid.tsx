@@ -1,6 +1,8 @@
-import React from "react";
+/** @jsxImportSource solid-js */
+import { createSignal } from "solid-js";
+import { For } from "solid-js";
 import { insert } from "@formkit/drag-and-drop";
-import { useDragAndDrop } from "@formkit/drag-and-drop/react";
+import { useDragAndDrop } from "@formkit/drag-and-drop/solid";
 
 const insertPointClasses = [
   "absolute",
@@ -26,7 +28,7 @@ const insertPointClasses = [
   "before:text-xs",
 ];
 
-export function myComponent() {
+export function MyComponent() {
   const todoItems = [
     "Schedule perm",
     "Rewind VHS tapes",
@@ -36,8 +38,8 @@ export function myComponent() {
     "Return Nintendo Power Glove",
   ];
 
-  const [todoSwap, setTodoSwap] = React.useState(false);
-  const [doneSwap, setDoneSwap] = React.useState(false);
+  const [todoSwap, setTodoSwap] = createSignal(false);
+  const [doneSwap, setDoneSwap] = createSignal(false);
 
   const doneItems = ["Pickup new mix-tape from Beth"];
 
@@ -77,21 +79,25 @@ export function myComponent() {
     }
   );
 
+  function toggleTodoSwap() {
+    setTodoSwap(!todoSwap());
+  }
+
+  function toggleDoneSwap() {
+    setDoneSwap(!doneSwap());
+  }
+
   return (
-    <div className="kanban-board">
+    <div class="kanban-board">
       <ul ref={todoList}>
-        {todos.map((todo) => (
-          <li className="kanban-item" key={todo}>
-            {todo}
-          </li>
-        ))}
+        <For each={todos()}>
+          {(todo) => <li class="kanban-item">{todo}</li>}
+        </For>
       </ul>
       <ul ref={doneList}>
-        {dones.map((done) => (
-          <li className="kanban-item" key={done}>
-            {done}
-          </li>
-        ))}
+        <For each={dones()}>
+          {(done) => <li class="kanban-item">{done}</li>}
+        </For>
       </ul>
     </div>
   );

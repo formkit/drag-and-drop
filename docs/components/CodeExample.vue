@@ -39,6 +39,16 @@ try {
       <li
         class="example-tab"
         @click="
+          exampleLang = 'solid';
+          expanded = true;
+        "
+        :data-active="exampleLang === 'solid'"
+      >
+        <IconSolid class="inline-block w-4 sm:w-5 mr-1.5" /> Solid
+      </li>
+      <li
+        class="example-tab"
+        @click="
           exampleLang = 'native';
           expanded = true;
         "
@@ -69,6 +79,9 @@ try {
       </div>
       <div v-show="exampleLang === 'vue'">
         <CodeExampleVue :example="example" />
+      </div>
+      <div v-show="exampleLang === 'solid'">
+        <CodeExampleSolid :example="example" />
       </div>
       <div v-show="exampleLang === 'native'">
         <CodeExampleNative :example="example" />

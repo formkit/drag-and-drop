@@ -277,6 +277,13 @@ onMounted(() => {
                         <FrameworkIcons active="vue" />
                       </li>
                       <li
+                        v-if="framework !== 'solid'"
+                        @click="handleFrameworkSelect('solid')"
+                        class="p-2 w-full text-center hover:bg-white/60 dark:hover:bg-white/20"
+                      >
+                        <FrameworkIcons active="solid" />
+                      </li>
+                      <li
                         v-if="framework !== 'native'"
                         @click="handleFrameworkSelect('native')"
                         class="p-2 w-full text-center hover:bg-white/60 dark:hover:bg-white/20"
