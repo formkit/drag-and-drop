@@ -15,21 +15,24 @@ export default defineConfig({
   projects: [
     {
       name: "Desktop Chrome",
-      testMatch: "tests/drag/**/*.spec.ts",
+      testMatch: ["tests/drag/**/*.spec.ts", "tests-frameworks/**/*.spec.ts"],
+
       use: {
         ...devices["Desktop Chrome"],
       },
     },
     {
       name: "Desktop Firefox",
-      testMatch: "tests/drag/**/*.spec.ts",
+      testMatch: ["tests/drag/**/*.spec.ts", "tests-frameworks/**/*.spec.ts"],
+
       use: {
         ...devices["Desktop Firefox"],
       },
     },
     {
       name: "Desktop Webkit",
-      testMatch: "tests/drag/**/*.spec.ts",
+      testMatch: ["tests/drag/**/*.spec.ts", "tests-frameworks/**/*.spec.ts"],
+
       use: {
         ...devices["Desktop Webkit"],
       },
