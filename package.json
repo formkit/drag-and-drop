@@ -1,5 +1,5 @@
 {
-  "version": "0.3.4",
+  "version": "0.4.0",
   "private": true,
   "description": "Drag and drop package.",
   "main": "./index.cjs",
@@ -52,6 +52,16 @@
       "import": {
         "types": "./react/index.d.ts",
         "default": "./react/index.mjs"
+      }
+    },
+    "./solid": {
+      "require": {
+        "types": "./solid/index.d.cts",
+        "default": "./solid/index.cjs"
+      },
+      "import": {
+        "types": "./solid/index.d.ts",
+        "default": "./solid/index.mjs"
       }
     },
     ".": {
