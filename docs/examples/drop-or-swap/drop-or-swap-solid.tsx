@@ -2,7 +2,7 @@
 import { createSignal } from "solid-js";
 import { For } from "solid-js";
 import { dropOrSwap } from "@formkit/drag-and-drop";
-import { useDragAndDrop } from "../../../src/solid/index";
+import { useDragAndDrop } from "@formkit/drag-and-drop/solid";
 
 export function MyComponent() {
   const todoItems = [
