@@ -1,5 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
-import { dragDrop } from "../../utils";
+import { drag } from "../../utils";
 
 let page: Page;
 
@@ -11,7 +11,7 @@ test.describe("Sorting", async () => {
   test("Drag sort", async () => {
     await page.goto("http://localhost:3001/sort");
     await new Promise((r) => setTimeout(r, 1000));
-    await dragDrop(page, {
+    await drag(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
       dragStart: true,
@@ -19,7 +19,7 @@ test.describe("Sorting", async () => {
     await expect(page.locator("#sort_values")).toHaveText(
       "Banana Apple Orange"
     );
-    await dragDrop(page, {
+    await drag(page, {
       originEl: { id: "Banana", position: "center" },
       destinationEl: { id: "Orange", position: "center" },
       drop: true,
@@ -27,7 +27,7 @@ test.describe("Sorting", async () => {
     await expect(page.locator("#sort_values")).toHaveText(
       "Banana Orange Apple"
     );
-    await dragDrop(page, {
+    await drag(page, {
       originEl: { id: "Banana", position: "center" },
       destinationEl: { id: "Orange", position: "center" },
       dragStart: true,
@@ -35,7 +35,7 @@ test.describe("Sorting", async () => {
     await expect(page.locator("#sort_values")).toHaveText(
       "Orange Banana Apple"
     );
-    await dragDrop(page, {
+    await drag(page, {
       originEl: { id: "Banana", position: "center" },
       destinationEl: { id: "Apple", position: "center" },
     });
@@ -47,7 +47,7 @@ test.describe("Sorting", async () => {
   test("Uneven drag sort", async () => {
     await page.goto("http://localhost:3001/sort/uneven");
     await new Promise((r) => setTimeout(r, 1000));
-    await dragDrop(page, {
+    await drag(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
       dragStart: true,
@@ -55,7 +55,7 @@ test.describe("Sorting", async () => {
     await expect(page.locator("#sort_values")).toHaveText(
       "Banana Apple Orange"
     );
-    await dragDrop(page, {
+    await drag(page, {
       originEl: { id: "Banana", position: "center" },
       destinationEl: { id: "Orange", position: "center" },
       drop: true,
@@ -63,7 +63,7 @@ test.describe("Sorting", async () => {
     await expect(page.locator("#sort_values")).toHaveText(
       "Banana Orange Apple"
     );
-    await dragDrop(page, {
+    await drag(page, {
       originEl: { id: "Banana", position: "center" },
       destinationEl: { id: "Orange", position: "center" },
       dragStart: true,
@@ -71,7 +71,7 @@ test.describe("Sorting", async () => {
     await expect(page.locator("#sort_values")).toHaveText(
       "Orange Banana Apple"
     );
-    await dragDrop(page, {
+    await drag(page, {
       originEl: { id: "Banana", position: "center" },
       destinationEl: { id: "Apple", position: "center" },
     });
@@ -83,7 +83,7 @@ test.describe("Sorting", async () => {
   test("Sort with animations", async () => {
     await page.goto("http://localhost:3001/sort/animations");
     await new Promise((r) => setTimeout(r, 1000));
-    await dragDrop(page, {
+    await drag(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
       dragStart: true,
@@ -91,7 +91,7 @@ test.describe("Sorting", async () => {
     await expect(page.locator("#sort_values")).toHaveText(
       "Banana Apple Orange"
     );
-    await dragDrop(page, {
+    await drag(page, {
       originEl: { id: "Banana", position: "center" },
       destinationEl: { id: "Orange", position: "center" },
       drop: true,
@@ -99,7 +99,7 @@ test.describe("Sorting", async () => {
     await expect(page.locator("#sort_values")).toHaveText(
       "Banana Orange Apple"
     );
-    await dragDrop(page, {
+    await drag(page, {
       originEl: { id: "Banana", position: "center" },
       destinationEl: { id: "Orange", position: "center" },
       dragStart: true,
@@ -107,7 +107,7 @@ test.describe("Sorting", async () => {
     await expect(page.locator("#sort_values")).toHaveText(
       "Orange Banana Apple"
     );
-    await dragDrop(page, {
+    await drag(page, {
       originEl: { id: "Banana", position: "center" },
       destinationEl: { id: "Apple", position: "center" },
     });
@@ -119,7 +119,7 @@ test.describe("Sorting", async () => {
   test("Sort with uneven els and animations", async () => {
     await page.goto("http://localhost:3001/sort/uneven-animations");
     await new Promise((r) => setTimeout(r, 1000));
-    await dragDrop(page, {
+    await drag(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
       dragStart: true,
@@ -127,7 +127,7 @@ test.describe("Sorting", async () => {
     await expect(page.locator("#sort_values")).toHaveText(
       "Banana Apple Orange"
     );
-    await dragDrop(page, {
+    await drag(page, {
       originEl: { id: "Banana", position: "center" },
       destinationEl: { id: "Orange", position: "center" },
       drop: true,
@@ -135,7 +135,7 @@ test.describe("Sorting", async () => {
     await expect(page.locator("#sort_values")).toHaveText(
       "Banana Orange Apple"
     );
-    await dragDrop(page, {
+    await drag(page, {
       originEl: { id: "Banana", position: "center" },
       destinationEl: { id: "Orange", position: "center" },
       dragStart: true,
@@ -143,7 +143,7 @@ test.describe("Sorting", async () => {
     await expect(page.locator("#sort_values")).toHaveText(
       "Orange Banana Apple"
     );
-    await dragDrop(page, {
+    await drag(page, {
       originEl: { id: "Banana", position: "center" },
       destinationEl: { id: "Apple", position: "center" },
     });

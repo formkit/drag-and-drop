@@ -1,10 +1,9 @@
 import React from "react";
 import Test1 from "./components/Test1";
 import Test2 from "./components/Test2";
-
 import reactLogo from "/reactjs-icon.svg";
 
-function App() {
+const App: React.FC = () => {
   return (
     <>
       <div className="logo">
@@ -17,6 +16,6 @@ function App() {
       </div>
     </>
   );
-}
+};
 
 export default App;

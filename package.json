@@ -1,5 +1,5 @@
 {
-  "version": "0.1.6",
+  "version": "0.4.0",
   "private": true,
   "description": "Drag and drop package.",
   "main": "./index.cjs",
@@ -8,8 +8,6 @@
   "scripts": {
     "tests": "cd tests && pnpm run dev",
     "tests-frameworks": "cd tests-frameworks && pnpm run dev",
-    "playground-nuxt": "cd playground/nuxt && pnpm run dev",
-    "playground-next": "cd playground/next && pnpm run dev",
     "docs": "cd docs && pnpm run dev",
     "build": "jiti build.ts",
     "release": "npx bumpp --no-tag --no-push --no-commit && pnpm run build && cd dist && npx publint && pnpm publish --no-git-checks",
@@ -20,6 +18,7 @@
   "author": "Sasha Milenkovic <sasha@formkit.com>",
   "license": "MIT",
   "devDependencies": {
+    "@formkit/drag-and-drop": "^0.2.3",
     "@playwright/test": "^1.42.1",
     "@types/react": "^18.2.73",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
@@ -30,6 +29,7 @@
     "jiti": "^1.21.0",
     "pathe": "^1.1.2",
     "publint": "^0.2.7",
+    "tailwind": "^4.0.0",
     "tsup": "^8.0.2",
     "typescript": "^5.4.3"
   },
@@ -52,6 +52,16 @@
       "import": {
         "types": "./react/index.d.ts",
         "default": "./react/index.mjs"
+      }
+    },
+    "./solid": {
+      "require": {
+        "types": "./solid/index.d.cts",
+        "default": "./solid/index.cjs"
+      },
+      "import": {
+        "types": "./solid/index.d.ts",
+        "default": "./solid/index.mjs"
       }
     },
     ".": {

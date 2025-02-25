@@ -1,299 +1,184 @@
-import type {
-  Node,
-  NodeEventData,
-  NodeFromPoint,
-  ParentFromPoint,
-  EventHandlers,
-  ParentData,
-} from "./types";
-
-import { parents, nodes } from "./index";
-
-export function throttle(callback: any, limit: number) {
-  var wait = false;
-  return function (...args: any[]) {
-    if (!wait) {
-      callback.call(null, ...args);
-      wait = true;
-      setTimeout(function () {
-        wait = false;
-      }, limit);
-    }
-  };
+/**
+ * Function to prevent default behavior of an event.
+ *
+ * @param {Event} e - The event to prevent default behavior of.
+ */
+export function pd(e: Event) {
+  e.preventDefault();
 }
 
-function splitClass(className: string): Array<string> {
+/**
+ * Function to stop propagation of an event.
+ *
+ * @param {Event} e - The event to stop propagation of.
+ */
+export function sp(e: Event) {
+  e.stopPropagation();
+}
+
+export function rect(el: HTMLElement) {
+  return el.getBoundingClientRect();
+}
+
+/**
+ * Function to create an emitter.
+ *
+ * @returns {[Function, Function]} A tuple containing emit and on functions
+ */
+export function createEmitter<T>() {
+  const callbacks = new Map<string, Array<(data: T) => void>>();
+
+  const emit = function (eventName: string, data: T) {
+    if (!callbacks.get(eventName)) return;
+    callbacks.get(eventName)!.forEach((cb) => {
+      cb(data);
+    });
+  };
+
+  const on = function (eventName: string, callback: (data: T) => void) {
+    const cbs = callbacks.get(eventName) ?? [];
+
+    cbs.push(callback);
+
+    callbacks.set(eventName, cbs);
+  };
+
+  return [emit, on] as const;
+}
+
+/**
+ * The emit and on functions for drag and drop.
+ *
+ * @type {[Function, Function]}
+ */
+export const [emit, on] = createEmitter();
+
+/**
+ * A regular expression to test for a valid date string.
+ *
+ * @param x - A RegExp to compare.
+ * @param y - A RegExp to compare.
+ * @public
+ */
+export function eqRegExp(x: RegExp, y: RegExp): boolean {
+  return (
+    x.source === y.source &&
+    x.flags.split("").sort().join("") === y.flags.split("").sort().join("")
+  );
+}
+
+/**
+ * Compare two values for equality, optionally at depth.
+ *
+ * @param valA - First value.
+ * @param valB - Second value.
+ * @param deep - If it will compare deeply if it's an object.
+ * @param explicit - An array of keys to explicity check.
+ *
+ * @returns `boolean`
+ *
+ * @public
+ */
+export function eq(
+  valA: unknown,
+  valB: unknown,
+  deep = true,
+  explicit: string[] = ["__key"]
+): boolean {
+  if (valA === valB) return true;
+
+  if (
+    typeof valB === "object" &&
+    typeof valA === "object" &&
+    valA !== null &&
+    valB !== null
+  ) {
+    if (valA instanceof Map) return false;
+    if (valA instanceof Set) return false;
+    if (valA instanceof Date && valB instanceof Date)
+      return valA.getTime() === valB.getTime();
+    if (valA instanceof RegExp && valB instanceof RegExp)
+      return eqRegExp(valA, valB);
+    if (valA === null || valB === null) return false;
+
+    const objA = valA as Record<string, unknown>;
+    const objB = valB as Record<string, unknown>;
+
+    if (Object.keys(objA).length !== Object.keys(objB).length) return false;
+
+    for (const k of explicit) {
+      if ((k in objA || k in objB) && objA[k] !== objB[k]) return false;
+    }
+
+    for (const key in objA) {
+      if (!(key in objB)) return false;
+      if (objA[key] !== objB[key] && !deep) return false;
+      if (deep && !eq(objA[key], objB[key], deep, explicit)) return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+///**
+// * Throttle a function.
+// *
+// * @param callback - The callback function to throttle.
+// * @param limit - The minimum time in milliseconds between function calls.
+// *
+// * @returns A throttled version of the callback function.
+// */
+//export function throttle<Args extends unknown[], Return>(
+//  callback: (...args: Args) => Return,
+//  limit: number
+//): (...args: Args) => void {
+//  let wait = false;
+//  return function (...args: Args) {
+//    if (!wait) {
+//      callback.apply(null, args);
+//      wait = true;
+//      setTimeout(function () {
+//        wait = false;
+//      }, limit);
+//    }
+//  };
+//}
+
+/**
+ * Split a class name into an array of class names.
+ *
+ * @param className - The class name to split.
+ *
+ * @returns An array of class names.
+ */
+export function splitClass(className: string): Array<string> {
   return className.split(" ").filter((x) => x);
 }
 
-/**
- * Check to see if code is running in a browser.
- *
- * @internal
- */
-export const isBrowser = typeof window !== "undefined";
+export function getRealCoords(el: HTMLElement): {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+  height: number;
+  width: number;
+} {
+  const { top, bottom, left, right, height, width } =
+    el.getBoundingClientRect();
 
-export function addClass(
-  els: Array<Node | HTMLElement | Element>,
-  className: string | undefined,
-  omitAppendPrivateClass = false
-) {
-  if (!className) return;
+  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
 
-  const classNames = splitClass(className);
-
-  if (!classNames.length) return;
-
-  if (classNames.includes("longTouch")) return;
-
-  for (const node of els) {
-    if (!isNode(node) || !nodes.has(node)) {
-      node.classList.add(...classNames);
-
-      continue;
-    }
-
-    const privateClasses = [];
-
-    const nodeData = nodes.get(node);
-
-    if (!nodeData) continue;
-
-    for (const className of classNames) {
-      if (!node.classList.contains(className)) {
-        node.classList.add(className);
-      } else if (
-        node.classList.contains(className) &&
-        omitAppendPrivateClass === false
-      ) {
-        privateClasses.push(className);
-      }
-    }
-
-    nodeData.privateClasses = privateClasses;
-
-    nodes.set(node, nodeData);
-  }
+  return {
+    top: top + scrollTop,
+    bottom: bottom + scrollTop,
+    left: left + scrollLeft,
+    right: right + scrollLeft,
+    height,
+    width,
+  };
 }
 
-export function removeClass(
-  els: Array<Node | HTMLElement | Element>,
-  className: string | undefined
-) {
-  if (!className) return;
-
-  const classNames = splitClass(className);
-
-  if (!classNames.length) return;
-
-  for (const node of els) {
-    if (!isNode(node)) {
-      node.classList.remove(...classNames);
-      continue;
-    }
-
-    const nodeData = nodes.get(node);
-
-    if (!nodeData) continue;
-    for (const className of classNames) {
-      if (!nodeData.privateClasses.includes(className)) {
-        node.classList.remove(className);
-      }
-    }
-  }
-}
-
-/**
- * Used for getting the closest scrollable parent of a given element.
- *
- * @param node - The element to get the closest scrollable parent of.
- *
- * @internal
- */
-export function getScrollParent(childNode: HTMLElement): HTMLElement {
-  let parentNode = childNode.parentNode;
-
-  while (
-    parentNode !== null &&
-    parentNode.nodeType === 1 &&
-    parentNode instanceof HTMLElement
-  ) {
-    const computedStyle = window.getComputedStyle(parentNode);
-
-    const overflow = computedStyle.getPropertyValue("overflow");
-
-    if (overflow === "scroll" || overflow === "auto") return parentNode;
-
-    parentNode = parentNode.parentNode;
-  }
-
-  return document.documentElement;
-}
-/**
- * Used for setting a single event listener on x number of events for a given
- * element.
- *
- * @param el - The element to set the event listener on.
- *
- * @param events - An array of events to set the event listener on.
- *
- * @param fn - The function to run when the event is triggered.
- *
- * @param remove - Whether or not to remove the event listener.
- *
- * @internal
- */
-export function events(
-  el: Node | HTMLElement,
-  events: Array<string>,
-  fn: any,
-  remove = false
-) {
-  events.forEach((event) => {
-    remove ? el.removeEventListener(event, fn) : el.addEventListener(event, fn);
-  });
-}
-
-export function getElFromPoint<T>(
-  eventData: NodeEventData<T>
-): NodeFromPoint<T> | ParentFromPoint<T> | undefined {
-  if (!(eventData.e instanceof TouchEvent)) return;
-
-  const newX = eventData.e.touches[0].clientX;
-
-  const newY = eventData.e.touches[0].clientY;
-
-  let target = document.elementFromPoint(newX, newY);
-
-  if (!isNode(target)) return;
-
-  let isParent;
-
-  let invalidEl = true;
-
-  while (target && invalidEl) {
-    if (nodes.has(target as Node) || parents.has(target as HTMLElement)) {
-      invalidEl = false;
-
-      isParent = parents.has(target as HTMLElement);
-
-      break;
-    }
-
-    target = target.parentNode as Node;
-  }
-
-  if (!isParent) {
-    const targetNodeData = nodes.get(target as Node);
-
-    if (!targetNodeData) return;
-
-    const targetParentData = parents.get(target.parentNode as Node);
-
-    if (!targetParentData) return;
-
-    return {
-      node: {
-        el: target as Node,
-        data: targetNodeData,
-      },
-      parent: {
-        el: target.parentNode as Node,
-        data: targetParentData as ParentData<T>,
-      },
-    };
-  } else {
-    const parentData = parents.get(target as HTMLElement);
-
-    if (!parentData) return;
-
-    return {
-      parent: {
-        el: target as HTMLElement,
-        data: parentData as ParentData<T>,
-      },
-    };
-  }
-}
-
-/**
- * Checks to see that a given element and its parent node are instances of
- * HTML Elements.
- *
- * @param {unknown} el - The element to check.
- *
- * @returns {boolean} - Whether or not provided element is of type Node.
- */
-export function isNode(el: unknown): el is Node {
-  return el instanceof HTMLElement && el.parentNode instanceof HTMLElement;
-}
-
-/**
- * Takes a given el and event handlers, assigns them, and returns the used abort
- * controller.
- *
- * @param el - The element to add the event listeners to.
- * @param events - The events to add to the element.
- * @returns - The abort controller used for the event listeners.
- */
-export function addEvents(
-  el: Document | ShadowRoot | Node | HTMLElement,
-  events: EventHandlers | any
-): AbortController {
-  const abortController = new AbortController();
-  for (const eventName in events) {
-    const handler = events[eventName];
-    el.addEventListener(eventName, handler, {
-      signal: abortController.signal,
-      passive: false,
-    });
-  }
-  return abortController;
-}
-
-export function copyNodeStyle(
-  sourceNode: Node,
-  targetNode: Node,
-  omitKeys = false
-) {
-  const computedStyle = window.getComputedStyle(sourceNode);
-
-  const omittedKeys = [
-    "position",
-    "z-index",
-    "top",
-    "left",
-    "x",
-    "pointer-events",
-    "y",
-    "transform-origin",
-    "filter",
-    "-webkit-text-fill-color",
-  ];
-
-  for (const key of Array.from(computedStyle)) {
-    if (omitKeys === false && key && omittedKeys.includes(key)) continue;
-
-    targetNode.style.setProperty(
-      key,
-      computedStyle.getPropertyValue(key),
-      computedStyle.getPropertyPriority(key)
-    );
-  }
-
-  for (const child of Array.from(sourceNode.children)) {
-    if (!isNode(child)) continue;
-
-    const targetChild = targetNode.children[
-      Array.from(sourceNode.children).indexOf(child)
-    ] as Node;
-
-    copyNodeStyle(child, targetChild, omitKeys);
-  }
-}
-
-export function eventCoordinates(data: DragEvent | TouchEvent) {
-  return data instanceof DragEvent
-    ? { x: data.clientX, y: data.clientY }
-    : { x: data.touches[0].clientX, y: data.touches[0].clientY };
+export function eventCoordinates(data: DragEvent | PointerEvent) {
+  return { x: data.clientX, y: data.clientY };
 }

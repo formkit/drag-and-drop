@@ -14,9 +14,10 @@ const state = reactive({
 
 html`
   <ul id="cassettes">
-    ${state.tapes.map((tape) =>
-      html`<li class="cassette" data-label="${tape}">${tape}</li>`.key(tape)
-    )}
+    ${() =>
+      state.tapes.map((tape) =>
+        html`<li class="cassette" data-label="${tape}">${tape}</li>`.key(tape)
+      )}
   </ul>
 `(document.getElementById("app")!);
 

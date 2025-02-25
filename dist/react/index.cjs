@@ -18,19 +18,18 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/react/index.ts
-var react_exports = {};
-__export(react_exports, {
+var index_exports = {};
+__export(index_exports, {
   dragAndDrop: () => dragAndDrop,
   useDragAndDrop: () => useDragAndDrop
 });
-module.exports = __toCommonJS(react_exports);
+module.exports = __toCommonJS(index_exports);
 var import_react = require("react");
 var import__ = require("../index.cjs");
 
 // src/react/utils.ts
 function getEl(parent) {
-  if (parent instanceof HTMLElement)
-    return parent;
+  if (parent instanceof HTMLElement) return parent;
   else if ("current" in parent && parent.current instanceof HTMLElement)
     return parent.current;
   else {
@@ -40,8 +39,7 @@ function getEl(parent) {
 }
 function handleReactElements(element, cb) {
   const el = getEl(element);
-  if (el)
-    cb(el);
+  if (el) cb(el);
 }
 
 // src/react/index.ts
@@ -56,8 +54,7 @@ function getValues(parent) {
 }
 function setValues(newValues, parent) {
   const values = parentValues.get(parent);
-  if (values)
-    values[1](newValues);
+  if (values) values[1](newValues);
   parentValues.set(parent, [newValues, values[1]]);
 }
 function handleParent(config, values) {
@@ -67,10 +64,8 @@ function handleParent(config, values) {
   };
 }
 function dragAndDrop(data) {
-  if (!import__.isBrowser)
-    return;
-  if (!Array.isArray(data))
-    data = [data];
+  if (!import__.isBrowser) return;
+  if (!Array.isArray(data)) data = [data];
   data.forEach((dnd) => {
     const { parent, state, ...rest } = dnd;
     handleReactElements(parent, handleParent(rest, state));
@@ -87,8 +82,7 @@ function useDragAndDrop(list, options = {}) {
   }, [values]);
   (0, import_react.useEffect)(() => {
     return () => {
-      if (parent.current)
-        (0, import__.tearDown)(parent.current);
+      if (parent.current) (0, import__.tearDown)(parent.current);
     };
   }, []);
   return [parent, values, setValues2, updateConfig];

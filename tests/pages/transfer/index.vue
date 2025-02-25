@@ -6,6 +6,8 @@ const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   draggable: (el) => {
     return el.tagName === "LI";
   },
+  dropZoneClass: "dropZone",
+  synthDropZoneClass: "synthDropZone",
 });
 
 const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
@@ -13,6 +15,9 @@ const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
   draggable: (el) => {
     return el.tagName === "LI";
   },
+  dropZoneClass: "dropZone",
+  synthDropZoneClass: "synthDropZone",
+  longPress: true,
 });
 
 const [parent3, values3] = useDragAndDrop(
@@ -22,6 +27,8 @@ const [parent3, values3] = useDragAndDrop(
     draggable: (el) => {
       return el.tagName === "LI";
     },
+    dropZoneClass: "dropZone",
+    longPress: true,
   }
 );
 </script>
@@ -30,9 +37,10 @@ const [parent3, values3] = useDragAndDrop(
   <h1>Transfer</h1>
   <div class="flex-wrap">
     <div>
-      <ul id="transfer_1" ref="parent1" class="list">
+      <ul id="transfer_1" ref="parent1" class="list" aria-label="list1">
         <li v-for="value in values1" :id="value" :key="value" class="item">
           {{ value }}
+          <div class="dragHandle">Drag handle</div>
         </li>
         <span id="values_1" class="text-xs">
           {{ values1.map((x) => x).join(" ") }}
@@ -40,7 +48,7 @@ const [parent3, values3] = useDragAndDrop(
       </ul>
     </div>
     <div>
-      <ul id="2" ref="parent2" class="list">
+      <ul id="2" ref="parent2" class="list" aria-label="list2">
         <li v-for="value in values2" :id="value" :key="value" class="item">
           {{ value }}
         </li>
@@ -63,6 +71,12 @@ const [parent3, values3] = useDragAndDrop(
 </template>
 
 <style scoped>
+.dragging {
+  background-color: blue;
+}
+.dropZone {
+  background-color: red;
+}
 .flex-wrap {
   display: flex;
 }
@@ -76,15 +90,17 @@ h1 {
   padding: 0;
   margin: 0;
   margin-bottom: 2em;
+  width: 100%;
+  font-size: 0.5em;
 }
 
 .item {
-  padding: 10px;
+  padding: 2px;
   margin: 5px;
   border: 1px solid #ccc;
-  width: 200px;
+  width: 100px;
   border-radius: 5px;
-  height: 200px;
+  height: 100px;
 }
 
 .item-small {

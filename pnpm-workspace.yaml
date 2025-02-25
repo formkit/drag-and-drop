@@ -3,6 +3,8 @@ workspaces:
   - tests
   - tests-frameworks
   - dist
+  - playground/nuxt
+  - playground/next
 
 packages:
   - "**"

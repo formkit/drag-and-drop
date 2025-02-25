@@ -3,14 +3,21 @@ import { useDragAndDrop } from "../../../src/vue/index";
 
 const disabled = ref(false);
 
-const [parentRef, values, updateConfig] = useDragAndDrop([
-  "Depeche Mode",
-  "Duran Duran",
-  "Pet",
-  "Kraftwerk",
-  "Tears for Fears",
-  "Spandau Ballet",
-]);
+const [parentRef, values, updateConfig] = useDragAndDrop(
+  [
+    "Depeche Mode",
+    "Duran Duran",
+    "Pet",
+    "Kraftwerk",
+    "Tears for Fears",
+    "Spandau Ballet",
+  ],
+  {
+    dropZoneClass: "saturate-0 opacity-20",
+    synthDropZoneClass: "saturate-0 opacity-20",
+    synthDraggingClass: "bg-transparent",
+  }
+);
 
 function toggleDisabled() {
   disabled.value = !disabled.value;

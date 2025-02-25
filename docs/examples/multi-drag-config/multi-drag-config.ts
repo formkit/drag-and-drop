@@ -1,6 +1,6 @@
 import type {
   NodeDragEventData,
-  NodeTouchEventData,
+  NodePointerEventData,
   DNDPlugin,
 } from "@formkit/drag-and-drop";
 
@@ -21,15 +21,17 @@ export interface MultiDragConfig<T> {
   /**
    * Class added when a node is being (touch) dragged.
    */
-  touchDraggingClass?: string;
+  synthDraggingClass?: string;
   /**
    * Class added when a node is being (touch) dragged over a dropZone.
    */
-  touchDropZoneClass?: string;
+  synthDropZoneClass?: string;
   /**
    * Function that is called when dragend event occurrs event occurs.
    */
-  multiHandleEnd: (data: NodeDragEventData<T> | NodeTouchEventData<T>) => void;
+  multiHandleEnd: (
+    data: NodeDragEventData<T> | NodePointerEventData<T>
+  ) => void;
   /**
    * Function that is called when dragstart occurs.
    */
@@ -37,9 +39,9 @@ export interface MultiDragConfig<T> {
   /**
    * Function that is called when dragstart event occurs.
    */
-  multiHandleTouchstart: (data: NodeTouchEventData<T>) => void;
+  multiHandlePointerdown: (data: NodePointerEventData<T>) => void;
   multiReapplyDragClasses: (
-    data: NodeDragEventData<T> | NodeTouchEventData<T>
+    data: NodeDragEventData<T> | NodePointerEventData<T>
   ) => void;
   /**
    * An array of functions to use for a given parent.

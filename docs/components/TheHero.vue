@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { dragAndDrop } from "@formkit/drag-and-drop/vue";
-import { animations } from "@formkit/drag-and-drop";
+import { dragAndDrop } from "../../src/vue/index";
 
 const dragList = ref(undefined);
 const showHand = ref(true);
@@ -43,13 +42,9 @@ const features = ref([
 dragAndDrop({
   parent: dragList,
   values: features,
-  draggingClass: "[&>.card]:-rotate-2 before:-rotate-2",
   dropZoneClass: "blur-[2px] opacity-60",
-  plugins: [
-    animations({
-      duration: 150,
-    }),
-  ],
+  synthDropZoneClass: "blur-[2px] opacity-60",
+  synthDraggingClass: "rounded-md",
 });
 
 function toggleFrameworkList(setting: boolean) {
@@ -282,6 +277,13 @@ onMounted(() => {
                         <FrameworkIcons active="vue" />
                       </li>
                       <li
+                        v-if="framework !== 'solid'"
+                        @click="handleFrameworkSelect('solid')"
+                        class="p-2 w-full text-center hover:bg-white/60 dark:hover:bg-white/20"
+                      >
+                        <FrameworkIcons active="solid" />
+                      </li>
+                      <li
                         v-if="framework !== 'native'"
                         @click="handleFrameworkSelect('native')"
                         class="p-2 w-full text-center hover:bg-white/60 dark:hover:bg-white/20"
@@ -346,17 +348,10 @@ onMounted(() => {
               m-2
               cursor-grab
               active:cursor-grabbing
-              active:shadow-xl
               active:select-none
 
-              before:absolute
-              before:z-[-1]
-              before:bg-pink-500
-              before:top-[3px]
-              before:-left-[3px]
-              before:w-full
-              before:h-full
-              before:rounded-md
+
+
 
               dark:before:bg-pink-400
             `"
@@ -371,8 +366,6 @@ onMounted(() => {
                 grow
                 w-full
                 bg-white
-                border-t
-                border-r
                 border-sky-500
                 text-center
 

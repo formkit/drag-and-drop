@@ -14,44 +14,36 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "Desktop Chrome Drag Tests",
-      testMatch: "tests/drag/**/*.spec.ts",
+      name: "Desktop Chrome",
+      testMatch: ["tests/drag/**/*.spec.ts", "tests-frameworks/**/*.spec.ts"],
+
       use: {
         ...devices["Desktop Chrome"],
       },
     },
     {
-      name: "Desktop Firefox Drag Tests",
-      testMatch: "tests/drag/**/*.spec.ts",
+      name: "Desktop Firefox",
+      testMatch: ["tests/drag/**/*.spec.ts", "tests-frameworks/**/*.spec.ts"],
+
       use: {
         ...devices["Desktop Firefox"],
       },
     },
     {
-      name: "Mobile Chrome Touch Tests",
-      testMatch: "tests/touch/**/*.spec.ts",
+      name: "Desktop Webkit",
+      testMatch: ["tests/drag/**/*.spec.ts", "tests-frameworks/**/*.spec.ts"],
+
       use: {
-        ...devices["Mobile Chrome"],
+        ...devices["Desktop Webkit"],
       },
     },
     {
-      name: "Mobile Safari Touch Tests",
-      testMatch: "tests/touch/**/*.spec.ts",
+      name: "iPhone 13 Chromium",
+      testMatch: "tests/synthetic-drag/**/*.spec.ts",
       use: {
-        ...devices["Mobile Safari"],
+        ...devices["iPhone 13"],
+        browserName: "chromium",
       },
-    },
-    {
-      name: "Mobile Firefox Touch Tests",
-      testMatch: "tests/touch/**/*.spec.ts",
-      use: {
-        ...devices["Mobile Firefox"],
-      },
-    },
-    {
-      name: "Framework Tests",
-      testMatch: "tests-frameworks/**/*.spec.ts",
-      use: { ...devices["Desktop Chrome"] },
     },
   ],
 });

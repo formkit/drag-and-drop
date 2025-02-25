@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
-import { multiDrag, selections } from "@formkit/drag-and-drop";
 
 const mockFileNames = [
   "dungeon_master.exe",
@@ -14,28 +13,14 @@ const mockFileNames = [
 
 const [parent1, files1] = useDragAndDrop(mockFileNames, {
   group: "A",
-  plugins: [
-    multiDrag({
-      plugins: [
-        selections({
-          selectedClass: "bg-blue-500 text-white",
-        }),
-      ],
-    }),
-  ],
+  multiDrag: true,
+  selectedClass: "bg-blue-500 text-white",
 });
 
 const [parent2, files2] = useDragAndDrop([], {
   group: "A",
-  plugins: [
-    multiDrag({
-      plugins: [
-        selections({
-          selectedClass: "bg-blue-500 text-white",
-        }),
-      ],
-    }),
-  ],
+  multiDrag: true,
+  selectedClass: "bg-blue-500 text-white",
 });
 </script>
 

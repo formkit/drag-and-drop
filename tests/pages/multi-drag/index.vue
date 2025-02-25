@@ -1,33 +1,16 @@
 <script setup lang="ts">
-import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
-import {
-  multiDrag,
-  selections,
-  multiDragState,
-  multiHandleDragstart,
-} from "@formkit/drag-and-drop";
+import { useDragAndDrop } from "../../../src/vue/index";
 
-const [parent, values] = useDragAndDrop(
-  ["Apple", "Banana", "Orange", "Strawberry", "Pineapple", "Grapes"],
-  {
-    plugins: [
-      multiDrag({
-        plugins: [selections()],
-        multiHandleDragstart: (data) => {
-          const otherEls = data.targetData.parent.data.enabledNodes.map(
-            (x) => x
-          );
-          multiDragState.selectedNodes.push(...otherEls);
-          multiHandleDragstart(data);
-        },
-      }),
-    ],
-  }
-);
+const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
+  draggingClass: "blue",
+  dropZoneClass: "dropZoneClass",
+  multiDrag: true,
+  selectedClass: "selected",
+});
 </script>
 
 <template>
-  <h2>Place Plugin</h2>
+  <h2>Multi drag plugin</h2>
   <div>
     <ul ref="parent" class="list">
       <li v-for="value in values" :id="value" :key="value" class="item">
@@ -41,34 +24,32 @@ const [parent, values] = useDragAndDrop(
       </span>
     </div>
   </div>
-  <div id="randomElement">Random element</div>
 </template>
 
 <style scoped>
+.selected {
+  background-color: yellow !important;
+  color: black !important;
+}
+
+.dropZoneClass {
+  background-color: green !important;
+  color: white !important;
+}
+
+.blue {
+  background-color: lightblue !important;
+  color: yellow !important;
+}
+
 .item {
   padding: 10px;
   border: 1px solid #ccc;
   margin: 5px 0;
   list-style-type: none;
 }
-
-.item.hover {
-  position: relative;
-}
-
-.item.hover::before {
-  content: "";
-  position: absolute;
-  bottom: -5px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: green;
-}
-
 .list {
   list-style-type: none;
-  width: 1400px;
   padding: 0;
   margin: 0;
   margin-bottom: 2em;
@@ -84,7 +65,6 @@ const [parent, values] = useDragAndDrop(
   text-align: center;
   background-color: #f9f9f9;
   box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
   width: 400px;
   height: 50px;
 }

@@ -1,9 +1,16 @@
 import { reactive, html } from "@arrow-js/core";
 import { dragAndDrop } from "@formkit/drag-and-drop";
-import { multiDrag, selections } from "@formkit/drag-and-drop";
 
 const state = reactive({
-  files1: ["dungeon_master.exe", "map_1.dat", "map_2.dat", "character1.txt", "character2.txt", "shell32.dll", "README.txt"],
+  files1: [
+    "dungeon_master.exe",
+    "map_1.dat",
+    "map_2.dat",
+    "character1.txt",
+    "character2.txt",
+    "shell32.dll",
+    "README.txt",
+  ],
   files2: [] as string[],
 });
 
@@ -15,15 +22,8 @@ dragAndDrop<string>({
   },
   config: {
     group: "A",
-    plugins: [
-      multiDrag({
-        plugins: [
-          selections({
-            selectedClass: "bg-blue-500 text-white",
-          }),
-        ],
-      }),
-    ],
+    multiDrag: true,
+    selectedClass: "bg-blue-500 text-white",
   },
 });
 
@@ -35,32 +35,22 @@ dragAndDrop<string>({
   },
   config: {
     group: "A",
-    plugins: [
-      multiDrag({
-        plugins: [
-          selections({
-            selectedClass: "bg-blue-500 text-white",
-          }),
-        ],
-      }),
-    ],
+    multiDrag: true,
+    selectedClass: "bg-blue-500 text-white",
   },
 });
 
 html`
   <div class="file-manager">
     <ul class="file-list" id="parent1">
-      ${state.files1.map((file) =>
-        html`
-          <li class="file">${file}</li>
-        `.key(file)
-      )}
+      ${() =>
+        state.files1.map((file) =>
+          html` <li class="file">${file}</li> `.key(file)
+        )}
     </ul>
     <ul class="file-list" id="parent2">
       ${state.files2.map((file) =>
-        html`
-          <li class="file">${file}</li>
-        `.key(file)
+        html` <li class="file">${file}</li> `.key(file)
       )}
     </ul>
   </div>

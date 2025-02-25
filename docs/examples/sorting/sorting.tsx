@@ -10,6 +10,7 @@ export function myComponent() {
     "Tears for Fears",
     "Spandau Ballet",
   ]);
+
   return (
     <ul ref={parent}>
       {tapes.map((tape) => (

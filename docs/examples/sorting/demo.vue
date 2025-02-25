@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { dragAndDrop } from "@formkit/drag-and-drop/vue";
+import { dragAndDrop } from "../../../src/vue/index";
 
 const dragList = ref();
 const tapes = ref([
@@ -14,6 +14,8 @@ dragAndDrop({
   parent: dragList,
   values: tapes,
   dropZoneClass: "saturate-0 opacity-20",
+  synthDropZoneClass: "saturate-0 opacity-20",
+  synthDraggingClass: "bg-transparent",
 });
 </script>
 
@@ -42,6 +44,10 @@ dragAndDrop({
             <CassetteTape :label="tape" :data-label="tape" />
           </li>
         </ul>
+        <pre
+          class="bg-white text-gray-800 p-4 border border-gray-300 rounded-lg font-mono text-sm shadow-sm overflow-x-auto whitespace-pre-wrap whitespace-pre mt-10"
+          >{{ JSON.stringify(tapes) }}</pre
+        >
       </div>
     </div>
   </DemoContainer>

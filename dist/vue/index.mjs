@@ -1,30 +1,22 @@
 // src/vue/index.ts
-import {
-  dragAndDrop as initParent,
-  isBrowser,
-  tearDown
-} from "../index.mjs";
+import { dragAndDrop as initParent, isBrowser, tearDown } from "../index.mjs";
+import { onUnmounted, ref } from "vue";
 
 // src/vue/utils.ts
 import { watch } from "vue";
 function getEl(parent) {
-  if (parent instanceof HTMLElement)
-    return parent;
-  else if (parent.value instanceof HTMLElement)
-    return parent.value;
+  if (parent instanceof HTMLElement) return parent;
+  else if (parent.value instanceof HTMLElement) return parent.value;
   else if ("$el" in parent && parent.$el instanceof HTMLElement)
     return parent.$el;
 }
 function handleVueElements(elements, cb) {
-  if (!Array.isArray(elements))
-    elements = [elements];
+  if (!Array.isArray(elements)) elements = [elements];
   for (const element of elements) {
     const validEl = getEl(element);
-    if (validEl)
-      return cb(validEl);
+    if (validEl) return cb(validEl);
     const stop = watch(element, (newEl) => {
-      if (!newEl)
-        return;
+      if (!newEl) return;
       const validEl2 = getEl(newEl);
       !validEl2 ? console.warn("Invalid parent element", newEl) : cb(validEl2);
       stop();
@@ -33,7 +25,6 @@ function handleVueElements(elements, cb) {
 }
 
 // src/vue/index.ts
-import { onUnmounted, ref } from "vue";
 var parentValues = /* @__PURE__ */ new WeakMap();
 function getValues(parent) {
   const values = parentValues.get(parent);
@@ -41,18 +32,16 @@ function getValues(parent) {
     console.warn("No values found for parent element");
     return [];
   }
-  return values.value;
+  return "value" in values ? values.value : values;
 }
 function setValues(newValues, parent) {
   const currentValues = parentValues.get(parent);
-  if (currentValues)
+  if (currentValues && "value" in currentValues)
     currentValues.value = newValues;
 }
 function dragAndDrop(data) {
-  if (!isBrowser)
-    return;
-  if (!Array.isArray(data))
-    data = [data];
+  if (!isBrowser) return;
+  if (!Array.isArray(data)) data = [data];
   data.forEach((dnd) => {
     const { parent, values, ...rest } = dnd;
     handleVueElements(parent, handleParent(rest, values));
@@ -76,8 +65,7 @@ function handleParent(config, values) {
       getValues,
       setValues,
       config: {
-        ...config,
-        dropZones: []
+        ...config
       }
     });
   };

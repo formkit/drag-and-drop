@@ -4,8 +4,7 @@ import { dragAndDrop as initParent, isBrowser, tearDown } from "../index.mjs";
 
 // src/react/utils.ts
 function getEl(parent) {
-  if (parent instanceof HTMLElement)
-    return parent;
+  if (parent instanceof HTMLElement) return parent;
   else if ("current" in parent && parent.current instanceof HTMLElement)
     return parent.current;
   else {
@@ -15,8 +14,7 @@ function getEl(parent) {
 }
 function handleReactElements(element, cb) {
   const el = getEl(element);
-  if (el)
-    cb(el);
+  if (el) cb(el);
 }
 
 // src/react/index.ts
@@ -31,8 +29,7 @@ function getValues(parent) {
 }
 function setValues(newValues, parent) {
   const values = parentValues.get(parent);
-  if (values)
-    values[1](newValues);
+  if (values) values[1](newValues);
   parentValues.set(parent, [newValues, values[1]]);
 }
 function handleParent(config, values) {
@@ -42,10 +39,8 @@ function handleParent(config, values) {
   };
 }
 function dragAndDrop(data) {
-  if (!isBrowser)
-    return;
-  if (!Array.isArray(data))
-    data = [data];
+  if (!isBrowser) return;
+  if (!Array.isArray(data)) data = [data];
   data.forEach((dnd) => {
     const { parent, state, ...rest } = dnd;
     handleReactElements(parent, handleParent(rest, state));
@@ -62,8 +57,7 @@ function useDragAndDrop(list, options = {}) {
   }, [values]);
   useEffect(() => {
     return () => {
-      if (parent.current)
-        tearDown(parent.current);
+      if (parent.current) tearDown(parent.current);
     };
   }, []);
   return [parent, values, setValues2, updateConfig];

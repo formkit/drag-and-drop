@@ -1,5 +1,4 @@
 import type { RefObject } from "react";
-import { useEffect } from "react";
 
 /**
  * Checks if the given parent is an HTMLElement.
