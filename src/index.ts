@@ -2802,9 +2802,6 @@ export function transfer<T>(
   state: DragState<T>
 ): void {
   data.e.preventDefault();
-
-  if (!validateTransfer(data, state)) return;
-  
   if (
     !validateTransfer({
       currentParent: state.currentParent,
@@ -3238,26 +3235,6 @@ export function getElFromPoint<T>(coordinates: {
   let target = document.elementFromPoint(coordinates.x, coordinates.y);
 
   if (!isNode(target)) return;
-
-
-/**
- * Used when the dragged element enters into a parent other than its own.
- *
- * @param eventData
- *
- * @param state
- *
- * @internal
- *
- * @returns void
- */
-export function transfer<T>(
-  data: NodeEventData<T> | ParentEventData<T>,
-  state: DragState<T> | TouchState<T>
-): void {
-  data.e.preventDefault();
-
-  if (!validateTransfer(data, state)) return;
 
   let isParent;
 
