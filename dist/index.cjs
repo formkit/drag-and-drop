@@ -2672,7 +2672,9 @@ function nodeEventData(callback) {
 }
 function transfer(data, state2) {
   data.e.preventDefault();
-
+  
+  if (!validateTransfer(data, state2));
+    
   if (!validateTransfer({
     currentParent: state2.currentParent,
     targetParent: data.targetData.parent,
