@@ -2802,6 +2802,7 @@ export function transfer<T>(
   state: DragState<T>
 ): void {
   data.e.preventDefault();
+
   if (
     !validateTransfer({
       currentParent: state.currentParent,

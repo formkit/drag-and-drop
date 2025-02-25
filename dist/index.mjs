@@ -2581,8 +2581,6 @@ function nodeEventData(callback) {
 }
 function transfer(data, state2) {
   data.e.preventDefault();
-  if (!validateTransfer(data, state2))
-
   if (!validateTransfer({
     currentParent: state2.currentParent,
     targetParent: data.targetData.parent,
@@ -2590,7 +2588,6 @@ function transfer(data, state2) {
     draggedNodes: state2.draggedNodes,
     state: state2
   }))
-
     return;
   data.targetData.parent.data.config.performTransfer({
     currentParent: state2.currentParent,
