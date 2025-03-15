@@ -1166,6 +1166,7 @@ var documentController3;
 var windowController;
 var scrollTimeout;
 var touchDevice = false;
+var useNativeDrag = false;
 function resetState() {
   const baseDragState2 = {
     activeDescendant: void 0,
@@ -1204,11 +1205,16 @@ function setDragState(dragStateProps2) {
   state.emit("dragStarted", state);
   return state;
 }
-function handleRootPointerdown(_e) {
+function handleRootPointerdown(e) {
   if (state.activeState) setActive(state.activeState.parent, void 0, state);
   if (state.selectedState)
     deselect(state.selectedState.nodes, state.selectedState.parent, state);
   state.selectedState = state.activeState = void 0;
+  if (e.pointerType === "mouse") {
+    useNativeDrag = true;
+  } else if (e.pointerType === "touch" || e.pointerType === "pen") {
+    useNativeDrag = false;
+  }
 }
 function handleRootPointerup(e) {
   pd(e);
@@ -1240,6 +1246,9 @@ function handleRootDragover(e) {
 function handleRootPointermove(e) {
   if (!state.pointerDown || !state.pointerDown.validated) return;
   const config = state.pointerDown.parent.data.config;
+  if (useNativeDrag || e.pointerType === "mouse") {
+    return;
+  }
   if (!isSynthDragState(state) && (touchDevice || !touchDevice && !config.nativeDrag)) {
     pd(e);
     if (config.longPress && !state.longPress) {
@@ -1954,6 +1963,11 @@ function handleNodePointerdown(data, state2) {
     node: data.targetData.node,
     validated: false
   };
+  if (data.e.pointerType === "mouse") {
+    useNativeDrag = true;
+  } else if (data.e.pointerType === "touch" || data.e.pointerType === "pen") {
+    useNativeDrag = false;
+  }
   if (!validateDragHandle({
     x: data.e.clientX,
     y: data.e.clientY,
