@@ -144,6 +144,11 @@ let scrollTimeout: ReturnType<typeof setTimeout>;
  */
 let touchDevice: boolean = false;
 
+/**
+ * Flag to indicate if native drag events are being used.
+ */
+let useNativeDrag = false;
+
 export function resetState() {
   const baseDragState = {
     activeDescendant: undefined,
@@ -201,13 +206,21 @@ export function setDragState<T>(
 /**
  *
  */
-function handleRootPointerdown(_e: PointerEvent) {
+function handleRootPointerdown(e: PointerEvent) {
+  console.log("handleRootPointerdown", e);
   if (state.activeState) setActive(state.activeState.parent, undefined, state);
 
   if (state.selectedState)
     deselect(state.selectedState.nodes, state.selectedState.parent, state);
 
   state.selectedState = state.activeState = undefined;
+
+  // Determine drag type based on pointerType
+  if (e.pointerType === "mouse") {
+    useNativeDrag = true;
+  } else if (e.pointerType === "touch" || e.pointerType === "pen") {
+    useNativeDrag = false;
+  }
 }
 
 function handleRootPointerup(e: PointerEvent) {
@@ -265,6 +278,11 @@ function handleRootPointermove(e: PointerEvent) {
   if (!state.pointerDown || !state.pointerDown.validated) return;
 
   const config = state.pointerDown.parent.data.config;
+
+  // Check pointerType and useNativeDrag flag to prevent synthetic drag
+  if (useNativeDrag || e.pointerType === "mouse") {
+    return; // Prevent synthetic drag if native drag is intended
+  }
 
   if (
     !isSynthDragState(state) &&
@@ -1468,6 +1486,7 @@ export function handleDragstart<T>(
   data: NodeDragEventData<T>,
   _state: BaseDragState<T>
 ) {
+  console.log("handle dragstart");
   const config = data.targetData.parent.data.config;
 
   if (
@@ -1519,6 +1538,15 @@ export function handleNodePointerdown<T>(
     node: data.targetData.node,
     validated: false,
   };
+
+  console.log("handleNodePointerdown", data.e);
+
+  // Determine drag type based on pointerType
+  if (data.e.pointerType === "mouse") {
+    useNativeDrag = true;
+  } else if (data.e.pointerType === "touch" || data.e.pointerType === "pen") {
+    useNativeDrag = false;
+  }
 
   if (
     !validateDragHandle({
@@ -2182,6 +2210,7 @@ function initSynthDrag<T>(
   _state: BaseDragState<T>,
   draggedNodes: Array<NodeRecord<T>>
 ): SynthDragState<T> {
+  console.log("initSynthDrag", e);
   const config = parent.data.config;
 
   let dragImage: HTMLElement | undefined;
