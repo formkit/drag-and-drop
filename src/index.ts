@@ -207,7 +207,6 @@ export function setDragState<T>(
  *
  */
 function handleRootPointerdown(e: PointerEvent) {
-  console.log("handleRootPointerdown", e);
   if (state.activeState) setActive(state.activeState.parent, undefined, state);
 
   if (state.selectedState)
@@ -1486,7 +1485,6 @@ export function handleDragstart<T>(
   data: NodeDragEventData<T>,
   _state: BaseDragState<T>
 ) {
-  console.log("handle dragstart");
   const config = data.targetData.parent.data.config;
 
   if (
@@ -1538,8 +1536,6 @@ export function handleNodePointerdown<T>(
     node: data.targetData.node,
     validated: false,
   };
-
-  console.log("handleNodePointerdown", data.e);
 
   // Determine drag type based on pointerType
   if (data.e.pointerType === "mouse") {
@@ -2210,7 +2206,6 @@ function initSynthDrag<T>(
   _state: BaseDragState<T>,
   draggedNodes: Array<NodeRecord<T>>
 ): SynthDragState<T> {
-  console.log("initSynthDrag", e);
   const config = parent.data.config;
 
   let dragImage: HTMLElement | undefined;
