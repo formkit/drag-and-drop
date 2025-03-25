@@ -62,6 +62,10 @@ export interface ParentConfig<T> {
    */
   disabled?: boolean;
   /**
+   * Prevents setting role attribute on nodes
+   */
+  noRoleAssigment?: boolean;
+  /**
    * A selector for the drag handle. Will search at any depth within the
    * draggable element.
    */

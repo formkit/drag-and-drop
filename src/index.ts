@@ -635,7 +635,11 @@ function deselect<T>(
   );
 
   for (const node of iterativeNodes) {
-    node.el.setAttribute("aria-selected", "false");
+    if (parent.data.config.noRoleAssigment) {
+      node.el.dataset.selected = 'false'
+    } else {
+      node.el.setAttribute("aria-selected", "false");
+    }
 
     const index = state.selectedState.nodes.findIndex((x) => x.el === node.el);
 
@@ -667,7 +671,11 @@ function setSelected<T>(
   state.pointerSelection = pointerdown;
 
   for (const node of selectedNodes) {
-    node.el.setAttribute("aria-selected", "true");
+    if(parent.data.config.noRoleAssigment){
+      node.el.dataset.selected = 'true'
+    }else {
+      node.el.setAttribute("aria-selected", "true");
+    }
 
     addNodeClass([node.el], parent.data.config.selectedClass, true);
   }
@@ -1117,9 +1125,13 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     },
   });
 
-  data.node.el.setAttribute("role", "option");
 
-  data.node.el.setAttribute("aria-selected", "false");
+  if(config.noRoleAssigment){
+    data.node.el.dataset.selected = 'false'
+  }else {
+    data.node.el.setAttribute("role", "option");
+    data.node.el.setAttribute("aria-selected", "false");
+  }
 
   data.node.el.draggable = true;
 
@@ -1217,19 +1229,23 @@ function nodesMutated(mutationList: MutationRecord[]) {
   const parentEl = mutationList[0].target;
 
   if (!(parentEl instanceof HTMLElement)) return;
+  const parentData = parents.get(parentEl);
 
   const allSelectedAndActiveNodes = document.querySelectorAll(
-    `[aria-selected="true"]`
+      parentData?.config.noRoleAssigment ? `[data-selected="true"]` : `[aria-selected="true"]`
   );
 
-  const parentData = parents.get(parentEl);
 
   if (!parentData) return;
 
   for (let x = 0; x < allSelectedAndActiveNodes.length; x++) {
     const node = allSelectedAndActiveNodes[x];
 
-    node.setAttribute("aria-selected", "false");
+    if(parentData?.config.noRoleAssigment){
+        (node as HTMLElement).dataset.selected = 'false'
+    }else {
+      node.setAttribute("aria-selected", "false");
+    }
 
     removeClass([node], parentData.config.selectedClass);
   }
