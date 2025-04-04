@@ -72,6 +72,8 @@ const __dirname = dirname(__filename);
   await replaceImports("dist/vue/index.cjs");
   await replaceImports("dist/react/index.mjs");
   await replaceImports("dist/react/index.cjs");
+  await replaceImports("dist/solid/index.mjs");
+  await replaceImports("dist/solid/index.cjs");
 
   console.log("Rewriting package.json...");
 
