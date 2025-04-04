@@ -48,7 +48,6 @@ __export(index_exports, {
   handleParentDragover: () => handleParentDragover3,
   handleParentDrop: () => handleParentDrop,
   handleParentFocus: () => handleParentFocus,
-  handleParentKeydown: () => handleParentKeydown,
   handleParentPointerover: () => handleParentPointerover2,
   handlePointercancel: () => handlePointercancel,
   initDrag: () => initDrag,
@@ -1217,7 +1216,6 @@ function handleRootPointerdown(e) {
   }
 }
 function handleRootPointerup(e) {
-  pd(e);
   if (state.pointerDown) state.pointerDown.node.el.draggable = true;
   state.pointerDown = void 0;
   if (!isSynthDragState(state)) return;
@@ -1295,25 +1293,6 @@ function dragAndDrop({
         if (isDragState(state) && e.cancelable) pd(e);
       }
     });
-    const liveRegion = document.createElement("div");
-    setAttrs(liveRegion, {
-      "aria-live": "polite",
-      "aria-atomic": "true",
-      "data-dnd-live-region": "true"
-    });
-    Object.assign(liveRegion.style, {
-      position: "absolute",
-      top: "0px",
-      left: "-9999px",
-      width: "1px",
-      height: "1px",
-      padding: "0",
-      overflow: "hidden",
-      clip: "rect(0, 0, 0, 0)",
-      whiteSpace: "nowrap",
-      border: "0"
-    });
-    document.body.appendChild(liveRegion);
   }
   if (!windowController)
     windowController = addEvents(window, {
@@ -1332,7 +1311,6 @@ function dragAndDrop({
       draggedNodes,
       dragstartClasses,
       handleNodeKeydown,
-      handleParentKeydown,
       handleDragstart,
       handleNodeDragover: handleNodeDragover3,
       handleParentDragover: handleParentDragover3,
@@ -1465,12 +1443,9 @@ function setActive(parent, newActiveNode, state2) {
   if (state2.activeState) {
     {
       removeClass([state2.activeState.node.el], activeDescendantClass);
-      if (state2.activeState.parent.el !== parent.el)
-        state2.activeState.parent.el.setAttribute("aria-activedescendant", "");
     }
   }
   if (!newActiveNode) {
-    state2.activeState?.parent.el.setAttribute("aria-activedescendant", "");
     state2.activeState = void 0;
     return;
   }
@@ -1479,10 +1454,6 @@ function setActive(parent, newActiveNode, state2) {
     parent
   };
   addNodeClass([newActiveNode.el], activeDescendantClass);
-  state2.activeState.parent.el.setAttribute(
-    "aria-activedescendant",
-    state2.activeState.node.el.id
-  );
 }
 function deselect(nodes2, parent, state2) {
   const selectedClass = parent.data.config.selectedClass;
@@ -1498,7 +1469,6 @@ function deselect(nodes2, parent, state2) {
     if (index === -1) continue;
     state2.selectedState.nodes.splice(index, 1);
   }
-  clearLiveRegion(parent);
 }
 function setSelected(parent, selectedNodes, newActiveNode, state2, pointerdown = false) {
   state2.pointerSelection = pointerdown;
@@ -1510,34 +1480,7 @@ function setSelected(parent, selectedNodes, newActiveNode, state2, pointerdown =
     nodes: selectedNodes,
     parent
   };
-  const selectedItems = selectedNodes.map(
-    (x) => x.el.getAttribute("aria-label")
-  );
-  if (selectedItems.length === 0) {
-    state2.selectedState = void 0;
-    clearLiveRegion(parent);
-    return;
-  }
   setActive(parent, newActiveNode, state2);
-  updateLiveRegion(
-    parent,
-    `${selectedItems.join(
-      ", "
-    )} ready for dragging. Use arrow keys to navigate. Press enter to drop ${selectedItems.join(
-      ", "
-    )}.`
-  );
-}
-function updateLiveRegion(parent, message) {
-  const liveRegion = document.querySelector('[data-dnd-live-region="true"]');
-  if (!liveRegion) return;
-  liveRegion.id = parent.el.id + "-live-region";
-  liveRegion.textContent = message;
-}
-function clearLiveRegion(parent) {
-  const liveRegion = document.getElementById(parent.el.id + "-live-region");
-  if (!liveRegion) return;
-  liveRegion.textContent = "";
 }
 function handleParentFocus(data, state2) {
   const firstEnabledNode = data.targetData.parent.data.enabledNodes[0];
@@ -1648,7 +1591,6 @@ function isSynthDragState(state2) {
 }
 function setup(parent, parentData) {
   parentData.abortControllers.mainParent = addEvents(parent, {
-    keydown: parentEventData(parentData.config.handleParentKeydown),
     dragover: parentEventData(parentData.config.handleParentDragover),
     handleParentPointerover: parentData.config.handleParentPointerover,
     scroll: parentEventData(parentData.config.handleParentScroll),
@@ -1696,14 +1638,6 @@ function setup(parent, parentData) {
       }
     );
   }
-  if (parent.id)
-    setAttrs(parent, {
-      role: "listbox",
-      tabindex: "0",
-      "aria-multiselectable": parentData.config.multiDrag ? "true" : "false",
-      "aria-activedescendant": "",
-      "aria-describedby": parent.id + "-live-region"
-    });
 }
 function setAttrs(el, attrs) {
   for (const key in attrs) el.setAttribute(key, attrs[key]);
@@ -1731,8 +1665,6 @@ function setupNode(data) {
       if (touchDevice) pd(e);
     }
   });
-  data.node.el.setAttribute("role", "option");
-  data.node.el.setAttribute("aria-selected", "false");
   data.node.el.draggable = true;
   config.reapplyDragClasses(data.node.el, data.parent.data);
   data.parent.data.config.plugins?.forEach((plugin) => {
@@ -2177,69 +2109,6 @@ function handleClickNode(_data) {
 function handleClickParent(_data) {
 }
 function handleNodeKeydown(_data) {
-}
-function handleParentKeydown(data, state2) {
-  const activeDescendant = state2.activeState?.node;
-  if (!activeDescendant) return;
-  const parentData = data.targetData.parent.data;
-  const enabledNodes = parentData.enabledNodes;
-  if (!(data.e.target instanceof HTMLElement)) return;
-  const index = enabledNodes.findIndex((x) => x.el === activeDescendant.el);
-  if (index === -1) return;
-  if (["ArrowDown", "ArrowUp", "ArrowRight", "ArrowLeft"].includes(data.e.key)) {
-    if (data.e.target === data.targetData.parent.el) pd(data.e);
-    const nextIndex = data.e.key === "ArrowDown" || data.e.key === "ArrowRight" ? index + 1 : index - 1;
-    if (nextIndex < 0 || nextIndex >= enabledNodes.length) return;
-    const nextNode = enabledNodes[nextIndex];
-    setActive(data.targetData.parent, nextNode, state2);
-  } else if (data.e.key === " ") {
-    if (data.e.target === data.targetData.parent.el) pd(data.e);
-    state2.selectedState && state2.selectedState.nodes.includes(activeDescendant) ? setSelected(
-      data.targetData.parent,
-      state2.selectedState.nodes.filter((x) => x.el !== activeDescendant.el),
-      activeDescendant,
-      state2
-    ) : setSelected(
-      data.targetData.parent,
-      [activeDescendant],
-      activeDescendant,
-      state2
-    );
-  } else if (data.e.key === "Enter" && state2.selectedState) {
-    if (state2.selectedState.parent.el === data.targetData.parent.el && state2.activeState) {
-      if (state2.selectedState.nodes[0].el === state2.activeState.node.el) {
-        updateLiveRegion(data.targetData.parent, "Cannot drop item on itself");
-        return;
-      }
-      state2.newActiveDescendant = state2.selectedState.nodes[0];
-      parentData.config.performSort({
-        parent: data.targetData.parent,
-        draggedNodes: state2.selectedState.nodes,
-        targetNodes: [state2.activeState.node]
-      });
-      deselect([], data.targetData.parent, state2);
-      updateLiveRegion(data.targetData.parent, "Drop successful");
-    } else if (state2.activeState && state2.selectedState.parent.el !== data.targetData.parent.el && validateTransfer({
-      currentParent: data.targetData.parent,
-      targetParent: state2.selectedState.parent,
-      initialParent: state2.selectedState.parent,
-      draggedNodes: state2.selectedState.nodes,
-      state: state2
-    })) {
-      parentData.config.performTransfer({
-        currentParent: state2.selectedState.parent,
-        targetParent: data.targetData.parent,
-        initialParent: state2.selectedState.parent,
-        draggedNodes: state2.selectedState.nodes,
-        initialIndex: state2.selectedState.nodes[0].data.index,
-        state: state2,
-        targetNodes: [state2.activeState.node]
-      });
-      state2.newActiveDescendant = state2.selectedState.nodes[0];
-      setSelected(data.targetData.parent, [], void 0, state2);
-      updateLiveRegion(data.targetData.parent, "Drop successful");
-    }
-  }
 }
 function preventSortOnScroll() {
   let scrollTimeout2;
@@ -2967,7 +2836,6 @@ function addEvents(el, events) {
   handleParentDragover,
   handleParentDrop,
   handleParentFocus,
-  handleParentKeydown,
   handleParentPointerover,
   handlePointercancel,
   initDrag,

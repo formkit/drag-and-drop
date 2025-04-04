@@ -15,8 +15,8 @@ dragAndDrop({
   onDragstart: (e) => {
     console.log("drag started");
   },
-  activeDescendantClass: "activeDescendantClass",
   selectedClass: "selectedClass",
+  group: "group-1",
 });
 
 dragAndDrop({
@@ -25,8 +25,8 @@ dragAndDrop({
   onDragstart: (e) => {
     console.log("drag started");
   },
-  activeDescendantClass: "activeDescendantClass",
   selectedClass: "selectedClass",
+  group: "group-1",
 });
 
 dragAndDrop({
@@ -35,8 +35,8 @@ dragAndDrop({
   onDragstart: (e) => {
     console.log("drag started");
   },
-  activeDescendantClass: "activeDescendantClass",
   selectedClass: "selectedClass",
+  group: "group-1",
 });
 </script>
 
@@ -67,10 +67,6 @@ dragAndDrop({
 
 .selectedClass {
   background-color: red;
-}
-
-body {
-  /*height: 10000px !important;*/
 }
 
 h1 {

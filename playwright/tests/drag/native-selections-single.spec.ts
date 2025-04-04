@@ -351,9 +351,6 @@ test.describe("Native selections single select", async () => {
     // Clicking banana to select it
     await page.locator("#Banana").click();
     await expect(page.locator("#Banana")).toHaveClass("item selected active");
-    await expect(page.locator("#fruits-live-region")).toHaveText(
-      "Banana ready for dragging. Use arrow keys to navigate. Press enter to drop Banana."
-    );
 
     // Dragging banana to orange
     await drag(page, {

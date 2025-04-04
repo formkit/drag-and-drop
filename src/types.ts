@@ -39,7 +39,7 @@ export interface ParentConfig<T> {
     currentParentData: ParentRecord<T>,
     state: BaseDragState<T>
   ) => boolean;
-  activeDescendantClass?: string;
+
   /**
    * The data transfer effect to use for the drag operation.
    */
@@ -128,10 +128,7 @@ export interface ParentConfig<T> {
     state: BaseDragState<T>
   ) => void;
   handleNodeKeydown: (data: NodeEventData<T>, state: DragState<T>) => void;
-  handleParentKeydown: (
-    data: ParentKeydownEventData<T>,
-    state: DragState<T>
-  ) => void;
+
   /**
    * Function that is called when dragend or touchend event occurs.
    */
@@ -281,6 +278,9 @@ export interface ParentConfig<T> {
    * The root element to use for the parent.
    */
   root: Document | ShadowRoot;
+  /**
+   * The class to add to a node when it is selected (clicked or pressed).
+   */
   selectedClass?: string;
   /**
    * Function that is called when a node is set up.
@@ -345,10 +345,7 @@ export interface ParentConfig<T> {
    * When hovering over a node, this class is applied to the node.
    */
   synthDropZoneClass?: string;
-  /**
-   * When a node receives focus, this class is applied to the node.
-   */
-  synthActiveDescendantClass?: string;
+
   /**
    * Callback function for when a sort operation is performed.
    */
@@ -781,7 +778,6 @@ export type BaseDragState<T> = {
   currentTargetValue: T | undefined;
   emit: (event: string, data: unknown) => void;
   on: (event: string, callback: (data: unknown) => void) => void;
-  newActiveDescendant?: NodeRecord<T>;
   preventSynthDrag: boolean;
   longPress: boolean;
   longPressTimeout: ReturnType<typeof setTimeout> | undefined;
