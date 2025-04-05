@@ -69,15 +69,25 @@ export const parents: ParentsData<any> = new WeakMap<
  */
 export const nodes: NodesData<any> = new WeakMap<Node, NodeData<unknown>>();
 
-/**
- * Function to check if touch support is enabled.
- *
- * @returns {boolean}
- */
-function checkTouchSupport() {
+function isMobilePlatform() {
   if (!isBrowser) return false;
 
-  return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+  // Modern, privacy-respecting way (supported in Chrome, Edge, some Safari/Firefox)
+  if ("userAgentData" in navigator) {
+    return (navigator.userAgentData as { mobile: boolean }).mobile === true;
+  }
+
+  // Fallback for older browsers
+  const ua = navigator.userAgent;
+
+  const isMobileUA = /android|iphone|ipod/i.test(ua);
+
+  // Modern iPads on iPadOS 13+ report as Mac in UA — use touch capability as a clue
+  const isIpad =
+    /iPad/.test(ua) ||
+    (ua.includes("Macintosh") && navigator.maxTouchPoints > 1);
+
+  return isMobileUA || isIpad;
 }
 
 /**
@@ -137,14 +147,9 @@ let windowController: AbortController | undefined;
 let scrollTimeout: ReturnType<typeof setTimeout>;
 
 /**
- * Variable to check if the device is touch.
- */
-let touchDevice: boolean = false;
-
-/**
  * Flag to indicate if native drag events are being used.
  */
-let useNativeDrag = false;
+let pointerType: "mouse" | "touch" | "pen" | undefined;
 
 export function resetState() {
   const baseDragState = {
@@ -202,20 +207,13 @@ export function setDragState<T>(
 /**
  *
  */
-function handleRootPointerdown(e: PointerEvent) {
+function handleRootPointerdown() {
   if (state.activeState) setActive(state.activeState.parent, undefined, state);
 
   if (state.selectedState)
     deselect(state.selectedState.nodes, state.selectedState.parent, state);
 
   state.selectedState = state.activeState = undefined;
-
-  // Determine drag type based on pointerType
-  if (e.pointerType === "mouse") {
-    useNativeDrag = true;
-  } else if (e.pointerType === "touch" || e.pointerType === "pen") {
-    useNativeDrag = false;
-  }
 }
 
 function handleRootPointerup() {
@@ -272,15 +270,13 @@ function handleRootPointermove(e: PointerEvent) {
 
   const config = state.pointerDown.parent.data.config;
 
-  // Check pointerType and useNativeDrag flag to prevent synthetic drag
-  if (useNativeDrag || e.pointerType === "mouse") {
+  // If the pointertype is mouse and the platform is not mobile, prevent
+  // synthetic drag.
+  if (e.pointerType === "mouse" && !isMobilePlatform()) {
     return; // Prevent synthetic drag if native drag is intended
   }
 
-  if (
-    !isSynthDragState(state) &&
-    (touchDevice || (!touchDevice && !config.nativeDrag))
-  ) {
+  if (!isSynthDragState(state)) {
     pd(e);
 
     if (config.longPress && !state.longPress) {
@@ -330,8 +326,6 @@ export function dragAndDrop<T>({
 }: DragAndDrop<T>): void {
   if (!isBrowser) return;
 
-  touchDevice = checkTouchSupport();
-
   if (!documentController) {
     documentController = addEvents(document, {
       dragover: handleRootDragover,
@@ -346,13 +340,6 @@ export function dragAndDrop<T>({
       },
     });
   }
-
-  if (!windowController)
-    windowController = addEvents(window, {
-      resize: () => {
-        touchDevice = checkTouchSupport();
-      },
-    });
 
   tearDown(parent);
 
@@ -1387,6 +1374,10 @@ export function handleNodePointerdown<T>(
   data: NodePointerEventData<T>,
   state: BaseDragState<T>
 ) {
+  console.log("pointer type", data.e.pointerType);
+  console.log("is mobile platform", isMobilePlatform());
+  // touchDevice = checkTouchSupport();
+
   sp(data.e);
 
   state.pointerDown = {
@@ -1394,13 +1385,6 @@ export function handleNodePointerdown<T>(
     node: data.targetData.node,
     validated: false,
   };
-
-  // Determine drag type based on pointerType
-  if (data.e.pointerType === "mouse") {
-    useNativeDrag = true;
-  } else if (data.e.pointerType === "touch" || data.e.pointerType === "pen") {
-    useNativeDrag = false;
-  }
 
   if (
     !validateDragHandle({
