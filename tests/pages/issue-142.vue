@@ -32,13 +32,7 @@ const [sourceList, sourceItems] = useDragAndDrop(
   </div>
 </template>
 
-<style>
-.container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
+<style scoped>
 h1 {
   margin-bottom: 2rem;
   color: #333;

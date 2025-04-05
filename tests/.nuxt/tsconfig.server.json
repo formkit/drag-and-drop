@@ -125,7 +125,6 @@
   },
   "include": [
     "./types/nitro-nuxt.d.ts",
-    "../../node_modules/.pnpm/@nuxtjs+tailwindcss@6.13.1_magicast@0.3.5/node_modules/@nuxtjs/tailwindcss/runtime/server",
     "../../node_modules/.pnpm/@nuxt+devtools@1.7.0_rollup@4.34.8_vite@6.1.1_@types+node@18.19.76_jiti@2.4.2_terser@5._f522d38e104094d5129bc7abbb215ace/node_modules/@nuxt/devtools/runtime/server",
     "../../node_modules/.pnpm/@nuxt+telemetry@2.6.5_magicast@0.3.5/node_modules/@nuxt/telemetry/runtime/server",
     "./types/nitro.d.ts",
@@ -136,7 +135,6 @@
     "../node_modules",
     "../../node_modules",
     "../../node_modules/.pnpm/nuxt@3.15.4_@parcel+watcher@2.5.1_@types+node@18.19.76_db0@0.2.4_eslint@8.57.1_ioredis@_267b367432adf49cd019eda89cabae02/node_modules/nuxt/node_modules",
-    "../../node_modules/.pnpm/@nuxtjs+tailwindcss@6.13.1_magicast@0.3.5/node_modules/@nuxtjs/tailwindcss/node_modules",
     "../../node_modules/.pnpm/@nuxt+devtools@1.7.0_rollup@4.34.8_vite@6.1.1_@types+node@18.19.76_jiti@2.4.2_terser@5._f522d38e104094d5129bc7abbb215ace/node_modules/@nuxt/devtools/node_modules",
     "../../node_modules/.pnpm/@nuxt+telemetry@2.6.5_magicast@0.3.5/node_modules/@nuxt/telemetry/node_modules",
     "../dist"

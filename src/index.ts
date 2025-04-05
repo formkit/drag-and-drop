@@ -1988,6 +1988,7 @@ function initSynthDrag<T>(
       willChange: "transform",
       overflow: "hidden",
       display: "none",
+      boxSizing: "border-box",
     });
   } else {
     if (!config.multiDrag || draggedNodes.length === 1) {
@@ -2008,6 +2009,7 @@ function initSynthDrag<T>(
         willChange: "transform",
         pointerEvents: "none",
         zIndex: 9999,
+        boxSizing: "border-box",
       });
     } else {
       const wrapper = document.createElement("div");
@@ -2020,6 +2022,8 @@ function initSynthDrag<T>(
         clonedNode.style.pointerEvents = "none";
 
         clonedNode.style.margin = "0";
+
+        clonedNode.style.boxSizing = "border-box";
 
         wrapper.append(clonedNode);
       }
@@ -2039,6 +2043,7 @@ function initSynthDrag<T>(
         padding: 0,
         pointerEvents: "none",
         zIndex: 9999,
+        boxSizing: "border-box",
       });
     }
   }
@@ -2497,7 +2502,9 @@ export function sort<T>(
 ) {
   const { x, y } = eventCoordinates(data.e);
 
-  if (!validateSort(data, state, x, y)) return;
+  if (!validateSort(data, state, x, y)) {
+    return;
+  }
 
   const range =
     state.draggedNode.data.index > data.targetData.node.data.index
@@ -2863,9 +2870,12 @@ function isScrollY(
   const threshold = 0.1;
 
   if (el === document.scrollingElement) {
+    const canScrollUp = el.scrollTop > 0;
+    const canScrollDown = el.scrollTop + window.innerHeight < el.scrollHeight;
+
     return {
-      down: e.clientY > el.clientHeight * (1 - threshold),
-      up: e.clientY < el.clientHeight * threshold,
+      down: canScrollDown && e.clientY > el.clientHeight * (1 - threshold),
+      up: canScrollUp && e.clientY < el.clientHeight * threshold,
     };
   }
 
@@ -2878,11 +2888,13 @@ function isScrollY(
     const offsetHeight = el.offsetHeight;
     const scrollTop = el.scrollTop;
 
+    const canScrollUp = scrollTop > 0;
+    const canScrollDown = scrollTop < scrollHeight - offsetHeight;
+
     return {
       down:
-        e.clientY > rect.top + offsetHeight * (1 - threshold) &&
-        scrollTop < scrollHeight - offsetHeight,
-      up: e.clientY < rect.top + offsetHeight * threshold && scrollTop > 0,
+        canScrollDown && e.clientY > rect.top + offsetHeight * (1 - threshold),
+      up: canScrollUp && e.clientY < rect.top + offsetHeight * threshold,
     };
   }
 
