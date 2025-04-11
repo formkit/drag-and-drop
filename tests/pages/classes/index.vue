@@ -6,7 +6,7 @@ const options = reactive({
   synthDraggingClasss: "draggingClass",
 });
 
-const parent: Ref<HTMLElement | undefined> = ref(undefined);
+const parent = useTemplateRef("parent");
 
 const values = ref(["Apple", "Banana", "Orange"]);
 

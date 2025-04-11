@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { dragAndDrop } from "../../../src/vue/index";
 
-const parent1: Ref<HTMLElement | undefined> = ref(undefined);
-const parent2: Ref<HTMLElement | undefined> = ref(undefined);
-const parent3: Ref<HTMLElement | undefined> = ref(undefined);
+const parent1 = useTemplateRef("parent1");
+const parent2 = useTemplateRef("parent2");
+const parent3 = useTemplateRef("parent3");
 
 const values1 = ref(["Apple", "Banana", "Orange"]);
 const values2 = ref(["Strawberry", "Blueberry", "Raspberry"]);
