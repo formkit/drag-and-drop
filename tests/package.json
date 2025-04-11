@@ -12,7 +12,7 @@
   "dependencies": {
     "@nuxtjs/tailwindcss": "^6.12.1",
     "nuxt": "^3.11.1",
-    "vue": "^3.4.21",
+    "vue": "^3.5.0",
     "vue-router": "^4.3.0",
     "@formkit/drag-and-drop": "workspace:*"
   },
