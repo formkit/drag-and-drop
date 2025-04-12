@@ -18,20 +18,20 @@
   "author": "Sasha Milenkovic <sasha@formkit.com>",
   "license": "MIT",
   "devDependencies": {
-    "@formkit/drag-and-drop": "^0.2.3",
-    "@playwright/test": "^1.42.1",
-    "@types/react": "^18.2.73",
+    "@formkit/drag-and-drop": "^0.2.6",
+    "@playwright/test": "^1.51.1",
+    "@types/react": "^18.3.20",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "bumpp": "^9.4.0",
+    "bumpp": "^9.11.1",
     "esbuild-plugin-replace": "^1.4.0",
-    "eslint": "^8.57.0",
-    "eslint-plugin-vue": "^9.24.0",
-    "jiti": "^1.21.0",
+    "eslint": "^8.57.1",
+    "eslint-plugin-vue": "^9.33.0",
+    "jiti": "^2.4.2",
     "pathe": "^1.1.2",
-    "publint": "^0.2.7",
+    "publint": "^0.2.12",
     "tailwind": "^4.0.0",
-    "tsup": "^8.0.2",
-    "typescript": "^5.4.3"
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.3"
   },
   "exports": {
     "./vue": {
