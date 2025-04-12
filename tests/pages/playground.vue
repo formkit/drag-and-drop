@@ -23,6 +23,7 @@ const state = reactive<{ tapes: string[]; log: Log }>({
 });
 
 function logEventHandler(name: string) {
+  console.log("logEventHandler", name);
   return (event: any) => {
     console.log(name, event);
     const lastEntry = state.log.current[state.log.current.length - 1];
@@ -42,14 +43,15 @@ onMounted(() => {
       state.tapes = reactive(newValues);
     },
     config: {
-      onDragstart: logEventHandler("[parent] dragstart"),
+      // onDragstart: logEventHandler("[parent] dragstart"),
+      onDragstart: () => console.log("hellooooooooooo parent dragstart"),
       onDragend: logEventHandler("[parent] dragend"),
       onSort: logEventHandler("[parent] sort"),
     },
   });
 
-  DNDState.on("dragStarted", logEventHandler("[global] dragstarted"));
-  DNDState.on("dragEnded", logEventHandler("[global] dragended"));
+  // DNDState.on("dragStarted", logEventHandler("[global] dragstarted"));
+  // DNDState.on("dragEnded", logEventHandler("[global] dragended"));
 });
 </script>
 

@@ -22,7 +22,7 @@ import {
   isDragState,
 } from "../../index";
 
-export const dropSwapState: DropSwapState = {
+export const dropSwapState: DropSwapState<unknown> = {
   draggedOverNodes: Array<NodeRecord<unknown>>(),
   initialDraggedIndex: undefined,
   transferred: false,

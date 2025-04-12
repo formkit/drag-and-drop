@@ -28,6 +28,7 @@ import type {
   NodeFromPoint,
   ParentFromPoint,
   ParentDragEventData,
+  DragstartEventData,
 } from "./types";
 
 import {
@@ -137,19 +138,9 @@ let dropped = false;
 let documentController: AbortController | undefined;
 
 /**
- * Abort controller for the window.
- */
-let windowController: AbortController | undefined;
-
-/**
  * Timeout for the scroll.
  */
 let scrollTimeout: ReturnType<typeof setTimeout>;
-
-/**
- * Flag to indicate if native drag events are being used.
- */
-let pointerType: "mouse" | "touch" | "pen" | undefined;
 
 export function resetState() {
   const baseDragState = {
@@ -984,7 +975,7 @@ export function setupNode<T>(data: SetupNodeData<T>) {
       if (isDragState(state) && e.cancelable) pd(e);
     },
     contextmenu: (e: Event) => {
-      if (touchDevice) pd(e);
+      if (isMobilePlatform()) pd(e);
     },
   });
 
@@ -1356,8 +1347,8 @@ export function handleDragstart<T>(
 
   const dragState = initDrag(data, nodes);
 
-  if (config.onDragstart)
-    config.onDragstart({
+  if (config.onDragstart) {
+    const dragstartData: DragstartEventData<T> = {
       parent: data.targetData.parent,
       values: parentValues(
         data.targetData.parent.el,
@@ -1367,17 +1358,15 @@ export function handleDragstart<T>(
       draggedNodes: dragState.draggedNodes,
       position: dragState.initialIndex,
       state: dragState,
-    });
+    };
+    config.onDragstart(dragstartData);
+  }
 }
 
 export function handleNodePointerdown<T>(
   data: NodePointerEventData<T>,
   state: BaseDragState<T>
 ) {
-  console.log("pointer type", data.e.pointerType);
-  console.log("is mobile platform", isMobilePlatform());
-  // touchDevice = checkTouchSupport();
-
   sp(data.e);
 
   state.pointerDown = {
@@ -1491,7 +1480,7 @@ export function handleNodePointerdown<T>(
     if (idx === -1) {
       if (state.selectedState.parent.el !== data.targetData.parent.el) {
         deselect(state.selectedState.nodes, data.targetData.parent, state);
-      } else if (parentData.config.multiDrag && touchDevice) {
+      } else if (parentData.config.multiDrag && isMobilePlatform()) {
         selectedNodes.push(...state.selectedState.nodes);
       } else {
         deselect(state.selectedState.nodes, data.targetData.parent, state);
@@ -2053,6 +2042,18 @@ function initSynthDrag<T>(
   document.documentElement.style.overscrollBehavior = "none";
 
   document.documentElement.style.touchAction = "none";
+
+  if (config.onDragstart) {
+    const dragstartData: DragstartEventData<T> = {
+      parent: parent,
+      values: parentValues(parent.el, parent.data),
+      draggedNode: node,
+      draggedNodes: draggedNodes,
+      position: node.data.index,
+      state: state as BaseDragState<T> | DragState<T> | SynthDragState<T>,
+    };
+    config.onDragstart(dragstartData);
+  }
 
   const synthDragState = setDragState({
     ...dragStateProps(

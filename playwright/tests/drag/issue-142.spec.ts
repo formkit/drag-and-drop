@@ -7,7 +7,7 @@ test.beforeEach(async ({ browser }) => {
 });
 
 test.describe("Issue #142", async () => {
-  test.only("Text selection and deselection should work correctly in input fields", async () => {
+  test("Text selection and deselection should work correctly in input fields", async () => {
     await page.goto("http://localhost:3001/issue-142");
 
     // Get the input element

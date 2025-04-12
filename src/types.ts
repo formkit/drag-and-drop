@@ -972,25 +972,25 @@ export interface ShouldSwapData<T> {
 export interface DropSwapConfig<T> {
   shouldSwap?: (data: ShouldSwapData<T>) => boolean;
   handleNodeDragover?: (
-    data: NodeDragEventData<unknown>,
-    state: DragState<unknown>
+    data: NodeDragEventData<T>,
+    state: DragState<T>
   ) => void;
   handleParentDragover?: (
-    data: ParentDragEventData<unknown>,
-    state: DragState<unknown>
+    data: ParentDragEventData<T>,
+    state: DragState<T>
   ) => void;
   handleParentPointerover?: (
-    e: PointeroverParentEvent<unknown>,
-    state: DragState<unknown>
+    e: PointeroverParentEvent<T>,
+    state: DragState<T>
   ) => void;
   handleNodePointerover?: (
-    data: PointeroverNodeEvent<unknown>,
-    state: SynthDragState<unknown>
+    data: PointeroverNodeEvent<T>,
+    state: SynthDragState<T>
   ) => void;
 }
 
-export interface DropSwapState {
-  draggedOverNodes: Array<NodeRecord<unknown>>;
+export interface DropSwapState<T> {
+  draggedOverNodes: Array<NodeRecord<T>>;
   initialDraggedIndex: number | undefined;
   transferred: boolean;
   dragging: boolean;

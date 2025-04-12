@@ -1040,12 +1040,17 @@ function handleEnd2(state2) {
 var isBrowser = typeof window !== "undefined";
 var parents = /* @__PURE__ */ new WeakMap();
 var nodes = /* @__PURE__ */ new WeakMap();
-function checkTouchSupport() {
+function isMobilePlatform() {
   if (!isBrowser) return false;
-  return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+  if ("userAgentData" in navigator) {
+    return navigator.userAgentData.mobile === true;
+  }
+  const ua = navigator.userAgent;
+  const isMobileUA = /android|iphone|ipod/i.test(ua);
+  const isIpad = /iPad/.test(ua) || ua.includes("Macintosh") && navigator.maxTouchPoints > 1;
+  return isMobileUA || isIpad;
 }
 var baseDragState = {
-  activeDescendant: void 0,
   affectedNodes: [],
   coordinates: {
     x: 0,
@@ -1054,7 +1059,6 @@ var baseDragState = {
   currentTargetValue: void 0,
   on,
   emit,
-  newActiveDescendant: void 0,
   originalZIndex: void 0,
   pointerSelection: false,
   preventEnter: false,
@@ -1072,13 +1076,9 @@ var baseDragState = {
 var state = baseDragState;
 var dropped = false;
 var documentController3;
-var windowController;
 var scrollTimeout;
-var touchDevice = false;
-var useNativeDrag = false;
 function resetState() {
   const baseDragState2 = {
-    activeDescendant: void 0,
     affectedNodes: [],
     coordinates: {
       x: 0,
@@ -1114,18 +1114,13 @@ function setDragState(dragStateProps2) {
   state.emit("dragStarted", state);
   return state;
 }
-function handleRootPointerdown(e) {
+function handleRootPointerdown() {
   if (state.activeState) setActive(state.activeState.parent, void 0, state);
   if (state.selectedState)
     deselect(state.selectedState.nodes, state.selectedState.parent, state);
   state.selectedState = state.activeState = void 0;
-  if (e.pointerType === "mouse") {
-    useNativeDrag = true;
-  } else if (e.pointerType === "touch" || e.pointerType === "pen") {
-    useNativeDrag = false;
-  }
 }
-function handleRootPointerup(e) {
+function handleRootPointerup() {
   if (state.pointerDown) state.pointerDown.node.el.draggable = true;
   state.pointerDown = void 0;
   if (!isSynthDragState(state)) return;
@@ -1154,10 +1149,10 @@ function handleRootDragover(e) {
 function handleRootPointermove(e) {
   if (!state.pointerDown || !state.pointerDown.validated) return;
   const config = state.pointerDown.parent.data.config;
-  if (useNativeDrag || e.pointerType === "mouse") {
+  if (e.pointerType === "mouse" && !isMobilePlatform()) {
     return;
   }
-  if (!isSynthDragState(state) && (touchDevice || !touchDevice && !config.nativeDrag)) {
+  if (!isSynthDragState(state)) {
     pd(e);
     if (config.longPress && !state.longPress) {
       clearTimeout(state.longPressTimeout);
@@ -1189,7 +1184,6 @@ function dragAndDrop({
   config = {}
 }) {
   if (!isBrowser) return;
-  touchDevice = checkTouchSupport();
   if (!documentController3) {
     documentController3 = addEvents(document, {
       dragover: handleRootDragover,
@@ -1204,12 +1198,6 @@ function dragAndDrop({
       }
     });
   }
-  if (!windowController)
-    windowController = addEvents(window, {
-      resize: () => {
-        touchDevice = checkTouchSupport();
-      }
-    });
   tearDown(parent);
   const [emit2, on2] = createEmitter();
   const parentData = {
@@ -1349,12 +1337,6 @@ function performSort({
     });
 }
 function setActive(parent, newActiveNode, state2) {
-  const activeDescendantClass = parent.data.config.activeDescendantClass;
-  if (state2.activeState) {
-    {
-      removeClass([state2.activeState.node.el], activeDescendantClass);
-    }
-  }
   if (!newActiveNode) {
     state2.activeState = void 0;
     return;
@@ -1363,7 +1345,6 @@ function setActive(parent, newActiveNode, state2) {
     node: newActiveNode,
     parent
   };
-  addNodeClass([newActiveNode.el], activeDescendantClass);
 }
 function deselect(nodes2, parent, state2) {
   const selectedClass = parent.data.config.selectedClass;
@@ -1572,7 +1553,7 @@ function setupNode(data) {
       if (isDragState(state) && e.cancelable) pd(e);
     },
     contextmenu: (e) => {
-      if (touchDevice) pd(e);
+      if (isMobilePlatform()) pd(e);
     }
   });
   data.node.el.draggable = true;
@@ -1611,16 +1592,8 @@ function nodesMutated(mutationList) {
     return;
   const parentEl = mutationList[0].target;
   if (!(parentEl instanceof HTMLElement)) return;
-  const allSelectedAndActiveNodes = document.querySelectorAll(
-    `[aria-selected="true"]`
-  );
   const parentData = parents.get(parentEl);
   if (!parentData) return;
-  for (let x = 0; x < allSelectedAndActiveNodes.length; x++) {
-    const node = allSelectedAndActiveNodes[x];
-    node.setAttribute("aria-selected", "false");
-    removeClass([node], parentData.config.selectedClass);
-  }
   remapNodes(parentEl);
 }
 function remapNodes(parent, force) {
@@ -1671,19 +1644,6 @@ function remapNodes(parent, force) {
         index: x
       }
     );
-    if (!isDragState(state) && state.newActiveDescendant && eq(state.newActiveDescendant.data.value, nodeData.value)) {
-      setActive(
-        {
-          data: parentData,
-          el: parent
-        },
-        {
-          el: node,
-          data: nodeData
-        },
-        state
-      );
-    }
     if (!isDragState(state) && state.activeState && eq(state.activeState.node.data.value, nodeData.value)) {
       setActive(
         {
@@ -1785,8 +1745,8 @@ function handleDragstart(data, _state) {
   });
   config.dragstartClasses(data.targetData.node, nodes2, config);
   const dragState = initDrag(data, nodes2);
-  if (config.onDragstart)
-    config.onDragstart({
+  if (config.onDragstart) {
+    const dragstartData = {
       parent: data.targetData.parent,
       values: parentValues(
         data.targetData.parent.el,
@@ -1796,7 +1756,9 @@ function handleDragstart(data, _state) {
       draggedNodes: dragState.draggedNodes,
       position: dragState.initialIndex,
       state: dragState
-    });
+    };
+    config.onDragstart(dragstartData);
+  }
 }
 function handleNodePointerdown(data, state2) {
   sp(data.e);
@@ -1805,11 +1767,6 @@ function handleNodePointerdown(data, state2) {
     node: data.targetData.node,
     validated: false
   };
-  if (data.e.pointerType === "mouse") {
-    useNativeDrag = true;
-  } else if (data.e.pointerType === "touch" || data.e.pointerType === "pen") {
-    useNativeDrag = false;
-  }
   if (!validateDragHandle({
     x: data.e.clientX,
     y: data.e.clientY,
@@ -1890,7 +1847,7 @@ function handleNodePointerdown(data, state2) {
     if (idx === -1) {
       if (state2.selectedState.parent.el !== data.targetData.parent.el) {
         deselect(state2.selectedState.nodes, data.targetData.parent, state2);
-      } else if (parentData.config.multiDrag && touchDevice) {
+      } else if (parentData.config.multiDrag && isMobilePlatform()) {
         selectedNodes.push(...state2.selectedState.nodes);
       } else {
         deselect(state2.selectedState.nodes, data.targetData.parent, state2);
@@ -1933,10 +1890,6 @@ function dragstartClasses(_node, nodes2, config, isSynth = false) {
     );
     removeClass(
       nodes2.map((x) => x.el),
-      config.activeDescendantClass
-    );
-    removeClass(
-      nodes2.map((x) => x.el),
       config.selectedClass
     );
   });
@@ -1968,6 +1921,7 @@ function initDrag(data, draggedNodes2) {
         const originalZIndex = data.targetData.node.el.style.zIndex;
         dragState.originalZIndex = originalZIndex;
         data.targetData.node.el.style.zIndex = "9999";
+        data.targetData.node.el.style.boxSizing = "border-box";
         return dragState;
       } else {
         const wrapper = document.createElement("div");
@@ -2154,7 +2108,8 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
       margin: 0,
       willChange: "transform",
       overflow: "hidden",
-      display: "none"
+      display: "none",
+      boxSizing: "border-box"
     });
   } else {
     if (!config.multiDrag || draggedNodes2.length === 1) {
@@ -2170,7 +2125,8 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
         margin: 0,
         willChange: "transform",
         pointerEvents: "none",
-        zIndex: 9999
+        zIndex: 9999,
+        boxSizing: "border-box"
       });
     } else {
       const wrapper = document.createElement("div");
@@ -2179,6 +2135,7 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
         const clonedNode = node2.el.cloneNode(true);
         clonedNode.style.pointerEvents = "none";
         clonedNode.style.margin = "0";
+        clonedNode.style.boxSizing = "border-box";
         wrapper.append(clonedNode);
       }
       display = wrapper.style.display;
@@ -2192,7 +2149,8 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
         margin: 0,
         padding: 0,
         pointerEvents: "none",
-        zIndex: 9999
+        zIndex: 9999,
+        boxSizing: "border-box"
       });
     }
   }
@@ -2212,6 +2170,17 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
   };
   document.documentElement.style.overscrollBehavior = "none";
   document.documentElement.style.touchAction = "none";
+  if (config.onDragstart) {
+    const dragstartData = {
+      parent,
+      values: parentValues(parent.el, parent.data),
+      draggedNode: node,
+      draggedNodes: draggedNodes2,
+      position: node.data.index,
+      state
+    };
+    config.onDragstart(dragstartData);
+  }
   const synthDragState = setDragState({
     ...dragStateProps(
       node,
@@ -2420,7 +2389,9 @@ function validateSort(data, state2, x, y) {
 }
 function sort(data, state2) {
   const { x, y } = eventCoordinates(data.e);
-  if (!validateSort(data, state2, x, y)) return;
+  if (!validateSort(data, state2, x, y)) {
+    return;
+  }
   const range = state2.draggedNode.data.index > data.targetData.node.data.index ? [data.targetData.node.data.index, state2.draggedNode.data.index] : [state2.draggedNode.data.index, data.targetData.node.data.index];
   state2.targetIndex = data.targetData.node.data.index;
   state2.affectedNodes = data.targetData.parent.data.enabledNodes.filter(
@@ -2595,18 +2566,22 @@ function isScrollX(el, e, style, rect, state2) {
 function isScrollY(el, e, style, rect) {
   const threshold = 0.1;
   if (el === document.scrollingElement) {
+    const canScrollUp = el.scrollTop > 0;
+    const canScrollDown = el.scrollTop + window.innerHeight < el.scrollHeight;
     return {
-      down: e.clientY > el.clientHeight * (1 - threshold),
-      up: e.clientY < el.clientHeight * threshold
+      down: canScrollDown && e.clientY > el.clientHeight * (1 - threshold),
+      up: canScrollUp && e.clientY < el.clientHeight * threshold
     };
   }
   if ((style.overflowY === "auto" || style.overflowY === "scroll") && el !== document.body && el !== document.documentElement) {
     const scrollHeight = el.scrollHeight;
     const offsetHeight = el.offsetHeight;
     const scrollTop = el.scrollTop;
+    const canScrollUp = scrollTop > 0;
+    const canScrollDown = scrollTop < scrollHeight - offsetHeight;
     return {
-      down: e.clientY > rect.top + offsetHeight * (1 - threshold) && scrollTop < scrollHeight - offsetHeight,
-      up: e.clientY < rect.top + offsetHeight * threshold && scrollTop > 0
+      down: canScrollDown && e.clientY > rect.top + offsetHeight * (1 - threshold),
+      up: canScrollUp && e.clientY < rect.top + offsetHeight * threshold
     };
   }
   return {

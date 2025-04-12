@@ -37,6 +37,7 @@ export function createEmitter<T>() {
 
   const emit = function (eventName: string, data: T) {
     if (!callbacks.get(eventName)) return;
+
     callbacks.get(eventName)!.forEach((cb) => {
       cb(data);
     });
