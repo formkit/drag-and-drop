@@ -24,7 +24,7 @@ __export(index_exports, {
   useDragAndDrop: () => useDragAndDrop
 });
 module.exports = __toCommonJS(index_exports);
-var import__ = require("../index");
+var import__ = require("../index.cjs");
 var import_solid_js2 = require("solid-js");
 var import_store = require("solid-js/store");
 

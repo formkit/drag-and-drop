@@ -3,7 +3,7 @@ import {
   dragAndDrop as initParent,
   isBrowser,
   tearDown
-} from "../index";
+} from "../index.mjs";
 import {
   createSignal,
   onCleanup,
