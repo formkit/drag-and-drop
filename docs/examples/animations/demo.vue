@@ -20,7 +20,7 @@ dragAndDrop({
 </script>
 
 <template>
-  <DemoContainer name="Sorting">
+  <DemoContainer name="Animations">
     <div class="bg-amber-800 dark:bg-amber-950">
       <div
         class="demo-background opacity-75 dark:opacity-40 dark:saturate-50"

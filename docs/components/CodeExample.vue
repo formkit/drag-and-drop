@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { ref, watch, onMounted, nextTick } from "vue";
 import type { Component } from "vue";
+import { ref, watch, onMounted, nextTick } from "vue";
 
 const props = defineProps<{
   example: string;

@@ -16,7 +16,7 @@
     <CodeExample example="events-global" />
     <h3 id="parent-events">Parent</h3>
     <p>
-      Parent's themselves have their own set of events that can be listened to.
+      Parents themselves have their own set of events that can be listened to.
       These events include: `onDragstart`, `onDragend`, `onSort`, `onTransfer`.
       To listen to parent events, assign a callback function to the event in the
       parent's configuration object.

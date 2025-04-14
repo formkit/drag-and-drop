@@ -38,7 +38,7 @@ export interface ParentConfig<T> {
     currentParentData: ParentRecord<T>,
     state: BaseDragState<T>
   ) => boolean;
-  activeDescendantClass?: string;
+
   /**
    * The data transfer effect to use for the drag operation.
    */
@@ -127,10 +127,7 @@ export interface ParentConfig<T> {
     state: BaseDragState<T>
   ) => void;
   handleNodeKeydown: (data: NodeEventData<T>, state: DragState<T>) => void;
-  handleParentKeydown: (
-    data: ParentKeydownEventData<T>,
-    state: DragState<T>
-  ) => void;
+
   /**
    * Function that is called when dragend or touchend event occurs.
    */
@@ -156,6 +153,8 @@ export interface ParentConfig<T> {
     data: NodeDragEventData<T>,
     state: DragState<T>
   ) => void;
+  handleNodeBlur: (data: NodeEventData<T>, state: DragState<T>) => void;
+  handleNodeFocus: (data: NodeEventData<T>, state: DragState<T>) => void;
   /**
    * Dragleave event on node
    */
@@ -278,6 +277,9 @@ export interface ParentConfig<T> {
    * The root element to use for the parent.
    */
   root: Document | ShadowRoot;
+  /**
+   * The class to add to a node when it is selected (clicked or pressed).
+   */
   selectedClass?: string;
   /**
    * Function that is called when a node is set up.
@@ -342,15 +344,7 @@ export interface ParentConfig<T> {
    * When hovering over a node, this class is applied to the node.
    */
   synthDropZoneClass?: string;
-  /**
-   * When a node receives focus, this class is applied to the node.
-   */
-  synthActiveDescendantClass?: string;
-  /**
-   * Config option to allow recursive copying of computed styles of dragged
-   * element to the cloned one that will be dragged (only for synthetic drag).
-   */
-  deepCopyStyles?: boolean;
+
   /**
    * Callback function for when a sort operation is performed.
    */
