@@ -1975,14 +1975,13 @@ function initSynthDrag<T>(
 
       Object.assign(dragImage.style, {
         position: "absolute",
-        height: node.el.getBoundingClientRect().height + "px",
-        width: node.el.getBoundingClientRect().width + "px",
-        overflow: "hidden",
-        margin: 0,
+        minHeight: node.el.getBoundingClientRect().height + "px",
+        minWidth: node.el.getBoundingClientRect().width + "px",
         willChange: "transform",
         pointerEvents: "none",
         zIndex: 9999,
         boxSizing: "border-box",
+        overflow: "hidden",
       });
     } else {
       const wrapper = document.createElement("div");
@@ -2154,10 +2153,10 @@ function moveNode<T>(
   const translateX = x - startLeft + window.scrollX;
   const translateY = y - startTop + window.scrollY;
 
-  // Apply the transform using translate
-  state.clonedDraggedNode.style.transform = `translate(${
+  // Apply the transform using translate3d
+  state.clonedDraggedNode.style.transform = `translate3d(${
     translateX + scrollX
-  }px, ${translateY + scrollY}px)`;
+  }px, ${translateY + scrollY}px, 0px)`;
 
   if (e.cancelable) pd(e);
 
