@@ -649,8 +649,6 @@ interface SynthDragStateProps {
     animationFrameIdY: number | undefined;
     lastScrollX: HTMLElement | null;
     lastScrollY: HTMLElement | null;
-    rootScrollWidth: number | undefined;
-    rootScrollHeight: number | undefined;
     rootOverScrollBehavior: string | undefined;
     rootTouchAction: string | undefined;
 }
@@ -677,6 +675,10 @@ type BaseDragState<T> = {
         parent: ParentRecord<T>;
         node: NodeRecord<T>;
         validated: boolean;
+        rect: DOMRect;
+        offsetHeight: number;
+        offsetWidth: number;
+        elFromPoint: Element | null;
     } | undefined;
     /**
      * The original z-index of the dragged node.
@@ -696,6 +698,11 @@ type BaseDragState<T> = {
     rootUserSelect: string | undefined;
     lastScrollContainerX: HTMLElement | null;
     lastScrollContainerY: HTMLElement | null;
+    rootScrollWidth: number | undefined;
+    rootScrollHeight: number | undefined;
+    windowScrollX: number | undefined;
+    windowScrollY: number | undefined;
+    dragItemRect: DOMRect | undefined;
 };
 interface DragStateProps<T> {
     /**
@@ -959,7 +966,7 @@ declare function setDragState<T>(dragStateProps: (SynthDragStateProps & DragStat
  * @returns void
  */
 declare function dragAndDrop<T>({ parent, getValues, setValues, config, }: DragAndDrop<T>): void;
-declare function dragStateProps<T>(node: NodeRecord<T>, parent: ParentRecord<T>, e: PointerEvent | DragEvent, draggedNodes: Array<NodeRecord<T>>, offsetX?: number, offsetY?: number): DragStateProps<T>;
+declare function dragStateProps<T>(node: NodeRecord<T>, parent: ParentRecord<T>, e: PointerEvent | DragEvent, draggedNodes: Array<NodeRecord<T>>, rect: DOMRect, offsetX?: number, offsetY?: number): DragStateProps<T>;
 /**
  * Perform the sort of the nodes.
  *
@@ -1246,7 +1253,7 @@ declare function handleLongPress<T>(data: NodePointerEventData<T>, state: BaseDr
  *
  * @returns void
  */
-declare function synthMove<T>(e: PointerEvent, state: SynthDragState<T>): void;
+declare function synthMove<T>(e: PointerEvent, state: SynthDragState<T>, justStarted?: boolean): void;
 /**
  * Handle the node drag over.
  *

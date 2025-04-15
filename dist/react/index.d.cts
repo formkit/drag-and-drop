@@ -555,8 +555,6 @@ interface SynthDragStateProps {
     animationFrameIdY: number | undefined;
     lastScrollX: HTMLElement | null;
     lastScrollY: HTMLElement | null;
-    rootScrollWidth: number | undefined;
-    rootScrollHeight: number | undefined;
     rootOverScrollBehavior: string | undefined;
     rootTouchAction: string | undefined;
 }
@@ -583,6 +581,10 @@ type BaseDragState<T> = {
         parent: ParentRecord<T>;
         node: NodeRecord<T>;
         validated: boolean;
+        rect: DOMRect;
+        offsetHeight: number;
+        offsetWidth: number;
+        elFromPoint: Element | null;
     } | undefined;
     /**
      * The original z-index of the dragged node.
@@ -602,6 +604,11 @@ type BaseDragState<T> = {
     rootUserSelect: string | undefined;
     lastScrollContainerX: HTMLElement | null;
     lastScrollContainerY: HTMLElement | null;
+    rootScrollWidth: number | undefined;
+    rootScrollHeight: number | undefined;
+    windowScrollX: number | undefined;
+    windowScrollY: number | undefined;
+    dragItemRect: DOMRect | undefined;
 };
 interface DragStateProps<T> {
     /**
