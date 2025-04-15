@@ -1161,7 +1161,9 @@ var baseDragState = {
   selectedNodes: [],
   selectedParent: void 0,
   preventSynthDrag: false,
-  pointerDown: void 0
+  pointerDown: void 0,
+  lastScrollContainerX: null,
+  lastScrollContainerY: null
 };
 var state = baseDragState;
 var dropped = false;
@@ -1193,7 +1195,9 @@ function resetState() {
     synthDragScrolling: false,
     longPress: false,
     pointerDown: void 0,
-    longPressTimeout: void 0
+    longPressTimeout: void 0,
+    lastScrollContainerX: null,
+    lastScrollContainerY: null
   };
   state = { ...baseDragState2 };
 }
@@ -1258,14 +1262,28 @@ function handleRootPointermove(e) {
       state,
       nodes2
     );
-    state.rootUserSelect = window.getComputedStyle(
-      document.documentElement
-    ).userSelect;
-    document.body.style.userSelect = "none";
     synthMove(e, synthDragState);
   } else if (isSynthDragState(state)) {
     synthMove(e, state);
   }
+}
+var sharedDragPopover = null;
+function createSharedDragPopover() {
+  const el = document.createElement("div");
+  el.id = "dnd-shared-drag-popover";
+  el.setAttribute("popover", "manual");
+  Object.assign(el.style, {
+    position: "absolute",
+    display: "none",
+    zIndex: 9999,
+    pointerEvents: "none",
+    willChange: "transform",
+    boxSizing: "border-box",
+    margin: "0"
+  });
+  document.body.appendChild(el);
+  el.showPopover();
+  return el;
 }
 function dragAndDrop({
   parent,
@@ -1287,6 +1305,7 @@ function dragAndDrop({
         if (isDragState(state) && e.cancelable) pd(e);
       }
     });
+    sharedDragPopover = createSharedDragPopover();
   }
   tearDown(parent);
   const [emit2, on2] = createEmitter();
@@ -2125,20 +2144,26 @@ function handlePointercancel(data, state2) {
   config?.handleEnd(state2);
 }
 function handleEnd3(state2) {
+  if (true) return;
   if (state2.draggedNode) state2.draggedNode.el.draggable = true;
-  document.body.style.userSelect = state2.rootUserSelect || "";
   if (isSynthDragState(state2)) {
-    document.documentElement.style.overscrollBehavior = state2.rootOverScrollBehavior || "";
-    document.documentElement.style.touchAction = state2.rootTouchAction || "";
+    requestAnimationFrame(() => {
+      document.documentElement.style.overscrollBehavior = // @ts-ignore
+      state2.rootOverScrollBehavior || "";
+      document.documentElement.style.touchAction = state2.rootTouchAction || "";
+      document.body.style.userSelect = state2.rootUserSelect || "";
+    });
   }
+  console.log("handleEnd", sharedDragPopover);
   if (isSynthDragState(state2)) cancelSynthScroll(state2);
   if ("longPressTimeout" in state2 && state2.longPressTimeout)
     clearTimeout(state2.longPressTimeout);
   const config = parents.get(state2.initialParent.el)?.config;
   const isSynth = isSynthDragState(state2);
   const dropZoneClass = isSynth ? config?.synthDropZoneClass : config?.dropZoneClass;
-  if (state2.originalZIndex !== void 0)
+  if (state2.originalZIndex !== void 0) {
     state2.draggedNode.el.style.zIndex = state2.originalZIndex;
+  }
   removeClass(
     state2.draggedNodes.map((x) => x.el),
     dropZoneClass
@@ -2151,7 +2176,14 @@ function handleEnd3(state2) {
     state2.draggedNodes.map((x) => x.el),
     isSynth ? state2.initialParent.data.config.synthDragPlaceholderClass : state2.initialParent.data?.config?.dragPlaceholderClass
   );
-  if (isSynth) state2.clonedDraggedNode.remove();
+  if (isSynth && sharedDragPopover) {
+    sharedDragPopover.style.display = "none";
+    sharedDragPopover.style.transform = "";
+    sharedDragPopover.style.minWidth = "";
+    sharedDragPopover.style.minHeight = "";
+    sharedDragPopover.innerHTML = "";
+    sharedDragPopover.id = "dnd-shared-drag-popover";
+  }
   deselect(state2.draggedNodes, state2.currentParent, state2);
   setActive(state2.currentParent, void 0, state2);
   resetState();
@@ -2184,69 +2216,49 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
   const config = parent.data.config;
   let dragImage;
   let display = node.el.style.display;
-  let result = void 0;
+  let result;
+  dragImage = sharedDragPopover;
+  dragImage.innerHTML = "";
   if (config.synthDragImage) {
     result = config.synthDragImage(node, parent, e, draggedNodes2);
-    dragImage = result.dragImage;
-    dragImage.setAttribute("popover", "manual");
-    dragImage.id = "dnd-dragged-node-clone";
-    display = dragImage.style.display;
-    Object.assign(dragImage.style, {
-      position: "absolute",
-      zIndex: 9999,
-      pointerEvents: "none",
-      margin: 0,
-      willChange: "transform",
-      overflow: "hidden",
-      display: "none",
-      boxSizing: "border-box"
-    });
+    const customImage = result.dragImage;
+    dragImage.appendChild(customImage.cloneNode(true));
+    display = customImage.style.display || display;
   } else {
     if (!config.multiDrag || draggedNodes2.length === 1) {
-      dragImage = node.el.cloneNode(true);
-      dragImage.id = "dnd-dragged-node-clone";
-      display = dragImage.style.display;
-      dragImage.setAttribute("popover", "manual");
-      Object.assign(dragImage.style, {
-        position: "absolute",
-        height: node.el.getBoundingClientRect().height + "px",
-        width: node.el.getBoundingClientRect().width + "px",
-        overflow: "hidden",
-        margin: 0,
-        willChange: "transform",
+      const clonedNode = node.el.cloneNode(true);
+      Object.assign(clonedNode.style, {
         pointerEvents: "none",
-        zIndex: 9999,
+        margin: "0",
         boxSizing: "border-box"
       });
+      dragImage.appendChild(clonedNode);
+      dragImage.style.minWidth = node.el.offsetWidth + "px";
+      dragImage.style.minHeight = node.el.offsetHeight + "px";
     } else {
       const wrapper = document.createElement("div");
-      wrapper.setAttribute("popover", "manual");
+      Object.assign(wrapper.style, {
+        display: "flex",
+        flexDirection: "column"
+      });
       for (const node2 of draggedNodes2) {
         const clonedNode = node2.el.cloneNode(true);
-        clonedNode.style.pointerEvents = "none";
-        clonedNode.style.margin = "0";
-        clonedNode.style.boxSizing = "border-box";
+        Object.assign(clonedNode.style, {
+          pointerEvents: "none",
+          margin: "0",
+          boxSizing: "border-box"
+        });
         wrapper.append(clonedNode);
       }
-      display = wrapper.style.display;
-      wrapper.id = "dnd-dragged-node-clone";
-      dragImage = wrapper;
-      Object.assign(dragImage.style, {
-        display: "flex",
-        flexDirection: "column",
-        position: "absolute",
-        overflow: "hidden",
-        margin: 0,
-        padding: 0,
-        pointerEvents: "none",
-        zIndex: 9999,
-        boxSizing: "border-box"
-      });
+      dragImage.appendChild(wrapper);
     }
   }
+  dragImage.style.display = "block";
   dragImage.style.position = "absolute";
-  parent.el.appendChild(dragImage);
-  dragImage.showPopover();
+  console.log("dragImage", dragImage);
+  const userSelectBefore = window.getComputedStyle(
+    document.documentElement
+  ).userSelect;
   const synthDragStateProps = {
     clonedDraggedEls: [],
     clonedDraggedNode: dragImage,
@@ -2258,8 +2270,12 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
     rootOverScrollBehavior: document.documentElement.style.overscrollBehavior,
     rootTouchAction: document.documentElement.style.touchAction
   };
-  document.documentElement.style.overscrollBehavior = "none";
-  document.documentElement.style.touchAction = "none";
+  requestAnimationFrame(() => {
+    document.documentElement.style.overscrollBehavior = "none";
+    document.documentElement.style.touchAction = "none";
+    document.body.style.userSelect = "none";
+    _state.rootUserSelect = userSelectBefore;
+  });
   if (config.onDragstart) {
     const dragstartData = {
       parent,
@@ -2267,7 +2283,7 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2) {
       draggedNode: node,
       draggedNodes: draggedNodes2,
       position: node.data.index,
-      state
+      state: _state
     };
     config.onDragstart(dragstartData);
   }
@@ -2315,8 +2331,10 @@ function cancelSynthScroll(state2, cancelX = true, cancelY = true) {
   if (!state2.animationFrameIdX && !state2.animationFrameIdY) {
     state2.preventEnter = false;
   }
+  state2.lastScrollContainerX = null;
+  state2.lastScrollContainerY = null;
 }
-function moveNode(e, state2, scrollX2 = 0, scrollY2 = 0) {
+function moveNode(e, state2, scrollX = 0, scrollY = 0) {
   const { x, y } = eventCoordinates(e);
   state2.coordinates.y = y;
   state2.coordinates.x = x;
@@ -2324,14 +2342,27 @@ function moveNode(e, state2, scrollX2 = 0, scrollY2 = 0) {
   const startTop = state2.startTop ?? 0;
   const translateX = x - startLeft + window.scrollX;
   const translateY = y - startTop + window.scrollY;
-  state2.clonedDraggedNode.style.transform = `translate(${translateX + scrollX2}px, ${translateY + scrollY2}px)`;
+  state2.clonedDraggedNode.style.transform = `translate3d(${translateX + scrollX}px, ${translateY + scrollY}px, 0px)`;
   if (e.cancelable) pd(e);
   pointermoveClasses(state2, state2.initialParent.data.config);
+}
+var lastScrollCheck = 0;
+var SCROLL_THROTTLE_MS = 50;
+function shouldHandleScroll(now = performance.now()) {
+  if (now - lastScrollCheck > SCROLL_THROTTLE_MS) {
+    lastScrollCheck = now;
+    return true;
+  }
+  return false;
 }
 function synthMove(e, state2) {
   moveNode(e, state2);
   const coordinates = eventCoordinates(e);
-  handleSynthScroll(coordinates, e, state2);
+  if (shouldHandleScroll()) {
+    requestAnimationFrame(() => {
+      handleSynthScroll(coordinates, e, state2);
+    });
+  }
   const elFromPoint = getElFromPoint(coordinates);
   if (!elFromPoint) {
     document.dispatchEvent(
@@ -2629,101 +2660,194 @@ function removeClass(els, className) {
     }
   }
 }
-function isScrollX(el, e, style, rect, state2) {
+function getScrollDirection(el, e, style, rect, opts) {
   const threshold = 0.1;
-  if (el === document.scrollingElement) {
-    const canScrollLeft = el.scrollLeft > 0;
-    const canScrollRight = el.scrollLeft + window.innerWidth < (state2.rootScrollWidth || 0);
-    return {
-      right: canScrollRight && e.clientX > el.clientWidth * (1 - threshold),
-      left: canScrollLeft && e.clientX < el.clientWidth * threshold
+  const isX = opts.axis === "x";
+  const isRoot = el === document.scrollingElement;
+  const scrollProp = isX ? "scrollLeft" : "scrollTop";
+  const sizeProp = isX ? "clientWidth" : "clientHeight";
+  const offsetProp = isX ? "offsetWidth" : "offsetHeight";
+  const scrollSizeProp = isX ? "scrollWidth" : "scrollHeight";
+  const clientCoord = isX ? e.clientX : e.clientY;
+  const rectStart = isX ? rect.left : rect.top;
+  const overflow = isX ? style.overflowX : style.overflowY;
+  if (isRoot) {
+    const scrollPos = el[scrollProp];
+    const clientSize = el[sizeProp];
+    const canScrollBefore = scrollPos > 0;
+    const canScrollAfter = scrollPos + clientSize < (isX ? opts.state.rootScrollWidth || 0 : el[scrollSizeProp]);
+    return isX ? {
+      left: canScrollBefore && clientCoord < clientSize * threshold,
+      right: canScrollAfter && clientCoord > clientSize * (1 - threshold)
+    } : {
+      up: canScrollBefore && clientCoord < clientSize * threshold,
+      down: canScrollAfter && clientCoord > clientSize * (1 - threshold)
     };
   }
-  if ((style.overflowX === "auto" || style.overflowX === "scroll") && el !== document.body && el !== document.documentElement) {
-    const scrollWidth = el.scrollWidth;
-    const offsetWidth = el.offsetWidth;
-    const scrollLeft = el.scrollLeft;
-    return {
-      right: e.clientX > rect.left + offsetWidth * (1 - threshold) && scrollLeft < scrollWidth - offsetWidth,
-      left: e.clientX < rect.left + offsetWidth * threshold && scrollLeft > 0
+  if ((overflow === "auto" || overflow === "scroll") && el !== document.body && el !== document.documentElement) {
+    const scrollSize = el[scrollSizeProp];
+    const offsetSize = el[offsetProp];
+    const scrollPos = el[scrollProp];
+    const canScrollBefore = scrollPos > 0;
+    const canScrollAfter = scrollPos < scrollSize - offsetSize;
+    return isX ? {
+      left: canScrollBefore && clientCoord < rectStart + offsetSize * threshold,
+      right: canScrollAfter && clientCoord > rectStart + offsetSize * (1 - threshold)
+    } : {
+      up: canScrollBefore && clientCoord < rectStart + offsetSize * threshold,
+      down: canScrollAfter && clientCoord > rectStart + offsetSize * (1 - threshold)
     };
   }
-  return {
-    right: false,
-    left: false
-  };
+  return isX ? { left: false, right: false } : { up: false, down: false };
 }
-function isScrollY(el, e, style, rect) {
-  const threshold = 0.1;
-  if (el === document.scrollingElement) {
-    const canScrollUp = el.scrollTop > 0;
-    const canScrollDown = el.scrollTop + window.innerHeight < el.scrollHeight;
-    return {
-      down: canScrollDown && e.clientY > el.clientHeight * (1 - threshold),
-      up: canScrollUp && e.clientY < el.clientHeight * threshold
-    };
-  }
-  if ((style.overflowY === "auto" || style.overflowY === "scroll") && el !== document.body && el !== document.documentElement) {
-    const scrollHeight = el.scrollHeight;
-    const offsetHeight = el.offsetHeight;
-    const scrollTop = el.scrollTop;
-    const canScrollUp = scrollTop > 0;
-    const canScrollDown = scrollTop < scrollHeight - offsetHeight;
-    return {
-      down: canScrollDown && e.clientY > rect.top + offsetHeight * (1 - threshold),
-      up: canScrollUp && e.clientY < rect.top + offsetHeight * threshold
-    };
-  }
-  return {
-    down: false,
-    up: false
-  };
-}
-function scrollX(el, e, state2, right = true) {
+function scrollAxis(el, e, state2, options) {
   state2.preventEnter = true;
-  const incr = right ? 5 : -5;
-  function scroll(el2) {
-    el2.scrollBy({ left: incr });
-    moveNode(e, state2, incr, 0);
-    state2.animationFrameIdX = requestAnimationFrame(scroll.bind(null, el2));
+  const isX = options.axis === "x";
+  const increment = options.direction === "positive" ? 5 : -5;
+  const scroll = () => {
+    el.scrollBy(isX ? { left: increment } : { top: increment });
+    moveNode(e, state2, isX ? increment : 0, isX ? 0 : increment);
+    const id2 = requestAnimationFrame(scroll);
+    if (isX) {
+      state2.animationFrameIdX = id2;
+    } else {
+      state2.animationFrameIdY = id2;
+    }
+  };
+  const id = requestAnimationFrame(scroll);
+  if (isX) {
+    state2.animationFrameIdX = id;
+  } else {
+    state2.animationFrameIdY = id;
   }
-  state2.animationFrameIdX = requestAnimationFrame(scroll.bind(null, el));
 }
-function scrollY(el, e, state2, up = true) {
-  state2.preventEnter = true;
-  const incr = up ? -5 : 5;
-  function scroll() {
-    el.scrollBy({ top: incr });
-    moveNode(e, state2, 0, incr);
-    state2.animationFrameIdY = requestAnimationFrame(scroll);
-  }
-  state2.animationFrameIdY = requestAnimationFrame(scroll);
+function isPointerInside(el, x, y) {
+  const rect = el.getBoundingClientRect();
+  return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
 }
 function handleSynthScroll(coordinates, e, state2) {
   cancelSynthScroll(state2);
+  const { x, y } = coordinates;
+  const lastX = state2.lastScrollContainerX;
+  const lastY = state2.lastScrollContainerY;
+  if (lastX && isPointerInside(lastX, x, y)) {
+    const style = window.getComputedStyle(lastX);
+    const rect = lastX.getBoundingClientRect();
+    const xResult = getScrollDirection(lastX, e, style, rect, {
+      axis: "x",
+      state: state2
+    });
+    const yResult = getScrollDirection(lastX, e, style, rect, {
+      axis: "y"
+    });
+    if (xResult.left || xResult.right) {
+      scrollAxis(lastX, e, state2, {
+        axis: "x",
+        direction: xResult.right ? "positive" : "negative"
+      });
+      return;
+    }
+    if (yResult.up || yResult.down) {
+      scrollAxis(lastX, e, state2, {
+        axis: "y",
+        direction: yResult.up ? "negative" : "positive"
+      });
+      return;
+    }
+  }
+  if (lastY && isPointerInside(lastY, x, y)) {
+    const style = window.getComputedStyle(lastY);
+    const rect = lastY.getBoundingClientRect();
+    const yResult = getScrollDirection(lastY, e, style, rect, {
+      axis: "y"
+    });
+    if (yResult.up || yResult.down) {
+      scrollAxis(lastY, e, state2, {
+        axis: "y",
+        direction: yResult.up ? "negative" : "positive"
+      });
+      return;
+    }
+  }
   const scrollables = {
     x: null,
     y: null
   };
-  const els = document.elementsFromPoint(coordinates.x, coordinates.y);
-  for (const el of els) {
-    if (scrollables.x && scrollables.y) break;
-    if (!(el instanceof HTMLElement)) continue;
-    const rect = el.getBoundingClientRect();
-    const style = window.getComputedStyle(el);
-    if (!scrollables.x) {
-      const { left, right } = isScrollX(el, e, style, rect, state2);
-      if (left || right) {
-        scrollables.x = el;
-        scrollX(el, e, state2, right);
-      }
+  const dragImage = state2.clonedDraggedNode;
+  const prev = {
+    zIndex: dragImage.style.zIndex,
+    visibility: dragImage.style.visibility,
+    transform: dragImage.style.transform
+  };
+  Object.assign(dragImage.style, {
+    zIndex: "-1",
+    visibility: "hidden",
+    transform: ""
+  });
+  let el = document.elementFromPoint(x, y);
+  Object.assign(dragImage.style, {
+    zIndex: prev.zIndex,
+    visibility: prev.visibility,
+    transform: prev.transform
+  });
+  while (el && (scrollables.x === null || scrollables.y === null)) {
+    if (!(el instanceof HTMLElement)) {
+      el = el.parentElement;
+      continue;
     }
-    if (!scrollables.y) {
-      const { up, down } = isScrollY(el, e, style, rect);
-      if (up || down) {
-        scrollables.y = el;
-        scrollY(el, e, state2, up);
-      }
+    const style = window.getComputedStyle(el);
+    const rect = el.getBoundingClientRect();
+    const xResult = getScrollDirection(el, e, style, rect, {
+      axis: "x",
+      state: state2
+    });
+    const yResult = getScrollDirection(el, e, style, rect, {
+      axis: "y"
+    });
+    if (!scrollables.x && (xResult.left || xResult.right)) {
+      scrollables.x = el;
+      state2.lastScrollContainerX = el;
+      scrollAxis(el, e, state2, {
+        axis: "x",
+        direction: xResult.right ? "positive" : "negative"
+      });
+    }
+    if (!scrollables.y && (yResult.up || yResult.down)) {
+      scrollables.y = el;
+      state2.lastScrollContainerY = el;
+      scrollAxis(el, e, state2, {
+        axis: "y",
+        direction: yResult.up ? "negative" : "positive"
+      });
+    }
+    el = el.parentElement;
+  }
+  const root = document.scrollingElement;
+  if (root instanceof HTMLElement) {
+    const style = window.getComputedStyle(root);
+    const rect = root.getBoundingClientRect();
+    const xResult = getScrollDirection(root, e, style, rect, {
+      axis: "x",
+      state: state2
+    });
+    const yResult = getScrollDirection(root, e, style, rect, {
+      axis: "y"
+    });
+    if (!scrollables.x && (xResult.left || xResult.right)) {
+      scrollables.x = root;
+      state2.lastScrollContainerX = root;
+      scrollAxis(root, e, state2, {
+        axis: "x",
+        direction: xResult.right ? "positive" : "negative"
+      });
+    }
+    if (!scrollables.y && (yResult.up || yResult.down)) {
+      scrollables.y = root;
+      state2.lastScrollContainerY = root;
+      scrollAxis(root, e, state2, {
+        axis: "y",
+        direction: yResult.up ? "negative" : "positive"
+      });
     }
   }
 }

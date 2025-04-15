@@ -118,6 +118,8 @@ const baseDragState = {
   selectedParent: undefined,
   preventSynthDrag: false,
   pointerDown: undefined,
+  lastScrollContainerX: null,
+  lastScrollContainerY: null,
 };
 
 /**
@@ -169,6 +171,8 @@ export function resetState() {
     longPress: false,
     pointerDown: undefined,
     longPressTimeout: undefined,
+    lastScrollContainerX: null,
+    lastScrollContainerY: null,
   };
 
   state = { ...baseDragState } as BaseDragState<unknown>;
@@ -290,16 +294,34 @@ function handleRootPointermove(e: PointerEvent) {
       nodes
     );
 
-    state.rootUserSelect = window.getComputedStyle(
-      document.documentElement
-    ).userSelect;
-
-    document.body.style.userSelect = "none";
-
     synthMove(e, synthDragState);
   } else if (isSynthDragState(state)) {
     synthMove(e, state);
   }
+}
+
+let sharedDragPopover: HTMLElement | null = null;
+
+function createSharedDragPopover(): HTMLElement {
+  const el = document.createElement("div");
+
+  el.id = "dnd-shared-drag-popover";
+  el.setAttribute("popover", "manual");
+
+  Object.assign(el.style, {
+    position: "absolute",
+    display: "none",
+    zIndex: 9999,
+    pointerEvents: "none",
+    willChange: "transform",
+    boxSizing: "border-box",
+    margin: "0",
+  });
+
+  document.body.appendChild(el);
+  el.showPopover(); // Moves it to the top layer
+
+  return el;
 }
 
 /**
@@ -330,6 +352,8 @@ export function dragAndDrop<T>({
         if (isDragState(state) && e.cancelable) pd(e);
       },
     });
+
+    sharedDragPopover = createSharedDragPopover();
   }
 
   tearDown(parent);
@@ -1817,17 +1841,25 @@ export function handlePointercancel<T>(
  * @returns void
  */
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
+  if (true) return;
   if (state.draggedNode) state.draggedNode.el.draggable = true;
 
-  document.body.style.userSelect = state.rootUserSelect || "";
-
   if (isSynthDragState(state)) {
-    document.documentElement.style.overscrollBehavior =
-      state.rootOverScrollBehavior || "";
+    requestAnimationFrame(() => {
+      document.documentElement.style.overscrollBehavior =
+        // @ts-ignore
+        state.rootOverScrollBehavior || "";
 
-    document.documentElement.style.touchAction = state.rootTouchAction || "";
+      // @ts-ignore
+      document.documentElement.style.touchAction = state.rootTouchAction || "";
+
+      document.body.style.userSelect = state.rootUserSelect || "";
+    });
   }
 
+  console.log("handleEnd", sharedDragPopover);
+
+  // @ts-ignore
   if (isSynthDragState(state)) cancelSynthScroll(state);
 
   if ("longPressTimeout" in state && state.longPressTimeout)
@@ -1841,8 +1873,10 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
     ? config?.synthDropZoneClass
     : config?.dropZoneClass;
 
-  if (state.originalZIndex !== undefined)
+  if (state.originalZIndex !== undefined) {
+    // @ts-ignore
     state.draggedNode.el.style.zIndex = state.originalZIndex;
+  }
 
   removeClass(
     state.draggedNodes.map((x) => x.el),
@@ -1861,7 +1895,23 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
       : state.initialParent.data?.config?.dragPlaceholderClass
   );
 
-  if (isSynth) state.clonedDraggedNode.remove();
+  // --- Modification Start ---
+  // if (isSynth) state.clonedDraggedNode.remove(); // DON'T REMOVE
+  if (isSynth && sharedDragPopover) {
+    // @ts-ignore
+    sharedDragPopover.style.display = "none"; // Hide it
+    // @ts-ignore
+    sharedDragPopover.style.transform = ""; // Reset transform
+    // @ts-ignore
+    sharedDragPopover.style.minWidth = ""; // Reset dimensions
+    // @ts-ignore
+    sharedDragPopover.style.minHeight = "";
+    // @ts-ignore
+    sharedDragPopover.innerHTML = ""; // Clear its content
+    // @ts-ignore
+    sharedDragPopover.id = "dnd-shared-drag-popover"; // Reset ID just in case
+  }
+  // --- Modification End ---
 
   deselect(state.draggedNodes, state.currentParent, state);
 
@@ -1922,7 +1972,7 @@ export function handleNodePointerup<T>(
  * @param node - The node.
  * @param parent - The parent.
  * @param e - The pointer event.
- * @param _state - The drag state.
+ * @param _state - The state.
  * @param draggedNodes - The dragged nodes.
  *
  * @returns The synth drag state.
@@ -1936,95 +1986,68 @@ function initSynthDrag<T>(
 ): SynthDragState<T> {
   const config = parent.data.config;
 
-  let dragImage: HTMLElement | undefined;
-
+  let dragImage: HTMLElement;
   let display = node.el.style.display;
+  let result;
 
-  let result = undefined;
+  // --- Use shared popover ---
+  dragImage = sharedDragPopover as HTMLElement;
+  dragImage.innerHTML = ""; // Clear contents
 
+  // --- If user provides custom image generator, use it ---
   if (config.synthDragImage) {
     result = config.synthDragImage(node, parent, e, draggedNodes);
+    const customImage = result.dragImage;
 
-    dragImage = result.dragImage;
-
-    dragImage.setAttribute("popover", "manual");
-
-    dragImage.id = "dnd-dragged-node-clone";
-
-    display = dragImage.style.display;
-
-    Object.assign(dragImage.style, {
-      position: "absolute",
-      zIndex: 9999,
-      pointerEvents: "none",
-      margin: 0,
-      willChange: "transform",
-      overflow: "hidden",
-      display: "none",
-      boxSizing: "border-box",
-    });
+    dragImage.appendChild(customImage.cloneNode(true)); // Insert visual
+    display = customImage.style.display || display;
   } else {
     if (!config.multiDrag || draggedNodes.length === 1) {
-      dragImage = node.el.cloneNode(true) as HTMLElement;
+      const clonedNode = node.el.cloneNode(true) as HTMLElement;
 
-      dragImage.id = "dnd-dragged-node-clone";
-
-      display = dragImage.style.display;
-
-      dragImage.setAttribute("popover", "manual");
-
-      Object.assign(dragImage.style, {
-        position: "absolute",
-        minHeight: node.el.getBoundingClientRect().height + "px",
-        minWidth: node.el.getBoundingClientRect().width + "px",
-        willChange: "transform",
+      Object.assign(clonedNode.style, {
         pointerEvents: "none",
-        zIndex: 9999,
+        margin: "0",
         boxSizing: "border-box",
-        overflow: "hidden",
       });
+
+      dragImage.appendChild(clonedNode);
+
+      dragImage.style.minWidth = node.el.offsetWidth + "px";
+      dragImage.style.minHeight = node.el.offsetHeight + "px";
     } else {
       const wrapper = document.createElement("div");
 
-      wrapper.setAttribute("popover", "manual");
+      Object.assign(wrapper.style, {
+        display: "flex",
+        flexDirection: "column",
+      });
 
       for (const node of draggedNodes) {
         const clonedNode = node.el.cloneNode(true) as HTMLElement;
 
-        clonedNode.style.pointerEvents = "none";
-
-        clonedNode.style.margin = "0";
-
-        clonedNode.style.boxSizing = "border-box";
+        Object.assign(clonedNode.style, {
+          pointerEvents: "none",
+          margin: "0",
+          boxSizing: "border-box",
+        });
 
         wrapper.append(clonedNode);
       }
 
-      display = wrapper.style.display;
-
-      wrapper.id = "dnd-dragged-node-clone";
-
-      dragImage = wrapper;
-
-      Object.assign(dragImage.style, {
-        display: "flex",
-        flexDirection: "column",
-        position: "absolute",
-        overflow: "hidden",
-        margin: 0,
-        padding: 0,
-        pointerEvents: "none",
-        zIndex: 9999,
-        boxSizing: "border-box",
-      });
+      dragImage.appendChild(wrapper);
     }
   }
 
+  // --- Activate shared drag image ---
+  dragImage.style.display = "block";
   dragImage.style.position = "absolute";
 
-  parent.el.appendChild(dragImage);
+  console.log("dragImage", dragImage);
 
-  dragImage.showPopover();
+  const userSelectBefore = window.getComputedStyle(
+    document.documentElement
+  ).userSelect;
 
   const synthDragStateProps = {
     clonedDraggedEls: [],
@@ -2038,18 +2061,23 @@ function initSynthDrag<T>(
     rootTouchAction: document.documentElement.style.touchAction,
   };
 
-  document.documentElement.style.overscrollBehavior = "none";
+  // --- Defer layout-costly style mutations ---
+  requestAnimationFrame(() => {
+    document.documentElement.style.overscrollBehavior = "none";
+    document.documentElement.style.touchAction = "none";
+    document.body.style.userSelect = "none";
+    _state.rootUserSelect = userSelectBefore;
+  });
 
-  document.documentElement.style.touchAction = "none";
-
+  // --- Optional dragstart hook ---
   if (config.onDragstart) {
     const dragstartData: DragstartEventData<T> = {
-      parent: parent,
+      parent,
       values: parentValues(parent.el, parent.data),
       draggedNode: node,
-      draggedNodes: draggedNodes,
+      draggedNodes,
       position: node.data.index,
-      state: state as BaseDragState<T> | DragState<T> | SynthDragState<T>,
+      state: _state as BaseDragState<T> | DragState<T> | SynthDragState<T>,
     };
     config.onDragstart(dragstartData);
   }
@@ -2133,6 +2161,9 @@ function cancelSynthScroll<T>(
   if (!state.animationFrameIdX && !state.animationFrameIdY) {
     state.preventEnter = false;
   }
+
+  state.lastScrollContainerX = null;
+  state.lastScrollContainerY = null;
 }
 
 function moveNode<T>(
@@ -2163,6 +2194,17 @@ function moveNode<T>(
   pointermoveClasses(state, state.initialParent.data.config);
 }
 
+let lastScrollCheck = 0;
+const SCROLL_THROTTLE_MS = 50;
+
+function shouldHandleScroll(now = performance.now()) {
+  if (now - lastScrollCheck > SCROLL_THROTTLE_MS) {
+    lastScrollCheck = now;
+    return true;
+  }
+  return false;
+}
+
 /**
  * Handle the synth move.
  *
@@ -2176,7 +2218,11 @@ export function synthMove<T>(e: PointerEvent, state: SynthDragState<T>) {
 
   const coordinates = eventCoordinates(e);
 
-  handleSynthScroll(coordinates, e, state);
+  if (shouldHandleScroll()) {
+    requestAnimationFrame(() => {
+      handleSynthScroll(coordinates, e, state);
+    });
+  }
 
   const elFromPoint = getElFromPoint(coordinates);
 
@@ -2781,184 +2827,126 @@ export function removeClass(
   }
 }
 
-/**
- * Check if the element is scrollable on the x axis.
- *
- * @param el - The element.
- * @param e - The event.
- * @param style - The style.
- * @param rect - The rect.
- * @param state - The state.
- *
- * @returns void
- */
-function isScrollX<T>(
+type ScrollDirection<T> =
+  | { axis: "x"; state: SynthDragState<T> }
+  | { axis: "y" };
+
+function getScrollDirection<T>(
   el: HTMLElement,
   e: PointerEvent,
   style: CSSStyleDeclaration,
   rect: DOMRect,
-  state: SynthDragState<T>
-): { left: boolean; right: boolean } {
+  opts: ScrollDirection<T>
+): Record<string, boolean> {
   const threshold = 0.1;
 
-  if (el === document.scrollingElement) {
-    const canScrollLeft = el.scrollLeft > 0;
-    const canScrollRight =
-      el.scrollLeft + window.innerWidth < (state.rootScrollWidth || 0);
+  const isX = opts.axis === "x";
+  const isRoot = el === document.scrollingElement;
+  const scrollProp = isX ? "scrollLeft" : "scrollTop";
+  const sizeProp = isX ? "clientWidth" : "clientHeight";
+  const offsetProp = isX ? "offsetWidth" : "offsetHeight";
+  const scrollSizeProp = isX ? "scrollWidth" : "scrollHeight";
+  const clientCoord = isX ? e.clientX : e.clientY;
+  const rectStart = isX ? rect.left : rect.top;
+  const overflow = isX ? style.overflowX : style.overflowY;
 
-    return {
-      right: canScrollRight && e.clientX > el.clientWidth * (1 - threshold),
-      left: canScrollLeft && e.clientX < el.clientWidth * threshold,
-    };
+  if (isRoot) {
+    const scrollPos = el[scrollProp];
+    const clientSize = el[sizeProp];
+    const canScrollBefore = scrollPos > 0;
+    const canScrollAfter =
+      scrollPos + clientSize <
+      (isX
+        ? (opts.state as SynthDragState<T>).rootScrollWidth || 0
+        : el[scrollSizeProp]);
+
+    return isX
+      ? {
+          left: canScrollBefore && clientCoord < clientSize * threshold,
+          right: canScrollAfter && clientCoord > clientSize * (1 - threshold),
+        }
+      : {
+          up: canScrollBefore && clientCoord < clientSize * threshold,
+          down: canScrollAfter && clientCoord > clientSize * (1 - threshold),
+        };
   }
 
   if (
-    (style.overflowX === "auto" || style.overflowX === "scroll") &&
+    (overflow === "auto" || overflow === "scroll") &&
     el !== document.body &&
     el !== document.documentElement
   ) {
-    const scrollWidth = el.scrollWidth;
-    const offsetWidth = el.offsetWidth;
-    const scrollLeft = el.scrollLeft;
+    const scrollSize = el[scrollSizeProp];
+    const offsetSize = el[offsetProp];
+    const scrollPos = el[scrollProp];
 
-    return {
-      right:
-        e.clientX > rect.left + offsetWidth * (1 - threshold) &&
-        scrollLeft < scrollWidth - offsetWidth,
-      left: e.clientX < rect.left + offsetWidth * threshold && scrollLeft > 0,
-    };
+    const canScrollBefore = scrollPos > 0;
+    const canScrollAfter = scrollPos < scrollSize - offsetSize;
+
+    return isX
+      ? {
+          left:
+            canScrollBefore && clientCoord < rectStart + offsetSize * threshold,
+          right:
+            canScrollAfter &&
+            clientCoord > rectStart + offsetSize * (1 - threshold),
+        }
+      : {
+          up:
+            canScrollBefore && clientCoord < rectStart + offsetSize * threshold,
+          down:
+            canScrollAfter &&
+            clientCoord > rectStart + offsetSize * (1 - threshold),
+        };
   }
 
-  return {
-    right: false,
-    left: false,
-  };
+  return isX ? { left: false, right: false } : { up: false, down: false };
 }
 
-/**
- * Check if the element is scrollable on the y axis.
- *
- * @param el - The element.
- * @param e - The event.
- * @param style - The style.
- * @param rect - The rect.
- *
- * @returns void
- */
-function isScrollY(
-  el: HTMLElement,
-  e: PointerEvent,
-  style: CSSStyleDeclaration,
-  rect: DOMRect
-): { up: boolean; down: boolean } {
-  const threshold = 0.1;
+type Axis = "x" | "y";
 
-  if (el === document.scrollingElement) {
-    const canScrollUp = el.scrollTop > 0;
-    const canScrollDown = el.scrollTop + window.innerHeight < el.scrollHeight;
-
-    return {
-      down: canScrollDown && e.clientY > el.clientHeight * (1 - threshold),
-      up: canScrollUp && e.clientY < el.clientHeight * threshold,
-    };
-  }
-
-  if (
-    (style.overflowY === "auto" || style.overflowY === "scroll") &&
-    el !== document.body &&
-    el !== document.documentElement
-  ) {
-    const scrollHeight = el.scrollHeight;
-    const offsetHeight = el.offsetHeight;
-    const scrollTop = el.scrollTop;
-
-    const canScrollUp = scrollTop > 0;
-    const canScrollDown = scrollTop < scrollHeight - offsetHeight;
-
-    return {
-      down:
-        canScrollDown && e.clientY > rect.top + offsetHeight * (1 - threshold),
-      up: canScrollUp && e.clientY < rect.top + offsetHeight * threshold,
-    };
-  }
-
-  return {
-    down: false,
-    up: false,
-  };
-}
-
-/**
- * Scroll the element on the x axis.
- *
- * @param el - The element.
- * @param e - The event.
- * @param state - The state.
- * @param right - Whether to scroll right.
- *
- * @returns void
- */
-function scrollX<T>(
+function scrollAxis<T>(
   el: HTMLElement,
   e: PointerEvent,
   state: SynthDragState<T>,
-  right = true
+  options: {
+    axis: Axis;
+    direction: "positive" | "negative";
+  }
 ) {
   state.preventEnter = true;
 
-  const incr = right ? 5 : -5;
+  const isX = options.axis === "x";
+  const increment = options.direction === "positive" ? 5 : -5;
 
-  function scroll(el: HTMLElement) {
-    el.scrollBy({ left: incr });
+  const scroll = () => {
+    el.scrollBy(isX ? { left: increment } : { top: increment });
 
-    moveNode(e, state, incr, 0);
+    moveNode(e, state, isX ? increment : 0, isX ? 0 : increment);
 
-    state.animationFrameIdX = requestAnimationFrame(scroll.bind(null, el));
+    const id = requestAnimationFrame(scroll);
+
+    if (isX) {
+      state.animationFrameIdX = id;
+    } else {
+      state.animationFrameIdY = id;
+    }
+  };
+
+  const id = requestAnimationFrame(scroll);
+
+  if (isX) {
+    state.animationFrameIdX = id;
+  } else {
+    state.animationFrameIdY = id;
   }
-
-  state.animationFrameIdX = requestAnimationFrame(scroll.bind(null, el));
 }
 
-/**
- * Scroll the element on the y axis.
- *
- * @param el - The element.
- * @param e - The event.
- * @param state - The state.
- * @param up - Whether to scroll up.
- *
- * @returns void
- */
-function scrollY<T>(
-  el: Element,
-  e: PointerEvent,
-  state: SynthDragState<T>,
-  up = true
-) {
-  state.preventEnter = true;
-
-  const incr = up ? -5 : 5;
-
-  function scroll() {
-    el.scrollBy({ top: incr });
-
-    moveNode(e, state, 0, incr);
-
-    state.animationFrameIdY = requestAnimationFrame(scroll);
-  }
-
-  state.animationFrameIdY = requestAnimationFrame(scroll);
+function isPointerInside(el: HTMLElement, x: number, y: number): boolean {
+  const rect = el.getBoundingClientRect();
+  return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
 }
 
-/**
- * Handle the synth scroll.
- *
- * @param coordinates - The coordinates.
- * @param e - The event.
- * @param state - The state.
- *
- * @returns void
- */
 function handleSynthScroll<T>(
   coordinates: { x: number; y: number },
   e: PointerEvent,
@@ -2966,40 +2954,157 @@ function handleSynthScroll<T>(
 ) {
   cancelSynthScroll(state);
 
+  const { x, y } = coordinates;
+
+  // Try fast path using last scroll containers
+  const lastX = state.lastScrollContainerX;
+  const lastY = state.lastScrollContainerY;
+
+  if (lastX && isPointerInside(lastX, x, y)) {
+    const style = window.getComputedStyle(lastX);
+    const rect = lastX.getBoundingClientRect();
+
+    const xResult = getScrollDirection(lastX, e, style, rect, {
+      axis: "x",
+      state,
+    });
+    const yResult = getScrollDirection(lastX, e, style, rect, {
+      axis: "y",
+    });
+
+    if (xResult.left || xResult.right) {
+      scrollAxis(lastX, e, state, {
+        axis: "x",
+        direction: xResult.right ? "positive" : "negative",
+      });
+      return;
+    }
+
+    if (yResult.up || yResult.down) {
+      scrollAxis(lastX, e, state, {
+        axis: "y",
+        direction: yResult.up ? "negative" : "positive",
+      });
+      return;
+    }
+  }
+
+  if (lastY && isPointerInside(lastY, x, y)) {
+    const style = window.getComputedStyle(lastY);
+    const rect = lastY.getBoundingClientRect();
+
+    const yResult = getScrollDirection(lastY, e, style, rect, {
+      axis: "y",
+    });
+
+    if (yResult.up || yResult.down) {
+      scrollAxis(lastY, e, state, {
+        axis: "y",
+        direction: yResult.up ? "negative" : "positive",
+      });
+      return;
+    }
+  }
+
+  // Fallback: walk up from elementFromPoint instead of scanning all elements
   const scrollables: Record<"x" | "y", HTMLElement | null> = {
     x: null,
     y: null,
   };
 
-  const els = document.elementsFromPoint(coordinates.x, coordinates.y);
+  const dragImage = state.clonedDraggedNode;
 
-  for (const el of els) {
-    if (scrollables.x && scrollables.y) break;
+  const prev = {
+    zIndex: dragImage.style.zIndex,
+    visibility: dragImage.style.visibility,
+    transform: dragImage.style.transform,
+  };
 
-    if (!(el instanceof HTMLElement)) continue;
+  Object.assign(dragImage.style, {
+    zIndex: "-1",
+    visibility: "hidden",
+    transform: "",
+  });
 
-    const rect = el.getBoundingClientRect();
+  let el = document.elementFromPoint(x, y);
 
-    const style = window.getComputedStyle(el);
+  Object.assign(dragImage.style, {
+    zIndex: prev.zIndex,
+    visibility: prev.visibility,
+    transform: prev.transform,
+  });
 
-    if (!scrollables.x) {
-      const { left, right } = isScrollX(el, e, style, rect, state);
-
-      if (left || right) {
-        scrollables.x = el;
-
-        scrollX(el, e, state, right);
-      }
+  while (el && (scrollables.x === null || scrollables.y === null)) {
+    if (!(el instanceof HTMLElement)) {
+      el = el.parentElement;
+      continue;
     }
 
-    if (!scrollables.y) {
-      const { up, down } = isScrollY(el, e, style, rect);
+    const style = window.getComputedStyle(el);
+    const rect = el.getBoundingClientRect();
 
-      if (up || down) {
-        scrollables.y = el;
+    const xResult = getScrollDirection(el, e, style, rect, {
+      axis: "x",
+      state,
+    });
 
-        scrollY(el, e, state, up);
-      }
+    const yResult = getScrollDirection(el, e, style, rect, {
+      axis: "y",
+    });
+
+    if (!scrollables.x && (xResult.left || xResult.right)) {
+      scrollables.x = el;
+      state.lastScrollContainerX = el;
+      scrollAxis(el, e, state, {
+        axis: "x",
+        direction: xResult.right ? "positive" : "negative",
+      });
+    }
+
+    if (!scrollables.y && (yResult.up || yResult.down)) {
+      scrollables.y = el;
+      state.lastScrollContainerY = el;
+      scrollAxis(el, e, state, {
+        axis: "y",
+        direction: yResult.up ? "negative" : "positive",
+      });
+    }
+
+    el = el.parentElement;
+  }
+
+  // 👇 Final fallback: check root/document scrolling element
+  const root = document.scrollingElement;
+
+  if (root instanceof HTMLElement) {
+    const style = window.getComputedStyle(root);
+    const rect = root.getBoundingClientRect();
+
+    const xResult = getScrollDirection(root, e, style, rect, {
+      axis: "x",
+      state,
+    });
+
+    const yResult = getScrollDirection(root, e, style, rect, {
+      axis: "y",
+    });
+
+    if (!scrollables.x && (xResult.left || xResult.right)) {
+      scrollables.x = root;
+      state.lastScrollContainerX = root;
+      scrollAxis(root, e, state, {
+        axis: "x",
+        direction: xResult.right ? "positive" : "negative",
+      });
+    }
+
+    if (!scrollables.y && (yResult.up || yResult.down)) {
+      scrollables.y = root;
+      state.lastScrollContainerY = root;
+      scrollAxis(root, e, state, {
+        axis: "y",
+        direction: yResult.up ? "negative" : "positive",
+      });
     }
   }
 }

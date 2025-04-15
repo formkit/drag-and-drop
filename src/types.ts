@@ -804,6 +804,8 @@ export type BaseDragState<T> = {
   };
   scrolling: boolean;
   rootUserSelect: string | undefined;
+  lastScrollContainerX: HTMLElement | null;
+  lastScrollContainerY: HTMLElement | null;
 };
 
 export interface DragStateProps<T> {

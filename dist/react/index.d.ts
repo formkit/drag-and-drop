@@ -600,6 +600,8 @@ type BaseDragState<T> = {
     };
     scrolling: boolean;
     rootUserSelect: string | undefined;
+    lastScrollContainerX: HTMLElement | null;
+    lastScrollContainerY: HTMLElement | null;
 };
 interface DragStateProps<T> {
     /**
