@@ -2164,10 +2164,6 @@ export function synthMove<T>(
     });
   }
 
-  if (justStarted) {
-    return;
-  }
-
   const elFromPoint = getElFromPoint(coordinates);
 
   if (!elFromPoint) {

@@ -2042,7 +2042,6 @@ function handlePointercancel(data, state2) {
   config?.handleEnd(state2);
 }
 function handleEnd3(state2) {
-  if (true) return;
   if (state2.draggedNode) state2.draggedNode.el.draggable = true;
   if (isSynthDragState(state2)) {
     state2.clonedDraggedNode.remove();
@@ -2221,9 +2220,6 @@ function synthMove(e, state2, justStarted = false) {
     requestAnimationFrame(() => {
       handleSynthScroll(coordinates, e, state2);
     });
-  }
-  if (justStarted) {
-    return;
   }
   const elFromPoint = getElFromPoint(coordinates);
   if (!elFromPoint) {
