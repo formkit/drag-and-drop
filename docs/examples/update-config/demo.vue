@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useDragAndDrop } from "../../../src/vue/index";
+import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
 
 const disabled = ref(false);
 

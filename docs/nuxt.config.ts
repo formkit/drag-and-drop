@@ -19,7 +19,7 @@ export default defineNuxtConfig({
   css: ["@/assets/css/main.css"],
 
   experimental: {
-    componentIslands: true,
+    componentIslands: false,
   },
 
   runtimeConfig: {
@@ -118,4 +118,14 @@ export default defineNuxtConfig({
 
   nitro: storageConfig,
   compatibilityDate: "2024-09-30",
+
+  vite: {
+    server: {
+      hmr: {
+        protocol: "wss",
+        host: "localhost",
+      },
+      allowedHosts: ["b362-47-197-190-12.ngrok-free.app"],
+    },
+  },
 });

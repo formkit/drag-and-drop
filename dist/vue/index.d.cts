@@ -581,10 +581,6 @@ type BaseDragState<T> = {
         parent: ParentRecord<T>;
         node: NodeRecord<T>;
         validated: boolean;
-        rect: DOMRect;
-        offsetHeight: number;
-        offsetWidth: number;
-        elFromPoint: Element | null;
     } | undefined;
     /**
      * The original z-index of the dragged node.

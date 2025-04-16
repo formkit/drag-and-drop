@@ -675,10 +675,6 @@ type BaseDragState<T> = {
         parent: ParentRecord<T>;
         node: NodeRecord<T>;
         validated: boolean;
-        rect: DOMRect;
-        offsetHeight: number;
-        offsetWidth: number;
-        elFromPoint: Element | null;
     } | undefined;
     /**
      * The original z-index of the dragged node.
@@ -966,7 +962,7 @@ declare function setDragState<T>(dragStateProps: (SynthDragStateProps & DragStat
  * @returns void
  */
 declare function dragAndDrop<T>({ parent, getValues, setValues, config, }: DragAndDrop<T>): void;
-declare function dragStateProps<T>(node: NodeRecord<T>, parent: ParentRecord<T>, e: PointerEvent | DragEvent, draggedNodes: Array<NodeRecord<T>>, rect: DOMRect, offsetX?: number, offsetY?: number): DragStateProps<T>;
+declare function dragStateProps<T>(node: NodeRecord<T>, parent: ParentRecord<T>, e: PointerEvent | DragEvent, draggedNodes: Array<NodeRecord<T>>, offsetX?: number, offsetY?: number): DragStateProps<T>;
 /**
  * Perform the sort of the nodes.
  *

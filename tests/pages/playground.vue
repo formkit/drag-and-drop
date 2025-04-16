@@ -22,31 +22,12 @@ const state = reactive<{ tapes: string[]; log: Log }>({
   },
 });
 
-function logEventHandler(name: string) {
-  console.log("logEventHandler", name);
-  return (event: any) => {
-    console.log(name, event);
-    const lastEntry = state.log.current[state.log.current.length - 1];
-    if (lastEntry && lastEntry.name === name) {
-      lastEntry.qty += 1;
-    } else {
-      state.log.current.push(reactive({ name: name, qty: 1 }));
-    }
-  };
-}
-
 onMounted(() => {
   dragAndDrop<string>({
     parent: document.getElementById("cassettes")!,
     getValues: () => state.tapes,
     setValues: (newValues) => {
       state.tapes = reactive(newValues);
-    },
-    config: {
-      // onDragstart: logEventHandler("[parent] dragstart"),
-      onDragstart: () => console.log("hellooooooooooo parent dragstart"),
-      onDragend: logEventHandler("[parent] dragend"),
-      onSort: logEventHandler("[parent] sort"),
     },
   });
 
