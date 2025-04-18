@@ -1579,10 +1579,15 @@ export function initDrag<T>(
 
     let dragImage: HTMLElement | undefined;
 
+    data.e.dataTransfer.setData("text/plain", "");
+
     if (config.dragImage) {
       dragImage = config.dragImage(data, draggedNodes);
     } else {
       if (!config.multiDrag || draggedNodes.length === 1) {
+        data.targetData.node.el.style.zIndex = "9999";
+        data.targetData.node.el.style.boxSizing = "border-box";
+
         data.e.dataTransfer.setDragImage(
           data.targetData.node.el,
           data.e.offsetX,
@@ -1590,13 +1595,12 @@ export function initDrag<T>(
         );
 
         dragState.originalZIndex = data.targetData.node.el.style.zIndex;
-        data.targetData.node.el.style.zIndex = "9999";
-        data.targetData.node.el.style.boxSizing = "border-box";
 
         return dragState;
       } else {
         const wrapper = document.createElement("div");
         wrapper.setAttribute("id", "dnd-dragged-node-clone");
+        wrapper.setAttribute("popover", "manual");
 
         for (const node of draggedNodes) {
           const clone = node.el.cloneNode(true) as HTMLElement;
@@ -1622,11 +1626,19 @@ export function initDrag<T>(
 
         data.targetData.parent.el.appendChild(wrapper);
 
+        wrapper.showPopover();
+
+        wrapper.getBoundingClientRect(); // ← forces layout
+
         dragImage = wrapper;
+
+        data.e.dataTransfer.setDragImage(
+          dragImage,
+          data.e.offsetX,
+          data.e.offsetY
+        );
       }
     }
-
-    data.e.dataTransfer.setDragImage(dragImage, data.e.offsetX, data.e.offsetY);
 
     setTimeout(() => {
       dragImage?.remove();

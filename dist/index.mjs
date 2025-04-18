@@ -1916,22 +1916,24 @@ function initDrag(data, draggedNodes2) {
     data.e.dataTransfer.dropEffect = config.dragDropEffect;
     data.e.dataTransfer.effectAllowed = config.dragEffectAllowed;
     let dragImage;
+    data.e.dataTransfer.setData("text/plain", "");
     if (config.dragImage) {
       dragImage = config.dragImage(data, draggedNodes2);
     } else {
       if (!config.multiDrag || draggedNodes2.length === 1) {
+        data.targetData.node.el.style.zIndex = "9999";
+        data.targetData.node.el.style.boxSizing = "border-box";
         data.e.dataTransfer.setDragImage(
           data.targetData.node.el,
           data.e.offsetX,
           data.e.offsetY
         );
         dragState.originalZIndex = data.targetData.node.el.style.zIndex;
-        data.targetData.node.el.style.zIndex = "9999";
-        data.targetData.node.el.style.boxSizing = "border-box";
         return dragState;
       } else {
         const wrapper = document.createElement("div");
         wrapper.setAttribute("id", "dnd-dragged-node-clone");
+        wrapper.setAttribute("popover", "manual");
         for (const node of draggedNodes2) {
           const clone = node.el.cloneNode(true);
           clone.id = node.el.id + "-clone";
@@ -1952,10 +1954,16 @@ function initDrag(data, draggedNodes2) {
           overflow: "hidden"
         });
         data.targetData.parent.el.appendChild(wrapper);
+        wrapper.showPopover();
+        wrapper.getBoundingClientRect();
         dragImage = wrapper;
+        data.e.dataTransfer.setDragImage(
+          dragImage,
+          data.e.offsetX,
+          data.e.offsetY
+        );
       }
     }
-    data.e.dataTransfer.setDragImage(dragImage, data.e.offsetX, data.e.offsetY);
     setTimeout(() => {
       dragImage?.remove();
     });

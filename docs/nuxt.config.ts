@@ -19,7 +19,7 @@ export default defineNuxtConfig({
   css: ["@/assets/css/main.css"],
 
   experimental: {
-    componentIslands: false,
+    componentIslands: true,
   },
 
   runtimeConfig: {
