@@ -2,7 +2,7 @@
 
 <template>
   <SectionWrapper>
-    <!-- <h2 id="features">Core Features</h2>
+    <h2 id="features">Core Features</h2>
 
     <h3 id="sortability">Sortability</h3>
     <p>
@@ -69,7 +69,7 @@
       using the
       <code>updateConfig</code> method. In the example below, clicking the
       button will toggle whether drag and drop is enabled for the parent.
-    </p> -->
+    </p>
     <CodeExample example="update-config" />
     <h3 id="multi-drag">Multi Drag</h3>
     <p>

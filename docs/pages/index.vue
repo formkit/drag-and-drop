@@ -12,15 +12,15 @@
     <div
       class="docs-content min-w-0 px-4 w-full max-w-[1000px] lg:pl-8 xl:pl-12"
     >
-      <!-- <KickStartCallout />
+      <KickStartCallout />
       <SectionIntroduction />
-      <SectionGettingStarted /> -->
+      <SectionGettingStarted />
       <SectionCoreFeatures />
-      <!-- <SectionPlugins />
+      <SectionPlugins />
       <SectionEvents />
       <SectionConfiguration />
       <SectionAccessibility />
-      <SectionSupport /> -->
+      <SectionSupport />
     </div>
   </main>
   <TheFooter />
