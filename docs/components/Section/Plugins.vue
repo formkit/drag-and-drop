@@ -23,7 +23,7 @@
       item. In addition, the <code>insert</code> plugin will render an insert
       point between the items to indicate where the item will be placed.
     </p>
-    <!-- <CodeExample example="insert" /> -->
+    <CodeExample example="insert" />
     <h3 id="animations">Animations (Experimenal)</h3>
     <p>
       To add animations to your drag and drop experience, you can use the

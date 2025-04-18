@@ -1153,14 +1153,6 @@ declare function handleNodePointerdown<T>(data: NodePointerEventData<T>, state: 
  * @returns void
  */
 declare function dragstartClasses<T>(_node: NodeRecord<T>, nodes: Array<NodeRecord<T>>, config: ParentConfig<T>, isSynth?: boolean): void;
-/**
- * Initialize the drag state.
- *
- * @param data - The node drag event data.
- * @param draggedNodes - The dragged nodes.
- *
- * @returns The drag state.
- */
 declare function initDrag<T>(data: NodeDragEventData<T>, draggedNodes: Array<NodeRecord<T>>): DragState<T>;
 declare function validateDragHandle<T>({ x, y, node, config, }: {
     x: number;

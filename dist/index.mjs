@@ -1919,24 +1919,24 @@ function initDrag(data, draggedNodes2) {
     if (config.dragImage) {
       dragImage = config.dragImage(data, draggedNodes2);
     } else {
-      if (!config.multiDrag) {
+      if (!config.multiDrag || draggedNodes2.length === 1) {
         data.e.dataTransfer.setDragImage(
           data.targetData.node.el,
           data.e.offsetX,
           data.e.offsetY
         );
-        const originalZIndex = data.targetData.node.el.style.zIndex;
-        dragState.originalZIndex = originalZIndex;
+        dragState.originalZIndex = data.targetData.node.el.style.zIndex;
         data.targetData.node.el.style.zIndex = "9999";
         data.targetData.node.el.style.boxSizing = "border-box";
         return dragState;
       } else {
         const wrapper = document.createElement("div");
+        wrapper.setAttribute("id", "dnd-dragged-node-clone");
         for (const node of draggedNodes2) {
-          const clonedNode = node.el.cloneNode(true);
-          clonedNode.style.pointerEvents = "none";
-          clonedNode.id = node.el.id + "-clone";
-          wrapper.append(clonedNode);
+          const clone = node.el.cloneNode(true);
+          clone.id = node.el.id + "-clone";
+          clone.style.pointerEvents = "none";
+          wrapper.appendChild(clone);
         }
         const { width } = draggedNodes2[0].el.getBoundingClientRect();
         Object.assign(wrapper.style, {
@@ -1946,11 +1946,14 @@ function initDrag(data, draggedNodes2) {
           position: "absolute",
           pointerEvents: "none",
           zIndex: "9999",
-          left: "-9999px"
+          left: "-9999px",
+          boxSizing: "border-box",
+          background: "transparent",
+          overflow: "hidden"
         });
+        data.targetData.parent.el.appendChild(wrapper);
         dragImage = wrapper;
       }
-      document.body.appendChild(dragImage);
     }
     data.e.dataTransfer.setDragImage(dragImage, data.e.offsetX, data.e.offsetY);
     setTimeout(() => {
@@ -2106,6 +2109,11 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2, rect) {
     "justifyContent",
     "padding",
     "paddingTop",
+    "margin",
+    "marginTop",
+    "marginBottom",
+    "marginLeft",
+    "marginRight",
     "paddingBottom",
     "paddingLeft",
     "paddingRight",
@@ -2163,11 +2171,13 @@ function initSynthDrag(node, parent, e, _state, draggedNodes2, rect) {
       clone.style.margin = "0";
       wrapper.append(clone);
     });
-    applyBaseStyles(wrapper, {
-      display: "flex",
-      flexDirection: "column",
-      padding: "0"
-    });
+    wrapper.style.display = "flex";
+    wrapper.style.flexDirection = "column";
+    wrapper.style.padding = "0";
+    wrapper.style.margin = "0";
+    wrapper.style.position = "absolute";
+    wrapper.style.zIndex = "9999";
+    wrapper.style.pointerEvents = "none";
     dragImage = wrapper;
   }
   dragImage.id = "dnd-dragged-node-clone";
@@ -2216,8 +2226,6 @@ function cancelSynthScroll(state2, cancelX = true, cancelY = true) {
   if (!state2.animationFrameIdX && !state2.animationFrameIdY) {
     state2.preventEnter = false;
   }
-  state2.lastScrollContainerX = null;
-  state2.lastScrollContainerY = null;
 }
 function moveNode(e, state2, justStarted = false, scrollX = 0, scrollY = 0) {
   const { x, y } = eventCoordinates(e);
@@ -2594,15 +2602,22 @@ function scrollAxis(el, e, state2, options) {
   state2.preventEnter = true;
   const isX = options.axis === "x";
   const direction = options.direction === "positive" ? 1 : -1;
-  const activationZone = 50;
+  let speed = 10;
   const maxSpeed = 30;
   const scroll = () => {
-    const pointerCoord = isX ? e.clientX : e.clientY;
-    const edge = options.direction === "positive" ? isX ? options.rect.right : options.rect.bottom : isX ? options.rect.left : options.rect.top;
-    const distance = Math.abs(pointerCoord - edge);
-    const proximity = Math.max(0, activationZone - distance);
-    const speedRatio = proximity / activationZone;
-    const speed = Math.ceil(maxSpeed * speedRatio);
+    const scrollProp = isX ? "scrollLeft" : "scrollTop";
+    const sizeProp = isX ? "clientWidth" : "clientHeight";
+    const scrollSizeProp = isX ? "scrollWidth" : "scrollHeight";
+    const scrollPos = el[scrollProp];
+    const clientSize = el[sizeProp];
+    const scrollSize = el[scrollSizeProp];
+    const canScroll = direction > 0 ? scrollPos + clientSize < scrollSize : scrollPos > 0;
+    if (!canScroll) {
+      if (isX) state2.animationFrameIdX = void 0;
+      else state2.animationFrameIdY = void 0;
+      return;
+    }
+    speed = Math.min(speed + 0.5, maxSpeed);
     el.scrollBy({
       [isX ? "left" : "top"]: speed * direction
     });
@@ -2649,16 +2664,14 @@ function handleSynthScroll(coordinates, e, state2) {
     if (xResult.left || xResult.right) {
       scrollAxis(lastX, e, state2, {
         axis: "x",
-        direction: xResult.right ? "positive" : "negative",
-        rect
+        direction: xResult.right ? "positive" : "negative"
       });
       return;
     }
     if (yResult.up || yResult.down) {
       scrollAxis(lastX, e, state2, {
         axis: "y",
-        direction: yResult.up ? "negative" : "positive",
-        rect
+        direction: yResult.up ? "negative" : "positive"
       });
       return;
     }
@@ -2672,8 +2685,7 @@ function handleSynthScroll(coordinates, e, state2) {
     if (yResult.up || yResult.down) {
       scrollAxis(lastY, e, state2, {
         axis: "y",
-        direction: yResult.up ? "negative" : "positive",
-        rect
+        direction: yResult.up ? "negative" : "positive"
       });
       return;
     }
@@ -2702,8 +2714,7 @@ function handleSynthScroll(coordinates, e, state2) {
       state2.lastScrollContainerX = el;
       scrollAxis(el, e, state2, {
         axis: "x",
-        direction: xResult.right ? "positive" : "negative",
-        rect
+        direction: xResult.right ? "positive" : "negative"
       });
     }
     if (!scrollables.y && (yResult.up || yResult.down)) {
@@ -2711,8 +2722,7 @@ function handleSynthScroll(coordinates, e, state2) {
       state2.lastScrollContainerY = el;
       scrollAxis(el, e, state2, {
         axis: "y",
-        direction: yResult.up ? "negative" : "positive",
-        rect
+        direction: yResult.up ? "negative" : "positive"
       });
     }
     el = el.parentElement;
@@ -2733,8 +2743,7 @@ function handleSynthScroll(coordinates, e, state2) {
       state2.lastScrollContainerX = root;
       scrollAxis(root, e, state2, {
         axis: "x",
-        direction: xResult.right ? "positive" : "negative",
-        rect
+        direction: xResult.right ? "positive" : "negative"
       });
     }
     if (!scrollables.y && (yResult.up || yResult.down)) {
@@ -2742,8 +2751,7 @@ function handleSynthScroll(coordinates, e, state2) {
       state2.lastScrollContainerY = root;
       scrollAxis(root, e, state2, {
         axis: "y",
-        direction: yResult.up ? "negative" : "positive",
-        rect
+        direction: yResult.up ? "negative" : "positive"
       });
     }
   }

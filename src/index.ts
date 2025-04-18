@@ -1556,14 +1556,6 @@ export function dragstartClasses<T>(
   });
 }
 
-/**
- * Initialize the drag state.
- *
- * @param data - The node drag event data.
- * @param draggedNodes - The dragged nodes.
- *
- * @returns The drag state.
- */
 export function initDrag<T>(
   data: NodeDragEventData<T>,
   draggedNodes: Array<NodeRecord<T>>
@@ -1583,7 +1575,6 @@ export function initDrag<T>(
     const config = data.targetData.parent.data.config;
 
     data.e.dataTransfer.dropEffect = config.dragDropEffect;
-
     data.e.dataTransfer.effectAllowed = config.dragEffectAllowed;
 
     let dragImage: HTMLElement | undefined;
@@ -1591,33 +1582,27 @@ export function initDrag<T>(
     if (config.dragImage) {
       dragImage = config.dragImage(data, draggedNodes);
     } else {
-      if (!config.multiDrag) {
+      if (!config.multiDrag || draggedNodes.length === 1) {
         data.e.dataTransfer.setDragImage(
           data.targetData.node.el,
           data.e.offsetX,
           data.e.offsetY
         );
 
-        const originalZIndex = data.targetData.node.el.style.zIndex;
-
-        dragState.originalZIndex = originalZIndex;
-
+        dragState.originalZIndex = data.targetData.node.el.style.zIndex;
         data.targetData.node.el.style.zIndex = "9999";
-
         data.targetData.node.el.style.boxSizing = "border-box";
 
         return dragState;
       } else {
         const wrapper = document.createElement("div");
+        wrapper.setAttribute("id", "dnd-dragged-node-clone");
 
         for (const node of draggedNodes) {
-          const clonedNode = node.el.cloneNode(true) as HTMLElement;
-
-          clonedNode.style.pointerEvents = "none";
-
-          clonedNode.id = node.el.id + "-clone";
-
-          wrapper.append(clonedNode);
+          const clone = node.el.cloneNode(true) as HTMLElement;
+          clone.id = node.el.id + "-clone";
+          clone.style.pointerEvents = "none";
+          wrapper.appendChild(clone);
         }
 
         const { width } = draggedNodes[0].el.getBoundingClientRect();
@@ -1630,12 +1615,15 @@ export function initDrag<T>(
           pointerEvents: "none",
           zIndex: "9999",
           left: "-9999px",
+          boxSizing: "border-box",
+          background: "transparent",
+          overflow: "hidden",
         });
+
+        data.targetData.parent.el.appendChild(wrapper);
 
         dragImage = wrapper;
       }
-
-      document.body.appendChild(dragImage);
     }
 
     data.e.dataTransfer.setDragImage(dragImage, data.e.offsetX, data.e.offsetY);
@@ -1958,6 +1946,11 @@ function initSynthDrag<T>(
     "justifyContent",
     "padding",
     "paddingTop",
+    "margin",
+    "marginTop",
+    "marginBottom",
+    "marginLeft",
+    "marginRight",
     "paddingBottom",
     "paddingLeft",
     "paddingRight",
@@ -2021,21 +2014,28 @@ function initSynthDrag<T>(
   // Multi-drag
   else {
     const wrapper = document.createElement("div");
+
     wrapper.setAttribute("popover", "manual");
 
     draggedNodes.forEach((dragged) => {
       const clone = dragged.el.cloneNode(true) as HTMLElement;
+
       copyCriticalStyles(dragged.el as HTMLElement, clone);
+
       clone.style.pointerEvents = "none";
+
       clone.style.margin = "0";
+
       wrapper.append(clone);
     });
 
-    applyBaseStyles(wrapper, {
-      display: "flex",
-      flexDirection: "column",
-      padding: "0",
-    });
+    wrapper.style.display = "flex";
+    wrapper.style.flexDirection = "column";
+    wrapper.style.padding = "0";
+    wrapper.style.margin = "0";
+    wrapper.style.position = "absolute";
+    wrapper.style.zIndex = "9999";
+    wrapper.style.pointerEvents = "none";
 
     dragImage = wrapper;
   }
@@ -2104,23 +2104,18 @@ function cancelSynthScroll<T>(
   cancelY = true
 ) {
   if (cancelX && state.animationFrameIdX !== undefined) {
-    cancelAnimationFrame(state.animationFrameIdX);
-
+    cancelAnimationFrame(state.animationFrameIdX); // ✅ Use cancelAnimationFrame
     state.animationFrameIdX = undefined;
   }
 
   if (cancelY && state.animationFrameIdY !== undefined) {
-    cancelAnimationFrame(state.animationFrameIdY);
-
+    cancelAnimationFrame(state.animationFrameIdY); // ✅ Use cancelAnimationFrame
     state.animationFrameIdY = undefined;
   }
 
   if (!state.animationFrameIdX && !state.animationFrameIdY) {
     state.preventEnter = false;
   }
-
-  state.lastScrollContainerX = null;
-  state.lastScrollContainerY = null;
 }
 
 function moveNode<T>(
@@ -2212,13 +2207,16 @@ export function synthMove<T>(
     state,
   };
 
+  // @ts-ignore
   if ("node" in elFromPoint) {
+    // @ts-ignore
     elFromPoint.node.el.dispatchEvent(
       new CustomEvent("handleNodePointerover", {
         detail: pointerMoveEventData,
       })
     );
   } else {
+    // @ts-ignore
     elFromPoint.parent.el.dispatchEvent(
       new CustomEvent("handleParentPointerover", {
         detail: pointerMoveEventData,
@@ -2880,31 +2878,36 @@ function scrollAxis<T>(
   options: {
     axis: Axis;
     direction: "positive" | "negative";
-    rect: DOMRect; // ← pass this in
   }
 ) {
   state.preventEnter = true;
 
   const isX = options.axis === "x";
   const direction = options.direction === "positive" ? 1 : -1;
-  const activationZone = 50;
+  let speed = 10;
   const maxSpeed = 30;
 
   const scroll = () => {
-    const pointerCoord = isX ? e.clientX : e.clientY;
-    const edge =
-      options.direction === "positive"
-        ? isX
-          ? options.rect.right
-          : options.rect.bottom
-        : isX
-        ? options.rect.left
-        : options.rect.top;
+    // Get fresh scroll bounds
+    const scrollProp = isX ? "scrollLeft" : "scrollTop";
+    const sizeProp = isX ? "clientWidth" : "clientHeight";
+    const scrollSizeProp = isX ? "scrollWidth" : "scrollHeight";
 
-    const distance = Math.abs(pointerCoord - edge);
-    const proximity = Math.max(0, activationZone - distance);
-    const speedRatio = proximity / activationZone;
-    const speed = Math.ceil(maxSpeed * speedRatio);
+    const scrollPos = el[scrollProp];
+    const clientSize = el[sizeProp];
+    const scrollSize = el[scrollSizeProp];
+
+    const canScroll =
+      direction > 0 ? scrollPos + clientSize < scrollSize : scrollPos > 0;
+
+    if (!canScroll) {
+      // Exit if we can't scroll further
+      if (isX) state.animationFrameIdX = undefined;
+      else state.animationFrameIdY = undefined;
+      return;
+    }
+
+    speed = Math.min(speed + 0.5, maxSpeed);
 
     el.scrollBy({
       [isX ? "left" : "top"]: speed * direction,
@@ -2970,7 +2973,6 @@ function handleSynthScroll<T>(
       scrollAxis(lastX, e, state, {
         axis: "x",
         direction: xResult.right ? "positive" : "negative",
-        rect,
       });
       return;
     }
@@ -2979,7 +2981,6 @@ function handleSynthScroll<T>(
       scrollAxis(lastX, e, state, {
         axis: "y",
         direction: yResult.up ? "negative" : "positive",
-        rect,
       });
       return;
     }
@@ -2997,7 +2998,6 @@ function handleSynthScroll<T>(
       scrollAxis(lastY, e, state, {
         axis: "y",
         direction: yResult.up ? "negative" : "positive",
-        rect,
       });
       return;
     }
@@ -3035,7 +3035,6 @@ function handleSynthScroll<T>(
       scrollAxis(el, e, state, {
         axis: "x",
         direction: xResult.right ? "positive" : "negative",
-        rect,
       });
     }
 
@@ -3045,7 +3044,6 @@ function handleSynthScroll<T>(
       scrollAxis(el, e, state, {
         axis: "y",
         direction: yResult.up ? "negative" : "positive",
-        rect,
       });
     }
 
@@ -3074,7 +3072,6 @@ function handleSynthScroll<T>(
       scrollAxis(root, e, state, {
         axis: "x",
         direction: xResult.right ? "positive" : "negative",
-        rect,
       });
     }
 
@@ -3084,7 +3081,6 @@ function handleSynthScroll<T>(
       scrollAxis(root, e, state, {
         axis: "y",
         direction: yResult.up ? "negative" : "positive",
-        rect,
       });
     }
   }

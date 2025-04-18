@@ -1,7 +1,6 @@
 {
-  "version": "0.4.2",
   "name": "@formkit/drag-and-drop",
-  "private": true,
+  "version": "0.4.2",
   "description": "Drag and drop package.",
   "main": "./index.cjs",
   "types": "./index.d.cts",
@@ -18,21 +17,6 @@
   "keywords": [],
   "author": "Sasha Milenkovic <sasha@formkit.com>",
   "license": "MIT",
-  "devDependencies": {
-    "@playwright/test": "^1.51.1",
-    "@types/react": "^18.3.20",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "bumpp": "^9.11.1",
-    "esbuild-plugin-replace": "^1.4.0",
-    "eslint": "^8.57.1",
-    "eslint-plugin-vue": "^9.33.0",
-    "jiti": "^2.4.2",
-    "pathe": "^1.1.2",
-    "publint": "^0.2.12",
-    "tailwind": "^4.0.0",
-    "tsup": "^8.4.0",
-    "typescript": "^5.8.3"
-  },
   "exports": {
     "./vue": {
       "require": {

@@ -10,6 +10,7 @@
 /// <reference path="types/app.config.d.ts" />
 /// <reference types="vue-router" />
 /// <reference path="types/middleware.d.ts" />
+/// <reference path="types/nitro-middleware.d.ts" />
 /// <reference path="types/layouts.d.ts" />
 /// <reference path="components.d.ts" />
 /// <reference path="imports.d.ts" />

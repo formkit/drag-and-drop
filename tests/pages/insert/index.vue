@@ -102,7 +102,6 @@ const [parent, values] = useDragAndDrop(
   text-align: center;
   background-color: #f9f9f9;
   box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
   height: 50px;
 }
 
