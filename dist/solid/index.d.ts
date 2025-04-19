@@ -603,6 +603,7 @@ type BaseDragState<T> = {
     dragItemRect: DOMRect | undefined;
     lastScrollDirectionX: "positive" | "negative" | undefined;
     lastScrollDirectionY: "positive" | "negative" | undefined;
+    scrollDebounceTimeout: ReturnType<typeof setTimeout> | undefined;
 };
 interface DragStateProps<T> {
     /**
@@ -681,8 +682,8 @@ interface DragStateProps<T> {
     transferred: boolean;
     lastScrollContainerX?: HTMLElement | null;
     lastScrollContainerY?: HTMLElement | null;
-    animationFrameIdX?: number;
-    animationFrameIdY?: number;
+    timeoutIdX?: number;
+    timeoutIdY?: number;
 }
 type SortEvent = <T>(data: SortEventData<T>) => void;
 type TransferEvent = <T>(data: TransferEventData<T>) => void;

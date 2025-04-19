@@ -1080,7 +1080,8 @@ var baseDragState = {
   windowScrollX: void 0,
   windowScrollY: void 0,
   lastScrollDirectionX: void 0,
-  lastScrollDirectionY: void 0
+  lastScrollDirectionY: void 0,
+  scrollDebounceTimeout: void 0
 };
 var state = baseDragState;
 var dropped = false;
@@ -1121,7 +1122,8 @@ function resetState() {
     windowScrollX: void 0,
     windowScrollY: void 0,
     lastScrollDirectionX: void 0,
-    lastScrollDirectionY: void 0
+    lastScrollDirectionY: void 0,
+    scrollDebounceTimeout: void 0
   };
   state = { ...baseDragState2 };
 }
@@ -1164,13 +1166,12 @@ function handleRootDragover(e) {
   if (!isDragState(state)) return;
   pd(e);
   const { x, y } = eventCoordinates(e);
-  const elFromPoint = document.elementFromPoint(x, y);
-  if (!elFromPoint || !(elFromPoint instanceof HTMLElement)) return;
-  requestAnimationFrame(() => {
-    if (isDragState(state) && shouldHandleScroll()) {
+  if (state.scrollDebounceTimeout) clearTimeout(state.scrollDebounceTimeout);
+  state.scrollDebounceTimeout = setTimeout(() => {
+    if (isDragState(state)) {
       handleSynthScroll({ x, y }, e, state);
     }
-  });
+  }, 16);
 }
 function handleRootPointermove(e) {
   if (!state.pointerDown || !state.pointerDown.validated) return;
@@ -2238,15 +2239,15 @@ function handleLongPress(data, state2, node) {
   }, config.longPressDuration || 1e3);
 }
 function cancelSynthScroll(state2, cancelX = true, cancelY = true) {
-  if (cancelX && state2.animationFrameIdX !== void 0) {
-    cancelAnimationFrame(state2.animationFrameIdX);
-    state2.animationFrameIdX = void 0;
+  if (cancelX && state2.timeoutIdX !== void 0) {
+    clearTimeout(state2.timeoutIdX);
+    state2.timeoutIdX = void 0;
   }
-  if (cancelY && state2.animationFrameIdY !== void 0) {
-    cancelAnimationFrame(state2.animationFrameIdY);
-    state2.animationFrameIdY = void 0;
+  if (cancelY && state2.timeoutIdY !== void 0) {
+    clearTimeout(state2.timeoutIdY);
+    state2.timeoutIdY = void 0;
   }
-  if (!state2.animationFrameIdX && !state2.animationFrameIdY) {
+  if (!state2.timeoutIdX && !state2.timeoutIdY) {
     state2.preventEnter = false;
   }
 }
@@ -2267,23 +2268,13 @@ function moveNode(e, state2, justStarted = false, scrollX = 0, scrollY = 0) {
   }
   if (e.cancelable) pd(e);
 }
-var lastScrollCheck = 0;
-var SCROLL_THROTTLE_MS = 50;
-function shouldHandleScroll(now = performance.now()) {
-  if (now - lastScrollCheck > SCROLL_THROTTLE_MS) {
-    lastScrollCheck = now;
-    return true;
-  }
-  return false;
-}
 function synthMove(e, state2, justStarted = false) {
   moveNode(e, state2, justStarted);
   const coordinates = eventCoordinates(e);
-  if (shouldHandleScroll()) {
-    requestAnimationFrame(() => {
-      handleSynthScroll(coordinates, e, state2);
-    });
-  }
+  if (state2.scrollDebounceTimeout) clearTimeout(state2.scrollDebounceTimeout);
+  state2.scrollDebounceTimeout = setTimeout(() => {
+    handleSynthScroll(coordinates, e, state2);
+  }, 16);
   const elFromPoint = getElFromPoint(coordinates);
   if (!elFromPoint) {
     document.dispatchEvent(
@@ -2624,23 +2615,16 @@ function getScrollDirection(el, e, style, rect, opts) {
 function scrollAxis(el, e, state2, options) {
   state2.preventEnter = true;
   const isX = options.axis === "x";
-  const direction = options.direction;
-  const dirFactor = direction === "positive" ? 1 : -1;
+  const dirFactor = options.direction === "positive" ? 1 : -1;
   const speed = 20;
-  if (isX) {
-    if (state2.lastScrollDirectionX && state2.lastScrollDirectionX !== direction && state2.animationFrameIdX !== void 0) {
-      cancelAnimationFrame(state2.animationFrameIdX);
-      state2.animationFrameIdX = void 0;
-    }
-    state2.lastScrollDirectionX = direction;
-  } else {
-    if (state2.lastScrollDirectionY && state2.lastScrollDirectionY !== direction && state2.animationFrameIdY !== void 0) {
-      cancelAnimationFrame(state2.animationFrameIdY);
-      state2.animationFrameIdY = void 0;
-    }
-    state2.lastScrollDirectionY = direction;
+  const key = isX ? "lastScrollDirectionX" : "lastScrollDirectionY";
+  const idKey = isX ? "timeoutIdX" : "timeoutIdY";
+  if (state2[key] && state2[key] !== options.direction && state2[idKey] !== void 0) {
+    clearTimeout(state2[idKey]);
+    state2[idKey] = void 0;
   }
-  const scroll = () => {
+  state2[key] = options.direction;
+  const scrollLoop = () => {
     const scrollProp = isX ? "scrollLeft" : "scrollTop";
     const sizeProp = isX ? "clientWidth" : "clientHeight";
     const scrollSizeProp = isX ? "scrollWidth" : "scrollHeight";
@@ -2649,13 +2633,10 @@ function scrollAxis(el, e, state2, options) {
     const scrollSize = el[scrollSizeProp];
     const canScroll = dirFactor > 0 ? scrollPos + clientSize < scrollSize : scrollPos > 0;
     if (!canScroll) {
-      if (isX) state2.animationFrameIdX = void 0;
-      else state2.animationFrameIdY = void 0;
+      state2[idKey] = void 0;
       return;
     }
-    el.scrollBy({
-      [isX ? "left" : "top"]: speed * dirFactor
-    });
+    el[scrollProp] += speed * dirFactor;
     if (isSynthDragState(state2) && e instanceof PointerEvent) {
       moveNode(
         e,
@@ -2665,19 +2646,9 @@ function scrollAxis(el, e, state2, options) {
         isX ? 0 : speed * dirFactor
       );
     }
-    const id2 = requestAnimationFrame(scroll);
-    if (isX) {
-      state2.animationFrameIdX = id2;
-    } else {
-      state2.animationFrameIdY = id2;
-    }
+    state2[idKey] = setTimeout(scrollLoop, 16);
   };
-  const id = requestAnimationFrame(scroll);
-  if (isX) {
-    state2.animationFrameIdX = id;
-  } else {
-    state2.animationFrameIdY = id;
-  }
+  state2[idKey] = setTimeout(scrollLoop, 16);
 }
 function isPointerInside(el, x, y) {
   const rect = el.getBoundingClientRect();
@@ -2686,112 +2657,50 @@ function isPointerInside(el, x, y) {
 function handleSynthScroll(coordinates, e, state2) {
   cancelSynthScroll(state2);
   const { x, y } = coordinates;
-  const lastX = state2.lastScrollContainerX;
-  const lastY = state2.lastScrollContainerY;
-  if (lastX && isPointerInside(lastX, x, y)) {
-    const style = window.getComputedStyle(lastX);
-    const rect = lastX.getBoundingClientRect();
-    const xResult = getScrollDirection(lastX, e, style, rect, {
-      axis: "x",
-      state: state2
-    });
-    const yResult = getScrollDirection(lastX, e, style, rect, {
-      axis: "y"
-    });
-    if (xResult.left || xResult.right) {
-      scrollAxis(lastX, e, state2, {
-        axis: "x",
-        direction: xResult.right ? "positive" : "negative"
-      });
-      return;
-    }
-    if (yResult.up || yResult.down) {
-      scrollAxis(lastX, e, state2, {
-        axis: "y",
-        direction: yResult.up ? "negative" : "positive"
-      });
-      return;
-    }
-  }
-  if (lastY && isPointerInside(lastY, x, y)) {
-    const style = window.getComputedStyle(lastY);
-    const rect = lastY.getBoundingClientRect();
-    const yResult = getScrollDirection(lastY, e, style, rect, {
-      axis: "y"
-    });
-    if (yResult.up || yResult.down) {
-      scrollAxis(lastY, e, state2, {
-        axis: "y",
-        direction: yResult.up ? "negative" : "positive"
-      });
-      return;
-    }
-  }
-  const scrollables = {
-    x: null,
-    y: null
+  let scrolled = false;
+  const attemptScroll = (axis, direction, container) => {
+    scrollAxis(container, e, state2, { axis, direction });
+    scrolled = true;
   };
-  let el = document.elementFromPoint(x, y);
-  while (el && (scrollables.x === null || scrollables.y === null)) {
-    if (!(el instanceof HTMLElement)) {
-      el = el.parentElement;
-      continue;
-    }
+  const checkAndScroll = (el) => {
     const style = window.getComputedStyle(el);
     const rect = el.getBoundingClientRect();
     const xResult = getScrollDirection(el, e, style, rect, {
       axis: "x",
       state: state2
     });
-    const yResult = getScrollDirection(el, e, style, rect, {
-      axis: "y"
-    });
-    if (!scrollables.x && (xResult.left || xResult.right)) {
-      scrollables.x = el;
+    const yResult = getScrollDirection(el, e, style, rect, { axis: "y" });
+    if (xResult.left || xResult.right) {
       state2.lastScrollContainerX = el;
-      scrollAxis(el, e, state2, {
-        axis: "x",
-        direction: xResult.right ? "positive" : "negative"
-      });
+      attemptScroll("x", xResult.right ? "positive" : "negative", el);
     }
-    if (!scrollables.y && (yResult.up || yResult.down)) {
-      scrollables.y = el;
+    if (yResult.up || yResult.down) {
       state2.lastScrollContainerY = el;
-      scrollAxis(el, e, state2, {
-        axis: "y",
-        direction: yResult.up ? "negative" : "positive"
-      });
+      attemptScroll("y", yResult.down ? "positive" : "negative", el);
     }
-    el = el.parentElement;
+  };
+  if (state2.lastScrollContainerX && isPointerInside(state2.lastScrollContainerX, x, y)) {
+    checkAndScroll(state2.lastScrollContainerX);
   }
-  const root = document.scrollingElement;
-  if (root instanceof HTMLElement) {
-    const style = window.getComputedStyle(root);
-    const rect = root.getBoundingClientRect();
-    const xResult = getScrollDirection(root, e, style, rect, {
-      axis: "x",
-      state: state2
-    });
-    const yResult = getScrollDirection(root, e, style, rect, {
-      axis: "y"
-    });
-    if (!scrollables.x && (xResult.left || xResult.right)) {
-      scrollables.x = root;
-      state2.lastScrollContainerX = root;
-      scrollAxis(root, e, state2, {
-        axis: "x",
-        direction: xResult.right ? "positive" : "negative"
-      });
-    }
-    if (!scrollables.y && (yResult.up || yResult.down)) {
-      scrollables.y = root;
-      state2.lastScrollContainerY = root;
-      scrollAxis(root, e, state2, {
-        axis: "y",
-        direction: yResult.up ? "negative" : "positive"
-      });
+  if (!scrolled && state2.lastScrollContainerY && isPointerInside(state2.lastScrollContainerY, x, y)) {
+    checkAndScroll(state2.lastScrollContainerY);
+  }
+  if (!scrolled) {
+    let el = document.elementFromPoint(x, y);
+    while (el && !(scrolled && state2.lastScrollContainerX && state2.lastScrollContainerY)) {
+      if (el instanceof HTMLElement) {
+        checkAndScroll(el);
+      }
+      el = el.parentElement;
     }
   }
+  if (!scrolled) {
+    const root = document.scrollingElement;
+    if (root instanceof HTMLElement) {
+      checkAndScroll(root);
+    }
+  }
+  if (!scrolled) cancelSynthScroll(state2);
 }
 function getElFromPoint(coordinates) {
   let target = document.elementFromPoint(coordinates.x, coordinates.y);

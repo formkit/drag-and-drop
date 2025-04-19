@@ -805,6 +805,7 @@ export type BaseDragState<T> = {
   dragItemRect: DOMRect | undefined;
   lastScrollDirectionX: "positive" | "negative" | undefined;
   lastScrollDirectionY: "positive" | "negative" | undefined;
+  scrollDebounceTimeout: ReturnType<typeof setTimeout> | undefined;
 };
 
 export interface DragStateProps<T> {
@@ -884,8 +885,8 @@ export interface DragStateProps<T> {
   transferred: boolean;
   lastScrollContainerX?: HTMLElement | null;
   lastScrollContainerY?: HTMLElement | null;
-  animationFrameIdX?: number;
-  animationFrameIdY?: number;
+  timeoutIdX?: number;
+  timeoutIdY?: number;
 }
 
 export type SortEvent = <T>(data: SortEventData<T>) => void;

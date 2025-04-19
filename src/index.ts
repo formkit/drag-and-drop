@@ -127,6 +127,7 @@ const baseDragState = {
   windowScrollY: undefined,
   lastScrollDirectionX: undefined,
   lastScrollDirectionY: undefined,
+  scrollDebounceTimeout: undefined,
 };
 
 /**
@@ -187,6 +188,7 @@ export function resetState() {
     windowScrollY: undefined,
     lastScrollDirectionX: undefined,
     lastScrollDirectionY: undefined,
+    scrollDebounceTimeout: undefined,
   };
 
   state = { ...baseDragState } as BaseDragState<unknown>;
@@ -264,26 +266,20 @@ function handleRootDrop(_e: DragEvent) {
   handleEnd(state);
 }
 
-/**
- * If we are currently dragging, then let's prevent default on dragover to avoid
- * the default behavior of the browser on drop.
- */
 function handleRootDragover(e: DragEvent) {
   if (!isDragState(state)) return;
 
   pd(e);
 
-  // Scroll if necessary
   const { x, y } = eventCoordinates(e);
-  const elFromPoint = document.elementFromPoint(x, y);
 
-  if (!elFromPoint || !(elFromPoint instanceof HTMLElement)) return;
+  if (state.scrollDebounceTimeout) clearTimeout(state.scrollDebounceTimeout);
 
-  requestAnimationFrame(() => {
-    if (isDragState(state) && shouldHandleScroll()) {
+  state.scrollDebounceTimeout = setTimeout(() => {
+    if (isDragState(state)) {
       handleSynthScroll({ x, y }, e, state);
     }
-  });
+  }, 16); // ~60fps
 }
 
 function handleRootPointermove(e: PointerEvent) {
@@ -2140,17 +2136,17 @@ function cancelSynthScroll<T>(
   cancelX = true,
   cancelY = true
 ) {
-  if (cancelX && state.animationFrameIdX !== undefined) {
-    cancelAnimationFrame(state.animationFrameIdX); // ✅ Use cancelAnimationFrame
-    state.animationFrameIdX = undefined;
+  if (cancelX && state.timeoutIdX !== undefined) {
+    clearTimeout(state.timeoutIdX);
+    state.timeoutIdX = undefined;
   }
 
-  if (cancelY && state.animationFrameIdY !== undefined) {
-    cancelAnimationFrame(state.animationFrameIdY); // ✅ Use cancelAnimationFrame
-    state.animationFrameIdY = undefined;
+  if (cancelY && state.timeoutIdY !== undefined) {
+    clearTimeout(state.timeoutIdY);
+    state.timeoutIdY = undefined;
   }
 
-  if (!state.animationFrameIdX && !state.animationFrameIdY) {
+  if (!state.timeoutIdX && !state.timeoutIdY) {
     state.preventEnter = false;
   }
 }
@@ -2190,25 +2186,17 @@ function moveNode<T>(
   if (e.cancelable) pd(e);
 }
 
-let lastScrollCheck = 0;
-const SCROLL_THROTTLE_MS = 50;
+// let lastScrollCheck = 0;
+// const SCROLL_THROTTLE_MS = 50;
 
-function shouldHandleScroll(now = performance.now()) {
-  if (now - lastScrollCheck > SCROLL_THROTTLE_MS) {
-    lastScrollCheck = now;
-    return true;
-  }
-  return false;
-}
+// function shouldHandleScroll(now = performance.now()) {
+//   if (now - lastScrollCheck > SCROLL_THROTTLE_MS) {
+//     lastScrollCheck = now;
+//     return true;
+//   }
+//   return false;
+// }
 
-/**
- * Handle the synth move.
- *
- * @param e - The pointer event.
- * @param state - The synth drag state.
- *
- * @returns void
- */
 export function synthMove<T>(
   e: PointerEvent,
   state: SynthDragState<T>,
@@ -2218,11 +2206,12 @@ export function synthMove<T>(
 
   const coordinates = eventCoordinates(e);
 
-  if (shouldHandleScroll()) {
-    requestAnimationFrame(() => {
-      handleSynthScroll(coordinates, e, state);
-    });
-  }
+  // Debounce scroll handling
+  if (state.scrollDebounceTimeout) clearTimeout(state.scrollDebounceTimeout);
+
+  state.scrollDebounceTimeout = setTimeout(() => {
+    handleSynthScroll(coordinates, e, state);
+  }, 16); // ~1 frame (60fps)
 
   const elFromPoint = getElFromPoint(coordinates);
 
@@ -2238,6 +2227,7 @@ export function synthMove<T>(
 
     return;
   }
+
   const pointerMoveEventData = {
     e,
     targetData: elFromPoint,
@@ -2918,34 +2908,25 @@ function scrollAxis<T>(
   state.preventEnter = true;
 
   const isX = options.axis === "x";
-  const direction = options.direction;
-  const dirFactor = direction === "positive" ? 1 : -1;
-  const speed = 20; // consistent speed
+  const dirFactor = options.direction === "positive" ? 1 : -1;
+  const speed = 20;
 
-  // Cancel existing scroll if direction changed
-  if (isX) {
-    if (
-      state.lastScrollDirectionX &&
-      state.lastScrollDirectionX !== direction &&
-      state.animationFrameIdX !== undefined
-    ) {
-      cancelAnimationFrame(state.animationFrameIdX);
-      state.animationFrameIdX = undefined;
-    }
-    state.lastScrollDirectionX = direction;
-  } else {
-    if (
-      state.lastScrollDirectionY &&
-      state.lastScrollDirectionY !== direction &&
-      state.animationFrameIdY !== undefined
-    ) {
-      cancelAnimationFrame(state.animationFrameIdY);
-      state.animationFrameIdY = undefined;
-    }
-    state.lastScrollDirectionY = direction;
+  // Cancel previous scroll if direction changed
+  const key = isX ? "lastScrollDirectionX" : "lastScrollDirectionY";
+  const idKey = isX ? "timeoutIdX" : "timeoutIdY";
+
+  if (
+    state[key] &&
+    state[key] !== options.direction &&
+    state[idKey] !== undefined
+  ) {
+    clearTimeout(state[idKey]!);
+    state[idKey] = undefined;
   }
 
-  const scroll = () => {
+  state[key] = options.direction;
+
+  const scrollLoop = () => {
     const scrollProp = isX ? "scrollLeft" : "scrollTop";
     const sizeProp = isX ? "clientWidth" : "clientHeight";
     const scrollSizeProp = isX ? "scrollWidth" : "scrollHeight";
@@ -2958,14 +2939,12 @@ function scrollAxis<T>(
       dirFactor > 0 ? scrollPos + clientSize < scrollSize : scrollPos > 0;
 
     if (!canScroll) {
-      if (isX) state.animationFrameIdX = undefined;
-      else state.animationFrameIdY = undefined;
+      state[idKey] = undefined;
       return;
     }
 
-    el.scrollBy({
-      [isX ? "left" : "top"]: speed * dirFactor,
-    });
+    // More consistent across Safari/Firefox
+    el[scrollProp] += speed * dirFactor;
 
     if (isSynthDragState(state) && e instanceof PointerEvent) {
       moveNode(
@@ -2977,22 +2956,10 @@ function scrollAxis<T>(
       );
     }
 
-    const id = requestAnimationFrame(scroll);
-
-    if (isX) {
-      state.animationFrameIdX = id;
-    } else {
-      state.animationFrameIdY = id;
-    }
+    state[idKey] = setTimeout(scrollLoop, 16); // ~60fps
   };
 
-  // Start scrolling
-  const id = requestAnimationFrame(scroll);
-  if (isX) {
-    state.animationFrameIdX = id;
-  } else {
-    state.animationFrameIdY = id;
-  }
+  state[idKey] = setTimeout(scrollLoop, 16);
 }
 
 function isPointerInside(el: HTMLElement, x: number, y: number): boolean {
@@ -3005,74 +2972,22 @@ function handleSynthScroll<T>(
   e: PointerEvent | DragEvent,
   state: DragState<T>
 ) {
-  cancelSynthScroll(state);
+  cancelSynthScroll(state); // ⛔️ Cancel any ongoing scrolls on movement
 
   const { x, y } = coordinates;
 
-  // Try fast path using last scroll containers
-  const lastX = state.lastScrollContainerX;
-  const lastY = state.lastScrollContainerY;
+  let scrolled = false;
 
-  if (lastX && isPointerInside(lastX, x, y)) {
-    const style = window.getComputedStyle(lastX);
-    const rect = lastX.getBoundingClientRect();
-
-    const xResult = getScrollDirection(lastX, e, style, rect, {
-      axis: "x",
-      state,
-    });
-    const yResult = getScrollDirection(lastX, e, style, rect, {
-      axis: "y",
-    });
-
-    if (xResult.left || xResult.right) {
-      scrollAxis(lastX, e, state, {
-        axis: "x",
-        direction: xResult.right ? "positive" : "negative",
-      });
-      return;
-    }
-
-    if (yResult.up || yResult.down) {
-      scrollAxis(lastX, e, state, {
-        axis: "y",
-        direction: yResult.up ? "negative" : "positive",
-      });
-      return;
-    }
-  }
-
-  if (lastY && isPointerInside(lastY, x, y)) {
-    const style = window.getComputedStyle(lastY);
-    const rect = lastY.getBoundingClientRect();
-
-    const yResult = getScrollDirection(lastY, e, style, rect, {
-      axis: "y",
-    });
-
-    if (yResult.up || yResult.down) {
-      scrollAxis(lastY, e, state, {
-        axis: "y",
-        direction: yResult.up ? "negative" : "positive",
-      });
-      return;
-    }
-  }
-
-  // Fallback: walk up from elementFromPoint instead of scanning all elements
-  const scrollables: Record<"x" | "y", HTMLElement | null> = {
-    x: null,
-    y: null,
+  const attemptScroll = (
+    axis: "x" | "y",
+    direction: "positive" | "negative",
+    container: HTMLElement
+  ) => {
+    scrollAxis(container, e, state, { axis, direction });
+    scrolled = true;
   };
 
-  let el = document.elementFromPoint(x, y);
-
-  while (el && (scrollables.x === null || scrollables.y === null)) {
-    if (!(el instanceof HTMLElement)) {
-      el = el.parentElement;
-      continue;
-    }
-
+  const checkAndScroll = (el: HTMLElement) => {
     const style = window.getComputedStyle(el);
     const rect = el.getBoundingClientRect();
 
@@ -3080,66 +2995,59 @@ function handleSynthScroll<T>(
       axis: "x",
       state,
     });
+    const yResult = getScrollDirection(el, e, style, rect, { axis: "y" });
 
-    const yResult = getScrollDirection(el, e, style, rect, {
-      axis: "y",
-    });
-
-    if (!scrollables.x && (xResult.left || xResult.right)) {
-      scrollables.x = el;
+    if (xResult.left || xResult.right) {
       state.lastScrollContainerX = el;
-      scrollAxis(el, e, state, {
-        axis: "x",
-        direction: xResult.right ? "positive" : "negative",
-      });
+      attemptScroll("x", xResult.right ? "positive" : "negative", el);
     }
 
-    if (!scrollables.y && (yResult.up || yResult.down)) {
-      scrollables.y = el;
+    if (yResult.up || yResult.down) {
       state.lastScrollContainerY = el;
-      scrollAxis(el, e, state, {
-        axis: "y",
-        direction: yResult.up ? "negative" : "positive",
-      });
+      attemptScroll("y", yResult.down ? "positive" : "negative", el);
     }
+  };
 
-    el = el.parentElement;
+  // Try fast path
+  if (
+    state.lastScrollContainerX &&
+    isPointerInside(state.lastScrollContainerX, x, y)
+  ) {
+    checkAndScroll(state.lastScrollContainerX);
   }
 
-  // 👇 Final fallback: check root/document scrolling element
-  const root = document.scrollingElement;
+  if (
+    !scrolled &&
+    state.lastScrollContainerY &&
+    isPointerInside(state.lastScrollContainerY, x, y)
+  ) {
+    checkAndScroll(state.lastScrollContainerY);
+  }
 
-  if (root instanceof HTMLElement) {
-    const style = window.getComputedStyle(root);
-    const rect = root.getBoundingClientRect();
-
-    const xResult = getScrollDirection(root, e, style, rect, {
-      axis: "x",
-      state,
-    });
-
-    const yResult = getScrollDirection(root, e, style, rect, {
-      axis: "y",
-    });
-
-    if (!scrollables.x && (xResult.left || xResult.right)) {
-      scrollables.x = root;
-      state.lastScrollContainerX = root;
-      scrollAxis(root, e, state, {
-        axis: "x",
-        direction: xResult.right ? "positive" : "negative",
-      });
-    }
-
-    if (!scrollables.y && (yResult.up || yResult.down)) {
-      scrollables.y = root;
-      state.lastScrollContainerY = root;
-      scrollAxis(root, e, state, {
-        axis: "y",
-        direction: yResult.up ? "negative" : "positive",
-      });
+  if (!scrolled) {
+    // Walk up from elementFromPoint as fallback
+    let el = document.elementFromPoint(x, y);
+    while (
+      el &&
+      !(scrolled && state.lastScrollContainerX && state.lastScrollContainerY)
+    ) {
+      if (el instanceof HTMLElement) {
+        checkAndScroll(el);
+      }
+      el = el.parentElement;
     }
   }
+
+  if (!scrolled) {
+    // Final fallback: scrollingElement
+    const root = document.scrollingElement;
+    if (root instanceof HTMLElement) {
+      checkAndScroll(root);
+    }
+  }
+
+  // If still not scrolling, make sure we're fully canceled
+  if (!scrolled) cancelSynthScroll(state);
 }
 
 export function getElFromPoint<T>(coordinates: {
