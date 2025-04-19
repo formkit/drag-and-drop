@@ -342,7 +342,6 @@ onMounted(() => {
               basis-[30%]
               m-2
               cursor-grab
-              active:cursor-grabbing
               active:select-none
               dark:before:bg-pink-400
               rounded-md

@@ -39,7 +39,7 @@ dragAndDrop({
           <li
             v-for="tape in tapes"
             :key="tape"
-            class="basis-1/2 md:basis-1/3 text-center cursor-grab active:cursor-grabbing"
+            class="basis-1/2 md:basis-1/3 text-center cursor-grab"
           >
             <CassetteTape :label="tape" :data-label="tape" />
           </li>

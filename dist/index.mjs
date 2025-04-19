@@ -1078,7 +1078,9 @@ var baseDragState = {
   rootScrollHeight: void 0,
   dragItemRect: void 0,
   windowScrollX: void 0,
-  windowScrollY: void 0
+  windowScrollY: void 0,
+  lastScrollDirectionX: void 0,
+  lastScrollDirectionY: void 0
 };
 var state = baseDragState;
 var dropped = false;
@@ -1117,7 +1119,9 @@ function resetState() {
     rootScrollHeight: void 0,
     dragItemRect: void 0,
     windowScrollX: void 0,
-    windowScrollY: void 0
+    windowScrollY: void 0,
+    lastScrollDirectionX: void 0,
+    lastScrollDirectionY: void 0
   };
   state = { ...baseDragState2 };
 }
@@ -1789,7 +1793,6 @@ function handleNodePointerdown(data, state2) {
     node: data.targetData.node,
     validated: false
   };
-  console.log("pointer down fired");
   if (!validateDragHandle({
     x: data.e.clientX,
     y: data.e.clientY,
@@ -1914,7 +1917,6 @@ function dragstartClasses(_node, nodes2, config, isSynth = false) {
   });
 }
 function initDrag(data, draggedNodes2) {
-  console.log("initDrag dragged nodes", draggedNodes2);
   sp(data.e);
   const dragState = setDragState(
     dragStateProps(
@@ -2066,7 +2068,6 @@ function handlePointercancel(data, state2) {
   config?.handleEnd(state2);
 }
 function handleEnd3(state2) {
-  console.log("handleEnd fired");
   if (state2.draggedNode) state2.draggedNode.el.draggable = true;
   if (isSynthDragState(state2)) {
     state2.clonedDraggedNode.remove();
@@ -2623,9 +2624,22 @@ function getScrollDirection(el, e, style, rect, opts) {
 function scrollAxis(el, e, state2, options) {
   state2.preventEnter = true;
   const isX = options.axis === "x";
-  const direction = options.direction === "positive" ? 1 : -1;
-  let speed = 10;
-  const maxSpeed = 30;
+  const direction = options.direction;
+  const dirFactor = direction === "positive" ? 1 : -1;
+  const speed = 20;
+  if (isX) {
+    if (state2.lastScrollDirectionX && state2.lastScrollDirectionX !== direction && state2.animationFrameIdX !== void 0) {
+      cancelAnimationFrame(state2.animationFrameIdX);
+      state2.animationFrameIdX = void 0;
+    }
+    state2.lastScrollDirectionX = direction;
+  } else {
+    if (state2.lastScrollDirectionY && state2.lastScrollDirectionY !== direction && state2.animationFrameIdY !== void 0) {
+      cancelAnimationFrame(state2.animationFrameIdY);
+      state2.animationFrameIdY = void 0;
+    }
+    state2.lastScrollDirectionY = direction;
+  }
   const scroll = () => {
     const scrollProp = isX ? "scrollLeft" : "scrollTop";
     const sizeProp = isX ? "clientWidth" : "clientHeight";
@@ -2633,23 +2647,22 @@ function scrollAxis(el, e, state2, options) {
     const scrollPos = el[scrollProp];
     const clientSize = el[sizeProp];
     const scrollSize = el[scrollSizeProp];
-    const canScroll = direction > 0 ? scrollPos + clientSize < scrollSize : scrollPos > 0;
+    const canScroll = dirFactor > 0 ? scrollPos + clientSize < scrollSize : scrollPos > 0;
     if (!canScroll) {
       if (isX) state2.animationFrameIdX = void 0;
       else state2.animationFrameIdY = void 0;
       return;
     }
-    speed = Math.min(speed + 0.5, maxSpeed);
     el.scrollBy({
-      [isX ? "left" : "top"]: speed * direction
+      [isX ? "left" : "top"]: speed * dirFactor
     });
     if (isSynthDragState(state2) && e instanceof PointerEvent) {
       moveNode(
         e,
         state2,
         false,
-        isX ? speed * direction : 0,
-        isX ? 0 : speed * direction
+        isX ? speed * dirFactor : 0,
+        isX ? 0 : speed * dirFactor
       );
     }
     const id2 = requestAnimationFrame(scroll);

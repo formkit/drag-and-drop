@@ -693,6 +693,8 @@ type BaseDragState<T> = {
     windowScrollX: number | undefined;
     windowScrollY: number | undefined;
     dragItemRect: DOMRect | undefined;
+    lastScrollDirectionX: "positive" | "negative" | undefined;
+    lastScrollDirectionY: "positive" | "negative" | undefined;
 };
 interface DragStateProps<T> {
     /**

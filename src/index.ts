@@ -125,6 +125,8 @@ const baseDragState = {
   dragItemRect: undefined,
   windowScrollX: undefined,
   windowScrollY: undefined,
+  lastScrollDirectionX: undefined,
+  lastScrollDirectionY: undefined,
 };
 
 /**
@@ -183,6 +185,8 @@ export function resetState() {
     dragItemRect: undefined,
     windowScrollX: undefined,
     windowScrollY: undefined,
+    lastScrollDirectionX: undefined,
+    lastScrollDirectionY: undefined,
   };
 
   state = { ...baseDragState } as BaseDragState<unknown>;
@@ -2914,12 +2918,34 @@ function scrollAxis<T>(
   state.preventEnter = true;
 
   const isX = options.axis === "x";
-  const direction = options.direction === "positive" ? 1 : -1;
-  let speed = 10;
-  const maxSpeed = 30;
+  const direction = options.direction;
+  const dirFactor = direction === "positive" ? 1 : -1;
+  const speed = 20; // consistent speed
+
+  // Cancel existing scroll if direction changed
+  if (isX) {
+    if (
+      state.lastScrollDirectionX &&
+      state.lastScrollDirectionX !== direction &&
+      state.animationFrameIdX !== undefined
+    ) {
+      cancelAnimationFrame(state.animationFrameIdX);
+      state.animationFrameIdX = undefined;
+    }
+    state.lastScrollDirectionX = direction;
+  } else {
+    if (
+      state.lastScrollDirectionY &&
+      state.lastScrollDirectionY !== direction &&
+      state.animationFrameIdY !== undefined
+    ) {
+      cancelAnimationFrame(state.animationFrameIdY);
+      state.animationFrameIdY = undefined;
+    }
+    state.lastScrollDirectionY = direction;
+  }
 
   const scroll = () => {
-    // Get fresh scroll bounds
     const scrollProp = isX ? "scrollLeft" : "scrollTop";
     const sizeProp = isX ? "clientWidth" : "clientHeight";
     const scrollSizeProp = isX ? "scrollWidth" : "scrollHeight";
@@ -2929,19 +2955,16 @@ function scrollAxis<T>(
     const scrollSize = el[scrollSizeProp];
 
     const canScroll =
-      direction > 0 ? scrollPos + clientSize < scrollSize : scrollPos > 0;
+      dirFactor > 0 ? scrollPos + clientSize < scrollSize : scrollPos > 0;
 
     if (!canScroll) {
-      // Exit if we can't scroll further
       if (isX) state.animationFrameIdX = undefined;
       else state.animationFrameIdY = undefined;
       return;
     }
 
-    speed = Math.min(speed + 0.5, maxSpeed);
-
     el.scrollBy({
-      [isX ? "left" : "top"]: speed * direction,
+      [isX ? "left" : "top"]: speed * dirFactor,
     });
 
     if (isSynthDragState(state) && e instanceof PointerEvent) {
@@ -2949,8 +2972,8 @@ function scrollAxis<T>(
         e,
         state,
         false,
-        isX ? speed * direction : 0,
-        isX ? 0 : speed * direction
+        isX ? speed * dirFactor : 0,
+        isX ? 0 : speed * dirFactor
       );
     }
 
@@ -2963,8 +2986,8 @@ function scrollAxis<T>(
     }
   };
 
+  // Start scrolling
   const id = requestAnimationFrame(scroll);
-
   if (isX) {
     state.animationFrameIdX = id;
   } else {
