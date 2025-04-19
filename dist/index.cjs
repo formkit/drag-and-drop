@@ -1249,6 +1249,14 @@ function handleRootDrop(_e) {
 function handleRootDragover(e) {
   if (!isDragState(state)) return;
   pd(e);
+  const { x, y } = eventCoordinates(e);
+  const elFromPoint = document.elementFromPoint(x, y);
+  if (!elFromPoint || !(elFromPoint instanceof HTMLElement)) return;
+  requestAnimationFrame(() => {
+    if (isDragState(state) && shouldHandleScroll()) {
+      handleSynthScroll({ x, y }, e, state);
+    }
+  });
 }
 function handleRootPointermove(e) {
   if (!state.pointerDown || !state.pointerDown.validated) return;
@@ -1654,7 +1662,7 @@ function setupNode(data) {
       if (isDragState(state) && e.cancelable) pd(e);
     },
     contextmenu: (e) => {
-      if (isMobilePlatform()) pd(e);
+      if (isSynthDragState(state)) pd(e);
     }
   });
   data.node.el.draggable = true;
@@ -1840,10 +1848,13 @@ function handleDragstart(data, _state) {
     pd(data.e);
     return;
   }
-  const nodes2 = config.draggedNodes({
+  let nodes2 = config.draggedNodes({
     parent: data.targetData.parent,
     node: data.targetData.node
   });
+  if (nodes2.length === 0) {
+    nodes2 = [data.targetData.node];
+  }
   config.dragstartClasses(data.targetData.node, nodes2, config);
   const dragState = initDrag(data, nodes2);
   if (config.onDragstart) {
@@ -1868,6 +1879,7 @@ function handleNodePointerdown(data, state2) {
     node: data.targetData.node,
     validated: false
   };
+  console.log("pointer down fired");
   if (!validateDragHandle({
     x: data.e.clientX,
     y: data.e.clientY,
@@ -1992,6 +2004,7 @@ function dragstartClasses(_node, nodes2, config, isSynth = false) {
   });
 }
 function initDrag(data, draggedNodes2) {
+  console.log("initDrag dragged nodes", draggedNodes2);
   sp(data.e);
   const dragState = setDragState(
     dragStateProps(
@@ -2143,12 +2156,13 @@ function handlePointercancel(data, state2) {
   config?.handleEnd(state2);
 }
 function handleEnd3(state2) {
+  console.log("handleEnd fired");
   if (state2.draggedNode) state2.draggedNode.el.draggable = true;
   if (isSynthDragState(state2)) {
     state2.clonedDraggedNode.remove();
-    cancelSynthScroll(state2);
     clearTimeout(state2.longPressTimeout);
   }
+  cancelSynthScroll(state2);
   const config = parents.get(state2.initialParent.el)?.config;
   const isSynth = isSynthDragState(state2);
   const dropZoneClass = isSynth ? config?.synthDropZoneClass : config?.dropZoneClass;
@@ -2552,7 +2566,7 @@ function nodeEventData(callback) {
   };
 }
 function transfer(data, state2) {
-  data.e.preventDefault();
+  pd(data.e);
   if (!validateTransfer({
     currentParent: state2.currentParent,
     targetParent: data.targetData.parent,
@@ -2719,13 +2733,15 @@ function scrollAxis(el, e, state2, options) {
     el.scrollBy({
       [isX ? "left" : "top"]: speed * direction
     });
-    moveNode(
-      e,
-      state2,
-      false,
-      isX ? speed * direction : 0,
-      isX ? 0 : speed * direction
-    );
+    if (isSynthDragState(state2) && e instanceof PointerEvent) {
+      moveNode(
+        e,
+        state2,
+        false,
+        isX ? speed * direction : 0,
+        isX ? 0 : speed * direction
+      );
+    }
     const id2 = requestAnimationFrame(scroll);
     if (isX) {
       state2.animationFrameIdX = id2;

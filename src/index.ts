@@ -268,6 +268,18 @@ function handleRootDragover(e: DragEvent) {
   if (!isDragState(state)) return;
 
   pd(e);
+
+  // Scroll if necessary
+  const { x, y } = eventCoordinates(e);
+  const elFromPoint = document.elementFromPoint(x, y);
+
+  if (!elFromPoint || !(elFromPoint instanceof HTMLElement)) return;
+
+  requestAnimationFrame(() => {
+    if (isDragState(state) && shouldHandleScroll()) {
+      handleSynthScroll({ x, y }, e, state);
+    }
+  });
 }
 
 function handleRootPointermove(e: PointerEvent) {
@@ -986,7 +998,7 @@ export function setupNode<T>(data: SetupNodeData<T>) {
       if (isDragState(state) && e.cancelable) pd(e);
     },
     contextmenu: (e: Event) => {
-      if (isMobilePlatform()) pd(e);
+      if (isSynthDragState(state)) pd(e);
     },
   });
 
@@ -1349,10 +1361,15 @@ export function handleDragstart<T>(
     return;
   }
 
-  const nodes = config.draggedNodes({
+  let nodes = config.draggedNodes({
     parent: data.targetData.parent,
     node: data.targetData.node,
   });
+
+  // On Safari, pointerdown can sometimes not fire before the dragstart event.
+  if (nodes.length === 0) {
+    nodes = [data.targetData.node];
+  }
 
   config.dragstartClasses(data.targetData.node, nodes, config);
 
@@ -1599,13 +1616,18 @@ export function initDrag<T>(
         return dragState;
       } else {
         const wrapper = document.createElement("div");
+
         wrapper.setAttribute("id", "dnd-dragged-node-clone");
+
         wrapper.setAttribute("popover", "manual");
 
         for (const node of draggedNodes) {
           const clone = node.el.cloneNode(true) as HTMLElement;
+
           clone.id = node.el.id + "-clone";
+
           clone.style.pointerEvents = "none";
+
           wrapper.appendChild(clone);
         }
 
@@ -1830,11 +1852,10 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
     // @ts-ignore
     state.clonedDraggedNode.remove();
 
-    // @ts-ignore
-    cancelSynthScroll(state);
-
     clearTimeout(state.longPressTimeout);
   }
+
+  cancelSynthScroll(state);
 
   const config = parents.get(state.initialParent.el)?.config;
 
@@ -2111,7 +2132,7 @@ export function handleLongPress<T>(
 }
 
 function cancelSynthScroll<T>(
-  state: SynthDragState<T>,
+  state: DragState<T>,
   cancelX = true,
   cancelY = true
 ) {
@@ -2595,7 +2616,7 @@ export function transfer<T>(
   data: NodeEventData<T> | ParentEventData<T>,
   state: DragState<T>
 ): void {
-  data.e.preventDefault();
+  pd(data.e);
 
   if (
     !validateTransfer({
@@ -2805,13 +2826,11 @@ export function removeClass(
   }
 }
 
-type ScrollDirection<T> =
-  | { axis: "x"; state: SynthDragState<T> }
-  | { axis: "y" };
+type ScrollDirection<T> = { axis: "x"; state: DragState<T> } | { axis: "y" };
 
 function getScrollDirection<T>(
   el: HTMLElement,
-  e: PointerEvent,
+  e: PointerEvent | DragEvent,
   style: CSSStyleDeclaration,
   rect: DOMRect,
   opts: ScrollDirection<T>
@@ -2885,8 +2904,8 @@ type Axis = "x" | "y";
 
 function scrollAxis<T>(
   el: HTMLElement,
-  e: PointerEvent,
-  state: SynthDragState<T>,
+  e: PointerEvent | DragEvent,
+  state: DragState<T>,
   options: {
     axis: Axis;
     direction: "positive" | "negative";
@@ -2925,13 +2944,15 @@ function scrollAxis<T>(
       [isX ? "left" : "top"]: speed * direction,
     });
 
-    moveNode(
-      e,
-      state,
-      false,
-      isX ? speed * direction : 0,
-      isX ? 0 : speed * direction
-    );
+    if (isSynthDragState(state) && e instanceof PointerEvent) {
+      moveNode(
+        e,
+        state,
+        false,
+        isX ? speed * direction : 0,
+        isX ? 0 : speed * direction
+      );
+    }
 
     const id = requestAnimationFrame(scroll);
 
@@ -2958,8 +2979,8 @@ function isPointerInside(el: HTMLElement, x: number, y: number): boolean {
 
 function handleSynthScroll<T>(
   coordinates: { x: number; y: number },
-  e: PointerEvent,
-  state: SynthDragState<T>
+  e: PointerEvent | DragEvent,
+  state: DragState<T>
 ) {
   cancelSynthScroll(state);
 

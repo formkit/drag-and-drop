@@ -553,12 +553,6 @@ interface SynthDragStateProps {
      * Pointer id of dragged el
      */
     pointerId: number;
-    animationFrameIdX: number | undefined;
-    animationFrameIdY: number | undefined;
-    lastScrollX: HTMLElement | null;
-    lastScrollY: HTMLElement | null;
-    rootOverScrollBehavior: string | undefined;
-    rootTouchAction: string | undefined;
 }
 type DragState<T> = DragStateProps<T> & BaseDragState<T>;
 type BaseDragState<T> = {
@@ -683,6 +677,10 @@ interface DragStateProps<T> {
      * Flag indicating that the dragged node was transferred
      */
     transferred: boolean;
+    lastScrollContainerX?: HTMLElement | null;
+    lastScrollContainerY?: HTMLElement | null;
+    animationFrameIdX?: number;
+    animationFrameIdY?: number;
 }
 type SortEvent = <T>(data: SortEventData<T>) => void;
 type TransferEvent = <T>(data: TransferEventData<T>) => void;
