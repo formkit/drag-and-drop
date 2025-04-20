@@ -463,7 +463,7 @@ export function moveBetween<T>(data: ParentRecord<T>, state: DragState<T>) {
       : undefined;
 
     if (position)
-      positioninsertPoint(
+      positionInsertPoint(
         data,
         position,
         foundRange[1] === "ascending",
@@ -525,7 +525,7 @@ function moveOutside<T>(data: ParentRecord<T>, state: DragState<T>) {
         : undefined;
 
       if (position)
-        positioninsertPoint(
+        positionInsertPoint(
           data,
           position,
           foundRange[1] === "ascending",
@@ -589,7 +589,7 @@ function createInsertPoint<T>(
 
   document.body.appendChild(insertPoint);
 
-  Object.assign(insertPoint, {
+  Object.assign(insertPoint.style, {
     position: "absolute",
     display: "none",
   });
@@ -601,7 +601,7 @@ function removeInsertPoint<T>(insertState: InsertState<T>) {
   insertState.insertPoint = null;
 }
 
-function positioninsertPoint<T>(
+function positionInsertPoint<T>(
   parent: ParentRecord<T>,
   position: { x: number[]; y: number[]; vertical: boolean },
   ascending: boolean,
@@ -627,7 +627,6 @@ function positioninsertPoint<T>(
       top: `${topPosition}px`,
       left: `${position.x[0]}px`,
       right: `${position.x[1]}px`,
-      height: "4px",
       width: `${position.x[1] - position.x[0]}px`,
     });
   } else {
@@ -639,7 +638,6 @@ function positioninsertPoint<T>(
     Object.assign(insertState.insertPoint.el.style, {
       top: `${position.y[0]}px`,
       bottom: `${position.y[1]}px`,
-      width: "4px",
       height: `${position.y[1] - position.y[0]}px`,
     });
   }

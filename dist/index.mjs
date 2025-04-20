@@ -565,29 +565,58 @@ function removeInsertPoint(insertState2) {
   insertState2.insertPoint = null;
 }
 function positioninsertPoint(parent, position, ascending, node, insertState2) {
-  if (insertState2.insertPoint?.el !== parent.el) {
+  if (insertState2.insertPoint?.parent?.el !== parent.el) {
     removeInsertPoint(insertState2);
     createInsertPoint(parent, insertState2);
   }
   insertState2.draggedOverNodes = [node];
-  if (!insertState2.insertPoint) return;
+  if (!insertState2.insertPoint) {
+    console.error("Insert point is null after trying to create/find it!");
+    return;
+  }
+  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
   if (position.vertical) {
-    const topPosition = position.y[ascending ? 1 : 0] - insertState2.insertPoint.el.getBoundingClientRect().height / 2;
+    const targetDocumentY = position.y[ascending ? 1 : 0];
+    const topPosition = targetDocumentY - 2;
+    const adjustedTop = topPosition - scrollTop;
+    console.log("positioninsertPoint (vertical):", {
+      targetDocumentY,
+      calculatedDocumentTop: topPosition,
+      scrollTop,
+      finalViewportTop: adjustedTop,
+      parentScrollTop: parent.el.scrollTop,
+      parentOffsetTop: parent.el.offsetTop
+    });
     Object.assign(insertState2.insertPoint.el.style, {
-      top: `${topPosition}px`,
-      left: `${position.x[0]}px`,
-      right: `${position.x[1]}px`,
+      top: `${adjustedTop}px`,
+      // Apply viewport-relative top
+      left: `${position.x[0] - scrollLeft}px`,
+      // Apply viewport-relative left
       height: "4px",
       width: `${position.x[1] - position.x[0]}px`
+      // Width is difference, doesn't need scroll adjustment
     });
   } else {
-    const leftPosition = position.x[ascending ? 1 : 0] - insertState2.insertPoint.el.getBoundingClientRect().width / 2;
-    insertState2.insertPoint.el.style.left = `${leftPosition}px`;
+    const targetDocumentX = position.x[ascending ? 1 : 0];
+    const leftPosition = targetDocumentX - 2;
+    const adjustedLeft = leftPosition - scrollLeft;
+    console.log("positioninsertPoint (horizontal):", {
+      targetDocumentX,
+      calculatedDocumentLeft: leftPosition,
+      scrollLeft,
+      finalViewportLeft: adjustedLeft,
+      parentScrollLeft: parent.el.scrollLeft,
+      parentOffsetLeft: parent.el.offsetLeft
+    });
     Object.assign(insertState2.insertPoint.el.style, {
-      top: `${position.y[0]}px`,
-      bottom: `${position.y[1]}px`,
+      top: `${position.y[0] - scrollTop}px`,
+      // Apply viewport-relative top
+      left: `${adjustedLeft}px`,
+      // Apply viewport-relative left
       width: "4px",
       height: `${position.y[1] - position.y[0]}px`
+      // Height is difference, doesn't need scroll adjustment
     });
   }
   insertState2.targetIndex = node.data.index;
