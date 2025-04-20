@@ -154,15 +154,32 @@ function checkPosition(e: DragEvent | PointerEvent) {
 
   const el = document.elementFromPoint(e.clientX, e.clientY);
 
-  if (!(el instanceof HTMLElement)) return;
+  // 1. If the element is not an HTMLElement or is the insert point itself, do nothing.
+  if (!(el instanceof HTMLElement) || el === insertState.insertPoint?.el) {
+    return;
+  }
 
-  if (!parents.has(el)) {
-    const insertPoint = insertState.insertPoint;
+  // 2. Traverse up the DOM from the element under the cursor
+  //    to see if any ancestor is a registered parent.
+  let isWithinAParent = false;
+  let current: HTMLElement | null = el;
+  while (current) {
+    if (parents.has(current)) {
+      isWithinAParent = true;
+      break; // Found a registered parent ancestor
+    }
+    if (current === document.body) break; // Stop if we reach the body
+    current = current.parentElement;
+  }
 
-    if (insertPoint?.el === el) return;
+  // 3. If the cursor is NOT within any registered parent...
+  if (!isWithinAParent) {
+    // Hide the insert point if it exists
+    if (insertState.insertPoint) {
+      insertState.insertPoint.el.style.display = "none";
+    }
 
-    if (insertPoint) insertPoint.el.style.display = "none";
-
+    // Remove drop zone class if a parent was previously being dragged over
     if (insertState.draggedOverParent) {
       removeClass(
         [insertState.draggedOverParent.el],
@@ -170,12 +187,15 @@ function checkPosition(e: DragEvent | PointerEvent) {
       );
     }
 
+    // Reset insert state related to dragged over elements
     insertState.draggedOverNodes = [];
-
     insertState.draggedOverParent = null;
 
+    // Reset current parent in the main state back to the initial one
     state.currentParent = state.initialParent;
   }
+  // 4. If the cursor IS within a registered parent, do nothing in this function.
+  // Other event handlers will manage the insertion point positioning.
 }
 
 interface Range {
@@ -620,6 +640,7 @@ function positionInsertPoint<T>(
   node: NodeRecord<T>,
   insertState: InsertState<T>
 ) {
+  console.log("position insert point");
   if (insertState.insertPoint?.el !== parent.el) {
     removeInsertPoint(insertState);
 
@@ -629,6 +650,8 @@ function positionInsertPoint<T>(
   insertState.draggedOverNodes = [node];
 
   if (!insertState.insertPoint) return;
+
+  console.log("set to block");
 
   insertState.insertPoint.el.style.display = "block";
 
