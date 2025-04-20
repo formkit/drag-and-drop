@@ -640,7 +640,6 @@ function positionInsertPoint<T>(
   node: NodeRecord<T>,
   insertState: InsertState<T>
 ) {
-  console.log("position insert point");
   if (insertState.insertPoint?.el !== parent.el) {
     removeInsertPoint(insertState);
 
@@ -650,8 +649,6 @@ function positionInsertPoint<T>(
   insertState.draggedOverNodes = [node];
 
   if (!insertState.insertPoint) return;
-
-  console.log("set to block");
 
   insertState.insertPoint.el.style.display = "block";
 

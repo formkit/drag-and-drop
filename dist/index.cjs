@@ -349,11 +349,23 @@ function findFirstOverflowingParent(element) {
 function checkPosition(e) {
   if (!isDragState(state)) return;
   const el = document.elementFromPoint(e.clientX, e.clientY);
-  if (!(el instanceof HTMLElement)) return;
-  if (!parents.has(el)) {
-    const insertPoint = insertState.insertPoint;
-    if (insertPoint?.el === el) return;
-    if (insertPoint) insertPoint.el.style.display = "none";
+  if (!(el instanceof HTMLElement) || el === insertState.insertPoint?.el) {
+    return;
+  }
+  let isWithinAParent = false;
+  let current = el;
+  while (current) {
+    if (parents.has(current)) {
+      isWithinAParent = true;
+      break;
+    }
+    if (current === document.body) break;
+    current = current.parentElement;
+  }
+  if (!isWithinAParent) {
+    if (insertState.insertPoint) {
+      insertState.insertPoint.el.style.display = "none";
+    }
     if (insertState.draggedOverParent) {
       removeClass(
         [insertState.draggedOverParent.el],
@@ -377,9 +389,17 @@ function createVerticalRange(nodeCoords, otherCoords, isAscending) {
   }
   const otherEdge = isAscending ? otherCoords.top : otherCoords.bottom;
   const nodeEdge = isAscending ? nodeCoords.bottom : nodeCoords.top;
-  const midpoint = nodeEdge + Math.abs(nodeEdge - otherEdge) / 2;
+  let midpoint;
+  let range;
+  if (isAscending) {
+    midpoint = nodeEdge + (otherEdge - nodeEdge) / 2;
+    range = [center, midpoint];
+  } else {
+    midpoint = otherEdge + (nodeEdge - otherEdge) / 2;
+    range = [midpoint, center];
+  }
   return {
-    y: isAscending ? [center, midpoint] : [midpoint, center],
+    y: range,
     x: [nodeCoords.left, nodeCoords.right],
     vertical: true
   };
@@ -565,7 +585,7 @@ function moveBetween(data, state2) {
   if (foundRange) {
     const position = foundRange[0].data.range ? foundRange[0].data.range[key] : void 0;
     if (position)
-      positioninsertPoint(
+      positionInsertPoint(
         data,
         position,
         foundRange[1] === "ascending",
@@ -605,7 +625,7 @@ function moveOutside(data, state2) {
     if (foundRange) {
       const position = foundRange[0].data.range ? foundRange[0].data.range[key] : void 0;
       if (position)
-        positioninsertPoint(
+        positionInsertPoint(
           data,
           position,
           foundRange[1] === "ascending",
@@ -645,7 +665,7 @@ function createInsertPoint(parent, insertState2) {
     el: insertPoint
   };
   document.body.appendChild(insertPoint);
-  Object.assign(insertPoint, {
+  Object.assign(insertPoint.style, {
     position: "absolute",
     display: "none"
   });
@@ -654,64 +674,37 @@ function removeInsertPoint(insertState2) {
   if (insertState2.insertPoint?.el) insertState2.insertPoint.el.remove();
   insertState2.insertPoint = null;
 }
-function positioninsertPoint(parent, position, ascending, node, insertState2) {
-  if (insertState2.insertPoint?.parent?.el !== parent.el) {
+function positionInsertPoint(parent, position, ascending, node, insertState2) {
+  console.log("position insert point");
+  if (insertState2.insertPoint?.el !== parent.el) {
     removeInsertPoint(insertState2);
     createInsertPoint(parent, insertState2);
   }
   insertState2.draggedOverNodes = [node];
-  if (!insertState2.insertPoint) {
-    console.error("Insert point is null after trying to create/find it!");
-    return;
-  }
-  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+  if (!insertState2.insertPoint) return;
+  console.log("set to block");
+  insertState2.insertPoint.el.style.display = "block";
   if (position.vertical) {
-    const targetDocumentY = position.y[ascending ? 1 : 0];
-    const topPosition = targetDocumentY - 2;
-    const adjustedTop = topPosition - scrollTop;
-    console.log("positioninsertPoint (vertical):", {
-      targetDocumentY,
-      calculatedDocumentTop: topPosition,
-      scrollTop,
-      finalViewportTop: adjustedTop,
-      parentScrollTop: parent.el.scrollTop,
-      parentOffsetTop: parent.el.offsetTop
-    });
+    const insertPointHeight = insertState2.insertPoint.el.getBoundingClientRect().height;
+    const targetY = position.y[ascending ? 1 : 0];
+    const topPosition = targetY - insertPointHeight / 2;
     Object.assign(insertState2.insertPoint.el.style, {
-      top: `${adjustedTop}px`,
-      // Apply viewport-relative top
-      left: `${position.x[0] - scrollLeft}px`,
-      // Apply viewport-relative left
-      height: "4px",
+      top: `${topPosition}px`,
+      left: `${position.x[0]}px`,
+      right: `${position.x[1]}px`,
       width: `${position.x[1] - position.x[0]}px`
-      // Width is difference, doesn't need scroll adjustment
     });
   } else {
-    const targetDocumentX = position.x[ascending ? 1 : 0];
-    const leftPosition = targetDocumentX - 2;
-    const adjustedLeft = leftPosition - scrollLeft;
-    console.log("positioninsertPoint (horizontal):", {
-      targetDocumentX,
-      calculatedDocumentLeft: leftPosition,
-      scrollLeft,
-      finalViewportLeft: adjustedLeft,
-      parentScrollLeft: parent.el.scrollLeft,
-      parentOffsetLeft: parent.el.offsetLeft
-    });
+    const leftPosition = position.x[ascending ? 1 : 0] - insertState2.insertPoint.el.getBoundingClientRect().width / 2;
+    insertState2.insertPoint.el.style.left = `${leftPosition}px`;
     Object.assign(insertState2.insertPoint.el.style, {
-      top: `${position.y[0] - scrollTop}px`,
-      // Apply viewport-relative top
-      left: `${adjustedLeft}px`,
-      // Apply viewport-relative left
-      width: "4px",
+      top: `${position.y[0]}px`,
+      bottom: `${position.y[1]}px`,
       height: `${position.y[1] - position.y[0]}px`
-      // Height is difference, doesn't need scroll adjustment
     });
   }
   insertState2.targetIndex = node.data.index;
   insertState2.ascending = ascending;
-  insertState2.insertPoint.el.style.display = "block";
 }
 function handleEnd(state2) {
   if (!isDragState(state2)) return;
