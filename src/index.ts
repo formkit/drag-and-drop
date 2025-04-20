@@ -2956,9 +2956,9 @@ function scrollAxis<T>(
       moveNode(
         e,
         state,
-        false,
-        isX ? speed * dirFactor : 0,
-        isX ? 0 : speed * dirFactor
+        false
+        // isX ? speed * dirFactor : 0, // REMOVED
+        // isX ? 0 : speed * dirFactor  // REMOVED
       );
     }
 
