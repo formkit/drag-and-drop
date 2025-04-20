@@ -2248,14 +2248,15 @@ function cancelSynthScroll(state2, cancelX = true, cancelY = true) {
     state2.preventEnter = false;
   }
 }
-function moveNode(e, state2, justStarted = false, scrollX = 0, scrollY = 0) {
-  const { x, y } = eventCoordinates(e);
-  state2.coordinates.y = y;
+function moveNode(state2, justStarted = false) {
+  const { x, y } = state2.coordinates;
   const startLeft = state2.startLeft ?? 0;
   const startTop = state2.startTop ?? 0;
-  const translateX = x - startLeft + (window.scrollX ?? 0);
-  const translateY = y - startTop + (window.scrollY ?? 0);
-  state2.clonedDraggedNode.style.transform = `translate3d(${translateX + scrollX}px, ${translateY + scrollY}px, 0px)`;
+  const currentScrollX = window.scrollX ?? 0;
+  const currentScrollY = window.scrollY ?? 0;
+  const translateX = x - startLeft + currentScrollX;
+  const translateY = y - startTop + currentScrollY;
+  state2.clonedDraggedNode.style.transform = `translate3d(${translateX}px, ${translateY}px, 0px)`;
   if (justStarted) {
     state2.clonedDraggedNode.style.opacity = "1";
     removeClass(
@@ -2263,14 +2264,15 @@ function moveNode(e, state2, justStarted = false, scrollX = 0, scrollY = 0) {
       state2.initialParent.data.config?.longPressClass
     );
   }
-  if (e.cancelable) pd(e);
 }
 function synthMove(e, state2, justStarted = false) {
-  moveNode(e, state2, justStarted);
   const coordinates = eventCoordinates(e);
+  state2.coordinates.x = coordinates.x;
+  state2.coordinates.y = coordinates.y;
+  moveNode(state2, justStarted);
   if (state2.scrollDebounceTimeout) clearTimeout(state2.scrollDebounceTimeout);
   state2.scrollDebounceTimeout = setTimeout(() => {
-    handleSynthScroll(coordinates, e, state2);
+    handleSynthScroll(state2.coordinates, e, state2);
   }, 16);
   const elFromPoint = getElFromPoint(coordinates);
   if (!elFromPoint) {
@@ -2615,7 +2617,7 @@ function getScrollDirection(el, e, style, rect, opts) {
   }
   return isX ? { left: false, right: false } : { up: false, down: false };
 }
-function scrollAxis(el, e, state2, options) {
+function scrollAxis(el, _e, state2, options) {
   state2.preventEnter = true;
   const isX = options.axis === "x";
   const dirFactor = options.direction === "positive" ? 1 : -1;
@@ -2640,14 +2642,8 @@ function scrollAxis(el, e, state2, options) {
       return;
     }
     el[scrollProp] += speed * dirFactor;
-    if (isSynthDragState(state2) && e instanceof PointerEvent) {
-      moveNode(
-        e,
-        state2,
-        false
-        // isX ? speed * dirFactor : 0, // REMOVED
-        // isX ? 0 : speed * dirFactor  // REMOVED
-      );
+    if (isSynthDragState(state2)) {
+      moveNode(state2);
     }
     state2[idKey] = requestAnimationFrame(scrollLoop);
   };
@@ -2658,8 +2654,6 @@ function isPointerInside(el, x, y) {
   return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
 }
 function handleSynthScroll(coordinates, e, state2) {
-  const wasScrollingX = state2.frameIdX !== void 0;
-  const wasScrollingY = state2.frameIdY !== void 0;
   cancelSynthScroll(state2);
   const { x, y } = coordinates;
   let scrolled = false;
@@ -2705,14 +2699,7 @@ function handleSynthScroll(coordinates, e, state2) {
       checkAndScroll(root);
     }
   }
-  if (!scrolled) {
-    if ((wasScrollingX || wasScrollingY) && isSynthDragState(state2) && e instanceof PointerEvent) {
-      moveNode(e, state2, false);
-    }
-    state2.lastScrollContainerX = null;
-    state2.lastScrollContainerY = null;
-    state2.preventEnter = false;
-  }
+  if (!scrolled) cancelSynthScroll(state2);
 }
 function getElFromPoint(coordinates) {
   let target = document.elementFromPoint(coordinates.x, coordinates.y);

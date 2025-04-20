@@ -2891,7 +2891,7 @@ type Axis = "x" | "y";
 
 function scrollAxis<T>(
   el: HTMLElement,
-  e: PointerEvent | DragEvent,
+  _e: PointerEvent | DragEvent,
   state: DragState<T>,
   options: {
     axis: Axis;
