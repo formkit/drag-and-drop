@@ -10,11 +10,36 @@ type Log = {
 
 const state = reactive<{ tapes: string[]; log: Log }>({
   tapes: [
-    "Depeche Mode",
-    "Duran Duran",
-    "Pet Shop Boys",
-    "Kraftwerk",
-    "Tears for Fears",
+    "Depeche Mode - Violator",
+    "Duran Duran - Rio",
+    "Pet Shop Boys - Actually",
+    "Kraftwerk - Computer World",
+    "Tears for Fears - Songs from the Big Chair",
+    "New Order - Blue Monday",
+    "The Human League - Dare",
+    "Gary Numan - The Pleasure Principle",
+    "Ultravox - Vienna",
+    "Visage - Visage",
+    "Japan - Quiet Life",
+    "Soft Cell - Non-Stop Erotic Cabaret",
+    "Heaven 17 - Penthouse and Pavement",
+    "OMD - Architecture & Morality",
+    "A Flock of Seagulls - A Flock of Seagulls",
+    "Talk Talk - It's My Life",
+    "Simple Minds - New Gold Dream",
+    "Eurythmics - Sweet Dreams",
+    "The Art of Noise - Who's Afraid of the Art of Noise?",
+    "Yellow Magic Orchestra - Solid State Survivor",
+    "Alphaville - Forever Young",
+    "Yazoo - Upstairs at Eric's",
+    "Thomas Dolby - The Golden Age of Wireless",
+    "Devo - Freedom of Choice",
+    "Berlin - Pleasure Victim",
+    "Missing Persons - Spring Session M",
+    "Information Society - Information Society",
+    "Front 242 - Front by Front",
+    "Nitzer Ebb - That Total Age",
+    "Ministry - Twitch",
   ],
   log: {
     previous: [],
@@ -29,6 +54,9 @@ onMounted(() => {
     setValues: (newValues) => {
       state.tapes = reactive(newValues);
     },
+    config: {
+      scrollThreshold: 0.25,
+    },
   });
 
   // DNDState.on("dragStarted", logEventHandler("[global] dragstarted"));
@@ -38,16 +66,18 @@ onMounted(() => {
 
 <template>
   <div>
-    <ul id="cassettes">
-      <li
-        v-for="tape in state.tapes"
-        :key="tape"
-        class="cassette"
-        :data-label="tape"
-      >
-        {{ tape }}
-      </li>
-    </ul>
+    <div class="cassette-container">
+      <ul id="cassettes">
+        <li
+          v-for="tape in state.tapes"
+          :key="tape"
+          class="cassette"
+          :data-label="tape"
+        >
+          {{ tape }}
+        </li>
+      </ul>
+    </div>
     <hr />
     <h3>State</h3>
     <p class="state">{{ JSON.stringify(state.tapes) }}</p>
@@ -97,19 +127,32 @@ ul {
   padding: 0;
 }
 
+.cassette-container {
+  height: 400px;
+  overflow-y: auto;
+  border: 2px solid #666;
+}
+
 #cassettes {
   padding: 10px;
   border: 1px solid black;
+  min-height: 800px;
 }
 
 .cassette {
   border: 1px solid black;
   background-color: #eeeeee;
   margin-bottom: 10px;
-  padding: 10px;
+  padding: 20px;
+  font-size: 16px;
 
   &:last-of-type {
     margin-bottom: 0;
+  }
+
+  &:hover {
+    background-color: #e0e0e0;
+    cursor: grab;
   }
 }
 

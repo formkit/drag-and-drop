@@ -273,13 +273,9 @@ function handleRootDragover(e: DragEvent) {
 
   const { x, y } = eventCoordinates(e);
 
-  if (state.scrollDebounceTimeout) clearTimeout(state.scrollDebounceTimeout);
-
-  state.scrollDebounceTimeout = setTimeout(() => {
-    if (isDragState(state)) {
-      handleSynthScroll({ x, y }, e, state);
-    }
-  }, 16); // ~60fps
+  if (isDragState(state)) {
+    handleSynthScroll({ x, y }, e, state);
+  }
 }
 
 function handleRootPointermove(e: PointerEvent) {
@@ -2278,6 +2274,11 @@ export function handleNodeDragover<T>(
 
   sp(data.e);
 
+  // Add synthetic scroll handling
+  if (isDragState(state)) {
+    handleSynthScroll({ x, y }, data.e, state);
+  }
+
   data.targetData.parent.el === state.currentParent?.el
     ? sort(data, state)
     : transfer(data, state);
@@ -2303,7 +2304,12 @@ export function handleParentDragover<T>(
 
   sp(data.e);
 
-  Object.assign(eventCoordinates(data.e));
+  const { x, y } = eventCoordinates(data.e);
+
+  // Add synthetic scroll handling
+  if (isDragState(state)) {
+    handleSynthScroll({ x, y }, data.e, state);
+  }
 
   transfer(data, state);
 }
@@ -2995,6 +3001,7 @@ function handleSynthScroll<T>(
       axis: "x",
       state,
     });
+
     const yResult = getScrollDirection(el, e, style, rect, { axis: "y" });
 
     if (xResult.left || xResult.right) {

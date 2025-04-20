@@ -1937,13 +1937,15 @@ function initDrag(data, draggedNodes2) {
       dragImage = config.dragImage(data, draggedNodes2);
     } else {
       if (!config.multiDrag || draggedNodes2.length === 1) {
-        data.targetData.node.el.style.zIndex = "9999";
-        data.targetData.node.el.style.boxSizing = "border-box";
-        data.e.dataTransfer.setDragImage(
-          data.targetData.node.el,
-          data.e.offsetX,
-          data.e.offsetY
-        );
+        const clone = data.targetData.node.el.cloneNode(true);
+        clone.style.zIndex = "9999";
+        clone.style.boxSizing = "border-box";
+        clone.style.overscrollBehavior = "none";
+        clone.style.pointerEvents = "none";
+        clone.style.position = "absolute";
+        clone.id = "dnd-dragged-node-clone";
+        data.targetData.parent.el.appendChild(clone);
+        data.e.dataTransfer.setDragImage(clone, data.e.offsetX, data.e.offsetY);
         dragState.originalZIndex = data.targetData.node.el.style.zIndex;
         return dragState;
       } else {
@@ -2613,6 +2615,8 @@ function getScrollDirection(el, e, style, rect, opts) {
   return isX ? { left: false, right: false } : { up: false, down: false };
 }
 function scrollAxis(el, e, state2, options) {
+  return;
+  console.log("scroll axis");
   state2.preventEnter = true;
   const isX = options.axis === "x";
   const dirFactor = options.direction === "positive" ? 1 : -1;
