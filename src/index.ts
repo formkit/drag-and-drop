@@ -2147,28 +2147,24 @@ function cancelSynthScroll<T>(
   }
 }
 
-function moveNode<T>(
-  e: PointerEvent,
-  state: SynthDragState<T>,
-  justStarted = false,
-  scrollX = 0,
-  scrollY = 0
-) {
-  const { x, y } = eventCoordinates(e);
-
-  state.coordinates.y = y;
+function moveNode<T>(state: SynthDragState<T>, justStarted = false) {
+  // Use the coordinates stored in the state, updated by synthMove
+  const { x, y } = state.coordinates;
 
   const startLeft = state.startLeft ?? 0;
   const startTop = state.startTop ?? 0;
 
-  // Calculate the translation values
-  const translateX = x - startLeft + (window.scrollX ?? 0);
-  const translateY = y - startTop + (window.scrollY ?? 0);
+  // Get current window scroll
+  const currentScrollX = window.scrollX ?? 0;
+  const currentScrollY = window.scrollY ?? 0;
+
+  // Calculate the translation based on viewport coordinates (x, y)
+  // and the initial offset (startLeft, startTop), adjusted for window scroll.
+  const translateX = x - startLeft + currentScrollX;
+  const translateY = y - startTop + currentScrollY;
 
   // Apply the transform using translate3d
-  state.clonedDraggedNode.style.transform = `translate3d(${
-    translateX + scrollX
-  }px, ${translateY + scrollY}px, 0px)`;
+  state.clonedDraggedNode.style.transform = `translate3d(${translateX}px, ${translateY}px, 0px)`;
 
   if (justStarted) {
     state.clonedDraggedNode.style.opacity = "1";
@@ -2178,35 +2174,26 @@ function moveNode<T>(
       state.initialParent.data.config?.longPressClass
     );
   }
-
-  if (e.cancelable) pd(e);
 }
-
-// let lastScrollCheck = 0;
-// const SCROLL_THROTTLE_MS = 50;
-
-// function shouldHandleScroll(now = performance.now()) {
-//   if (now - lastScrollCheck > SCROLL_THROTTLE_MS) {
-//     lastScrollCheck = now;
-//     return true;
-//   }
-//   return false;
-// }
 
 export function synthMove<T>(
   e: PointerEvent,
   state: SynthDragState<T>,
   justStarted = false
 ) {
-  moveNode(e, state, justStarted);
-
   const coordinates = eventCoordinates(e);
+  // Update state coordinates *before* calling moveNode or scheduling scroll check
+  state.coordinates.x = coordinates.x;
+  state.coordinates.y = coordinates.y;
+
+  moveNode(state, justStarted); // Pass only state now
 
   // Debounce scroll handling
   if (state.scrollDebounceTimeout) clearTimeout(state.scrollDebounceTimeout);
 
   state.scrollDebounceTimeout = setTimeout(() => {
-    handleSynthScroll(coordinates, e, state);
+    // Pass the updated state coordinates to handleSynthScroll
+    handleSynthScroll(state.coordinates, e, state);
   }, 16); // ~1 frame (60fps)
 
   const elFromPoint = getElFromPoint(coordinates);
@@ -2952,14 +2939,9 @@ function scrollAxis<T>(
     // More consistent across Safari/Firefox
     el[scrollProp] += speed * dirFactor;
 
-    if (isSynthDragState(state) && e instanceof PointerEvent) {
-      moveNode(
-        e,
-        state,
-        false
-        // isX ? speed * dirFactor : 0, // REMOVED
-        // isX ? 0 : speed * dirFactor  // REMOVED
-      );
+    // Re-add moveNode call to update position continuously during scroll
+    if (isSynthDragState(state)) {
+      moveNode(state); // Pass only state
     }
 
     state[idKey] = requestAnimationFrame(scrollLoop);

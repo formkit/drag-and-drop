@@ -2734,9 +2734,9 @@ function scrollAxis(el, e, state2, options) {
       moveNode(
         e,
         state2,
-        false,
-        isX ? speed * dirFactor : 0,
-        isX ? 0 : speed * dirFactor
+        false
+        // isX ? speed * dirFactor : 0, // REMOVED
+        // isX ? 0 : speed * dirFactor  // REMOVED
       );
     }
     state2[idKey] = requestAnimationFrame(scrollLoop);
@@ -2748,6 +2748,8 @@ function isPointerInside(el, x, y) {
   return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
 }
 function handleSynthScroll(coordinates, e, state2) {
+  const wasScrollingX = state2.frameIdX !== void 0;
+  const wasScrollingY = state2.frameIdY !== void 0;
   cancelSynthScroll(state2);
   const { x, y } = coordinates;
   let scrolled = false;
@@ -2793,7 +2795,14 @@ function handleSynthScroll(coordinates, e, state2) {
       checkAndScroll(root);
     }
   }
-  if (!scrolled) cancelSynthScroll(state2);
+  if (!scrolled) {
+    if ((wasScrollingX || wasScrollingY) && isSynthDragState(state2) && e instanceof PointerEvent) {
+      moveNode(e, state2, false);
+    }
+    state2.lastScrollContainerX = null;
+    state2.lastScrollContainerY = null;
+    state2.preventEnter = false;
+  }
 }
 function getElFromPoint(coordinates) {
   let target = document.elementFromPoint(coordinates.x, coordinates.y);
