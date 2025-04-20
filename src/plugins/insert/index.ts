@@ -202,10 +202,22 @@ function createVerticalRange(
 
   const otherEdge = isAscending ? otherCoords.top : otherCoords.bottom;
   const nodeEdge = isAscending ? nodeCoords.bottom : nodeCoords.top;
-  const midpoint = nodeEdge + Math.abs(nodeEdge - otherEdge) / 2;
+
+  let midpoint: number;
+  let range: [number, number];
+
+  if (isAscending) {
+    // Midpoint between current node's bottom and next node's top
+    midpoint = nodeEdge + (otherEdge - nodeEdge) / 2; // nodeCoords.bottom + (otherCoords.top - nodeCoords.bottom) / 2
+    range = [center, midpoint]; // Range from node center down to midpoint
+  } else {
+    // Midpoint between previous node's bottom and current node's top
+    midpoint = otherEdge + (nodeEdge - otherEdge) / 2; // otherCoords.bottom + (nodeCoords.top - otherCoords.bottom) / 2
+    range = [midpoint, center]; // Range from midpoint down to node center
+  }
 
   return {
-    y: isAscending ? [center, midpoint] : [midpoint, center],
+    y: range,
     x: [nodeCoords.left, nodeCoords.right],
     vertical: true,
   };
@@ -618,10 +630,13 @@ function positionInsertPoint<T>(
 
   if (!insertState.insertPoint) return;
 
+  insertState.insertPoint.el.style.display = "block";
+
   if (position.vertical) {
-    const topPosition =
-      position.y[ascending ? 1 : 0] -
-      insertState.insertPoint.el.getBoundingClientRect().height / 2;
+    const insertPointHeight =
+      insertState.insertPoint.el.getBoundingClientRect().height;
+    const targetY = position.y[ascending ? 1 : 0];
+    const topPosition = targetY - insertPointHeight / 2;
 
     Object.assign(insertState.insertPoint.el.style, {
       top: `${topPosition}px`,
@@ -645,8 +660,6 @@ function positionInsertPoint<T>(
   insertState.targetIndex = node.data.index;
 
   insertState.ascending = ascending;
-
-  insertState.insertPoint.el.style.display = "block";
 }
 
 export function handleParentDrop<T>(_data: NodeDragEventData<T>) {}

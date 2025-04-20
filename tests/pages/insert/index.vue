@@ -9,6 +9,7 @@ const insertPointClasses = [
   "rounded-full",
   "duration-[5ms]",
   "h-1",
+  "box-border",
   "before:block",
   'before:content-["Insert"]',
   "before:whitespace-nowrap",
@@ -46,7 +47,7 @@ const [parent, values] = useDragAndDrop(
 </script>
 
 <template>
-  <h2>Place Plugin</h2>
+  <h2>Insert Plugin</h2>
   <div>
     <ul ref="parent" class="list">
       <li v-for="value in values" :id="value" :key="value" class="item">
