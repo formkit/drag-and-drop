@@ -40,6 +40,26 @@ const state = reactive<{ tapes: string[]; log: Log }>({
     "Front 242 - Front by Front",
     "Nitzer Ebb - That Total Age",
     "Ministry - Twitch",
+    "The Cure - Disintegration",
+    "Siouxsie and the Banshees - Juju",
+    "Bauhaus - Mask",
+    "Joy Division - Unknown Pleasures",
+    "Echo & the Bunnymen - Ocean Rain",
+    "The Sisters of Mercy - First and Last and Always",
+    "Cocteau Twins - Heaven or Las Vegas",
+    "Dead Can Dance - Within the Realm of a Dying Sun",
+    "This Mortal Coil - It'll End in Tears",
+    "The Birthday Party - Junkyard",
+    "Christian Death - Only Theatre of Pain",
+    "Fields of the Nephilim - Dawnrazor",
+    "Clan of Xymox - Medusa",
+    "And Also the Trees - Virus Meadow",
+    "Death in June - The World That Summer",
+    "Current 93 - Thunder Perfect Mind",
+    "Coil - Horse Rotorvator",
+    "Skinny Puppy - VIVIsectVI",
+    "Front Line Assembly - Gashed Senses & Crossfire",
+    "KMFDM - UAIOE",
   ],
   log: {
     previous: [],
@@ -54,9 +74,6 @@ onMounted(() => {
     setValues: (newValues) => {
       state.tapes = reactive(newValues);
     },
-    config: {
-      scrollThreshold: 0.25,
-    },
   });
 
   // DNDState.on("dragStarted", logEventHandler("[global] dragstarted"));
@@ -65,7 +82,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
+  <div class="page-container">
     <div class="cassette-container">
       <ul id="cassettes">
         <li
@@ -119,6 +136,13 @@ onMounted(() => {
 <style scoped>
 body {
   font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.page-container {
+  min-height: 1000vh; /* Made much longer - 1000 viewport heights */
+  padding: 20px;
 }
 
 ul {

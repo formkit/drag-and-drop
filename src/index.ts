@@ -2132,17 +2132,17 @@ function cancelSynthScroll<T>(
   cancelX = true,
   cancelY = true
 ) {
-  if (cancelX && state.timeoutIdX !== undefined) {
-    clearTimeout(state.timeoutIdX);
-    state.timeoutIdX = undefined;
+  if (cancelX && state.frameIdX !== undefined) {
+    cancelAnimationFrame(state.frameIdX);
+    state.frameIdX = undefined;
   }
 
-  if (cancelY && state.timeoutIdY !== undefined) {
-    clearTimeout(state.timeoutIdY);
-    state.timeoutIdY = undefined;
+  if (cancelY && state.frameIdY !== undefined) {
+    cancelAnimationFrame(state.frameIdY);
+    state.frameIdY = undefined;
   }
 
-  if (!state.timeoutIdX && !state.timeoutIdY) {
+  if (!state.frameIdX && !state.frameIdY) {
     state.preventEnter = false;
   }
 }
@@ -2919,14 +2919,14 @@ function scrollAxis<T>(
 
   // Cancel previous scroll if direction changed
   const key = isX ? "lastScrollDirectionX" : "lastScrollDirectionY";
-  const idKey = isX ? "timeoutIdX" : "timeoutIdY";
+  const idKey = isX ? "frameIdX" : "frameIdY";
 
   if (
     state[key] &&
     state[key] !== options.direction &&
     state[idKey] !== undefined
   ) {
-    clearTimeout(state[idKey]!);
+    cancelAnimationFrame(state[idKey]!);
     state[idKey] = undefined;
   }
 
@@ -2962,10 +2962,10 @@ function scrollAxis<T>(
       );
     }
 
-    state[idKey] = setTimeout(scrollLoop, 16); // ~60fps
+    state[idKey] = requestAnimationFrame(scrollLoop);
   };
 
-  state[idKey] = setTimeout(scrollLoop, 16);
+  state[idKey] = requestAnimationFrame(scrollLoop);
 }
 
 function isPointerInside(el: HTMLElement, x: number, y: number): boolean {

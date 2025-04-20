@@ -1256,12 +1256,9 @@ function handleRootDragover(e) {
   if (!isDragState(state)) return;
   pd(e);
   const { x, y } = eventCoordinates(e);
-  if (state.scrollDebounceTimeout) clearTimeout(state.scrollDebounceTimeout);
-  state.scrollDebounceTimeout = setTimeout(() => {
-    if (isDragState(state)) {
-      handleSynthScroll({ x, y }, e, state);
-    }
-  }, 16);
+  if (isDragState(state)) {
+    handleSynthScroll({ x, y }, e, state);
+  }
 }
 function handleRootPointermove(e) {
   if (!state.pointerDown || !state.pointerDown.validated) return;
@@ -2027,15 +2024,13 @@ function initDrag(data, draggedNodes2) {
       dragImage = config.dragImage(data, draggedNodes2);
     } else {
       if (!config.multiDrag || draggedNodes2.length === 1) {
-        const clone = data.targetData.node.el.cloneNode(true);
-        clone.style.zIndex = "9999";
-        clone.style.boxSizing = "border-box";
-        clone.style.overscrollBehavior = "none";
-        clone.style.pointerEvents = "none";
-        clone.style.position = "absolute";
-        clone.id = "dnd-dragged-node-clone";
-        data.targetData.parent.el.appendChild(clone);
-        data.e.dataTransfer.setDragImage(clone, data.e.offsetX, data.e.offsetY);
+        data.targetData.node.el.style.zIndex = "9999";
+        data.targetData.node.el.style.boxSizing = "border-box";
+        data.e.dataTransfer.setDragImage(
+          data.targetData.node.el,
+          data.e.offsetX,
+          data.e.offsetY
+        );
         dragState.originalZIndex = data.targetData.node.el.style.zIndex;
         return dragState;
       } else {
@@ -2331,15 +2326,15 @@ function handleLongPress(data, state2, node) {
   }, config.longPressDuration || 1e3);
 }
 function cancelSynthScroll(state2, cancelX = true, cancelY = true) {
-  if (cancelX && state2.timeoutIdX !== void 0) {
-    clearTimeout(state2.timeoutIdX);
-    state2.timeoutIdX = void 0;
+  if (cancelX && state2.frameIdX !== void 0) {
+    cancelAnimationFrame(state2.frameIdX);
+    state2.frameIdX = void 0;
   }
-  if (cancelY && state2.timeoutIdY !== void 0) {
-    clearTimeout(state2.timeoutIdY);
-    state2.timeoutIdY = void 0;
+  if (cancelY && state2.frameIdY !== void 0) {
+    cancelAnimationFrame(state2.frameIdY);
+    state2.frameIdY = void 0;
   }
-  if (!state2.timeoutIdX && !state2.timeoutIdY) {
+  if (!state2.frameIdX && !state2.frameIdY) {
     state2.preventEnter = false;
   }
 }
@@ -2406,6 +2401,9 @@ function handleNodeDragover3(data, state2) {
   state2.coordinates.x = x;
   pd(data.e);
   sp(data.e);
+  if (isDragState(state2)) {
+    handleSynthScroll({ x, y }, data.e, state2);
+  }
   data.targetData.parent.el === state2.currentParent?.el ? sort(data, state2) : transfer(data, state2);
 }
 function handleParentDragover3(data, state2) {
@@ -2413,7 +2411,10 @@ function handleParentDragover3(data, state2) {
   if (!config.nativeDrag) return;
   pd(data.e);
   sp(data.e);
-  Object.assign(eventCoordinates(data.e));
+  const { x, y } = eventCoordinates(data.e);
+  if (isDragState(state2)) {
+    handleSynthScroll({ x, y }, data.e, state2);
+  }
   transfer(data, state2);
 }
 function handleParentPointerover2(e) {
@@ -2705,16 +2706,14 @@ function getScrollDirection(el, e, style, rect, opts) {
   return isX ? { left: false, right: false } : { up: false, down: false };
 }
 function scrollAxis(el, e, state2, options) {
-  return;
-  console.log("scroll axis");
   state2.preventEnter = true;
   const isX = options.axis === "x";
   const dirFactor = options.direction === "positive" ? 1 : -1;
   const speed = 20;
   const key = isX ? "lastScrollDirectionX" : "lastScrollDirectionY";
-  const idKey = isX ? "timeoutIdX" : "timeoutIdY";
+  const idKey = isX ? "frameIdX" : "frameIdY";
   if (state2[key] && state2[key] !== options.direction && state2[idKey] !== void 0) {
-    clearTimeout(state2[idKey]);
+    cancelAnimationFrame(state2[idKey]);
     state2[idKey] = void 0;
   }
   state2[key] = options.direction;
@@ -2740,9 +2739,9 @@ function scrollAxis(el, e, state2, options) {
         isX ? 0 : speed * dirFactor
       );
     }
-    state2[idKey] = setTimeout(scrollLoop, 16);
+    state2[idKey] = requestAnimationFrame(scrollLoop);
   };
-  state2[idKey] = setTimeout(scrollLoop, 16);
+  state2[idKey] = requestAnimationFrame(scrollLoop);
 }
 function isPointerInside(el, x, y) {
   const rect = el.getBoundingClientRect();
