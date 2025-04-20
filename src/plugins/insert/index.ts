@@ -11,6 +11,7 @@ import type {
   BaseDragState,
   InsertState,
   Coordinates,
+  Node,
 } from "../../types";
 
 import {
@@ -24,6 +25,7 @@ import {
   removeClass,
   addEvents,
   remapNodes,
+  nodes,
 } from "../../index";
 
 import { eq, pd, eventCoordinates } from "../../utils";
@@ -164,7 +166,7 @@ function checkPosition(e: DragEvent | PointerEvent) {
   let isWithinAParent = false;
   let current: HTMLElement | null = el;
   while (current) {
-    if (parents.has(current)) {
+    if (nodes.has(current as Node) || parents.has(current)) {
       isWithinAParent = true;
       break; // Found a registered parent ancestor
     }
@@ -312,7 +314,7 @@ function getRealCoords(el: HTMLElement): Coordinates {
 }
 
 function defineRanges(parent: HTMLElement) {
-  if (!isDragState(state)) return;
+  if (!isDragState(state) && !isSynthDragState(state)) return;
 
   const parentData = parents.get(parent);
   if (!parentData) return;
@@ -692,7 +694,7 @@ export function handleParentDrop<T>(_data: NodeDragEventData<T>) {}
 export function handleEnd<T>(
   state: DragState<T> | SynthDragState<T> | BaseDragState<T>
 ) {
-  if (!isDragState(state)) return;
+  if (!isDragState(state) && !isSynthDragState(state)) return;
 
   const insertPoint = insertState.insertPoint;
 

@@ -265,7 +265,7 @@ function checkPosition(e) {
   let isWithinAParent = false;
   let current = el;
   while (current) {
-    if (parents.has(current)) {
+    if (nodes.has(current) || parents.has(current)) {
       isWithinAParent = true;
       break;
     }
@@ -585,14 +585,12 @@ function removeInsertPoint(insertState2) {
   insertState2.insertPoint = null;
 }
 function positionInsertPoint(parent, position, ascending, node, insertState2) {
-  console.log("position insert point");
   if (insertState2.insertPoint?.el !== parent.el) {
     removeInsertPoint(insertState2);
     createInsertPoint(parent, insertState2);
   }
   insertState2.draggedOverNodes = [node];
   if (!insertState2.insertPoint) return;
-  console.log("set to block");
   insertState2.insertPoint.el.style.display = "block";
   if (position.vertical) {
     const insertPointHeight = insertState2.insertPoint.el.getBoundingClientRect().height;

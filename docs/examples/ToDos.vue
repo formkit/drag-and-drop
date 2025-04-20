@@ -138,6 +138,8 @@ const insertPointClasses = [
   "z-[1000]",
   "rounded-full",
   "duration-[5ms]",
+  "h-1",
+  "box-border",
   "before:block",
   'before:content-["Insert"]',
   "before:whitespace-nowrap",
