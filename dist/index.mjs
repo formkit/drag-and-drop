@@ -370,7 +370,7 @@ function getRealCoords(el) {
   };
 }
 function defineRanges(parent) {
-  if (!isDragState(state)) return;
+  if (!isDragState(state) && !isSynthDragState(state)) return;
   const parentData = parents.get(parent);
   if (!parentData) return;
   const enabledNodes = parentData.enabledNodes;
@@ -443,11 +443,8 @@ function handleNodeDragover(data) {
   if (!config.nativeDrag) return;
   data.e.preventDefault();
 }
-function processParentDragEvent(e, targetData, state2, isNativeDrag) {
-  const config = targetData.parent.data.config;
-  if (!isNativeDrag && config.nativeDrag) return;
+function processParentDragEvent(e, targetData, state2) {
   pd(e);
-  if (isNativeDrag) pd(e);
   const { x, y } = eventCoordinates(e);
   const clientX = x;
   const clientY = y;
@@ -470,13 +467,13 @@ function processParentDragEvent(e, targetData, state2, isNativeDrag) {
   state2.currentParent = realTargetParent;
 }
 function handleParentDragover(data, state2) {
-  processParentDragEvent(data.e, data.targetData, state2, true);
+  processParentDragEvent(data.e, data.targetData, state2);
 }
 function handleParentPointerover(data) {
   const { detail } = data;
   const { state: state2, targetData } = detail;
   if (state2.scrolling) return;
-  processParentDragEvent(detail.e, targetData, state2, false);
+  processParentDragEvent(detail.e, targetData, state2);
 }
 function moveBetween(data, state2) {
   if (data.data.config.sortable === false) return;
@@ -564,6 +561,7 @@ function findClosest(enabledNodes, state2) {
   }
 }
 function createInsertPoint(parent, insertState2) {
+  console.log("create insert point");
   const insertPoint = parent.data.config.insertConfig?.insertPoint({
     el: parent.el,
     data: parent.data
@@ -585,6 +583,7 @@ function removeInsertPoint(insertState2) {
   insertState2.insertPoint = null;
 }
 function positionInsertPoint(parent, position, ascending, node, insertState2) {
+  console.log("position insert point");
   if (insertState2.insertPoint?.el !== parent.el) {
     removeInsertPoint(insertState2);
     createInsertPoint(parent, insertState2);
@@ -615,7 +614,7 @@ function positionInsertPoint(parent, position, ascending, node, insertState2) {
   insertState2.ascending = ascending;
 }
 function handleEnd(state2) {
-  if (!isDragState(state2)) return;
+  if (!isDragState(state2) && !isSynthDragState(state2)) return;
   const insertPoint = insertState.insertPoint;
   if (!insertState.draggedOverParent) {
     const draggedParentValues = parentValues(

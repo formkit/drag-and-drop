@@ -410,15 +410,11 @@ function processParentDragEvent<T>(
   e: DragEvent | PointerEvent,
   targetData: ParentEventData<T>["targetData"],
   state: DragState<T>,
-  isNativeDrag: boolean
+  nativeDrag = false
 ) {
-  const config = targetData.parent.data.config;
-
-  if (!isNativeDrag && config.nativeDrag) return;
-
   pd(e);
 
-  if (isNativeDrag) pd(e);
+  if (nativeDrag && e instanceof PointerEvent) return;
 
   const { x, y } = eventCoordinates(e);
 
@@ -466,7 +462,7 @@ export function handleParentPointerover<T>(data: PointeroverParentEvent<T>) {
 
   if (state.scrolling) return;
 
-  processParentDragEvent(detail.e, targetData, state, false);
+  processParentDragEvent(detail.e, targetData, state);
 }
 
 export function moveBetween<T>(data: ParentRecord<T>, state: DragState<T>) {
@@ -608,6 +604,7 @@ function createInsertPoint<T>(
   parent: ParentRecord<T>,
   insertState: InsertState<T>
 ) {
+  console.log("create insert point");
   const insertPoint = parent.data.config.insertConfig?.insertPoint({
     el: parent.el,
     data: parent.data,
@@ -642,6 +639,7 @@ function positionInsertPoint<T>(
   node: NodeRecord<T>,
   insertState: InsertState<T>
 ) {
+  console.log("position insert point");
   if (insertState.insertPoint?.el !== parent.el) {
     removeInsertPoint(insertState);
 
