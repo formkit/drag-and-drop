@@ -2728,7 +2728,7 @@ function removeClass(els, className) {
   }
 }
 function getScrollDirection(el, e, style, rect, opts) {
-  const threshold = 0.05;
+  const threshold = 0.075;
   const isX = opts.axis === "x";
   const isRoot = el === document.scrollingElement;
   const scrollProp = isX ? "scrollLeft" : "scrollTop";

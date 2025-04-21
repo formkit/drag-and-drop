@@ -8,5 +8,6 @@
       parent container and the draggable items, you can make your lists
       accessible to screen readers.
     </p>
+    <CodeExample example="accessibility" />
   </SectionWrapper>
 </template>

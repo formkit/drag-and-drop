@@ -33,7 +33,7 @@ const [list1Node, items1] = useDragAndDrop(initialItems1, {
   onTransfer: (event) => {
     announce(
       `Transferred ${event.draggedNodes[0].data.value} from List ${
-        event.sourceParent === list1Node.value ? 1 : 2
+        event.sourceParent.el === list1Node.value ? 1 : 2
       } to List 1 at position ${event.targetIndex + 1}.`
     );
   },
@@ -58,7 +58,7 @@ const [list2Node, items2] = useDragAndDrop(initialItems2, {
   onTransfer: (event) => {
     announce(
       `Transferred ${event.draggedNodes[0].data.value} from List ${
-        event.sourceParent === list1Node.value ? 1 : 2
+        event.sourceParent.el === list1Node.value ? 1 : 2
       } to List 2 at position ${event.targetIndex + 1}.`
     );
   },
@@ -274,114 +274,228 @@ async function handleListKeydown(event: KeyboardEvent, listIndex: 0 | 1) {
 </script>
 
 <template>
-  <div class="accessibility-demo">
-    <div ref="liveRegion" aria-live="polite" class="sr-only">
-      {{ liveMessage }}
-    </div>
-
-    <div class="lists-container">
-      <div class="list-wrapper">
-        <h2 id="list1-heading">List 1</h2>
-        <ul
-          ref="list1Node"
-          class="list"
-          tabindex="0"
-          role="listbox"
-          aria-labelledby="list1-heading"
-          :aria-activedescendant="
-            focusedListIndex === 0 ? focusedItemId : undefined
-          "
-          @focus="handleListFocus(0)"
-          @blur="handleListBlur"
-          @keydown="handleListKeydown($event, 0)"
-        >
-          <li
-            v-for="(item, index) in items1"
-            :key="item"
-            :id="`list1-item-${item}`"
-            class="item"
-            role="option"
-            :aria-selected="
-              focusedListIndex === 0 && focusedItemIndex === index
-            "
-            :class="{
-              'item-focused':
-                focusedListIndex === 0 && focusedItemIndex === index,
-              'item-selected':
-                selectedItem?.listIndex === 0 &&
-                selectedItem?.itemIndex === index,
-            }"
-            tabindex="-1"
-          >
-            {{ item }}
-          </li>
-          <li v-if="items1.length === 0" class="empty-list-message">Empty</li>
-        </ul>
+  <DemoContainer name="accessibility">
+    <div class="accessibility-demo">
+      <div ref="liveRegion" aria-live="polite" class="sr-only">
+        {{ liveMessage }}
       </div>
 
-      <div class="list-wrapper">
-        <h2 id="list2-heading">List 2</h2>
-        <ul
-          ref="list2Node"
-          class="list"
-          tabindex="0"
-          role="listbox"
-          aria-labelledby="list2-heading"
-          :aria-activedescendant="
-            focusedListIndex === 1 ? focusedItemId : undefined
-          "
-          @focus="handleListFocus(1)"
-          @blur="handleListBlur"
-          @keydown="handleListKeydown($event, 1)"
-        >
-          <li
-            v-for="(item, index) in items2"
-            :key="item"
-            :id="`list2-item-${item}`"
-            class="item"
-            role="option"
-            :aria-selected="
-              focusedListIndex === 1 && focusedItemIndex === index
+      <div class="lists-container">
+        <div class="list-wrapper">
+          <h2 id="list1-heading">List 1</h2>
+          <ul
+            ref="list1Node"
+            class="list"
+            tabindex="0"
+            role="listbox"
+            aria-labelledby="list1-heading"
+            :aria-activedescendant="
+              focusedListIndex === 0 ? focusedItemId : undefined
             "
-            :class="{
-              'item-focused':
-                focusedListIndex === 1 && focusedItemIndex === index,
-              'item-selected':
-                selectedItem?.listIndex === 1 &&
-                selectedItem?.itemIndex === index,
-            }"
-            tabindex="-1"
+            @focus="handleListFocus(0)"
+            @blur="handleListBlur"
+            @keydown="handleListKeydown($event, 0)"
           >
-            {{ item }}
+            <li
+              v-for="(item, index) in items1"
+              :key="item"
+              :id="`list1-item-${item}`"
+              class="item"
+              role="option"
+              :aria-selected="
+                focusedListIndex === 0 && focusedItemIndex === index
+              "
+              :class="{
+                'item-focused':
+                  focusedListIndex === 0 && focusedItemIndex === index,
+                'item-selected':
+                  selectedItem?.listIndex === 0 &&
+                  selectedItem?.itemIndex === index,
+              }"
+              tabindex="-1"
+            >
+              {{ item }}
+            </li>
+            <li v-if="items1.length === 0" class="empty-list-message">Empty</li>
+          </ul>
+        </div>
+
+        <div class="list-wrapper">
+          <h2 id="list2-heading">List 2</h2>
+          <ul
+            ref="list2Node"
+            class="list"
+            tabindex="0"
+            role="listbox"
+            aria-labelledby="list2-heading"
+            :aria-activedescendant="
+              focusedListIndex === 1 ? focusedItemId : undefined
+            "
+            @focus="handleListFocus(1)"
+            @blur="handleListBlur"
+            @keydown="handleListKeydown($event, 1)"
+          >
+            <li
+              v-for="(item, index) in items2"
+              :key="item"
+              :id="`list2-item-${item}`"
+              class="item"
+              role="option"
+              :aria-selected="
+                focusedListIndex === 1 && focusedItemIndex === index
+              "
+              :class="{
+                'item-focused':
+                  focusedListIndex === 1 && focusedItemIndex === index,
+                'item-selected':
+                  selectedItem?.listIndex === 1 &&
+                  selectedItem?.itemIndex === index,
+              }"
+              tabindex="-1"
+            >
+              {{ item }}
+            </li>
+            <li v-if="items2.length === 0" class="empty-list-message">Empty</li>
+          </ul>
+        </div>
+      </div>
+      <div class="instructions">
+        <h3>Keyboard Instructions</h3>
+        <ul>
+          <li>Use <kbd>Tab</kbd> or <kbd>Shift+Tab</kbd> to focus a list.</li>
+          <li>
+            Use <kbd>↑</kbd> / <kbd>↓</kbd> arrows to navigate items within the
+            focused list.
           </li>
-          <li v-if="items2.length === 0" class="empty-list-message">Empty</li>
+          <li>
+            Press <kbd>Spacebar</kbd> to select/deselect the highlighted item
+            for moving.
+          </li>
+          <li>
+            With an item selected, use <kbd>↑</kbd> / <kbd>↓</kbd> (within the
+            same or another focused list) to choose the drop position.
+          </li>
+          <li>
+            Press <kbd>Enter</kbd> to drop the selected item at the highlighted
+            position.
+          </li>
+          <li>
+            Press <kbd>Escape</kbd> to cancel a selection or leave the list.
+          </li>
         </ul>
       </div>
     </div>
-    <div class="instructions">
-      <h3>Keyboard Instructions</h3>
-      <ul>
-        <li>Use <kbd>Tab</kbd> or <kbd>Shift+Tab</kbd> to focus a list.</li>
-        <li>
-          Use <kbd>↑</kbd> / <kbd>↓</kbd> arrows to navigate items within the
-          focused list.
-        </li>
-        <li>
-          Press <kbd>Spacebar</kbd> to select/deselect the highlighted item for
-          moving.
-        </li>
-        <li>
-          With an item selected, use <kbd>↑</kbd> / <kbd>↓</kbd> (within the
-          same or another focused list) to choose the drop position.
-        </li>
-        <li>
-          Press <kbd>Enter</kbd> to drop the selected item at the highlighted
-          position.
-        </li>
-        <li>
-          Press <kbd>Escape</kbd> to cancel a selection or leave the list.
-        </li>
-      </ul>
-    </div>
-  </div>
+  </DemoContainer>
 </template>
+
+<style scoped>
+.accessibility-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.lists-container {
+  display: flex;
+  gap: 2rem;
+  justify-content: space-around;
+}
+
+.list-wrapper {
+  flex: 1;
+  min-width: 150px;
+}
+
+.list {
+  list-style: none;
+  padding: 0.5rem;
+  margin: 0;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  min-height: 150px;
+  background-color: #f9f9f9;
+}
+
+.list:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.item {
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  cursor: default; /* Indicate keyboard interaction */
+  user-select: none; /* Prevent text selection interfering */
+}
+
+.item:last-child {
+  margin-bottom: 0;
+}
+
+/* Style for the virtually focused item */
+.item-focused {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+  background-color: #e7f3ff;
+}
+
+/* Style for the selected item */
+.item-selected {
+  background-color: #cce5ff;
+  border-color: #b8daff;
+  font-weight: bold;
+}
+
+.empty-list-message {
+  text-align: center;
+  color: #666;
+  padding: 1rem;
+  font-style: italic;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.instructions {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #f0f0f0;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.instructions h3 {
+  margin-top: 0;
+}
+
+.instructions kbd {
+  display: inline-block;
+  padding: 0.1em 0.4em;
+  font-size: 0.9em;
+  line-height: 1;
+  color: #24292e;
+  vertical-align: middle;
+  background-color: #fafbfc;
+  border: solid 1px #d1d5da;
+  border-radius: 3px;
+  box-shadow: inset 0 -1px 0 #d1d5da;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+</style>
