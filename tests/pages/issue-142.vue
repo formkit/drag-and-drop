@@ -25,7 +25,7 @@ const [sourceList, sourceItems] = useDragAndDrop(
       <input type="text" value="Hello World" class="text-input" />
       <ul ref="sourceList" class="fruit-list">
         <li v-for="item in sourceItems" :id="item" :key="item" class="item">
-          {{ item }}
+          <input type="text" :value="item" />
         </li>
       </ul>
     </div>
