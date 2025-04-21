@@ -73,17 +73,14 @@ export const nodes: NodesData<any> = new WeakMap<Node, NodeData<unknown>>();
 function isMobilePlatform() {
   if (!isBrowser) return false;
 
-  // Modern, privacy-respecting way (supported in Chrome, Edge, some Safari/Firefox)
   if ("userAgentData" in navigator) {
     return (navigator.userAgentData as { mobile: boolean }).mobile === true;
   }
 
-  // Fallback for older browsers
   const ua = navigator.userAgent;
 
   const isMobileUA = /android|iphone|ipod/i.test(ua);
 
-  // Modern iPads on iPadOS 13+ report as Mac in UA — use touch capability as a clue
   const isIpad =
     /iPad/.test(ua) ||
     (ua.includes("Macintosh") && navigator.maxTouchPoints > 1);
@@ -283,10 +280,8 @@ function handleRootPointermove(e: PointerEvent) {
 
   const config = state.pointerDown.parent.data.config;
 
-  // If the pointertype is mouse and the platform is not mobile, prevent
-  // synthetic drag.
   if (e.pointerType === "mouse" && !isMobilePlatform()) {
-    return; // Prevent synthetic drag if native drag is intended
+    return;
   }
 
   if (!isSynthDragState(state)) {
@@ -306,7 +301,6 @@ function handleRootPointermove(e: PointerEvent) {
 
     const rect = state.pointerDown.node.el.getBoundingClientRect();
 
-    // @ts-ignore
     const synthDragState = initSynthDrag(
       state.pointerDown.node,
       state.pointerDown.parent,
@@ -1100,14 +1094,6 @@ function nodesMutated(mutationList: MutationRecord[]) {
 
   if (!parentData) return;
 
-  // for (let x = 0; x < allSelectedAndActiveNodes.length; x++) {
-  //   const node = allSelectedAndActiveNodes[x];
-
-  //   node.setAttribute("aria-selected", "false");
-
-  //   removeClass([node], parentData.config.selectedClass);
-  // }
-
   remapNodes(parentEl);
 }
 
@@ -1846,7 +1832,6 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   if (state.draggedNode) state.draggedNode.el.draggable = true;
 
   if (isSynthDragState(state)) {
-    // @ts-ignore
     state.clonedDraggedNode.remove();
 
     clearTimeout(state.longPressTimeout);
@@ -1863,7 +1848,6 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
     : config?.dropZoneClass;
 
   if (state.originalZIndex !== undefined) {
-    // @ts-ignore
     state.draggedNode.el.style.zIndex = state.originalZIndex;
   }
 
@@ -1883,8 +1867,6 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
       ? state.initialParent.data.config.synthDragPlaceholderClass
       : state.initialParent.data?.config?.dragPlaceholderClass
   );
-
-  // --- Modification End ---
 
   deselect(state.draggedNodes, state.currentParent, state);
 
@@ -2149,22 +2131,17 @@ function cancelSynthScroll<T>(
 }
 
 function moveNode<T>(state: SynthDragState<T>, justStarted = false) {
-  // Use the coordinates stored in the state, updated by synthMove
   const { x, y } = state.coordinates;
 
   const startLeft = state.startLeft ?? 0;
   const startTop = state.startTop ?? 0;
 
-  // Get current window scroll
   const currentScrollX = window.scrollX ?? 0;
   const currentScrollY = window.scrollY ?? 0;
 
-  // Calculate the translation based on viewport coordinates (x, y)
-  // and the initial offset (startLeft, startTop), adjusted for window scroll.
   const translateX = x - startLeft + currentScrollX;
   const translateY = y - startTop + currentScrollY;
 
-  // Apply the transform using translate3d
   state.clonedDraggedNode.style.transform = `translate3d(${translateX}px, ${translateY}px, 0px)`;
 
   if (justStarted) {
@@ -2183,17 +2160,14 @@ export function synthMove<T>(
   justStarted = false
 ) {
   const coordinates = eventCoordinates(e);
-  // Update state coordinates *before* calling moveNode or scheduling scroll check
   state.coordinates.x = coordinates.x;
   state.coordinates.y = coordinates.y;
 
   moveNode(state, justStarted); // Pass only state now
 
-  // Debounce scroll handling
   if (state.scrollDebounceTimeout) clearTimeout(state.scrollDebounceTimeout);
 
   state.scrollDebounceTimeout = setTimeout(() => {
-    // Pass the updated state coordinates to handleSynthScroll
     handleSynthScroll(state.coordinates, e, state);
   }, 16); // ~1 frame (60fps)
 
@@ -2218,16 +2192,13 @@ export function synthMove<T>(
     state,
   };
 
-  // @ts-ignore
   if ("node" in elFromPoint) {
-    // @ts-ignore
     elFromPoint.node.el.dispatchEvent(
       new CustomEvent("handleNodePointerover", {
         detail: pointerMoveEventData,
       })
     );
   } else {
-    // @ts-ignore
     elFromPoint.parent.el.dispatchEvent(
       new CustomEvent("handleParentPointerover", {
         detail: pointerMoveEventData,
@@ -2262,7 +2233,6 @@ export function handleNodeDragover<T>(
 
   sp(data.e);
 
-  // Add synthetic scroll handling
   if (isDragState(state)) {
     handleSynthScroll({ x, y }, data.e, state);
   }
@@ -2294,7 +2264,6 @@ export function handleParentDragover<T>(
 
   const { x, y } = eventCoordinates(data.e);
 
-  // Add synthetic scroll handling
   if (isDragState(state)) {
     handleSynthScroll({ x, y }, data.e, state);
   }
@@ -2823,7 +2792,7 @@ function getScrollDirection<T>(
   rect: DOMRect,
   opts: ScrollDirection<T>
 ): Record<string, boolean> {
-  const threshold = 0.05;
+  const threshold = 0.075;
 
   const isX = opts.axis === "x";
   const isRoot = el === document.scrollingElement;
@@ -2905,7 +2874,6 @@ function scrollAxis<T>(
   const dirFactor = options.direction === "positive" ? 1 : -1;
   const speed = 20;
 
-  // Cancel previous scroll if direction changed
   const key = isX ? "lastScrollDirectionX" : "lastScrollDirectionY";
   const idKey = isX ? "frameIdX" : "frameIdY";
 
@@ -2937,12 +2905,10 @@ function scrollAxis<T>(
       return;
     }
 
-    // More consistent across Safari/Firefox
     el[scrollProp] += speed * dirFactor;
 
-    // Re-add moveNode call to update position continuously during scroll
     if (isSynthDragState(state)) {
-      moveNode(state); // Pass only state
+      moveNode(state);
     }
 
     state[idKey] = requestAnimationFrame(scrollLoop);
@@ -2998,7 +2964,6 @@ function handleSynthScroll<T>(
     }
   };
 
-  // Try fast path
   if (
     state.lastScrollContainerX &&
     isPointerInside(state.lastScrollContainerX, x, y)
@@ -3015,7 +2980,6 @@ function handleSynthScroll<T>(
   }
 
   if (!scrolled) {
-    // Walk up from elementFromPoint as fallback
     let el = document.elementFromPoint(x, y);
     while (
       el &&
@@ -3029,14 +2993,12 @@ function handleSynthScroll<T>(
   }
 
   if (!scrolled) {
-    // Final fallback: scrollingElement
     const root = document.scrollingElement;
     if (root instanceof HTMLElement) {
       checkAndScroll(root);
     }
   }
 
-  // If still not scrolling, make sure we're fully canceled
   if (!scrolled) cancelSynthScroll(state);
 }
 
