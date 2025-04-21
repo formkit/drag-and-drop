@@ -533,8 +533,9 @@ function handleNodeDragover(data) {
   if (!config.nativeDrag) return;
   data.e.preventDefault();
 }
-function processParentDragEvent(e, targetData, state2) {
+function processParentDragEvent(e, targetData, state2, nativeDrag = false) {
   pd(e);
+  if (nativeDrag && e instanceof PointerEvent) return;
   const { x, y } = eventCoordinates(e);
   const clientX = x;
   const clientY = y;
@@ -557,7 +558,7 @@ function processParentDragEvent(e, targetData, state2) {
   state2.currentParent = realTargetParent;
 }
 function handleParentDragover(data, state2) {
-  processParentDragEvent(data.e, data.targetData, state2);
+  processParentDragEvent(data.e, data.targetData, state2, true);
 }
 function handleParentPointerover(data) {
   const { detail } = data;
@@ -1108,6 +1109,23 @@ function handleEnd2(state2) {
       state2.currentParent.data,
       swap ? swapElements(values, null, draggedIndex, targetIndex) : newValues
     );
+    if (state2.initialParent.data.config.onSort) {
+      state2.initialParent.data.config.onSort({
+        parent: {
+          el: state2.initialParent.el,
+          data: state2.initialParent.data
+        },
+        previousValues: [...initialParentValues],
+        previousNodes: [...state2.initialParent.data.enabledNodes],
+        nodes: [...state2.initialParent.data.enabledNodes],
+        values: [...newValues],
+        draggedNodes: state2.draggedNodes,
+        previousPosition: draggedIndex,
+        position: targetIndex,
+        targetNodes: dropSwapState.draggedOverNodes,
+        state: state2
+      });
+    }
   } else {
     if (swap) {
       const res = swapElements(
@@ -1142,6 +1160,28 @@ function handleEnd2(state2) {
         newValues
       );
     }
+  }
+  if (state2.currentParent.data.config.onTransfer) {
+    state2.currentParent.data.config.onTransfer({
+      sourceParent: state2.currentParent,
+      targetParent: state2.initialParent,
+      initialParent: state2.initialParent,
+      draggedNodes: state2.draggedNodes,
+      targetIndex,
+      state: state2,
+      targetNodes: dropSwapState.draggedOverNodes
+    });
+  }
+  if (state2.initialParent.data.config.onTransfer) {
+    state2.initialParent.data.config.onTransfer({
+      sourceParent: state2.initialParent,
+      targetParent: state2.currentParent,
+      initialParent: state2.initialParent,
+      draggedNodes: state2.draggedNodes,
+      targetIndex,
+      state: state2,
+      targetNodes: dropSwapState.draggedOverNodes
+    });
   }
 }
 
@@ -1449,7 +1489,7 @@ function performSort({
   if ("draggedNode" in state)
     state.currentTargetValue = targetNodes[0].data.value;
   setParentValues(parent.el, parent.data, [...newParentValues]);
-  if (parent.data.config.onSort)
+  if (parent.data.config.onSort) {
     parent.data.config.onSort({
       parent: {
         el: parent.el,
@@ -1465,6 +1505,7 @@ function performSort({
       targetNodes,
       state
     });
+  }
 }
 function setActive(parent, newActiveNode, state2) {
   if (!newActiveNode) {

@@ -8,6 +8,8 @@ import type {
   ParentDragEventData,
   PointeroverParentEvent,
   DropSwapState,
+  ParentRecord,
+  BaseDragState,
 } from "../../types";
 import {
   parents,
@@ -340,6 +342,24 @@ function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
       state.currentParent.data,
       swap ? swapElements(values, null, draggedIndex, targetIndex) : newValues
     );
+
+    if (state.initialParent.data.config.onSort) {
+      state.initialParent.data.config.onSort({
+        parent: {
+          el: state.initialParent.el,
+          data: state.initialParent.data,
+        } as ParentRecord<unknown>,
+        previousValues: [...initialParentValues],
+        previousNodes: [...state.initialParent.data.enabledNodes],
+        nodes: [...state.initialParent.data.enabledNodes],
+        values: [...newValues],
+        draggedNodes: state.draggedNodes,
+        previousPosition: draggedIndex,
+        position: targetIndex,
+        targetNodes: dropSwapState.draggedOverNodes as NodeRecord<T>[],
+        state: state as BaseDragState<unknown>,
+      });
+    }
   } else {
     if (swap) {
       const res = swapElements(
@@ -379,5 +399,29 @@ function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
         newValues
       );
     }
+  }
+
+  if (state.currentParent.data.config.onTransfer) {
+    state.currentParent.data.config.onTransfer({
+      sourceParent: state.currentParent,
+      targetParent: state.initialParent,
+      initialParent: state.initialParent,
+      draggedNodes: state.draggedNodes,
+      targetIndex,
+      state,
+      targetNodes: dropSwapState.draggedOverNodes as NodeRecord<T>[],
+    });
+  }
+
+  if (state.initialParent.data.config.onTransfer) {
+    state.initialParent.data.config.onTransfer({
+      sourceParent: state.initialParent,
+      targetParent: state.currentParent,
+      initialParent: state.initialParent,
+      draggedNodes: state.draggedNodes,
+      targetIndex,
+      state,
+      targetNodes: dropSwapState.draggedOverNodes as NodeRecord<T>[],
+    });
   }
 }

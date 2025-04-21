@@ -11,7 +11,7 @@ test.beforeEach(async ({ browser }) => {
 
 test.describe("Place plugin", async () => {
   test("Test #1", async () => {
-    await page.goto("http://localhost:3001/place");
+    await page.goto("http://localhost:3001/drop-or-swap");
     await new Promise((r) => setTimeout(r, 1000));
     // When initially dragging apple, we should expect to the apple receive
     // the drag placeholder class and the drop zone class. We should also see
@@ -95,7 +95,7 @@ test.describe("Place plugin", async () => {
   });
 
   test("Test #2", async () => {
-    await page.goto("http://localhost:3001/place");
+    await page.goto("http://localhost:3001/drop-or-swap");
     await new Promise((r) => setTimeout(r, 1000));
 
     // Picking up Orange should set the drag placeholder and drop zone on Orange

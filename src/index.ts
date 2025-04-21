@@ -514,7 +514,7 @@ export function performSort<T>({
 
   setParentValues(parent.el, parent.data, [...newParentValues]);
 
-  if (parent.data.config.onSort)
+  if (parent.data.config.onSort) {
     parent.data.config.onSort({
       parent: {
         el: parent.el,
@@ -530,6 +530,7 @@ export function performSort<T>({
       targetNodes,
       state,
     });
+  }
 }
 
 /**
