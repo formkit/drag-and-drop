@@ -2823,7 +2823,7 @@ function getScrollDirection<T>(
   rect: DOMRect,
   opts: ScrollDirection<T>
 ): Record<string, boolean> {
-  const threshold = 0.1;
+  const threshold = 0.05;
 
   const isX = opts.axis === "x";
   const isRoot = el === document.scrollingElement;
@@ -2961,7 +2961,7 @@ function handleSynthScroll<T>(
   e: PointerEvent | DragEvent,
   state: DragState<T>
 ) {
-  cancelSynthScroll(state); // ⛔️ Cancel any ongoing scrolls on movement
+  cancelSynthScroll(state);
 
   const { x, y } = coordinates;
 
