@@ -562,7 +562,6 @@ function findClosest(enabledNodes, state2) {
   }
 }
 function createInsertPoint(parent, insertState2) {
-  console.log("create insert point");
   const insertPoint = parent.data.config.insertConfig?.insertPoint({
     el: parent.el,
     data: parent.data
@@ -584,7 +583,6 @@ function removeInsertPoint(insertState2) {
   insertState2.insertPoint = null;
 }
 function positionInsertPoint(parent, position, ascending, node, insertState2) {
-  console.log("position insert point");
   if (insertState2.insertPoint?.el !== parent.el) {
     removeInsertPoint(insertState2);
     createInsertPoint(parent, insertState2);

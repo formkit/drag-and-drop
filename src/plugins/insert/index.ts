@@ -604,7 +604,6 @@ function createInsertPoint<T>(
   parent: ParentRecord<T>,
   insertState: InsertState<T>
 ) {
-  console.log("create insert point");
   const insertPoint = parent.data.config.insertConfig?.insertPoint({
     el: parent.el,
     data: parent.data,
@@ -639,7 +638,6 @@ function positionInsertPoint<T>(
   node: NodeRecord<T>,
   insertState: InsertState<T>
 ) {
-  console.log("position insert point");
   if (insertState.insertPoint?.el !== parent.el) {
     removeInsertPoint(insertState);
 
