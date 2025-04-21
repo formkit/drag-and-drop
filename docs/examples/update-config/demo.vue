@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useDragAndDrop } from "../../../src/vue/index";
+import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
 
 const disabled = ref(false);
 
@@ -46,7 +46,7 @@ function toggleDisabled() {
           <li
             v-for="tape in values"
             :key="tape"
-            class="basis-1/2 md:basis-1/3 text-center cursor-grab active:cursor-grabbing"
+            class="basis-1/2 md:basis-1/3 text-center cursor-grab"
           >
             <CassetteTape :label="tape" :data-label="tape" />
           </li>

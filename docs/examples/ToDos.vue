@@ -138,6 +138,8 @@ const insertPointClasses = [
   "z-[1000]",
   "rounded-full",
   "duration-[5ms]",
+  "h-1",
+  "box-border",
   "before:block",
   'before:content-["Insert"]',
   "before:whitespace-nowrap",
@@ -176,7 +178,7 @@ const insertPointClasses = [
             >
               <span
                 v-if="dragHandles"
-                class="kanban-handle inline-block shrink-0 w-2 mr-2 cursor-grab active:cursor-grabbing"
+                class="kanban-handle inline-block shrink-0 w-2 mr-2 cursor-grab"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 512">
                   <path
@@ -213,7 +215,7 @@ const insertPointClasses = [
             >
               <span
                 v-if="dragHandles"
-                class="kanban-handle block w-2 mr-2 shrink-0 cursor-grab active:cursor-grabbing"
+                class="kanban-handle block w-2 mr-2 shrink-0 cursor-grab"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 512">
                   <path
@@ -257,7 +259,7 @@ const insertPointClasses = [
   @apply list-none h-full min-h-[300px] md:min-h-[400px];
 }
 .kanban-item {
-  @apply bg-slate-100 text-slate-600 antialiased border border-slate-300 p-2 md:p-4 font-oldschool text-base md:text-lg lg:text-xl leading-none font-thin mb-2 last:mb-0 group-data-[handles=false]:cursor-grab group-data-[handles=false]:active:cursor-grabbing;
+  @apply bg-slate-100 text-slate-600 antialiased border border-slate-300 p-2 md:p-4 font-oldschool text-base md:text-lg lg:text-xl leading-none font-thin mb-2 last:mb-0 group-data-[handles=false]:cursor-grab;
   @apply dark:bg-slate-600 dark:text-slate-50 dark:border-slate-400;
 }
 .kanban-complete {

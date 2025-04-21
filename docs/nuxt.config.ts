@@ -18,6 +18,10 @@ const storageConfig = process.env.KV_DRIVER
 export default defineNuxtConfig({
   css: ["@/assets/css/main.css"],
 
+  devtools: {
+    enabled: false,
+  },
+
   experimental: {
     componentIslands: true,
   },
@@ -118,4 +122,14 @@ export default defineNuxtConfig({
 
   nitro: storageConfig,
   compatibilityDate: "2024-09-30",
+
+  // vite: {
+  //   server: {
+  //     hmr: {
+  //       protocol: "wss",
+  //       host: "localhost",
+  //     },
+  //     allowedHosts: ["b362-47-197-190-12.ngrok-free.app"],
+  //   },
+  // },
 });

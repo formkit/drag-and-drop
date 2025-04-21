@@ -33,7 +33,7 @@ const [list1Node, items1] = useDragAndDrop(initialItems1, {
   onTransfer: (event) => {
     announce(
       `Transferred ${event.draggedNodes[0].data.value} from List ${
-        event.sourceParent === list1Node.value ? 1 : 2
+        event.sourceParent.el === list1Node.value ? 1 : 2
       } to List 1 at position ${event.targetIndex + 1}.`
     );
   },
@@ -58,7 +58,7 @@ const [list2Node, items2] = useDragAndDrop(initialItems2, {
   onTransfer: (event) => {
     announce(
       `Transferred ${event.draggedNodes[0].data.value} from List ${
-        event.sourceParent === list1Node.value ? 1 : 2
+        event.sourceParent.el === list1Node.value ? 1 : 2
       } to List 2 at position ${event.targetIndex + 1}.`
     );
   },

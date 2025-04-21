@@ -11,7 +11,7 @@ test.beforeEach(async ({ browser }) => {
 
 test.describe("Place plugin with multi drag", async () => {
   test("Test #1", async () => {
-    await page.goto("http://localhost:3001/place/multi-drag");
+    await page.goto("http://localhost:3001/drop-or-swap/multi-drag");
     await new Promise((r) => setTimeout(r, 1000));
 
     await page.locator("#Apple").click();

@@ -11,6 +11,7 @@ import type {
   BaseDragState,
   InsertState,
   Coordinates,
+  Node,
 } from "../../types";
 
 import {
@@ -24,6 +25,7 @@ import {
   removeClass,
   addEvents,
   remapNodes,
+  nodes,
 } from "../../index";
 
 import { eq, pd, eventCoordinates } from "../../utils";
@@ -154,15 +156,32 @@ function checkPosition(e: DragEvent | PointerEvent) {
 
   const el = document.elementFromPoint(e.clientX, e.clientY);
 
-  if (!(el instanceof HTMLElement)) return;
+  // 1. If the element is not an HTMLElement or is the insert point itself, do nothing.
+  if (!(el instanceof HTMLElement) || el === insertState.insertPoint?.el) {
+    return;
+  }
 
-  if (!parents.has(el)) {
-    const insertPoint = insertState.insertPoint;
+  // 2. Traverse up the DOM from the element under the cursor
+  //    to see if any ancestor is a registered parent.
+  let isWithinAParent = false;
+  let current: HTMLElement | null = el;
+  while (current) {
+    if (nodes.has(current as Node) || parents.has(current)) {
+      isWithinAParent = true;
+      break; // Found a registered parent ancestor
+    }
+    if (current === document.body) break; // Stop if we reach the body
+    current = current.parentElement;
+  }
 
-    if (insertPoint?.el === el) return;
+  // 3. If the cursor is NOT within any registered parent...
+  if (!isWithinAParent) {
+    // Hide the insert point if it exists
+    if (insertState.insertPoint) {
+      insertState.insertPoint.el.style.display = "none";
+    }
 
-    if (insertPoint) insertPoint.el.style.display = "none";
-
+    // Remove drop zone class if a parent was previously being dragged over
     if (insertState.draggedOverParent) {
       removeClass(
         [insertState.draggedOverParent.el],
@@ -170,12 +189,15 @@ function checkPosition(e: DragEvent | PointerEvent) {
       );
     }
 
+    // Reset insert state related to dragged over elements
     insertState.draggedOverNodes = [];
-
     insertState.draggedOverParent = null;
 
+    // Reset current parent in the main state back to the initial one
     state.currentParent = state.initialParent;
   }
+  // 4. If the cursor IS within a registered parent, do nothing in this function.
+  // Other event handlers will manage the insertion point positioning.
 }
 
 interface Range {
@@ -202,10 +224,22 @@ function createVerticalRange(
 
   const otherEdge = isAscending ? otherCoords.top : otherCoords.bottom;
   const nodeEdge = isAscending ? nodeCoords.bottom : nodeCoords.top;
-  const midpoint = nodeEdge + Math.abs(nodeEdge - otherEdge) / 2;
+
+  let midpoint: number;
+  let range: [number, number];
+
+  if (isAscending) {
+    // Midpoint between current node's bottom and next node's top
+    midpoint = nodeEdge + (otherEdge - nodeEdge) / 2; // nodeCoords.bottom + (otherCoords.top - nodeCoords.bottom) / 2
+    range = [center, midpoint]; // Range from node center down to midpoint
+  } else {
+    // Midpoint between previous node's bottom and current node's top
+    midpoint = otherEdge + (nodeEdge - otherEdge) / 2; // otherCoords.bottom + (nodeCoords.top - otherCoords.bottom) / 2
+    range = [midpoint, center]; // Range from midpoint down to node center
+  }
 
   return {
-    y: isAscending ? [center, midpoint] : [midpoint, center],
+    y: range,
     x: [nodeCoords.left, nodeCoords.right],
     vertical: true,
   };
@@ -280,7 +314,7 @@ function getRealCoords(el: HTMLElement): Coordinates {
 }
 
 function defineRanges(parent: HTMLElement) {
-  if (!isDragState(state)) return;
+  if (!isDragState(state) && !isSynthDragState(state)) return;
 
   const parentData = parents.get(parent);
   if (!parentData) return;
@@ -376,15 +410,11 @@ function processParentDragEvent<T>(
   e: DragEvent | PointerEvent,
   targetData: ParentEventData<T>["targetData"],
   state: DragState<T>,
-  isNativeDrag: boolean
+  nativeDrag = false
 ) {
-  const config = targetData.parent.data.config;
-
-  if (!isNativeDrag && config.nativeDrag) return;
-
   pd(e);
 
-  if (isNativeDrag) pd(e);
+  if (nativeDrag && e instanceof PointerEvent) return;
 
   const { x, y } = eventCoordinates(e);
 
@@ -432,7 +462,7 @@ export function handleParentPointerover<T>(data: PointeroverParentEvent<T>) {
 
   if (state.scrolling) return;
 
-  processParentDragEvent(detail.e, targetData, state, false);
+  processParentDragEvent(detail.e, targetData, state);
 }
 
 export function moveBetween<T>(data: ParentRecord<T>, state: DragState<T>) {
@@ -463,7 +493,7 @@ export function moveBetween<T>(data: ParentRecord<T>, state: DragState<T>) {
       : undefined;
 
     if (position)
-      positioninsertPoint(
+      positionInsertPoint(
         data,
         position,
         foundRange[1] === "ascending",
@@ -525,7 +555,7 @@ function moveOutside<T>(data: ParentRecord<T>, state: DragState<T>) {
         : undefined;
 
       if (position)
-        positioninsertPoint(
+        positionInsertPoint(
           data,
           position,
           foundRange[1] === "ascending",
@@ -574,6 +604,7 @@ function createInsertPoint<T>(
   parent: ParentRecord<T>,
   insertState: InsertState<T>
 ) {
+  console.log("create insert point");
   const insertPoint = parent.data.config.insertConfig?.insertPoint({
     el: parent.el,
     data: parent.data,
@@ -589,7 +620,7 @@ function createInsertPoint<T>(
 
   document.body.appendChild(insertPoint);
 
-  Object.assign(insertPoint, {
+  Object.assign(insertPoint.style, {
     position: "absolute",
     display: "none",
   });
@@ -601,13 +632,14 @@ function removeInsertPoint<T>(insertState: InsertState<T>) {
   insertState.insertPoint = null;
 }
 
-function positioninsertPoint<T>(
+function positionInsertPoint<T>(
   parent: ParentRecord<T>,
   position: { x: number[]; y: number[]; vertical: boolean },
   ascending: boolean,
   node: NodeRecord<T>,
   insertState: InsertState<T>
 ) {
+  console.log("position insert point");
   if (insertState.insertPoint?.el !== parent.el) {
     removeInsertPoint(insertState);
 
@@ -618,16 +650,18 @@ function positioninsertPoint<T>(
 
   if (!insertState.insertPoint) return;
 
+  insertState.insertPoint.el.style.display = "block";
+
   if (position.vertical) {
-    const topPosition =
-      position.y[ascending ? 1 : 0] -
-      insertState.insertPoint.el.getBoundingClientRect().height / 2;
+    const insertPointHeight =
+      insertState.insertPoint.el.getBoundingClientRect().height;
+    const targetY = position.y[ascending ? 1 : 0];
+    const topPosition = targetY - insertPointHeight / 2;
 
     Object.assign(insertState.insertPoint.el.style, {
       top: `${topPosition}px`,
       left: `${position.x[0]}px`,
       right: `${position.x[1]}px`,
-      height: "4px",
       width: `${position.x[1] - position.x[0]}px`,
     });
   } else {
@@ -639,7 +673,6 @@ function positioninsertPoint<T>(
     Object.assign(insertState.insertPoint.el.style, {
       top: `${position.y[0]}px`,
       bottom: `${position.y[1]}px`,
-      width: "4px",
       height: `${position.y[1] - position.y[0]}px`,
     });
   }
@@ -647,8 +680,6 @@ function positioninsertPoint<T>(
   insertState.targetIndex = node.data.index;
 
   insertState.ascending = ascending;
-
-  insertState.insertPoint.el.style.display = "block";
 }
 
 export function handleParentDrop<T>(_data: NodeDragEventData<T>) {}
@@ -661,7 +692,7 @@ export function handleParentDrop<T>(_data: NodeDragEventData<T>) {}
 export function handleEnd<T>(
   state: DragState<T> | SynthDragState<T> | BaseDragState<T>
 ) {
-  if (!isDragState(state)) return;
+  if (!isDragState(state) && !isSynthDragState(state)) return;
 
   const insertPoint = insertState.insertPoint;
 

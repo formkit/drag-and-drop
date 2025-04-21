@@ -9,7 +9,7 @@ test.beforeEach(async ({ browser }) => {
 
 test.describe("Drag swap", async () => {
   test("Test #1: Swapping within list.", async () => {
-    await page.goto("http://localhost:3001/swap");
+    await page.goto("http://localhost:3001/drop-or-swap/swap");
     await new Promise((r) => setTimeout(r, 1000));
 
     // Taking first item, hovering over second, and releading it should swap
@@ -83,7 +83,7 @@ test.describe("Drag swap", async () => {
   });
 
   test("Test #2: Swapping between lists.", async () => {
-    await page.goto("http://localhost:3001/swap");
+    await page.goto("http://localhost:3001/drop-or-swap/swap");
     await new Promise((r) => setTimeout(r, 1000));
 
     // Taking first item, hovering over the second list (not a node), and

@@ -16,7 +16,14 @@ export function sp(e: Event) {
   e.stopPropagation();
 }
 
-export function rect(el: HTMLElement) {
+/**
+ * Function to get the bounding client rect of an element.
+ *
+ * @param {HTMLElement} el - The element to get the bounding client rect of.
+ *
+ * @returns {ClientRect} The bounding client rect of the element.
+ */
+export function rect(el: HTMLElement): ClientRect {
   return el.getBoundingClientRect();
 }
 
@@ -30,6 +37,7 @@ export function createEmitter<T>() {
 
   const emit = function (eventName: string, data: T) {
     if (!callbacks.get(eventName)) return;
+
     callbacks.get(eventName)!.forEach((cb) => {
       cb(data);
     });
@@ -119,30 +127,6 @@ export function eq(
   }
   return false;
 }
-
-///**
-// * Throttle a function.
-// *
-// * @param callback - The callback function to throttle.
-// * @param limit - The minimum time in milliseconds between function calls.
-// *
-// * @returns A throttled version of the callback function.
-// */
-//export function throttle<Args extends unknown[], Return>(
-//  callback: (...args: Args) => Return,
-//  limit: number
-//): (...args: Args) => void {
-//  let wait = false;
-//  return function (...args: Args) {
-//    if (!wait) {
-//      callback.apply(null, args);
-//      wait = true;
-//      setTimeout(function () {
-//        wait = false;
-//      }, limit);
-//    }
-//  };
-//}
 
 /**
  * Split a class name into an array of class names.

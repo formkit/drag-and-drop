@@ -22,8 +22,8 @@
       <code>insert</code> plugin does not update values until the user drops the
       item. In addition, the <code>insert</code> plugin will render an insert
       point between the items to indicate where the item will be placed.
-      <CodeExample example="insert" />
     </p>
+    <CodeExample example="insert" />
     <h3 id="animations">Animations (Experimenal)</h3>
     <p>
       To add animations to your drag and drop experience, you can use the

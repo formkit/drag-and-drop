@@ -39,7 +39,7 @@ export interface ParentConfig<T> {
     currentParentData: ParentRecord<T>,
     state: BaseDragState<T>
   ) => boolean;
-  activeDescendantClass?: string;
+
   /**
    * The data transfer effect to use for the drag operation.
    */
@@ -128,10 +128,7 @@ export interface ParentConfig<T> {
     state: BaseDragState<T>
   ) => void;
   handleNodeKeydown: (data: NodeEventData<T>, state: DragState<T>) => void;
-  handleParentKeydown: (
-    data: ParentKeydownEventData<T>,
-    state: DragState<T>
-  ) => void;
+
   /**
    * Function that is called when dragend or touchend event occurs.
    */
@@ -281,6 +278,9 @@ export interface ParentConfig<T> {
    * The root element to use for the parent.
    */
   root: Document | ShadowRoot;
+  /**
+   * The class to add to a node when it is selected (clicked or pressed).
+   */
   selectedClass?: string;
   /**
    * Function that is called when a node is set up.
@@ -345,10 +345,7 @@ export interface ParentConfig<T> {
    * When hovering over a node, this class is applied to the node.
    */
   synthDropZoneClass?: string;
-  /**
-   * When a node receives focus, this class is applied to the node.
-   */
-  synthActiveDescendantClass?: string;
+
   /**
    * Callback function for when a sort operation is performed.
    */
@@ -754,14 +751,6 @@ export interface SynthDragStateProps {
    * Pointer id of dragged el
    */
   pointerId: number;
-  animationFrameIdX: number | undefined;
-  animationFrameIdY: number | undefined;
-  lastScrollX: HTMLElement | null;
-  lastScrollY: HTMLElement | null;
-  rootScrollWidth: number | undefined;
-  rootScrollHeight: number | undefined;
-  rootOverScrollBehavior: string | undefined;
-  rootTouchAction: string | undefined;
 }
 
 export type DragState<T> = DragStateProps<T> & BaseDragState<T>;
@@ -781,7 +770,6 @@ export type BaseDragState<T> = {
   currentTargetValue: T | undefined;
   emit: (event: string, data: unknown) => void;
   on: (event: string, callback: (data: unknown) => void) => void;
-  newActiveDescendant?: NodeRecord<T>;
   preventSynthDrag: boolean;
   longPress: boolean;
   longPressTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -808,6 +796,18 @@ export type BaseDragState<T> = {
   };
   scrolling: boolean;
   rootUserSelect: string | undefined;
+  lastScrollContainerX: HTMLElement | null;
+  lastScrollContainerY: HTMLElement | null;
+  rootScrollWidth: number | undefined;
+  rootScrollHeight: number | undefined;
+  windowScrollX: number | undefined;
+  windowScrollY: number | undefined;
+  dragItemRect: DOMRect | undefined;
+  lastScrollDirectionX: "positive" | "negative" | undefined;
+  lastScrollDirectionY: "positive" | "negative" | undefined;
+  scrollDebounceTimeout: ReturnType<typeof setTimeout> | undefined;
+  frameIdX?: number;
+  frameIdY?: number;
 };
 
 export interface DragStateProps<T> {
@@ -885,6 +885,10 @@ export interface DragStateProps<T> {
    * Flag indicating that the dragged node was transferred
    */
   transferred: boolean;
+  lastScrollContainerX?: HTMLElement | null;
+  lastScrollContainerY?: HTMLElement | null;
+  frameIdX?: number;
+  frameIdY?: number;
 }
 
 export type SortEvent = <T>(data: SortEventData<T>) => void;
@@ -976,25 +980,25 @@ export interface ShouldSwapData<T> {
 export interface DropSwapConfig<T> {
   shouldSwap?: (data: ShouldSwapData<T>) => boolean;
   handleNodeDragover?: (
-    data: NodeDragEventData<unknown>,
-    state: DragState<unknown>
+    data: NodeDragEventData<T>,
+    state: DragState<T>
   ) => void;
   handleParentDragover?: (
-    data: ParentDragEventData<unknown>,
-    state: DragState<unknown>
+    data: ParentDragEventData<T>,
+    state: DragState<T>
   ) => void;
   handleParentPointerover?: (
-    e: PointeroverParentEvent<unknown>,
-    state: DragState<unknown>
+    e: PointeroverParentEvent<T>,
+    state: DragState<T>
   ) => void;
   handleNodePointerover?: (
-    data: PointeroverNodeEvent<unknown>,
-    state: SynthDragState<unknown>
+    data: PointeroverNodeEvent<T>,
+    state: SynthDragState<T>
   ) => void;
 }
 
-export interface DropSwapState {
-  draggedOverNodes: Array<NodeRecord<unknown>>;
+export interface DropSwapState<T> {
+  draggedOverNodes: Array<NodeRecord<T>>;
   initialDraggedIndex: number | undefined;
   transferred: boolean;
   dragging: boolean;

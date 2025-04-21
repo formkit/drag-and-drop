@@ -16,7 +16,6 @@ const [parent, flavors] = useDragAndDrop(
       valuesChanged.value = "Not sorting";
     },
     onSort: (event) => {
-      console.log("onSort", event);
       valuesChanged.value = `${event.previousValues} -> ${event.values}`;
     },
   }

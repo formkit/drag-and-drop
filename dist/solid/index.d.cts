@@ -14,7 +14,6 @@ interface ParentConfig<T> {
      * A function that returns whether a given parent accepts a given node.
      */
     accepts?: (targetParentData: ParentRecord<T>, initialParentData: ParentRecord<T>, currentParentData: ParentRecord<T>, state: BaseDragState<T>) => boolean;
-    activeDescendantClass?: string;
     /**
      * The data transfer effect to use for the drag operation.
      */
@@ -89,7 +88,6 @@ interface ParentConfig<T> {
     group?: string;
     handleParentFocus: (data: ParentEventData<T>, state: BaseDragState<T>) => void;
     handleNodeKeydown: (data: NodeEventData<T>, state: DragState<T>) => void;
-    handleParentKeydown: (data: ParentKeydownEventData<T>, state: DragState<T>) => void;
     /**
      * Function that is called when dragend or touchend event occurs.
      */
@@ -197,6 +195,9 @@ interface ParentConfig<T> {
      * The root element to use for the parent.
      */
     root: Document | ShadowRoot;
+    /**
+     * The class to add to a node when it is selected (clicked or pressed).
+     */
     selectedClass?: string;
     /**
      * Function that is called when a node is set up.
@@ -256,10 +257,6 @@ interface ParentConfig<T> {
      * When hovering over a node, this class is applied to the node.
      */
     synthDropZoneClass?: string;
-    /**
-     * When a node receives focus, this class is applied to the node.
-     */
-    synthActiveDescendantClass?: string;
     /**
      * Callback function for when a sort operation is performed.
      */
@@ -381,16 +378,6 @@ interface NodePointerEventData<T> extends NodeEventData<T> {
      * The data of the target node.
      */
     targetData: NodeTargetData<T>;
-}
-interface ParentKeydownEventData<T> extends ParentEventData<T> {
-    /**
-     * The event that was triggered.
-     */
-    e: KeyboardEvent;
-    /**
-     * The data of the target node.
-     */
-    targetData: ParentTargetData<T>;
 }
 /**
  * The data passed to the parent event listener.
@@ -566,14 +553,6 @@ interface SynthDragStateProps {
      * Pointer id of dragged el
      */
     pointerId: number;
-    animationFrameIdX: number | undefined;
-    animationFrameIdY: number | undefined;
-    lastScrollX: HTMLElement | null;
-    lastScrollY: HTMLElement | null;
-    rootScrollWidth: number | undefined;
-    rootScrollHeight: number | undefined;
-    rootOverScrollBehavior: string | undefined;
-    rootTouchAction: string | undefined;
 }
 type DragState<T> = DragStateProps<T> & BaseDragState<T>;
 type BaseDragState<T> = {
@@ -591,7 +570,6 @@ type BaseDragState<T> = {
     currentTargetValue: T | undefined;
     emit: (event: string, data: unknown) => void;
     on: (event: string, callback: (data: unknown) => void) => void;
-    newActiveDescendant?: NodeRecord<T>;
     preventSynthDrag: boolean;
     longPress: boolean;
     longPressTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -616,6 +594,18 @@ type BaseDragState<T> = {
     };
     scrolling: boolean;
     rootUserSelect: string | undefined;
+    lastScrollContainerX: HTMLElement | null;
+    lastScrollContainerY: HTMLElement | null;
+    rootScrollWidth: number | undefined;
+    rootScrollHeight: number | undefined;
+    windowScrollX: number | undefined;
+    windowScrollY: number | undefined;
+    dragItemRect: DOMRect | undefined;
+    lastScrollDirectionX: "positive" | "negative" | undefined;
+    lastScrollDirectionY: "positive" | "negative" | undefined;
+    scrollDebounceTimeout: ReturnType<typeof setTimeout> | undefined;
+    frameIdX?: number;
+    frameIdY?: number;
 };
 interface DragStateProps<T> {
     /**
@@ -692,6 +682,10 @@ interface DragStateProps<T> {
      * Flag indicating that the dragged node was transferred
      */
     transferred: boolean;
+    lastScrollContainerX?: HTMLElement | null;
+    lastScrollContainerY?: HTMLElement | null;
+    frameIdX?: number;
+    frameIdY?: number;
 }
 type SortEvent = <T>(data: SortEventData<T>) => void;
 type TransferEvent = <T>(data: TransferEventData<T>) => void;
@@ -742,10 +736,10 @@ interface ShouldSwapData<T> {
 }
 interface DropSwapConfig<T> {
     shouldSwap?: (data: ShouldSwapData<T>) => boolean;
-    handleNodeDragover?: (data: NodeDragEventData<unknown>, state: DragState<unknown>) => void;
-    handleParentDragover?: (data: ParentDragEventData<unknown>, state: DragState<unknown>) => void;
-    handleParentPointerover?: (e: PointeroverParentEvent<unknown>, state: DragState<unknown>) => void;
-    handleNodePointerover?: (data: PointeroverNodeEvent<unknown>, state: SynthDragState<unknown>) => void;
+    handleNodeDragover?: (data: NodeDragEventData<T>, state: DragState<T>) => void;
+    handleParentDragover?: (data: ParentDragEventData<T>, state: DragState<T>) => void;
+    handleParentPointerover?: (e: PointeroverParentEvent<T>, state: DragState<T>) => void;
+    handleNodePointerover?: (data: PointeroverNodeEvent<T>, state: SynthDragState<T>) => void;
 }
 interface InsertConfig<T> {
     insertPoint: (parent: ParentRecord<T>) => HTMLElement;

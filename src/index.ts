@@ -22,13 +22,13 @@ import type {
   TearDownNodeData,
   BaseDragState,
   SynthDragState,
-  ParentKeydownEventData,
   SynthDragStateProps,
   ParentRecord,
   EventHandlers,
   NodeFromPoint,
   ParentFromPoint,
   ParentDragEventData,
+  DragstartEventData,
 } from "./types";
 
 import {
@@ -70,15 +70,22 @@ export const parents: ParentsData<any> = new WeakMap<
  */
 export const nodes: NodesData<any> = new WeakMap<Node, NodeData<unknown>>();
 
-/**
- * Function to check if touch support is enabled.
- *
- * @returns {boolean}
- */
-function checkTouchSupport() {
+function isMobilePlatform() {
   if (!isBrowser) return false;
 
-  return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+  if ("userAgentData" in navigator) {
+    return (navigator.userAgentData as { mobile: boolean }).mobile === true;
+  }
+
+  const ua = navigator.userAgent;
+
+  const isMobileUA = /android|iphone|ipod/i.test(ua);
+
+  const isIpad =
+    /iPad/.test(ua) ||
+    (ua.includes("Macintosh") && navigator.maxTouchPoints > 1);
+
+  return isMobileUA || isIpad;
 }
 
 /**
@@ -87,7 +94,6 @@ function checkTouchSupport() {
  * @type {BaseDragState<unknown>}
  */
 const baseDragState = {
-  activeDescendant: undefined,
   affectedNodes: [],
   coordinates: {
     x: 0,
@@ -96,7 +102,6 @@ const baseDragState = {
   currentTargetValue: undefined,
   on,
   emit,
-  newActiveDescendant: undefined,
   originalZIndex: undefined,
   pointerSelection: false,
   preventEnter: false,
@@ -110,6 +115,16 @@ const baseDragState = {
   selectedParent: undefined,
   preventSynthDrag: false,
   pointerDown: undefined,
+  lastScrollContainerX: null,
+  lastScrollContainerY: null,
+  rootScrollWidth: undefined,
+  rootScrollHeight: undefined,
+  dragItemRect: undefined,
+  windowScrollX: undefined,
+  windowScrollY: undefined,
+  lastScrollDirectionX: undefined,
+  lastScrollDirectionY: undefined,
+  scrollDebounceTimeout: undefined,
 };
 
 /**
@@ -130,28 +145,12 @@ let dropped = false;
 let documentController: AbortController | undefined;
 
 /**
- * Abort controller for the window.
- */
-let windowController: AbortController | undefined;
-
-/**
  * Timeout for the scroll.
  */
 let scrollTimeout: ReturnType<typeof setTimeout>;
 
-/**
- * Variable to check if the device is touch.
- */
-let touchDevice: boolean = false;
-
-/**
- * Flag to indicate if native drag events are being used.
- */
-let useNativeDrag = false;
-
 export function resetState() {
   const baseDragState = {
-    activeDescendant: undefined,
     affectedNodes: [],
     coordinates: {
       x: 0,
@@ -177,6 +176,16 @@ export function resetState() {
     longPress: false,
     pointerDown: undefined,
     longPressTimeout: undefined,
+    lastScrollContainerX: null,
+    lastScrollContainerY: null,
+    rootScrollWidth: undefined,
+    rootScrollHeight: undefined,
+    dragItemRect: undefined,
+    windowScrollX: undefined,
+    windowScrollY: undefined,
+    lastScrollDirectionX: undefined,
+    lastScrollDirectionY: undefined,
+    scrollDebounceTimeout: undefined,
   };
 
   state = { ...baseDragState } as BaseDragState<unknown>;
@@ -206,25 +215,16 @@ export function setDragState<T>(
 /**
  *
  */
-function handleRootPointerdown(e: PointerEvent) {
+function handleRootPointerdown() {
   if (state.activeState) setActive(state.activeState.parent, undefined, state);
 
   if (state.selectedState)
     deselect(state.selectedState.nodes, state.selectedState.parent, state);
 
   state.selectedState = state.activeState = undefined;
-
-  // Determine drag type based on pointerType
-  if (e.pointerType === "mouse") {
-    useNativeDrag = true;
-  } else if (e.pointerType === "touch" || e.pointerType === "pen") {
-    useNativeDrag = false;
-  }
 }
 
-function handleRootPointerup(e: PointerEvent) {
-  pd(e);
-
+function handleRootPointerup() {
   if (state.pointerDown) state.pointerDown.node.el.draggable = true;
 
   state.pointerDown = undefined;
@@ -263,14 +263,16 @@ function handleRootDrop(_e: DragEvent) {
   handleEnd(state);
 }
 
-/**
- * If we are currently dragging, then let's prevent default on dragover to avoid
- * the default behavior of the browser on drop.
- */
 function handleRootDragover(e: DragEvent) {
   if (!isDragState(state)) return;
 
   pd(e);
+
+  const { x, y } = eventCoordinates(e);
+
+  if (isDragState(state)) {
+    handleSynthScroll({ x, y }, e, state);
+  }
 }
 
 function handleRootPointermove(e: PointerEvent) {
@@ -278,15 +280,11 @@ function handleRootPointermove(e: PointerEvent) {
 
   const config = state.pointerDown.parent.data.config;
 
-  // Check pointerType and useNativeDrag flag to prevent synthetic drag
-  if (useNativeDrag || e.pointerType === "mouse") {
-    return; // Prevent synthetic drag if native drag is intended
+  if (e.pointerType === "mouse" && !isMobilePlatform()) {
+    return;
   }
 
-  if (
-    !isSynthDragState(state) &&
-    (touchDevice || (!touchDevice && !config.nativeDrag))
-  ) {
+  if (!isSynthDragState(state)) {
     pd(e);
 
     if (config.longPress && !state.longPress) {
@@ -301,21 +299,18 @@ function handleRootPointermove(e: PointerEvent) {
 
     config.dragstartClasses(state.pointerDown.node, nodes, config, true);
 
+    const rect = state.pointerDown.node.el.getBoundingClientRect();
+
     const synthDragState = initSynthDrag(
       state.pointerDown.node,
       state.pointerDown.parent,
       e,
       state,
-      nodes
+      nodes,
+      rect
     );
 
-    state.rootUserSelect = window.getComputedStyle(
-      document.documentElement
-    ).userSelect;
-
-    document.body.style.userSelect = "none";
-
-    synthMove(e, synthDragState);
+    synthMove(e, synthDragState, true);
   } else if (isSynthDragState(state)) {
     synthMove(e, state);
   }
@@ -336,8 +331,6 @@ export function dragAndDrop<T>({
 }: DragAndDrop<T>): void {
   if (!isBrowser) return;
 
-  touchDevice = checkTouchSupport();
-
   if (!documentController) {
     documentController = addEvents(document, {
       dragover: handleRootDragover,
@@ -351,37 +344,7 @@ export function dragAndDrop<T>({
         if (isDragState(state) && e.cancelable) pd(e);
       },
     });
-
-    const liveRegion = document.createElement("div");
-
-    setAttrs(liveRegion, {
-      "aria-live": "polite",
-      "aria-atomic": "true",
-      "data-dnd-live-region": "true",
-    });
-
-    Object.assign(liveRegion.style, {
-      position: "absolute",
-      top: "0px",
-      left: "-9999px",
-      width: "1px",
-      height: "1px",
-      padding: "0",
-      overflow: "hidden",
-      clip: "rect(0, 0, 0, 0)",
-      whiteSpace: "nowrap",
-      border: "0",
-    });
-
-    document.body.appendChild(liveRegion);
   }
-
-  if (!windowController)
-    windowController = addEvents(window, {
-      resize: () => {
-        touchDevice = checkTouchSupport();
-      },
-    });
 
   tearDown(parent);
 
@@ -396,7 +359,6 @@ export function dragAndDrop<T>({
       draggedNodes,
       dragstartClasses,
       handleNodeKeydown,
-      handleParentKeydown,
       handleDragstart,
       handleNodeDragover,
       handleParentDragover,
@@ -501,9 +463,8 @@ export function dragStateProps<T>(
     longPressTimeout: undefined,
     currentTargetValue: node.data.value,
     scrollEls: [],
-    // Need to account for if the explicity offset is positive or negative
-    startLeft: offsetX ? offsetX : x - rect.left,
-    startTop: offsetY ? offsetY : y - rect.top,
+    startLeft: offsetX ? offsetX : x - (rect?.left ?? 0),
+    startTop: offsetY ? offsetY : y - (rect?.top ?? 0),
     targetIndex: node.data.index,
     transferred: false,
   };
@@ -547,7 +508,7 @@ export function performSort<T>({
 
   setParentValues(parent.el, parent.data, [...newParentValues]);
 
-  if (parent.data.config.onSort)
+  if (parent.data.config.onSort) {
     parent.data.config.onSort({
       parent: {
         el: parent.el,
@@ -563,6 +524,7 @@ export function performSort<T>({
       targetNodes,
       state,
     });
+  }
 }
 
 /**
@@ -578,20 +540,7 @@ function setActive<T>(
   newActiveNode: NodeRecord<T> | undefined,
   state: BaseDragState<T>
 ) {
-  const activeDescendantClass = parent.data.config.activeDescendantClass;
-
-  if (state.activeState) {
-    {
-      removeClass([state.activeState.node.el], activeDescendantClass);
-
-      if (state.activeState.parent.el !== parent.el)
-        state.activeState.parent.el.setAttribute("aria-activedescendant", "");
-    }
-  }
-
   if (!newActiveNode) {
-    state.activeState?.parent.el.setAttribute("aria-activedescendant", "");
-
     state.activeState = undefined;
 
     return;
@@ -601,13 +550,6 @@ function setActive<T>(
     node: newActiveNode,
     parent,
   };
-
-  addNodeClass([newActiveNode.el], activeDescendantClass);
-
-  state.activeState.parent.el.setAttribute(
-    "aria-activedescendant",
-    state.activeState.node.el.id
-  );
 }
 
 /**
@@ -643,13 +585,11 @@ function deselect<T>(
 
     state.selectedState.nodes.splice(index, 1);
   }
-
-  clearLiveRegion(parent);
 }
 
 /**
- * This function sets the selected nodes. This will clean the prior selected state
- * as well as removing any classes or attributes set.
+ * This function sets the selected nodes. This will clean the prior selected
+ * state as well as removing any classes or attributes set.
  *
  * @param {ParentRecord<T>} parent - The parent record.
  * @param {Array<NodeRecord<T>>} selectedNodes - The nodes to select.
@@ -677,61 +617,7 @@ function setSelected<T>(
     parent,
   };
 
-  const selectedItems = selectedNodes.map((x) =>
-    x.el.getAttribute("aria-label")
-  );
-
-  if (selectedItems.length === 0) {
-    state.selectedState = undefined;
-
-    clearLiveRegion(parent);
-
-    return;
-  }
-
   setActive(parent, newActiveNode, state);
-
-  updateLiveRegion(
-    parent,
-    `${selectedItems.join(
-      ", "
-    )} ready for dragging. Use arrow keys to navigate. Press enter to drop ${selectedItems.join(
-      ", "
-    )}.`
-  );
-}
-
-/**
- * Update the live region.
- *
- * @param {ParentRecord<T>} parent - The parent record.
- * @param {string} message - The message to update the live region with.
- *
- * @returns void
- */
-function updateLiveRegion<T>(parent: ParentRecord<T>, message: string) {
-  const liveRegion = document.querySelector('[data-dnd-live-region="true"]');
-
-  if (!liveRegion) return;
-
-  liveRegion.id = parent.el.id + "-live-region";
-
-  liveRegion.textContent = message;
-}
-
-/**
- * Clear the live region.
- *
- * @param {ParentRecord<T>} parent - The parent record.
- *
- * @returns void
- */
-function clearLiveRegion<T>(parent: ParentRecord<T>) {
-  const liveRegion = document.getElementById(parent.el.id + "-live-region");
-
-  if (!liveRegion) return;
-
-  liveRegion.textContent = "";
 }
 
 /**
@@ -993,7 +879,6 @@ export function isSynthDragState<T>(
  */
 function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
   parentData.abortControllers.mainParent = addEvents(parent, {
-    keydown: parentEventData(parentData.config.handleParentKeydown),
     dragover: parentEventData(parentData.config.handleParentDragover),
     handleParentPointerover: parentData.config.handleParentPointerover,
     scroll: parentEventData(parentData.config.handleParentScroll),
@@ -1062,15 +947,6 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
       }
     );
   }
-
-  if (parent.id)
-    setAttrs(parent, {
-      role: "listbox",
-      tabindex: "0",
-      "aria-multiselectable": parentData.config.multiDrag ? "true" : "false",
-      "aria-activedescendant": "",
-      "aria-describedby": parent.id + "-live-region",
-    });
 }
 
 /**
@@ -1113,13 +989,9 @@ export function setupNode<T>(data: SetupNodeData<T>) {
       if (isDragState(state) && e.cancelable) pd(e);
     },
     contextmenu: (e: Event) => {
-      if (touchDevice) pd(e);
+      if (isSynthDragState(state)) pd(e);
     },
   });
-
-  data.node.el.setAttribute("role", "option");
-
-  data.node.el.setAttribute("aria-selected", "false");
 
   data.node.el.draggable = true;
 
@@ -1218,21 +1090,9 @@ function nodesMutated(mutationList: MutationRecord[]) {
 
   if (!(parentEl instanceof HTMLElement)) return;
 
-  const allSelectedAndActiveNodes = document.querySelectorAll(
-    `[aria-selected="true"]`
-  );
-
   const parentData = parents.get(parentEl);
 
   if (!parentData) return;
-
-  for (let x = 0; x < allSelectedAndActiveNodes.length; x++) {
-    const node = allSelectedAndActiveNodes[x];
-
-    node.setAttribute("aria-selected", "false");
-
-    removeClass([node], parentData.config.selectedClass);
-  }
 
   remapNodes(parentEl);
 }
@@ -1316,24 +1176,6 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
         index: x,
       }
     );
-
-    if (
-      !isDragState(state) &&
-      state.newActiveDescendant &&
-      eq(state.newActiveDescendant.data.value, nodeData.value)
-    ) {
-      setActive(
-        {
-          data: parentData,
-          el: parent,
-        },
-        {
-          el: node,
-          data: nodeData,
-        },
-        state
-      );
-    }
 
     if (
       !isDragState(state) &&
@@ -1502,17 +1344,22 @@ export function handleDragstart<T>(
     return;
   }
 
-  const nodes = config.draggedNodes({
+  let nodes = config.draggedNodes({
     parent: data.targetData.parent,
     node: data.targetData.node,
   });
+
+  // On Safari, pointerdown can sometimes not fire before the dragstart event.
+  if (nodes.length === 0) {
+    nodes = [data.targetData.node];
+  }
 
   config.dragstartClasses(data.targetData.node, nodes, config);
 
   const dragState = initDrag(data, nodes);
 
-  if (config.onDragstart)
-    config.onDragstart({
+  if (config.onDragstart) {
+    const dragstartData: DragstartEventData<T> = {
       parent: data.targetData.parent,
       values: parentValues(
         data.targetData.parent.el,
@@ -1522,7 +1369,9 @@ export function handleDragstart<T>(
       draggedNodes: dragState.draggedNodes,
       position: dragState.initialIndex,
       state: dragState,
-    });
+    };
+    config.onDragstart(dragstartData);
+  }
 }
 
 export function handleNodePointerdown<T>(
@@ -1537,13 +1386,6 @@ export function handleNodePointerdown<T>(
     validated: false,
   };
 
-  // Determine drag type based on pointerType
-  if (data.e.pointerType === "mouse") {
-    useNativeDrag = true;
-  } else if (data.e.pointerType === "touch" || data.e.pointerType === "pen") {
-    useNativeDrag = false;
-  }
-
   if (
     !validateDragHandle({
       x: data.e.clientX,
@@ -1554,11 +1396,7 @@ export function handleNodePointerdown<T>(
   )
     return;
 
-  state.pointerDown = {
-    parent: data.targetData.parent,
-    node: data.targetData.node,
-    validated: true,
-  };
+  state.pointerDown.validated = true;
 
   handleLongPress(data, state, data.targetData.node);
 
@@ -1649,7 +1487,7 @@ export function handleNodePointerdown<T>(
     if (idx === -1) {
       if (state.selectedState.parent.el !== data.targetData.parent.el) {
         deselect(state.selectedState.nodes, data.targetData.parent, state);
-      } else if (parentData.config.multiDrag && touchDevice) {
+      } else if (parentData.config.multiDrag && isMobilePlatform()) {
         selectedNodes.push(...state.selectedState.nodes);
       } else {
         deselect(state.selectedState.nodes, data.targetData.parent, state);
@@ -1713,24 +1551,11 @@ export function dragstartClasses<T>(
 
     removeClass(
       nodes.map((x) => x.el),
-      config.activeDescendantClass
-    );
-
-    removeClass(
-      nodes.map((x) => x.el),
       config.selectedClass
     );
   });
 }
 
-/**
- * Initialize the drag state.
- *
- * @param data - The node drag event data.
- * @param draggedNodes - The dragged nodes.
- *
- * @returns The drag state.
- */
 export function initDrag<T>(
   data: NodeDragEventData<T>,
   draggedNodes: Array<NodeRecord<T>>
@@ -1750,39 +1575,43 @@ export function initDrag<T>(
     const config = data.targetData.parent.data.config;
 
     data.e.dataTransfer.dropEffect = config.dragDropEffect;
-
     data.e.dataTransfer.effectAllowed = config.dragEffectAllowed;
 
     let dragImage: HTMLElement | undefined;
 
+    data.e.dataTransfer.setData("text/plain", "");
+
     if (config.dragImage) {
       dragImage = config.dragImage(data, draggedNodes);
     } else {
-      if (!config.multiDrag) {
+      if (!config.multiDrag || draggedNodes.length === 1) {
+        data.targetData.node.el.style.zIndex = "9999";
+        data.targetData.node.el.style.boxSizing = "border-box";
+
         data.e.dataTransfer.setDragImage(
           data.targetData.node.el,
           data.e.offsetX,
           data.e.offsetY
         );
 
-        const originalZIndex = data.targetData.node.el.style.zIndex;
-
-        dragState.originalZIndex = originalZIndex;
-
-        data.targetData.node.el.style.zIndex = "9999";
+        dragState.originalZIndex = data.targetData.node.el.style.zIndex;
 
         return dragState;
       } else {
         const wrapper = document.createElement("div");
 
+        wrapper.setAttribute("id", "dnd-dragged-node-clone");
+
+        wrapper.setAttribute("popover", "manual");
+
         for (const node of draggedNodes) {
-          const clonedNode = node.el.cloneNode(true) as HTMLElement;
+          const clone = node.el.cloneNode(true) as HTMLElement;
 
-          clonedNode.style.pointerEvents = "none";
+          clone.id = node.el.id + "-clone";
 
-          clonedNode.id = node.el.id + "-clone";
+          clone.style.pointerEvents = "none";
 
-          wrapper.append(clonedNode);
+          wrapper.appendChild(clone);
         }
 
         const { width } = draggedNodes[0].el.getBoundingClientRect();
@@ -1795,15 +1624,26 @@ export function initDrag<T>(
           pointerEvents: "none",
           zIndex: "9999",
           left: "-9999px",
+          boxSizing: "border-box",
+          background: "transparent",
+          overflow: "hidden",
         });
 
+        data.targetData.parent.el.appendChild(wrapper);
+
+        wrapper.showPopover();
+
+        wrapper.getBoundingClientRect(); // ← forces layout
+
         dragImage = wrapper;
+
+        data.e.dataTransfer.setDragImage(
+          dragImage,
+          data.e.offsetX,
+          data.e.offsetY
+        );
       }
-
-      document.body.appendChild(dragImage);
     }
-
-    data.e.dataTransfer.setDragImage(dragImage, data.e.offsetX, data.e.offsetY);
 
     setTimeout(() => {
       dragImage?.remove();
@@ -1847,106 +1687,6 @@ export function handleClickNode<T>(_data: NodeEventData<T>) {}
 export function handleClickParent<T>(_data: ParentEventData<T>) {}
 
 export function handleNodeKeydown<T>(_data: NodeEventData<T>) {}
-
-export function handleParentKeydown<T>(
-  data: ParentKeydownEventData<T>,
-  state: BaseDragState<T>
-) {
-  const activeDescendant = state.activeState?.node;
-
-  if (!activeDescendant) return;
-
-  const parentData = data.targetData.parent.data;
-
-  const enabledNodes = parentData.enabledNodes;
-
-  if (!(data.e.target instanceof HTMLElement)) return;
-  const index = enabledNodes.findIndex((x) => x.el === activeDescendant.el);
-
-  if (index === -1) return;
-
-  if (
-    ["ArrowDown", "ArrowUp", "ArrowRight", "ArrowLeft"].includes(data.e.key)
-  ) {
-    if (data.e.target === data.targetData.parent.el) pd(data.e);
-
-    const nextIndex =
-      data.e.key === "ArrowDown" || data.e.key === "ArrowRight"
-        ? index + 1
-        : index - 1;
-
-    if (nextIndex < 0 || nextIndex >= enabledNodes.length) return;
-
-    const nextNode = enabledNodes[nextIndex];
-
-    setActive(data.targetData.parent, nextNode, state);
-  } else if (data.e.key === " ") {
-    if (data.e.target === data.targetData.parent.el) pd(data.e);
-
-    state.selectedState && state.selectedState.nodes.includes(activeDescendant)
-      ? setSelected(
-          data.targetData.parent,
-          state.selectedState.nodes.filter((x) => x.el !== activeDescendant.el),
-          activeDescendant,
-          state
-        )
-      : setSelected(
-          data.targetData.parent,
-          [activeDescendant],
-          activeDescendant,
-          state
-        );
-  } else if (data.e.key === "Enter" && state.selectedState) {
-    if (
-      state.selectedState.parent.el === data.targetData.parent.el &&
-      state.activeState
-    ) {
-      if (state.selectedState.nodes[0].el === state.activeState.node.el) {
-        updateLiveRegion(data.targetData.parent, "Cannot drop item on itself");
-
-        return;
-      }
-
-      state.newActiveDescendant = state.selectedState.nodes[0];
-
-      parentData.config.performSort({
-        parent: data.targetData.parent,
-        draggedNodes: state.selectedState.nodes,
-        targetNodes: [state.activeState.node],
-      });
-
-      deselect([], data.targetData.parent, state);
-
-      updateLiveRegion(data.targetData.parent, "Drop successful");
-    } else if (
-      state.activeState &&
-      state.selectedState.parent.el !== data.targetData.parent.el &&
-      validateTransfer({
-        currentParent: data.targetData.parent,
-        targetParent: state.selectedState.parent,
-        initialParent: state.selectedState.parent,
-        draggedNodes: state.selectedState.nodes,
-        state,
-      })
-    ) {
-      parentData.config.performTransfer({
-        currentParent: state.selectedState.parent,
-        targetParent: data.targetData.parent,
-        initialParent: state.selectedState.parent,
-        draggedNodes: state.selectedState.nodes,
-        initialIndex: state.selectedState.nodes[0].data.index,
-        state,
-        targetNodes: [state.activeState.node],
-      });
-
-      state.newActiveDescendant = state.selectedState.nodes[0];
-
-      setSelected(data.targetData.parent, [], undefined, state);
-
-      updateLiveRegion(data.targetData.parent, "Drop successful");
-    }
-  }
-}
 
 /**
  * Prevent the sort on scroll.
@@ -2091,19 +1831,13 @@ export function handlePointercancel<T>(
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   if (state.draggedNode) state.draggedNode.el.draggable = true;
 
-  document.body.style.userSelect = state.rootUserSelect || "";
-
   if (isSynthDragState(state)) {
-    document.documentElement.style.overscrollBehavior =
-      state.rootOverScrollBehavior || "";
+    state.clonedDraggedNode.remove();
 
-    document.documentElement.style.touchAction = state.rootTouchAction || "";
+    clearTimeout(state.longPressTimeout);
   }
 
-  if (isSynthDragState(state)) cancelSynthScroll(state);
-
-  if ("longPressTimeout" in state && state.longPressTimeout)
-    clearTimeout(state.longPressTimeout);
+  cancelSynthScroll(state);
 
   const config = parents.get(state.initialParent.el)?.config;
 
@@ -2113,8 +1847,9 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
     ? config?.synthDropZoneClass
     : config?.dropZoneClass;
 
-  if (state.originalZIndex !== undefined)
+  if (state.originalZIndex !== undefined) {
     state.draggedNode.el.style.zIndex = state.originalZIndex;
+  }
 
   removeClass(
     state.draggedNodes.map((x) => x.el),
@@ -2132,8 +1867,6 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
       ? state.initialParent.data.config.synthDragPlaceholderClass
       : state.initialParent.data?.config?.dragPlaceholderClass
   );
-
-  if (isSynth) state.clonedDraggedNode.remove();
 
   deselect(state.draggedNodes, state.currentParent, state);
 
@@ -2178,6 +1911,8 @@ export function handleNodePointerup<T>(
   if ("longPressTimeout" in state && state.longPressTimeout)
     clearTimeout(state.longPressTimeout);
 
+  state.longPress = false;
+
   removeClass(
     data.targetData.parent.data.enabledNodes.map((x) => x.el),
     config.longPressClass
@@ -2196,6 +1931,7 @@ export function handleNodePointerup<T>(
  * @param e - The pointer event.
  * @param _state - The drag state.
  * @param draggedNodes - The dragged nodes.
+ * @param rect - The bounding rect of the original element
  *
  * @returns The synth drag state.
  */
@@ -2204,91 +1940,119 @@ function initSynthDrag<T>(
   parent: ParentRecord<T>,
   e: PointerEvent,
   _state: BaseDragState<T>,
-  draggedNodes: Array<NodeRecord<T>>
+  draggedNodes: Array<NodeRecord<T>>,
+  rect: DOMRect
 ): SynthDragState<T> {
   const config = parent.data.config;
 
-  let dragImage: HTMLElement | undefined;
+  let dragImage: HTMLElement;
 
-  let display = node.el.style.display;
+  let result:
+    | { dragImage: HTMLElement; offsetX?: number; offsetY?: number }
+    | undefined;
 
-  let result = undefined;
+  const criticalStyleProps = [
+    "display",
+    "flexDirection",
+    "alignItems",
+    "justifyContent",
+    "padding",
+    "paddingTop",
+    "margin",
+    "marginTop",
+    "marginBottom",
+    "marginLeft",
+    "marginRight",
+    "paddingBottom",
+    "paddingLeft",
+    "paddingRight",
+    "border",
+    "borderRadius",
+    "background",
+    "backgroundColor",
+    "boxShadow",
+    "font",
+    "color",
+    "lineHeight",
+    "gap",
+    "width",
+    "height",
+    "boxSizing",
+    "overflow",
+  ] as const;
 
+  const copyCriticalStyles = (src: HTMLElement, dest: HTMLElement) => {
+    const computed = window.getComputedStyle(src);
+    criticalStyleProps.forEach((prop) => {
+      dest.style[prop] = computed[prop]!;
+    });
+  };
+
+  // Helper to style the drag image
+  const applyBaseStyles = (
+    el: HTMLElement,
+    extraStyles: Partial<CSSStyleDeclaration> = {}
+  ) => {
+    Object.assign(el.style, {
+      position: "absolute",
+      zIndex: "9999",
+      pointerEvents: "none",
+      willChange: "transform",
+      boxSizing: "border-box",
+      opacity: "0",
+      overflow: "hidden",
+      width: `${rect.width}px`,
+      height: `${rect.height}px`,
+      ...extraStyles,
+    });
+  };
+
+  // Custom drag image
   if (config.synthDragImage) {
     result = config.synthDragImage(node, parent, e, draggedNodes);
-
     dragImage = result.dragImage;
-
     dragImage.setAttribute("popover", "manual");
-
-    dragImage.id = "dnd-dragged-node-clone";
-
-    display = dragImage.style.display;
-
-    Object.assign(dragImage.style, {
-      position: "absolute",
-      zIndex: 9999,
-      pointerEvents: "none",
-      margin: 0,
-      willChange: "transform",
-      overflow: "hidden",
-      display: "none",
-    });
-  } else {
-    if (!config.multiDrag || draggedNodes.length === 1) {
-      dragImage = node.el.cloneNode(true) as HTMLElement;
-
-      dragImage.id = "dnd-dragged-node-clone";
-
-      display = dragImage.style.display;
-
-      dragImage.setAttribute("popover", "manual");
-
-      Object.assign(dragImage.style, {
-        position: "absolute",
-        height: node.el.getBoundingClientRect().height + "px",
-        width: node.el.getBoundingClientRect().width + "px",
-        overflow: "hidden",
-        margin: 0,
-        willChange: "transform",
-        pointerEvents: "none",
-        zIndex: 9999,
-      });
-    } else {
-      const wrapper = document.createElement("div");
-
-      wrapper.setAttribute("popover", "manual");
-
-      for (const node of draggedNodes) {
-        const clonedNode = node.el.cloneNode(true) as HTMLElement;
-
-        clonedNode.style.pointerEvents = "none";
-
-        clonedNode.style.margin = "0";
-
-        wrapper.append(clonedNode);
-      }
-
-      display = wrapper.style.display;
-
-      wrapper.id = "dnd-dragged-node-clone";
-
-      dragImage = wrapper;
-
-      Object.assign(dragImage.style, {
-        display: "flex",
-        flexDirection: "column",
-        position: "absolute",
-        overflow: "hidden",
-        margin: 0,
-        padding: 0,
-        pointerEvents: "none",
-        zIndex: 9999,
-      });
-    }
+    applyBaseStyles(dragImage);
   }
 
-  dragImage.style.position = "absolute";
+  // Single drag
+  else if (!config.multiDrag || draggedNodes.length === 1) {
+    dragImage = node.el.cloneNode(true) as HTMLElement;
+    copyCriticalStyles(node.el as HTMLElement, dragImage);
+    dragImage.setAttribute("popover", "manual");
+    applyBaseStyles(dragImage);
+  }
+
+  // Multi-drag
+  else {
+    const wrapper = document.createElement("div");
+
+    wrapper.setAttribute("popover", "manual");
+
+    draggedNodes.forEach((dragged) => {
+      const clone = dragged.el.cloneNode(true) as HTMLElement;
+
+      copyCriticalStyles(dragged.el as HTMLElement, clone);
+
+      clone.style.pointerEvents = "none";
+
+      clone.style.margin = "0";
+
+      wrapper.append(clone);
+    });
+
+    wrapper.style.display = "flex";
+    wrapper.style.flexDirection = "column";
+    wrapper.style.padding = "0";
+    wrapper.style.margin = "0";
+    wrapper.style.position = "absolute";
+    wrapper.style.zIndex = "9999";
+    wrapper.style.pointerEvents = "none";
+
+    dragImage = wrapper;
+  }
+
+  dragImage.id = "dnd-dragged-node-clone";
 
   parent.el.appendChild(dragImage);
 
@@ -2297,18 +2061,11 @@ function initSynthDrag<T>(
   const synthDragStateProps = {
     clonedDraggedEls: [],
     clonedDraggedNode: dragImage,
-    draggedNodeDisplay: display,
     synthDragScrolling: false,
     synthDragging: true,
     rootScrollWidth: document.scrollingElement?.scrollWidth,
     rootScrollHeight: document.scrollingElement?.scrollHeight,
-    rootOverScrollBehavior: document.documentElement.style.overscrollBehavior,
-    rootTouchAction: document.documentElement.style.touchAction,
   };
-
-  document.documentElement.style.overscrollBehavior = "none";
-
-  document.documentElement.style.touchAction = "none";
 
   const synthDragState = setDragState({
     ...dragStateProps(
@@ -2321,9 +2078,6 @@ function initSynthDrag<T>(
     ),
     ...synthDragStateProps,
   }) as SynthDragState<T>;
-
-  synthDragState.clonedDraggedNode.style.display =
-    synthDragState.draggedNodeDisplay || "";
 
   return synthDragState;
 }
@@ -2344,8 +2098,6 @@ export function handleLongPress<T>(
 ) {
   const config = data.targetData.parent.data.config;
 
-  if (!config.longPress) return;
-
   state.longPressTimeout = setTimeout(() => {
     if (!state) return;
 
@@ -2355,84 +2107,69 @@ export function handleLongPress<T>(
       addNodeClass([node.el], config.longPressClass);
 
     pd(data.e);
-  }, config.longPressDuration || 200);
-}
-
-function pointermoveClasses<T>(
-  state: SynthDragState<T>,
-  config: ParentConfig<T>
-) {
-  if (config.longPressClass)
-    removeClass(
-      state.draggedNodes.map((x) => x.el),
-      config?.longPressClass
-    );
+  }, config.longPressDuration || 1000);
 }
 
 function cancelSynthScroll<T>(
-  state: SynthDragState<T>,
+  state: DragState<T>,
   cancelX = true,
   cancelY = true
 ) {
-  if (cancelX && state.animationFrameIdX !== undefined) {
-    cancelAnimationFrame(state.animationFrameIdX);
-
-    state.animationFrameIdX = undefined;
+  if (cancelX && state.frameIdX !== undefined) {
+    cancelAnimationFrame(state.frameIdX);
+    state.frameIdX = undefined;
   }
 
-  if (cancelY && state.animationFrameIdY !== undefined) {
-    cancelAnimationFrame(state.animationFrameIdY);
-
-    state.animationFrameIdY = undefined;
+  if (cancelY && state.frameIdY !== undefined) {
+    cancelAnimationFrame(state.frameIdY);
+    state.frameIdY = undefined;
   }
 
-  if (!state.animationFrameIdX && !state.animationFrameIdY) {
+  if (!state.frameIdX && !state.frameIdY) {
     state.preventEnter = false;
   }
 }
 
-function moveNode<T>(
-  e: PointerEvent,
-  state: SynthDragState<T>,
-  scrollX = 0,
-  scrollY = 0
-) {
-  const { x, y } = eventCoordinates(e);
-
-  state.coordinates.y = y;
-  state.coordinates.x = x;
+function moveNode<T>(state: SynthDragState<T>, justStarted = false) {
+  const { x, y } = state.coordinates;
 
   const startLeft = state.startLeft ?? 0;
   const startTop = state.startTop ?? 0;
 
-  // Calculate the translation values
-  const translateX = x - startLeft + window.scrollX;
-  const translateY = y - startTop + window.scrollY;
+  const currentScrollX = window.scrollX ?? 0;
+  const currentScrollY = window.scrollY ?? 0;
 
-  // Apply the transform using translate
-  state.clonedDraggedNode.style.transform = `translate(${
-    translateX + scrollX
-  }px, ${translateY + scrollY}px)`;
+  const translateX = x - startLeft + currentScrollX;
+  const translateY = y - startTop + currentScrollY;
 
-  if (e.cancelable) pd(e);
+  state.clonedDraggedNode.style.transform = `translate3d(${translateX}px, ${translateY}px, 0px)`;
 
-  pointermoveClasses(state, state.initialParent.data.config);
+  if (justStarted) {
+    state.clonedDraggedNode.style.opacity = "1";
+
+    removeClass(
+      state.draggedNodes.map((x) => x.el),
+      state.initialParent.data.config?.longPressClass
+    );
+  }
 }
 
-/**
- * Handle the synth move.
- *
- * @param e - The pointer event.
- * @param state - The synth drag state.
- *
- * @returns void
- */
-export function synthMove<T>(e: PointerEvent, state: SynthDragState<T>) {
-  moveNode(e, state);
-
+export function synthMove<T>(
+  e: PointerEvent,
+  state: SynthDragState<T>,
+  justStarted = false
+) {
   const coordinates = eventCoordinates(e);
+  state.coordinates.x = coordinates.x;
+  state.coordinates.y = coordinates.y;
 
-  handleSynthScroll(coordinates, e, state);
+  moveNode(state, justStarted); // Pass only state now
+
+  if (state.scrollDebounceTimeout) clearTimeout(state.scrollDebounceTimeout);
+
+  state.scrollDebounceTimeout = setTimeout(() => {
+    handleSynthScroll(state.coordinates, e, state);
+  }, 16); // ~1 frame (60fps)
 
   const elFromPoint = getElFromPoint(coordinates);
 
@@ -2448,6 +2185,7 @@ export function synthMove<T>(e: PointerEvent, state: SynthDragState<T>) {
 
     return;
   }
+
   const pointerMoveEventData = {
     e,
     targetData: elFromPoint,
@@ -2495,6 +2233,10 @@ export function handleNodeDragover<T>(
 
   sp(data.e);
 
+  if (isDragState(state)) {
+    handleSynthScroll({ x, y }, data.e, state);
+  }
+
   data.targetData.parent.el === state.currentParent?.el
     ? sort(data, state)
     : transfer(data, state);
@@ -2520,7 +2262,11 @@ export function handleParentDragover<T>(
 
   sp(data.e);
 
-  Object.assign(eventCoordinates(data.e));
+  const { x, y } = eventCoordinates(data.e);
+
+  if (isDragState(state)) {
+    handleSynthScroll({ x, y }, data.e, state);
+  }
 
   transfer(data, state);
 }
@@ -2742,7 +2488,9 @@ export function sort<T>(
 ) {
   const { x, y } = eventCoordinates(data.e);
 
-  if (!validateSort(data, state, x, y)) return;
+  if (!validateSort(data, state, x, y)) {
+    return;
+  }
 
   const range =
     state.draggedNode.data.index > data.targetData.node.data.index
@@ -2825,7 +2573,7 @@ export function transfer<T>(
   data: NodeEventData<T> | ParentEventData<T>,
   state: DragState<T>
 ): void {
-  data.e.preventDefault();
+  pd(data.e);
 
   if (
     !validateTransfer({
@@ -3035,222 +2783,223 @@ export function removeClass(
   }
 }
 
-/**
- * Check if the element is scrollable on the x axis.
- *
- * @param el - The element.
- * @param e - The event.
- * @param style - The style.
- * @param rect - The rect.
- * @param state - The state.
- *
- * @returns void
- */
-function isScrollX<T>(
+type ScrollDirection<T> = { axis: "x"; state: DragState<T> } | { axis: "y" };
+
+function getScrollDirection<T>(
   el: HTMLElement,
-  e: PointerEvent,
+  e: PointerEvent | DragEvent,
   style: CSSStyleDeclaration,
   rect: DOMRect,
-  state: SynthDragState<T>
-): { left: boolean; right: boolean } {
-  const threshold = 0.1;
+  opts: ScrollDirection<T>
+): Record<string, boolean> {
+  const threshold = 0.075;
 
-  if (el === document.scrollingElement) {
-    const canScrollLeft = el.scrollLeft > 0;
-    const canScrollRight =
-      el.scrollLeft + window.innerWidth < (state.rootScrollWidth || 0);
+  const isX = opts.axis === "x";
+  const isRoot = el === document.scrollingElement;
+  const scrollProp = isX ? "scrollLeft" : "scrollTop";
+  const sizeProp = isX ? "clientWidth" : "clientHeight";
+  const offsetProp = isX ? "offsetWidth" : "offsetHeight";
+  const scrollSizeProp = isX ? "scrollWidth" : "scrollHeight";
+  const clientCoord = isX ? e.clientX : e.clientY;
+  const rectStart = isX ? rect.left : rect.top;
+  const overflow = isX ? style.overflowX : style.overflowY;
 
-    return {
-      right: canScrollRight && e.clientX > el.clientWidth * (1 - threshold),
-      left: canScrollLeft && e.clientX < el.clientWidth * threshold,
-    };
+  if (isRoot) {
+    const scrollPos = el[scrollProp];
+    const clientSize = el[sizeProp];
+    const canScrollBefore = scrollPos > 0;
+    const canScrollAfter =
+      scrollPos + clientSize <
+      (isX
+        ? (opts.state as SynthDragState<T>).rootScrollWidth || 0
+        : el[scrollSizeProp]);
+
+    return isX
+      ? {
+          left: canScrollBefore && clientCoord < clientSize * threshold,
+          right: canScrollAfter && clientCoord > clientSize * (1 - threshold),
+        }
+      : {
+          up: canScrollBefore && clientCoord < clientSize * threshold,
+          down: canScrollAfter && clientCoord > clientSize * (1 - threshold),
+        };
   }
 
   if (
-    (style.overflowX === "auto" || style.overflowX === "scroll") &&
+    (overflow === "auto" || overflow === "scroll") &&
     el !== document.body &&
     el !== document.documentElement
   ) {
-    const scrollWidth = el.scrollWidth;
-    const offsetWidth = el.offsetWidth;
-    const scrollLeft = el.scrollLeft;
+    const scrollSize = el[scrollSizeProp];
+    const offsetSize = el[offsetProp];
+    const scrollPos = el[scrollProp];
 
-    return {
-      right:
-        e.clientX > rect.left + offsetWidth * (1 - threshold) &&
-        scrollLeft < scrollWidth - offsetWidth,
-      left: e.clientX < rect.left + offsetWidth * threshold && scrollLeft > 0,
-    };
+    const canScrollBefore = scrollPos > 0;
+    const canScrollAfter = scrollPos < scrollSize - offsetSize;
+
+    return isX
+      ? {
+          left:
+            canScrollBefore && clientCoord < rectStart + offsetSize * threshold,
+          right:
+            canScrollAfter &&
+            clientCoord > rectStart + offsetSize * (1 - threshold),
+        }
+      : {
+          up:
+            canScrollBefore && clientCoord < rectStart + offsetSize * threshold,
+          down:
+            canScrollAfter &&
+            clientCoord > rectStart + offsetSize * (1 - threshold),
+        };
   }
 
-  return {
-    right: false,
-    left: false,
-  };
+  return isX ? { left: false, right: false } : { up: false, down: false };
 }
 
-/**
- * Check if the element is scrollable on the y axis.
- *
- * @param el - The element.
- * @param e - The event.
- * @param style - The style.
- * @param rect - The rect.
- *
- * @returns void
- */
-function isScrollY(
-  el: HTMLElement,
-  e: PointerEvent,
-  style: CSSStyleDeclaration,
-  rect: DOMRect
-): { up: boolean; down: boolean } {
-  const threshold = 0.1;
+type Axis = "x" | "y";
 
-  if (el === document.scrollingElement) {
-    return {
-      down: e.clientY > el.clientHeight * (1 - threshold),
-      up: e.clientY < el.clientHeight * threshold,
-    };
+function scrollAxis<T>(
+  el: HTMLElement,
+  _e: PointerEvent | DragEvent,
+  state: DragState<T>,
+  options: {
+    axis: Axis;
+    direction: "positive" | "negative";
   }
+) {
+  state.preventEnter = true;
+
+  const isX = options.axis === "x";
+  const dirFactor = options.direction === "positive" ? 1 : -1;
+  const speed = 20;
+
+  const key = isX ? "lastScrollDirectionX" : "lastScrollDirectionY";
+  const idKey = isX ? "frameIdX" : "frameIdY";
 
   if (
-    (style.overflowY === "auto" || style.overflowY === "scroll") &&
-    el !== document.body &&
-    el !== document.documentElement
+    state[key] &&
+    state[key] !== options.direction &&
+    state[idKey] !== undefined
   ) {
-    const scrollHeight = el.scrollHeight;
-    const offsetHeight = el.offsetHeight;
-    const scrollTop = el.scrollTop;
-
-    return {
-      down:
-        e.clientY > rect.top + offsetHeight * (1 - threshold) &&
-        scrollTop < scrollHeight - offsetHeight,
-      up: e.clientY < rect.top + offsetHeight * threshold && scrollTop > 0,
-    };
+    cancelAnimationFrame(state[idKey]!);
+    state[idKey] = undefined;
   }
 
-  return {
-    down: false,
-    up: false,
+  state[key] = options.direction;
+
+  const scrollLoop = () => {
+    const scrollProp = isX ? "scrollLeft" : "scrollTop";
+    const sizeProp = isX ? "clientWidth" : "clientHeight";
+    const scrollSizeProp = isX ? "scrollWidth" : "scrollHeight";
+
+    const scrollPos = el[scrollProp];
+    const clientSize = el[sizeProp];
+    const scrollSize = el[scrollSizeProp];
+
+    const canScroll =
+      dirFactor > 0 ? scrollPos + clientSize < scrollSize : scrollPos > 0;
+
+    if (!canScroll) {
+      state[idKey] = undefined;
+      return;
+    }
+
+    el[scrollProp] += speed * dirFactor;
+
+    if (isSynthDragState(state)) {
+      moveNode(state);
+    }
+
+    state[idKey] = requestAnimationFrame(scrollLoop);
   };
+
+  state[idKey] = requestAnimationFrame(scrollLoop);
 }
 
-/**
- * Scroll the element on the x axis.
- *
- * @param el - The element.
- * @param e - The event.
- * @param state - The state.
- * @param right - Whether to scroll right.
- *
- * @returns void
- */
-function scrollX<T>(
-  el: HTMLElement,
-  e: PointerEvent,
-  state: SynthDragState<T>,
-  right = true
-) {
-  state.preventEnter = true;
-
-  const incr = right ? 5 : -5;
-
-  function scroll(el: HTMLElement) {
-    el.scrollBy({ left: incr });
-
-    moveNode(e, state, incr, 0);
-
-    state.animationFrameIdX = requestAnimationFrame(scroll.bind(null, el));
-  }
-
-  state.animationFrameIdX = requestAnimationFrame(scroll.bind(null, el));
+function isPointerInside(el: HTMLElement, x: number, y: number): boolean {
+  const rect = el.getBoundingClientRect();
+  return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
 }
 
-/**
- * Scroll the element on the y axis.
- *
- * @param el - The element.
- * @param e - The event.
- * @param state - The state.
- * @param up - Whether to scroll up.
- *
- * @returns void
- */
-function scrollY<T>(
-  el: Element,
-  e: PointerEvent,
-  state: SynthDragState<T>,
-  up = true
-) {
-  state.preventEnter = true;
-
-  const incr = up ? -5 : 5;
-
-  function scroll() {
-    el.scrollBy({ top: incr });
-
-    moveNode(e, state, 0, incr);
-
-    state.animationFrameIdY = requestAnimationFrame(scroll);
-  }
-
-  state.animationFrameIdY = requestAnimationFrame(scroll);
-}
-
-/**
- * Handle the synth scroll.
- *
- * @param coordinates - The coordinates.
- * @param e - The event.
- * @param state - The state.
- *
- * @returns void
- */
 function handleSynthScroll<T>(
   coordinates: { x: number; y: number },
-  e: PointerEvent,
-  state: SynthDragState<T>
+  e: PointerEvent | DragEvent,
+  state: DragState<T>
 ) {
   cancelSynthScroll(state);
 
-  const scrollables: Record<"x" | "y", HTMLElement | null> = {
-    x: null,
-    y: null,
+  const { x, y } = coordinates;
+
+  let scrolled = false;
+
+  const attemptScroll = (
+    axis: "x" | "y",
+    direction: "positive" | "negative",
+    container: HTMLElement
+  ) => {
+    scrollAxis(container, e, state, { axis, direction });
+    scrolled = true;
   };
 
-  const els = document.elementsFromPoint(coordinates.x, coordinates.y);
-
-  for (const el of els) {
-    if (scrollables.x && scrollables.y) break;
-
-    if (!(el instanceof HTMLElement)) continue;
-
+  const checkAndScroll = (el: HTMLElement) => {
+    const style = window.getComputedStyle(el);
     const rect = el.getBoundingClientRect();
 
-    const style = window.getComputedStyle(el);
+    const xResult = getScrollDirection(el, e, style, rect, {
+      axis: "x",
+      state,
+    });
 
-    if (!scrollables.x) {
-      const { left, right } = isScrollX(el, e, style, rect, state);
+    const yResult = getScrollDirection(el, e, style, rect, { axis: "y" });
 
-      if (left || right) {
-        scrollables.x = el;
-
-        scrollX(el, e, state, right);
-      }
+    if (xResult.left || xResult.right) {
+      state.lastScrollContainerX = el;
+      attemptScroll("x", xResult.right ? "positive" : "negative", el);
     }
 
-    if (!scrollables.y) {
-      const { up, down } = isScrollY(el, e, style, rect);
+    if (yResult.up || yResult.down) {
+      state.lastScrollContainerY = el;
+      attemptScroll("y", yResult.down ? "positive" : "negative", el);
+    }
+  };
 
-      if (up || down) {
-        scrollables.y = el;
+  if (
+    state.lastScrollContainerX &&
+    isPointerInside(state.lastScrollContainerX, x, y)
+  ) {
+    checkAndScroll(state.lastScrollContainerX);
+  }
 
-        scrollY(el, e, state, up);
+  if (
+    !scrolled &&
+    state.lastScrollContainerY &&
+    isPointerInside(state.lastScrollContainerY, x, y)
+  ) {
+    checkAndScroll(state.lastScrollContainerY);
+  }
+
+  if (!scrolled) {
+    let el = document.elementFromPoint(x, y);
+    while (
+      el &&
+      !(scrolled && state.lastScrollContainerX && state.lastScrollContainerY)
+    ) {
+      if (el instanceof HTMLElement) {
+        checkAndScroll(el);
       }
+      el = el.parentElement;
     }
   }
+
+  if (!scrolled) {
+    const root = document.scrollingElement;
+    if (root instanceof HTMLElement) {
+      checkAndScroll(root);
+    }
+  }
+
+  if (!scrolled) cancelSynthScroll(state);
 }
 
 export function getElFromPoint<T>(coordinates: {

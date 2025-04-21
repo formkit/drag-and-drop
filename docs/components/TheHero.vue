@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { dragAndDrop } from "../../src/vue/index";
+import { dragAndDrop } from "@formkit/drag-and-drop/vue";
 
 const dragList = ref(undefined);
 const showHand = ref(true);
@@ -44,7 +44,6 @@ dragAndDrop({
   values: features,
   dropZoneClass: "blur-[2px] opacity-60",
   synthDropZoneClass: "blur-[2px] opacity-60",
-  synthDraggingClass: "rounded-md",
 });
 
 function toggleFrameworkList(setting: boolean) {
@@ -313,17 +312,14 @@ onMounted(() => {
             rounded-xl
             p-3
             backdrop-blur-[8px]
-
             transition-all
             duration-500
             translate-y-10
             opacity-0
             data-[show=true]:translate-y-0
             data-[show=true]:opacity-100
-
             dark:bg-slate-800/20
             dark:border-pink-500
-
             before:content-['try_me']
             before:absolute
             before:bottom-full
@@ -331,7 +327,6 @@ onMounted(() => {
             before:text-blue-400
             before:text-xs
             before:uppercase
-
             dark:before:text-pink-300
           `"
         >
@@ -347,13 +342,9 @@ onMounted(() => {
               basis-[30%]
               m-2
               cursor-grab
-              active:cursor-grabbing
               active:select-none
-
-
-
-
               dark:before:bg-pink-400
+              rounded-md
             `"
           >
             <div
@@ -368,7 +359,6 @@ onMounted(() => {
                 bg-white
                 border-sky-500
                 text-center
-
                 dark:border-red-400
                 dark:bg-indigo-950/80
               `"

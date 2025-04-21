@@ -4,9 +4,9 @@
   <SectionWrapper>
     <h2 id="accessibility">Accessibility</h2>
     <p>
-      By adding appropriate <code>aria-label</code> attributes to both the
-      parent container and the draggable items, you can make your lists
-      accessible to screen readers.
+      Below is an example of how to implement drag and drop lists with
+      accessibility in mind.
     </p>
+    <CodeExample example="accessibility" />
   </SectionWrapper>
 </template>

@@ -38,5 +38,12 @@ const darkHtml = await codeToHtml(code, {
   <div>
     <div v-html="html" class="dark:hidden"></div>
     <div v-html="darkHtml" class="hidden dark:block"></div>
+    <!-- Hidden container for raw code -->
+    <div
+      :id="`raw-code-container-${props.example}-solid`"
+      style="display: none"
+    >
+      <pre>{{ code }}</pre>
+    </div>
   </div>
 </template>

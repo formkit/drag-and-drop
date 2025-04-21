@@ -34,5 +34,12 @@ const [html, darkHtml] = await Promise.all([
   <div :data-full-height="fullHeight">
     <div v-html="html" class="dark:hidden"></div>
     <div v-html="darkHtml" class="hidden dark:block"></div>
+    <!-- Hidden container for raw code -->
+    <div
+      :id="`raw-code-container-${props.example}-native`"
+      style="display: none"
+    >
+      <pre>{{ code }}</pre>
+    </div>
   </div>
 </template>

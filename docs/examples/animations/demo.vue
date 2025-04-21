@@ -20,7 +20,7 @@ dragAndDrop({
 </script>
 
 <template>
-  <DemoContainer name="Sorting">
+  <DemoContainer name="Animations">
     <div class="bg-amber-800 dark:bg-amber-950">
       <div
         class="demo-background opacity-75 dark:opacity-40 dark:saturate-50"
@@ -39,7 +39,7 @@ dragAndDrop({
           <li
             v-for="tape in tapes"
             :key="tape"
-            class="basis-1/2 md:basis-1/3 text-center cursor-grab active:cursor-grabbing"
+            class="basis-1/2 md:basis-1/3 text-center cursor-grab"
           >
             <CassetteTape :label="tape" :data-label="tape" />
           </li>
