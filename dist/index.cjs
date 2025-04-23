@@ -1366,6 +1366,7 @@ function dragAndDrop({
         if (isDragState(state) && e.cancelable) pd(e);
       },
       contextmenu: (e) => {
+        console.log("document contextmenu");
         if (isSynthDragState(state)) pd(e);
       }
     });
@@ -1725,7 +1726,7 @@ function setupNode(data) {
       if (isDragState(state) && e.cancelable) pd(e);
     },
     contextmenu: (e) => {
-      console.log("contextmenu", state);
+      console.log("contextmenu");
       if (isSynthDragState(state)) pd(e);
     }
   });
@@ -2201,7 +2202,7 @@ function handleDragend(data, state2) {
 function handlePointercancel(data, state2) {
   console.log("handlePointercancel", state2);
   if (!isSynthDragState(state2)) return;
-  console.log("handlePointercancel", state2);
+  console.log("handlePointercancel after isSynthDragState", state2);
   pd(data.e);
   if (dropped) {
     dropped = false;
@@ -2220,7 +2221,7 @@ function handlePointercancel(data, state2) {
   config?.handleEnd(state2);
 }
 function handleEnd3(state2) {
-  console.log("handleEnd", state2);
+  console.log("handleEnd");
   if (state2.draggedNode) state2.draggedNode.el.draggable = true;
   if (isSynthDragState(state2)) {
     state2.clonedDraggedNode.remove();
