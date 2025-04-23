@@ -225,11 +225,14 @@ function handleRootPointerdown() {
 }
 
 function handleRootPointerup() {
+  console.log("handleRootPointerup");
   if (state.pointerDown) state.pointerDown.node.el.draggable = true;
 
   state.pointerDown = undefined;
 
   if (!isSynthDragState(state)) return;
+
+  console.log("handleRootPointerup after isSynthDragState", state);
 
   const config = state.currentParent.data.config;
 
@@ -1952,6 +1955,7 @@ function initSynthDrag<T>(
   draggedNodes: Array<NodeRecord<T>>,
   rect: DOMRect
 ): SynthDragState<T> {
+  console.log("initSynthDrag");
   const config = parent.data.config;
 
   let dragImage: HTMLElement;
