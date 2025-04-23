@@ -2801,11 +2801,7 @@ export function addClass(
 }
 
 /**
-<<<<<<< Updated upstream
- * Remove class from the nodes using requestAnimationFrame for better timing.
-=======
  * Remove class from the nodes.
->>>>>>> Stashed changes
  *
  * @param els - The nodes.
  * @param className - The class name.
@@ -2822,27 +2818,6 @@ export function removeClass(
 
   if (!classNames.length) return;
 
-<<<<<<< Updated upstream
-  // Use requestAnimationFrame to ensure class removal happens during proper rendering cycle
-  requestAnimationFrame(() => {
-    for (const node of els) {
-      if (!isNode(node)) {
-        node.classList.remove(...classNames);
-        continue;
-      }
-
-      const nodeData = nodes.get(node) || parents.get(node);
-
-      if (!nodeData) continue;
-
-      for (const className of classNames) {
-        if (!nodeData.privateClasses.includes(className)) {
-          node.classList.remove(className);
-        }
-      }
-    }
-  });
-=======
   for (const node of els) {
     if (!isNode(node)) {
       node.classList.remove(...classNames);
@@ -2859,7 +2834,6 @@ export function removeClass(
       }
     }
   }
->>>>>>> Stashed changes
 }
 
 type ScrollDirection<T> = { axis: "x"; state: DragState<T> } | { axis: "y" };
