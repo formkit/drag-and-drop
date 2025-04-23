@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../../src/vue/index";
 
-const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {});
+const [parent, values] = useDragAndDrop(["Apple", "Banana", "Orange"], {
+  dropZoneClass: "red",
+  synthDropZoneClass: "red",
+});
 
 onMounted(() => {
   // Set initial scroll positions for testing
@@ -35,17 +38,22 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Make the HTML tag scrollable in both directions */
-html {
+.red {
+  background-color: red !important;
 }
 
+html,
 body {
   margin: 0;
-  padding: 20px;
+  padding: 0;
+  height: 100%;
+  overflow: auto;
 }
 
 .page-container {
   position: relative;
+  min-height: 200vh; /* Make page taller than viewport to enable scrolling */
+  padding: 20px;
 }
 
 /* Horizontal scrollable container */
@@ -61,6 +69,7 @@ body {
   padding: 1em;
   min-width: 150%;
 }
+
 .placeholder-content {
   min-height: 1000px;
   padding: 1em;

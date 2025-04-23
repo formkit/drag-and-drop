@@ -343,6 +343,10 @@ export function dragAndDrop<T>({
       touchmove: (e: TouchEvent) => {
         if (isDragState(state) && e.cancelable) pd(e);
       },
+      contextmenu: (e: Event) => {
+        console.log("document contextmenu");
+        if (isSynthDragState(state)) pd(e);
+      },
     });
   }
 
@@ -989,6 +993,7 @@ export function setupNode<T>(data: SetupNodeData<T>) {
       if (isDragState(state) && e.cancelable) pd(e);
     },
     contextmenu: (e: Event) => {
+      console.log("contextmenu");
       if (isSynthDragState(state)) pd(e);
     },
   });
@@ -1796,7 +1801,10 @@ export function handlePointercancel<T>(
   data: NodeEventData<T>,
   state: DragState<T> | SynthDragState<T> | BaseDragState<T>
 ) {
+  console.log("handlePointercancel", state);
   if (!isSynthDragState(state)) return;
+
+  console.log("handlePointercancel after isSynthDragState", state);
 
   pd(data.e);
 
@@ -1829,6 +1837,7 @@ export function handlePointercancel<T>(
  * @returns void
  */
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
+  console.log("handleEnd");
   if (state.draggedNode) state.draggedNode.el.draggable = true;
 
   if (isSynthDragState(state)) {
