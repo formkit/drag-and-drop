@@ -2144,6 +2144,7 @@ function handleEnd3(state2) {
   if (state2.originalZIndex !== void 0) {
     state2.draggedNode.el.style.zIndex = state2.originalZIndex;
   }
+<<<<<<< Updated upstream
   removeClass(
     state2.draggedNodes.map((x) => x.el),
     dropZoneClass
@@ -2156,6 +2157,22 @@ function handleEnd3(state2) {
     state2.draggedNodes.map((x) => x.el),
     isSynth ? state2.initialParent.data.config.synthDragPlaceholderClass : state2.initialParent.data?.config?.dragPlaceholderClass
   );
+=======
+  requestAnimationFrame(() => {
+    removeClass(
+      state2.draggedNodes.map((x) => x.el),
+      dropZoneClass
+    );
+    removeClass(
+      state2.draggedNodes.map((x) => x.el),
+      state2.initialParent.data?.config?.longPressClass
+    );
+    removeClass(
+      state2.draggedNodes.map((x) => x.el),
+      isSynth ? state2.initialParent.data.config.synthDragPlaceholderClass : state2.initialParent.data?.config?.dragPlaceholderClass
+    );
+  });
+>>>>>>> Stashed changes
   deselect(state2.draggedNodes, state2.currentParent, state2);
   setActive(state2.currentParent, void 0, state2);
   resetState();

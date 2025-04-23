@@ -1558,7 +1558,7 @@ export function dragstartClasses<T>(
     isSynth ? config.synthDraggingClass : config.draggingClass
   );
 
-  requestAnimationFrame(() => {
+  setTimeout(() => {
     removeClass(
       nodes.map((x) => x.el),
       isSynth ? config.synthDraggingClass : config.draggingClass
@@ -1862,12 +1862,15 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
     clearTimeout(state.longPressTimeout);
   }
 
+  // Ensure scrolling is properly cancelled
   cancelSynthScroll(state);
 
+  // Clear any lingering scroll directions and timeouts
   state.lastScrollDirectionX = undefined;
   state.lastScrollDirectionY = undefined;
   state.preventEnter = false;
 
+  // CRITICAL: Clear the scroll debounce timeout
   if (state.scrollDebounceTimeout) {
     clearTimeout(state.scrollDebounceTimeout);
     state.scrollDebounceTimeout = undefined;
@@ -1881,11 +1884,11 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
     ? config?.synthDropZoneClass
     : config?.dropZoneClass;
 
-  requestAnimationFrame(() => {
-    if (state.originalZIndex !== undefined) {
-      state.draggedNode.el.style.zIndex = state.originalZIndex;
-    }
+  if (state.originalZIndex !== undefined) {
+    state.draggedNode.el.style.zIndex = state.originalZIndex;
+  }
 
+  requestAnimationFrame(() => {
     removeClass(
       state.draggedNodes.map((x) => x.el),
       dropZoneClass
@@ -1902,12 +1905,14 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
         ? state.initialParent.data.config.synthDragPlaceholderClass
         : state.initialParent.data?.config?.dragPlaceholderClass
     );
-
-    deselect(state.draggedNodes, state.currentParent, state);
-    setActive(state.currentParent, undefined, state);
   });
 
+  deselect(state.draggedNodes, state.currentParent, state);
+
+  setActive(state.currentParent, undefined, state);
+
   resetState();
+
   state.selectedState = undefined;
 
   config?.onDragend?.({
@@ -2703,24 +2708,19 @@ export function addNodeClass<T>(
   className: string | undefined,
   omitAppendPrivateClass = false
 ) {
-  if (!className) return;
-
   function nodeSetter<T>(node: Node, nodeData: NodeData<T>) {
     nodes.set(node, nodeData);
   }
 
-  // Use requestAnimationFrame to ensure class addition happens during proper rendering cycle
-  requestAnimationFrame(() => {
-    for (const el of els) {
-      const nodeData = nodes.get(el as Node);
+  for (const el of els) {
+    const nodeData = nodes.get(el as Node);
 
-      const newData = addClass(el, className, nodeData, omitAppendPrivateClass);
+    const newData = addClass(el, className, nodeData, omitAppendPrivateClass);
 
-      if (!newData) continue;
+    if (!newData) continue;
 
-      nodeSetter(el as Node, newData as NodeData<T>);
-    }
-  });
+    nodeSetter(el as Node, newData as NodeData<T>);
+  }
 }
 
 /**
@@ -2801,7 +2801,11 @@ export function addClass(
 }
 
 /**
+<<<<<<< Updated upstream
  * Remove class from the nodes using requestAnimationFrame for better timing.
+=======
+ * Remove class from the nodes.
+>>>>>>> Stashed changes
  *
  * @param els - The nodes.
  * @param className - The class name.
@@ -2818,6 +2822,7 @@ export function removeClass(
 
   if (!classNames.length) return;
 
+<<<<<<< Updated upstream
   // Use requestAnimationFrame to ensure class removal happens during proper rendering cycle
   requestAnimationFrame(() => {
     for (const node of els) {
@@ -2837,6 +2842,24 @@ export function removeClass(
       }
     }
   });
+=======
+  for (const node of els) {
+    if (!isNode(node)) {
+      node.classList.remove(...classNames);
+      continue;
+    }
+
+    const nodeData = nodes.get(node) || parents.get(node);
+
+    if (!nodeData) continue;
+
+    for (const className of classNames) {
+      if (!nodeData.privateClasses.includes(className)) {
+        node.classList.remove(className);
+      }
+    }
+  }
+>>>>>>> Stashed changes
 }
 
 type ScrollDirection<T> = { axis: "x"; state: DragState<T> } | { axis: "y" };

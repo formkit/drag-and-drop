@@ -9,7 +9,7 @@ test.beforeEach(async ({ browser }) => {
   page = await browser.newPage();
 });
 
-test.describe("Place plugin synthetic", async () => {
+test.describe("Drop or swap plugin synthetic", async () => {
   test("Test #1", async () => {
     await page.goto("http://localhost:3001/drop-or-swap");
     await new Promise((r) => setTimeout(r, 1000));
