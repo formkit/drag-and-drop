@@ -247,14 +247,11 @@ function handleRootPointerdown() {
 }
 
 function handleRootPointerup() {
-  console.log("handleRootPointerup");
   if (state.pointerDown) state.pointerDown.node.el.draggable = true;
 
   state.pointerDown = undefined;
 
   if (!isSynthDragState(state)) return;
-
-  console.log("handleRootPointerup after isSynthDragState", state);
 
   const config = state.currentParent.data.config;
 
@@ -369,7 +366,6 @@ export function dragAndDrop<T>({
         if (isDragState(state) && e.cancelable) pd(e);
       },
       contextmenu: (e: Event) => {
-        console.log("document contextmenu");
         if (isSynthDragState(state)) pd(e);
       },
     });
@@ -1018,7 +1014,6 @@ export function setupNode<T>(data: SetupNodeData<T>) {
       if (isDragState(state) && e.cancelable) pd(e);
     },
     contextmenu: (e: Event) => {
-      console.log("contextmenu");
       if (isSynthDragState(state)) pd(e);
     },
   });
@@ -1826,10 +1821,7 @@ export function handlePointercancel<T>(
   data: NodeEventData<T>,
   state: DragState<T> | SynthDragState<T> | BaseDragState<T>
 ) {
-  console.log("handlePointercancel", state);
   if (!isSynthDragState(state)) return;
-
-  console.log("handlePointercancel after isSynthDragState", state);
 
   pd(data.e);
 
@@ -1889,21 +1881,16 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
     ? config?.synthDropZoneClass
     : config?.dropZoneClass;
 
-  console.log("handleEnd", dropZoneClass);
-
   requestAnimationFrame(() => {
     if (state.originalZIndex !== undefined) {
       state.draggedNode.el.style.zIndex = state.originalZIndex;
     }
 
-    // Force a style recalculation to ensure we're in the next browser paint cycle
-    // First remove drop zone class
     removeClass(
       state.draggedNodes.map((x) => x.el),
       dropZoneClass
     );
 
-    // Remove other classes in a separate animation frame
     removeClass(
       state.draggedNodes.map((x) => x.el),
       state.initialParent.data?.config?.longPressClass
@@ -1990,7 +1977,6 @@ function initSynthDrag<T>(
   draggedNodes: Array<NodeRecord<T>>,
   rect: DOMRect
 ): SynthDragState<T> {
-  console.log("initSynthDrag");
   const config = parent.data.config;
 
   let dragImage: HTMLElement;
