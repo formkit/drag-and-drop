@@ -1889,22 +1889,24 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   }
 
   requestAnimationFrame(() => {
-    removeClass(
-      state.draggedNodes.map((x) => x.el),
-      dropZoneClass
-    );
+    requestAnimationFrame(() => {
+      removeClass(
+        state.draggedNodes.map((x) => x.el),
+        dropZoneClass
+      );
 
-    removeClass(
-      state.draggedNodes.map((x) => x.el),
-      state.initialParent.data?.config?.longPressClass
-    );
+      removeClass(
+        state.draggedNodes.map((x) => x.el),
+        state.initialParent.data?.config?.longPressClass
+      );
 
-    removeClass(
-      state.draggedNodes.map((x) => x.el),
-      isSynth
-        ? state.initialParent.data.config.synthDragPlaceholderClass
-        : state.initialParent.data?.config?.dragPlaceholderClass
-    );
+      removeClass(
+        state.draggedNodes.map((x) => x.el),
+        isSynth
+          ? state.initialParent.data.config.synthDragPlaceholderClass
+          : state.initialParent.data?.config?.dragPlaceholderClass
+      );
+    });
   });
 
   deselect(state.draggedNodes, state.currentParent, state);
