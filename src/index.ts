@@ -2128,7 +2128,7 @@ function cancelSynthScroll<T>(
   cancelX = true,
   cancelY = true
 ) {
-  console.log("cancelSynthScroll");
+  console.log("cancelSynthScroll", cancelY, state.frameIdY);
   if (cancelX && state.frameIdX !== undefined) {
     cancelAnimationFrame(state.frameIdX);
     state.frameIdX = undefined;
