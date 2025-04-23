@@ -1856,76 +1856,84 @@ export function handlePointercancel<T>(
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   if (state.draggedNode) state.draggedNode.el.draggable = true;
 
-  if (isSynthDragState(state)) {
-    state.clonedDraggedNode.remove();
-
-    clearTimeout(state.longPressTimeout);
-  }
-
-  // Ensure scrolling is properly cancelled
-  cancelSynthScroll(state);
-
-  // Clear any lingering scroll directions and timeouts
-  state.lastScrollDirectionX = undefined;
-  state.lastScrollDirectionY = undefined;
-  state.preventEnter = false;
-
-  // CRITICAL: Clear the scroll debounce timeout
-  if (state.scrollDebounceTimeout) {
-    clearTimeout(state.scrollDebounceTimeout);
-    state.scrollDebounceTimeout = undefined;
-  }
-
-  const config = parents.get(state.initialParent.el)?.config;
-
+  // --- Capture necessary data BEFORE resetState might affect it ---
+  const nodesToClean = state.draggedNodes.map((x) => x.el);
+  const initialParentData = state.initialParent.data;
   const isSynth = isSynthDragState(state);
-
+  const config = parents.get(state.initialParent.el)?.config;
   const dropZoneClass = isSynth
     ? config?.synthDropZoneClass
     : config?.dropZoneClass;
+  const longPressClass = initialParentData?.config?.longPressClass;
+  const placeholderClass = isSynth
+    ? initialParentData?.config?.synthDragPlaceholderClass // Corrected potential typo: used initialParentData
+    : initialParentData?.config?.dragPlaceholderClass;
+  const originalZIndex = state.originalZIndex;
+  // --- End data capture ---
 
-  if (state.originalZIndex !== undefined) {
-    state.draggedNode.el.style.zIndex = state.originalZIndex;
+  if (isSynthDragState(state)) {
+    // Ensure cloned node removal happens reasonably quickly
+    if (state.clonedDraggedNode) {
+      // Check if it exists
+      state.clonedDraggedNode.remove();
+    }
+    if (state.longPressTimeout) {
+      // Check if timeout exists
+      clearTimeout(state.longPressTimeout);
+    }
   }
 
+  // Ensure scrolling is properly cancelled (needs state, do before reset)
+  cancelSynthScroll(state);
+
+  // Clear any lingering scroll directions and timeouts (needs state, do before reset)
+  state.lastScrollDirectionX = undefined;
+  state.lastScrollDirectionY = undefined;
+  state.preventEnter = false;
+  if (state.scrollDebounceTimeout) {
+    clearTimeout(state.scrollDebounceTimeout);
+    state.scrollDebounceTimeout = undefined; // Ensure it's marked as cleared
+  }
+
+  // Apply z-index change synchronously if needed
+  if (originalZIndex !== undefined && state.draggedNode) {
+    state.draggedNode.el.style.zIndex = originalZIndex;
+  }
+
+  // Use single rAF with captured data for class removal
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      removeClass(
-        state.draggedNodes.map((x) => x.el),
-        dropZoneClass
-      );
-
-      removeClass(
-        state.draggedNodes.map((x) => x.el),
-        state.initialParent.data?.config?.longPressClass
-      );
-
-      removeClass(
-        state.draggedNodes.map((x) => x.el),
-        isSynth
-          ? state.initialParent.data.config.synthDragPlaceholderClass
-          : state.initialParent.data?.config?.dragPlaceholderClass
-      );
-    });
+    // Use the captured data, not the potentially reset global state
+    removeClass(nodesToClean, dropZoneClass);
+    removeClass(nodesToClean, longPressClass);
+    removeClass(nodesToClean, placeholderClass);
   });
 
+  // Deselect and reset active state (needs state, do before reset)
   deselect(state.draggedNodes, state.currentParent, state);
-
   setActive(state.currentParent, undefined, state);
 
-  resetState();
+  // Prepare data for callback/event *before* resetState
+  const finalStateForCallback = { ...state }; // Shallow copy for safety
 
-  state.selectedState = undefined;
-
+  // Call onDragend callback *before* resetState
   config?.onDragend?.({
-    parent: state.currentParent,
-    values: parentValues(state.currentParent.el, state.currentParent.data),
-    draggedNode: state.draggedNode,
-    draggedNodes: state.draggedNodes,
-    state,
+    parent: finalStateForCallback.currentParent,
+    values: parentValues(
+      finalStateForCallback.currentParent.el,
+      finalStateForCallback.currentParent.data
+    ),
+    draggedNode: finalStateForCallback.draggedNode,
+    draggedNodes: finalStateForCallback.draggedNodes,
+    state: finalStateForCallback,
   });
 
-  state.emit("dragEnded", state);
+  // Emit event *before* resetState
+  state.emit("dragEnded", finalStateForCallback); // Emit with the final state representation
+
+  // Reset global state LAST
+  resetState();
+
+  // No need to set state.selectedState = undefined; resetState handles it.
 }
 
 /**
