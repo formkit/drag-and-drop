@@ -1849,7 +1849,13 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
     clearTimeout(state.longPressTimeout);
   }
 
+  // Ensure scrolling is properly cancelled
   cancelSynthScroll(state);
+
+  // Clear any lingering scroll directions
+  state.lastScrollDirectionX = undefined;
+  state.lastScrollDirectionY = undefined;
+  state.preventEnter = false;
 
   const config = parents.get(state.initialParent.el)?.config;
 
@@ -2128,16 +2134,20 @@ function cancelSynthScroll<T>(
   cancelX = true,
   cancelY = true
 ) {
-  console.log("cancelSynthScroll", cancelY, state.frameIdY);
-  if (cancelX && state.frameIdX !== undefined) {
-    cancelAnimationFrame(state.frameIdX);
-    state.frameIdX = undefined;
+  if (cancelX) {
+    if (state.frameIdX !== undefined) {
+      cancelAnimationFrame(state.frameIdX);
+      state.frameIdX = undefined;
+    }
+    state.lastScrollDirectionX = undefined;
   }
 
-  if (cancelY && state.frameIdY !== undefined) {
-    console.log("cancelAnimationFrame(state.frameIdY)");
-    cancelAnimationFrame(state.frameIdY);
-    state.frameIdY = undefined;
+  if (cancelY) {
+    if (state.frameIdY !== undefined) {
+      cancelAnimationFrame(state.frameIdY);
+      state.frameIdY = undefined;
+    }
+    state.lastScrollDirectionY = undefined;
   }
 
   if (!state.frameIdX && !state.frameIdY) {
@@ -2892,11 +2902,8 @@ function scrollAxis<T>(
   const key = isX ? "lastScrollDirectionX" : "lastScrollDirectionY";
   const idKey = isX ? "frameIdX" : "frameIdY";
 
-  if (
-    state[key] &&
-    state[key] !== options.direction &&
-    state[idKey] !== undefined
-  ) {
+  // Cancel any existing animation first, regardless of direction
+  if (state[idKey] !== undefined) {
     cancelAnimationFrame(state[idKey]!);
     state[idKey] = undefined;
   }
@@ -2917,6 +2924,7 @@ function scrollAxis<T>(
 
     if (!canScroll) {
       state[idKey] = undefined;
+      state[key] = undefined;
       return;
     }
 
