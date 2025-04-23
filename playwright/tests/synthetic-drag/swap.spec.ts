@@ -21,7 +21,7 @@ test.describe("Synthetic swap", async () => {
       dragStart: true,
     });
     await expect(page.locator("#Apple")).toHaveClass(
-      "item synthDragPlaceholder synthDropZone"
+      "item synthDropZone synthDragPlaceholder"
     );
 
     await syntheticDrag(page, {

@@ -1965,7 +1965,7 @@ function dragstartClasses(_node, nodes2, config, isSynth = false) {
     nodes2.map((x) => x.el),
     isSynth ? config.synthDraggingClass : config.draggingClass
   );
-  requestAnimationFrame(() => {
+  setTimeout(() => {
     removeClass(
       nodes2.map((x) => x.el),
       isSynth ? config.synthDraggingClass : config.draggingClass
@@ -2137,9 +2137,21 @@ function handlePointercancel(data, state2) {
 }
 function handleEnd3(state2) {
   if (state2.draggedNode) state2.draggedNode.el.draggable = true;
+  const nodesToClean = state2.draggedNodes.map((x) => x.el);
+  const initialParentData = state2.initialParent.data;
+  const isSynth = isSynthDragState(state2);
+  const config = parents.get(state2.initialParent.el)?.config;
+  const dropZoneClass = isSynth ? config?.synthDropZoneClass : config?.dropZoneClass;
+  const longPressClass = initialParentData?.config?.longPressClass;
+  const placeholderClass = isSynth ? initialParentData?.config?.synthDragPlaceholderClass : initialParentData?.config?.dragPlaceholderClass;
+  const originalZIndex = state2.originalZIndex;
   if (isSynthDragState(state2)) {
-    state2.clonedDraggedNode.remove();
-    clearTimeout(state2.longPressTimeout);
+    if (state2.clonedDraggedNode) {
+      state2.clonedDraggedNode.remove();
+    }
+    if (state2.longPressTimeout) {
+      clearTimeout(state2.longPressTimeout);
+    }
   }
   cancelSynthScroll(state2);
   state2.lastScrollDirectionX = void 0;
@@ -2149,38 +2161,29 @@ function handleEnd3(state2) {
     clearTimeout(state2.scrollDebounceTimeout);
     state2.scrollDebounceTimeout = void 0;
   }
-  const config = parents.get(state2.initialParent.el)?.config;
-  const isSynth = isSynthDragState(state2);
-  const dropZoneClass = isSynth ? config?.synthDropZoneClass : config?.dropZoneClass;
+  if (originalZIndex !== void 0 && state2.draggedNode) {
+    state2.draggedNode.el.style.zIndex = originalZIndex;
+  }
   requestAnimationFrame(() => {
-    if (state2.originalZIndex !== void 0) {
-      state2.draggedNode.el.style.zIndex = state2.originalZIndex;
-    }
-    removeClass(
-      state2.draggedNodes.map((x) => x.el),
-      dropZoneClass
-    );
-    removeClass(
-      state2.draggedNodes.map((x) => x.el),
-      state2.initialParent.data?.config?.longPressClass
-    );
-    removeClass(
-      state2.draggedNodes.map((x) => x.el),
-      isSynth ? state2.initialParent.data.config.synthDragPlaceholderClass : state2.initialParent.data?.config?.dragPlaceholderClass
-    );
-    deselect(state2.draggedNodes, state2.currentParent, state2);
-    setActive(state2.currentParent, void 0, state2);
+    removeClass(nodesToClean, dropZoneClass);
+    removeClass(nodesToClean, longPressClass);
+    removeClass(nodesToClean, placeholderClass);
   });
-  resetState();
-  state2.selectedState = void 0;
+  deselect(state2.draggedNodes, state2.currentParent, state2);
+  setActive(state2.currentParent, void 0, state2);
+  const finalStateForCallback = { ...state2 };
   config?.onDragend?.({
-    parent: state2.currentParent,
-    values: parentValues(state2.currentParent.el, state2.currentParent.data),
-    draggedNode: state2.draggedNode,
-    draggedNodes: state2.draggedNodes,
-    state: state2
+    parent: finalStateForCallback.currentParent,
+    values: parentValues(
+      finalStateForCallback.currentParent.el,
+      finalStateForCallback.currentParent.data
+    ),
+    draggedNode: finalStateForCallback.draggedNode,
+    draggedNodes: finalStateForCallback.draggedNodes,
+    state: finalStateForCallback
   });
-  state2.emit("dragEnded", state2);
+  state2.emit("dragEnded", finalStateForCallback);
+  resetState();
 }
 function handleNodePointerup(data, state2) {
   sp(data.e);
@@ -2608,18 +2611,15 @@ function parentEventData(callback) {
   };
 }
 function addNodeClass(els, className, omitAppendPrivateClass = false) {
-  if (!className) return;
   function nodeSetter(node, nodeData) {
     nodes.set(node, nodeData);
   }
-  requestAnimationFrame(() => {
-    for (const el of els) {
-      const nodeData = nodes.get(el);
-      const newData = addClass(el, className, nodeData, omitAppendPrivateClass);
-      if (!newData) continue;
-      nodeSetter(el, newData);
-    }
-  });
+  for (const el of els) {
+    const nodeData = nodes.get(el);
+    const newData = addClass(el, className, nodeData, omitAppendPrivateClass);
+    if (!newData) continue;
+    nodeSetter(el, newData);
+  }
 }
 function addParentClass(els, className, omitAppendPrivateClass = false) {
   function parentSetter(parent, parentData) {
@@ -2627,7 +2627,6 @@ function addParentClass(els, className, omitAppendPrivateClass = false) {
   }
   for (const el of els) {
     const parentData = parents.get(el);
-    console.log("add parent class", className, omitAppendPrivateClass);
     const newData = addClass(el, className, parentData, omitAppendPrivateClass);
     if (!newData) continue;
     parentSetter(el, newData);
@@ -2644,20 +2643,10 @@ function addClass(el, className, data, omitAppendPrivateClass = false) {
   }
   const privateClasses = [...data.privateClasses || []];
   for (const className2 of classNames) {
-    if (el.classList.contains(className2)) {
-      console.log(
-        `Class ${className2} already exists on element:`,
-        omitAppendPrivateClass ? "NOT adding to privateClasses" : "adding to privateClasses"
-      );
-    }
     if (!el.classList.contains(className2)) {
       el.classList.add(className2);
     } else if (el.classList.contains(className2) && omitAppendPrivateClass === false) {
       privateClasses.push(className2);
-      console.log(
-        `Added ${className2} to privateClasses, now contains:`,
-        privateClasses
-      );
     }
   }
   data.privateClasses = privateClasses;
@@ -2667,44 +2656,18 @@ function removeClass(els, className) {
   if (!className) return;
   const classNames = splitClass(className);
   if (!classNames.length) return;
-  const parentElements = [];
-  const regularNodes = [];
-  for (const el of els) {
-    if (el instanceof HTMLElement && parents.get(el)) {
-      parentElements.push(el);
-    } else {
-      regularNodes.push(el);
+  for (const node of els) {
+    if (!isNode(node)) {
+      node.classList.remove(...classNames);
+      continue;
     }
-  }
-  for (const parent of parentElements) {
-    const parentData = parents.get(parent);
-    if (!parentData) continue;
-    if (className.includes("dropZoneParent")) {
-      console.log("remove drop zone parent class", className);
-      console.log("show me private classes", parentData.privateClasses);
-    }
-    for (const cls of classNames) {
-      if (!parentData.privateClasses.includes(cls)) {
-        parent.classList.remove(cls);
+    const nodeData = nodes.get(node) || parents.get(node);
+    if (!nodeData) continue;
+    for (const className2 of classNames) {
+      if (!nodeData.privateClasses.includes(className2)) {
+        node.classList.remove(className2);
       }
     }
-  }
-  if (regularNodes.length > 0) {
-    requestAnimationFrame(() => {
-      for (const node of regularNodes) {
-        if (!isNode(node)) {
-          node.classList.remove(...classNames);
-          continue;
-        }
-        const nodeData = nodes.get(node);
-        if (!nodeData) continue;
-        for (const cls of classNames) {
-          if (!nodeData.privateClasses.includes(cls)) {
-            node.classList.remove(cls);
-          }
-        }
-      }
-    });
   }
 }
 function getScrollDirection(el, e, style, rect, opts) {

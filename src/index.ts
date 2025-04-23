@@ -1558,7 +1558,7 @@ export function dragstartClasses<T>(
     isSynth ? config.synthDraggingClass : config.draggingClass
   );
 
-  requestAnimationFrame(() => {
+  setTimeout(() => {
     removeClass(
       nodes.map((x) => x.el),
       isSynth ? config.synthDraggingClass : config.draggingClass
@@ -1856,69 +1856,84 @@ export function handlePointercancel<T>(
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   if (state.draggedNode) state.draggedNode.el.draggable = true;
 
-  if (isSynthDragState(state)) {
-    state.clonedDraggedNode.remove();
-
-    clearTimeout(state.longPressTimeout);
-  }
-
-  cancelSynthScroll(state);
-
-  state.lastScrollDirectionX = undefined;
-  state.lastScrollDirectionY = undefined;
-  state.preventEnter = false;
-
-  if (state.scrollDebounceTimeout) {
-    clearTimeout(state.scrollDebounceTimeout);
-    state.scrollDebounceTimeout = undefined;
-  }
-
-  const config = parents.get(state.initialParent.el)?.config;
-
+  // --- Capture necessary data BEFORE resetState might affect it ---
+  const nodesToClean = state.draggedNodes.map((x) => x.el);
+  const initialParentData = state.initialParent.data;
   const isSynth = isSynthDragState(state);
-
+  const config = parents.get(state.initialParent.el)?.config;
   const dropZoneClass = isSynth
     ? config?.synthDropZoneClass
     : config?.dropZoneClass;
+  const longPressClass = initialParentData?.config?.longPressClass;
+  const placeholderClass = isSynth
+    ? initialParentData?.config?.synthDragPlaceholderClass // Corrected potential typo: used initialParentData
+    : initialParentData?.config?.dragPlaceholderClass;
+  const originalZIndex = state.originalZIndex;
+  // --- End data capture ---
 
-  requestAnimationFrame(() => {
-    if (state.originalZIndex !== undefined) {
-      state.draggedNode.el.style.zIndex = state.originalZIndex;
+  if (isSynthDragState(state)) {
+    // Ensure cloned node removal happens reasonably quickly
+    if (state.clonedDraggedNode) {
+      // Check if it exists
+      state.clonedDraggedNode.remove();
     }
+    if (state.longPressTimeout) {
+      // Check if timeout exists
+      clearTimeout(state.longPressTimeout);
+    }
+  }
 
-    removeClass(
-      state.draggedNodes.map((x) => x.el),
-      dropZoneClass
-    );
+  // Ensure scrolling is properly cancelled (needs state, do before reset)
+  cancelSynthScroll(state);
 
-    removeClass(
-      state.draggedNodes.map((x) => x.el),
-      state.initialParent.data?.config?.longPressClass
-    );
+  // Clear any lingering scroll directions and timeouts (needs state, do before reset)
+  state.lastScrollDirectionX = undefined;
+  state.lastScrollDirectionY = undefined;
+  state.preventEnter = false;
+  if (state.scrollDebounceTimeout) {
+    clearTimeout(state.scrollDebounceTimeout);
+    state.scrollDebounceTimeout = undefined; // Ensure it's marked as cleared
+  }
 
-    removeClass(
-      state.draggedNodes.map((x) => x.el),
-      isSynth
-        ? state.initialParent.data.config.synthDragPlaceholderClass
-        : state.initialParent.data?.config?.dragPlaceholderClass
-    );
+  // Apply z-index change synchronously if needed
+  if (originalZIndex !== undefined && state.draggedNode) {
+    state.draggedNode.el.style.zIndex = originalZIndex;
+  }
 
-    deselect(state.draggedNodes, state.currentParent, state);
-    setActive(state.currentParent, undefined, state);
+  // Use single rAF with captured data for class removal
+  requestAnimationFrame(() => {
+    // Use the captured data, not the potentially reset global state
+    removeClass(nodesToClean, dropZoneClass);
+    removeClass(nodesToClean, longPressClass);
+    removeClass(nodesToClean, placeholderClass);
   });
 
-  resetState();
-  state.selectedState = undefined;
+  // Deselect and reset active state (needs state, do before reset)
+  deselect(state.draggedNodes, state.currentParent, state);
+  setActive(state.currentParent, undefined, state);
 
+  // Prepare data for callback/event *before* resetState
+  const finalStateForCallback = { ...state }; // Shallow copy for safety
+
+  // Call onDragend callback *before* resetState
   config?.onDragend?.({
-    parent: state.currentParent,
-    values: parentValues(state.currentParent.el, state.currentParent.data),
-    draggedNode: state.draggedNode,
-    draggedNodes: state.draggedNodes,
-    state,
+    parent: finalStateForCallback.currentParent,
+    values: parentValues(
+      finalStateForCallback.currentParent.el,
+      finalStateForCallback.currentParent.data
+    ),
+    draggedNode: finalStateForCallback.draggedNode,
+    draggedNodes: finalStateForCallback.draggedNodes,
+    state: finalStateForCallback,
   });
 
-  state.emit("dragEnded", state);
+  // Emit event *before* resetState
+  state.emit("dragEnded", finalStateForCallback); // Emit with the final state representation
+
+  // Reset global state LAST
+  resetState();
+
+  // No need to set state.selectedState = undefined; resetState handles it.
 }
 
 /**
@@ -2703,24 +2718,19 @@ export function addNodeClass<T>(
   className: string | undefined,
   omitAppendPrivateClass = false
 ) {
-  if (!className) return;
-
   function nodeSetter<T>(node: Node, nodeData: NodeData<T>) {
     nodes.set(node, nodeData);
   }
 
-  // Use requestAnimationFrame to ensure class addition happens during proper rendering cycle
-  requestAnimationFrame(() => {
-    for (const el of els) {
-      const nodeData = nodes.get(el as Node);
+  for (const el of els) {
+    const nodeData = nodes.get(el as Node);
 
-      const newData = addClass(el, className, nodeData, omitAppendPrivateClass);
+    const newData = addClass(el, className, nodeData, omitAppendPrivateClass);
 
-      if (!newData) continue;
+    if (!newData) continue;
 
-      nodeSetter(el as Node, newData as NodeData<T>);
-    }
-  });
+    nodeSetter(el as Node, newData as NodeData<T>);
+  }
 }
 
 /**
@@ -2800,8 +2810,7 @@ export function addClass(
 }
 
 /**
- * Remove class from the nodes using requestAnimationFrame for better timing on regular nodes,
- * but synchronously for parent elements to avoid race conditions with remapNodes.
+ * Remove class from the nodes.
  *
  * @param els - The nodes.
  * @param className - The class name.
@@ -2818,51 +2827,21 @@ export function removeClass(
 
   if (!classNames.length) return;
 
-  // Split elements into parents (remove synchronously) and regular nodes (use animation frame)
-  const parentElements: Array<HTMLElement> = [];
-  const regularNodes: Array<Node | HTMLElement | Element> = [];
-
-  for (const el of els) {
-    if (el instanceof HTMLElement && parents.get(el)) {
-      parentElements.push(el);
-    } else {
-      regularNodes.push(el);
+  for (const node of els) {
+    if (!isNode(node)) {
+      node.classList.remove(...classNames);
+      continue;
     }
-  }
 
-  // Process parent elements synchronously
-  for (const parent of parentElements) {
-    const parentData = parents.get(parent);
+    const nodeData = nodes.get(node) || parents.get(node);
 
-    if (!parentData) continue;
+    if (!nodeData) continue;
 
-    for (const cls of classNames) {
-      if (!parentData.privateClasses.includes(cls)) {
-        parent.classList.remove(cls);
+    for (const className of classNames) {
+      if (!nodeData.privateClasses.includes(className)) {
+        node.classList.remove(className);
       }
     }
-  }
-
-  // Use requestAnimationFrame for regular nodes
-  if (regularNodes.length > 0) {
-    requestAnimationFrame(() => {
-      for (const node of regularNodes) {
-        if (!isNode(node)) {
-          node.classList.remove(...classNames);
-          continue;
-        }
-
-        const nodeData = nodes.get(node);
-
-        if (!nodeData) continue;
-
-        for (const cls of classNames) {
-          if (!nodeData.privateClasses.includes(cls)) {
-            node.classList.remove(cls);
-          }
-        }
-      }
-    });
   }
 }
 
