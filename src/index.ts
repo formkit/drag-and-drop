@@ -125,6 +125,8 @@ const baseDragState = {
   lastScrollDirectionX: undefined,
   lastScrollDirectionY: undefined,
   scrollDebounceTimeout: undefined,
+  frameIdX: undefined,
+  frameIdY: undefined,
 };
 
 /**
@@ -150,6 +152,24 @@ let documentController: AbortController | undefined;
 let scrollTimeout: ReturnType<typeof setTimeout>;
 
 export function resetState() {
+  // Clear any existing timeouts to prevent stale references
+  if (state.scrollDebounceTimeout) {
+    clearTimeout(state.scrollDebounceTimeout);
+  }
+
+  if (state.longPressTimeout) {
+    clearTimeout(state.longPressTimeout);
+  }
+
+  // Cancel any animation frames
+  if (state.frameIdX !== undefined) {
+    cancelAnimationFrame(state.frameIdX);
+  }
+
+  if (state.frameIdY !== undefined) {
+    cancelAnimationFrame(state.frameIdY);
+  }
+
   const baseDragState = {
     affectedNodes: [],
     coordinates: {
@@ -186,6 +206,8 @@ export function resetState() {
     lastScrollDirectionX: undefined,
     lastScrollDirectionY: undefined,
     scrollDebounceTimeout: undefined,
+    frameIdX: undefined,
+    frameIdY: undefined,
   };
 
   state = { ...baseDragState } as BaseDragState<unknown>;
@@ -1852,10 +1874,16 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   // Ensure scrolling is properly cancelled
   cancelSynthScroll(state);
 
-  // Clear any lingering scroll directions
+  // Clear any lingering scroll directions and timeouts
   state.lastScrollDirectionX = undefined;
   state.lastScrollDirectionY = undefined;
   state.preventEnter = false;
+
+  // CRITICAL: Clear the scroll debounce timeout
+  if (state.scrollDebounceTimeout) {
+    clearTimeout(state.scrollDebounceTimeout);
+    state.scrollDebounceTimeout = undefined;
+  }
 
   const config = parents.get(state.initialParent.el)?.config;
 
@@ -2190,10 +2218,18 @@ export function synthMove<T>(
 
   moveNode(state, justStarted); // Pass only state now
 
-  if (state.scrollDebounceTimeout) clearTimeout(state.scrollDebounceTimeout);
+  // Clear any existing timeout to avoid multiple concurrent timeouts
+  if (state.scrollDebounceTimeout) {
+    clearTimeout(state.scrollDebounceTimeout);
+    state.scrollDebounceTimeout = undefined;
+  }
 
+  // Only set a new timeout if we're still in a valid drag state
   state.scrollDebounceTimeout = setTimeout(() => {
-    handleSynthScroll(state.coordinates, e, state);
+    // Only process if the drag state is still active
+    if (isSynthDragState(state)) {
+      handleSynthScroll(state.coordinates, e, state);
+    }
   }, 16); // ~1 frame (60fps)
 
   const elFromPoint = getElFromPoint(coordinates);
@@ -2893,6 +2929,11 @@ function scrollAxis<T>(
     direction: "positive" | "negative";
   }
 ) {
+  // Check if this is a stale call from a previous state
+  if (!isDragState(state) || !state.draggedNode) {
+    return; // State has been reset or is no longer in a drag state
+  }
+
   state.preventEnter = true;
 
   const isX = options.axis === "x";
@@ -2911,6 +2952,15 @@ function scrollAxis<T>(
   state[key] = options.direction;
 
   const scrollLoop = () => {
+    // Check again if state is still valid
+    if (!isDragState(state) || !state.draggedNode) {
+      if (state[idKey] !== undefined) {
+        cancelAnimationFrame(state[idKey]!);
+        state[idKey] = undefined;
+      }
+      return;
+    }
+
     const scrollProp = isX ? "scrollLeft" : "scrollTop";
     const sizeProp = isX ? "clientWidth" : "clientHeight";
     const scrollSizeProp = isX ? "scrollWidth" : "scrollHeight";
@@ -2950,6 +3000,11 @@ function handleSynthScroll<T>(
   e: PointerEvent | DragEvent,
   state: DragState<T>
 ) {
+  // First check if this is a stale call from a previous state
+  if (!isDragState(state) || !state.draggedNode) {
+    return; // State has been reset or is no longer in a drag state
+  }
+
   cancelSynthScroll(state);
 
   const { x, y } = coordinates;
