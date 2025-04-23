@@ -182,6 +182,13 @@ export async function syntheticDrag(
       })
     );
 
+    destinationElement.dispatchEvent(
+      new PointerEvent("pointerover", {
+        pointerId: 1,
+        ...destProps,
+      })
+    );
+
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     // Additional move at destination to ensure hover state

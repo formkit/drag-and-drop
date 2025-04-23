@@ -2784,28 +2784,27 @@ export function addClass(
 
   if (!classNames.length) return;
 
-  if (classNames.includes("longPress")) return;
-
   if (!data) {
     el.classList.add(...classNames);
     return;
   }
+  // Revert to original logic: Initialize privateClasses as empty for this call.
+  const privateClasses = [];
 
-  const privateClasses = [...(data.privateClasses || [])];
-
-  for (const className of classNames) {
-    if (!el.classList.contains(className)) {
-      el.classList.add(className);
+  for (const currentClassName of classNames) {
+    if (!el.classList.contains(currentClassName)) {
+      el.classList.add(currentClassName);
     } else if (
-      el.classList.contains(className) &&
+      // Only add to privateClasses if the element already had the class
+      // AND omitAppendPrivateClass is specifically false for THIS call.
+      el.classList.contains(currentClassName) &&
       omitAppendPrivateClass === false
     ) {
-      privateClasses.push(className);
+      privateClasses.push(currentClassName);
     }
   }
-
+  // Assign the newly computed privateClasses, overwriting any previous value.
   data.privateClasses = privateClasses;
-
   return data;
 }
 

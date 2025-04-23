@@ -979,9 +979,10 @@ function updateDraggedOverNodes(data, state2) {
   );
   state2.currentTargetValue = targetData.node.data.value;
   state2.currentParent = targetData.parent;
-  addParentClass(
-    [state2.currentParent.el],
+  addClass(
+    state2.currentParent.el,
     isSynthDragState(state2) ? config.synthDropZoneParentClass : config.dropZoneParentClass,
+    state2.currentParent.data,
     true
   );
 }
@@ -1000,7 +1001,12 @@ function handleParentDragover2(data, state2) {
   );
   removeClass([state2.currentParent.el], currentConfig.dropZoneParentClass);
   const config = data.targetData.parent.data.config;
-  addParentClass([data.targetData.parent.el], config.dropZoneParentClass, true);
+  addClass(
+    data.targetData.parent.el,
+    config.dropZoneParentClass,
+    data.targetData.parent.data,
+    true
+  );
   dropSwapState.draggedOverNodes = [];
   state2.currentParent = data.targetData.parent;
 }
@@ -1015,9 +1021,10 @@ function handeParentPointerover(data) {
     currentConfig.synthDropZoneParentClass
   );
   const config = data.detail.targetData.parent.data.config;
-  addParentClass(
-    [data.detail.targetData.parent.el],
+  addClass(
+    data.detail.targetData.parent.el,
     config.synthDropZoneParentClass,
+    data.detail.targetData.parent.data,
     true
   );
   dropSwapState.draggedOverNodes = [];
