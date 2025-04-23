@@ -1889,36 +1889,36 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
     ? config?.synthDropZoneClass
     : config?.dropZoneClass;
 
+  console.log("handleEnd", dropZoneClass);
+
   requestAnimationFrame(() => {
     if (state.originalZIndex !== undefined) {
       state.draggedNode.el.style.zIndex = state.originalZIndex;
     }
+
+    // Force a style recalculation to ensure we're in the next browser paint cycle
+    // First remove drop zone class
+    removeClass(
+      state.draggedNodes.map((x) => x.el),
+      dropZoneClass
+    );
+
+    // Remove other classes in a separate animation frame
+    removeClass(
+      state.draggedNodes.map((x) => x.el),
+      state.initialParent.data?.config?.longPressClass
+    );
+
+    removeClass(
+      state.draggedNodes.map((x) => x.el),
+      isSynth
+        ? state.initialParent.data.config.synthDragPlaceholderClass
+        : state.initialParent.data?.config?.dragPlaceholderClass
+    );
+
+    deselect(state.draggedNodes, state.currentParent, state);
+    setActive(state.currentParent, undefined, state);
   });
-
-  // Force a style recalculation to ensure we're in the next browser paint cycle
-  // First remove drop zone class
-  removeClass(
-    state.draggedNodes.map((x) => x.el),
-    dropZoneClass
-  );
-
-  // Force another style recalculation for the next set of changes
-
-  // Remove other classes in a separate animation frame
-  removeClass(
-    state.draggedNodes.map((x) => x.el),
-    state.initialParent.data?.config?.longPressClass
-  );
-
-  removeClass(
-    state.draggedNodes.map((x) => x.el),
-    isSynth
-      ? state.initialParent.data.config.synthDragPlaceholderClass
-      : state.initialParent.data?.config?.dragPlaceholderClass
-  );
-
-  deselect(state.draggedNodes, state.currentParent, state);
-  setActive(state.currentParent, undefined, state);
 
   resetState();
   state.selectedState = undefined;
