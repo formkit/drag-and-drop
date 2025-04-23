@@ -18,10 +18,10 @@ import {
   addNodeClass,
   isSynthDragState,
   removeClass,
-  addClass,
   state,
   addEvents,
   isDragState,
+  addParentClass,
 } from "../../index";
 
 export const dropSwapState: DropSwapState<unknown> = {
@@ -147,12 +147,11 @@ function updateDraggedOverNodes<T>(
 
   state.currentParent = targetData.parent;
 
-  addClass(
-    state.currentParent.el,
+  addParentClass(
+    [state.currentParent.el],
     isSynthDragState(state)
       ? config.synthDropZoneParentClass
       : config.dropZoneParentClass,
-    state.currentParent.data,
     true
   );
 }
@@ -187,12 +186,7 @@ export function handleParentDragover<T>(
 
   const config = data.targetData.parent.data.config;
 
-  addClass(
-    data.targetData.parent.el,
-    config.dropZoneParentClass,
-    data.targetData.parent.data,
-    true
-  );
+  addParentClass([data.targetData.parent.el], config.dropZoneParentClass, true);
 
   dropSwapState.draggedOverNodes = [];
 
@@ -214,10 +208,9 @@ export function handeParentPointerover<T>(data: PointeroverParentEvent<T>) {
 
   const config = data.detail.targetData.parent.data.config;
 
-  addClass(
-    data.detail.targetData.parent.el,
+  addParentClass(
+    [data.detail.targetData.parent.el],
     config.synthDropZoneParentClass,
-    data.detail.targetData.parent.data,
     true
   );
 

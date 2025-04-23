@@ -1353,7 +1353,8 @@ declare function addParentClass<T>(els: Array<HTMLElement>, className: string | 
  */
 declare function addClass(el: Node | HTMLElement | Element, className: string | undefined, data: NodeData<any> | ParentData<any> | undefined, omitAppendPrivateClass?: boolean): ParentData<any> | NodeData<any> | undefined;
 /**
- * Remove class from the nodes.
+ * Remove class from the nodes using requestAnimationFrame for better timing on regular nodes,
+ * but synchronously for parent elements to avoid race conditions with remapNodes.
  *
  * @param els - The nodes.
  * @param className - The class name.

@@ -889,10 +889,9 @@ function updateDraggedOverNodes(data, state2) {
   );
   state2.currentTargetValue = targetData.node.data.value;
   state2.currentParent = targetData.parent;
-  addClass(
-    state2.currentParent.el,
+  addParentClass(
+    [state2.currentParent.el],
     isSynthDragState(state2) ? config.synthDropZoneParentClass : config.dropZoneParentClass,
-    state2.currentParent.data,
     true
   );
 }
@@ -911,12 +910,7 @@ function handleParentDragover2(data, state2) {
   );
   removeClass([state2.currentParent.el], currentConfig.dropZoneParentClass);
   const config = data.targetData.parent.data.config;
-  addClass(
-    data.targetData.parent.el,
-    config.dropZoneParentClass,
-    data.targetData.parent.data,
-    true
-  );
+  addParentClass([data.targetData.parent.el], config.dropZoneParentClass, true);
   dropSwapState.draggedOverNodes = [];
   state2.currentParent = data.targetData.parent;
 }
@@ -931,10 +925,9 @@ function handeParentPointerover(data) {
     currentConfig.synthDropZoneParentClass
   );
   const config = data.detail.targetData.parent.data.config;
-  addClass(
-    data.detail.targetData.parent.el,
+  addParentClass(
+    [data.detail.targetData.parent.el],
     config.synthDropZoneParentClass,
-    data.detail.targetData.parent.data,
     true
   );
   dropSwapState.draggedOverNodes = [];
@@ -1138,13 +1131,27 @@ var baseDragState = {
   windowScrollY: void 0,
   lastScrollDirectionX: void 0,
   lastScrollDirectionY: void 0,
-  scrollDebounceTimeout: void 0
+  scrollDebounceTimeout: void 0,
+  frameIdX: void 0,
+  frameIdY: void 0
 };
 var state = baseDragState;
 var dropped = false;
 var documentController3;
 var scrollTimeout;
 function resetState() {
+  if (state.scrollDebounceTimeout) {
+    clearTimeout(state.scrollDebounceTimeout);
+  }
+  if (state.longPressTimeout) {
+    clearTimeout(state.longPressTimeout);
+  }
+  if (state.frameIdX !== void 0) {
+    cancelAnimationFrame(state.frameIdX);
+  }
+  if (state.frameIdY !== void 0) {
+    cancelAnimationFrame(state.frameIdY);
+  }
   const baseDragState2 = {
     affectedNodes: [],
     coordinates: {
@@ -1180,7 +1187,9 @@ function resetState() {
     windowScrollY: void 0,
     lastScrollDirectionX: void 0,
     lastScrollDirectionY: void 0,
-    scrollDebounceTimeout: void 0
+    scrollDebounceTimeout: void 0,
+    frameIdX: void 0,
+    frameIdY: void 0
   };
   state = { ...baseDragState2 };
 }
@@ -1276,7 +1285,6 @@ function dragAndDrop({
         if (isDragState(state) && e.cancelable) pd(e);
       },
       contextmenu: (e) => {
-        console.log("document contextmenu");
         if (isSynthDragState(state)) pd(e);
       }
     });
@@ -1636,7 +1644,6 @@ function setupNode(data) {
       if (isDragState(state) && e.cancelable) pd(e);
     },
     contextmenu: (e) => {
-      console.log("contextmenu");
       if (isSynthDragState(state)) pd(e);
     }
   });
@@ -1958,7 +1965,7 @@ function dragstartClasses(_node, nodes2, config, isSynth = false) {
     nodes2.map((x) => x.el),
     isSynth ? config.synthDraggingClass : config.draggingClass
   );
-  setTimeout(() => {
+  requestAnimationFrame(() => {
     removeClass(
       nodes2.map((x) => x.el),
       isSynth ? config.synthDraggingClass : config.draggingClass
@@ -2110,9 +2117,7 @@ function handleDragend(data, state2) {
   config.handleEnd(state2);
 }
 function handlePointercancel(data, state2) {
-  console.log("handlePointercancel", state2);
   if (!isSynthDragState(state2)) return;
-  console.log("handlePointercancel after isSynthDragState", state2);
   pd(data.e);
   if (dropped) {
     dropped = false;
@@ -2131,33 +2136,41 @@ function handlePointercancel(data, state2) {
   config?.handleEnd(state2);
 }
 function handleEnd3(state2) {
-  console.log("handleEnd");
   if (state2.draggedNode) state2.draggedNode.el.draggable = true;
   if (isSynthDragState(state2)) {
     state2.clonedDraggedNode.remove();
     clearTimeout(state2.longPressTimeout);
   }
   cancelSynthScroll(state2);
+  state2.lastScrollDirectionX = void 0;
+  state2.lastScrollDirectionY = void 0;
+  state2.preventEnter = false;
+  if (state2.scrollDebounceTimeout) {
+    clearTimeout(state2.scrollDebounceTimeout);
+    state2.scrollDebounceTimeout = void 0;
+  }
   const config = parents.get(state2.initialParent.el)?.config;
   const isSynth = isSynthDragState(state2);
   const dropZoneClass = isSynth ? config?.synthDropZoneClass : config?.dropZoneClass;
-  if (state2.originalZIndex !== void 0) {
-    state2.draggedNode.el.style.zIndex = state2.originalZIndex;
-  }
-  removeClass(
-    state2.draggedNodes.map((x) => x.el),
-    dropZoneClass
-  );
-  removeClass(
-    state2.draggedNodes.map((x) => x.el),
-    state2.initialParent.data?.config?.longPressClass
-  );
-  removeClass(
-    state2.draggedNodes.map((x) => x.el),
-    isSynth ? state2.initialParent.data.config.synthDragPlaceholderClass : state2.initialParent.data?.config?.dragPlaceholderClass
-  );
-  deselect(state2.draggedNodes, state2.currentParent, state2);
-  setActive(state2.currentParent, void 0, state2);
+  requestAnimationFrame(() => {
+    if (state2.originalZIndex !== void 0) {
+      state2.draggedNode.el.style.zIndex = state2.originalZIndex;
+    }
+    removeClass(
+      state2.draggedNodes.map((x) => x.el),
+      dropZoneClass
+    );
+    removeClass(
+      state2.draggedNodes.map((x) => x.el),
+      state2.initialParent.data?.config?.longPressClass
+    );
+    removeClass(
+      state2.draggedNodes.map((x) => x.el),
+      isSynth ? state2.initialParent.data.config.synthDragPlaceholderClass : state2.initialParent.data?.config?.dragPlaceholderClass
+    );
+    deselect(state2.draggedNodes, state2.currentParent, state2);
+    setActive(state2.currentParent, void 0, state2);
+  });
   resetState();
   state2.selectedState = void 0;
   config?.onDragend?.({
@@ -2302,13 +2315,19 @@ function handleLongPress(data, state2, node) {
   }, config.longPressDuration || 1e3);
 }
 function cancelSynthScroll(state2, cancelX = true, cancelY = true) {
-  if (cancelX && state2.frameIdX !== void 0) {
-    cancelAnimationFrame(state2.frameIdX);
-    state2.frameIdX = void 0;
+  if (cancelX) {
+    if (state2.frameIdX !== void 0) {
+      cancelAnimationFrame(state2.frameIdX);
+      state2.frameIdX = void 0;
+    }
+    state2.lastScrollDirectionX = void 0;
   }
-  if (cancelY && state2.frameIdY !== void 0) {
-    cancelAnimationFrame(state2.frameIdY);
-    state2.frameIdY = void 0;
+  if (cancelY) {
+    if (state2.frameIdY !== void 0) {
+      cancelAnimationFrame(state2.frameIdY);
+      state2.frameIdY = void 0;
+    }
+    state2.lastScrollDirectionY = void 0;
   }
   if (!state2.frameIdX && !state2.frameIdY) {
     state2.preventEnter = false;
@@ -2336,9 +2355,14 @@ function synthMove(e, state2, justStarted = false) {
   state2.coordinates.x = coordinates.x;
   state2.coordinates.y = coordinates.y;
   moveNode(state2, justStarted);
-  if (state2.scrollDebounceTimeout) clearTimeout(state2.scrollDebounceTimeout);
+  if (state2.scrollDebounceTimeout) {
+    clearTimeout(state2.scrollDebounceTimeout);
+    state2.scrollDebounceTimeout = void 0;
+  }
   state2.scrollDebounceTimeout = setTimeout(() => {
-    handleSynthScroll(state2.coordinates, e, state2);
+    if (isSynthDragState(state2)) {
+      handleSynthScroll(state2.coordinates, e, state2);
+    }
   }, 16);
   const elFromPoint = getElFromPoint(coordinates);
   if (!elFromPoint) {
@@ -2584,15 +2608,18 @@ function parentEventData(callback) {
   };
 }
 function addNodeClass(els, className, omitAppendPrivateClass = false) {
+  if (!className) return;
   function nodeSetter(node, nodeData) {
     nodes.set(node, nodeData);
   }
-  for (const el of els) {
-    const nodeData = nodes.get(el);
-    const newData = addClass(el, className, nodeData, omitAppendPrivateClass);
-    if (!newData) continue;
-    nodeSetter(el, newData);
-  }
+  requestAnimationFrame(() => {
+    for (const el of els) {
+      const nodeData = nodes.get(el);
+      const newData = addClass(el, className, nodeData, omitAppendPrivateClass);
+      if (!newData) continue;
+      nodeSetter(el, newData);
+    }
+  });
 }
 function addParentClass(els, className, omitAppendPrivateClass = false) {
   function parentSetter(parent, parentData) {
@@ -2600,6 +2627,7 @@ function addParentClass(els, className, omitAppendPrivateClass = false) {
   }
   for (const el of els) {
     const parentData = parents.get(el);
+    console.log("add parent class", className, omitAppendPrivateClass);
     const newData = addClass(el, className, parentData, omitAppendPrivateClass);
     if (!newData) continue;
     parentSetter(el, newData);
@@ -2614,12 +2642,22 @@ function addClass(el, className, data, omitAppendPrivateClass = false) {
     el.classList.add(...classNames);
     return;
   }
-  const privateClasses = [];
+  const privateClasses = [...data.privateClasses || []];
   for (const className2 of classNames) {
+    if (el.classList.contains(className2)) {
+      console.log(
+        `Class ${className2} already exists on element:`,
+        omitAppendPrivateClass ? "NOT adding to privateClasses" : "adding to privateClasses"
+      );
+    }
     if (!el.classList.contains(className2)) {
       el.classList.add(className2);
     } else if (el.classList.contains(className2) && omitAppendPrivateClass === false) {
       privateClasses.push(className2);
+      console.log(
+        `Added ${className2} to privateClasses, now contains:`,
+        privateClasses
+      );
     }
   }
   data.privateClasses = privateClasses;
@@ -2629,18 +2667,44 @@ function removeClass(els, className) {
   if (!className) return;
   const classNames = splitClass(className);
   if (!classNames.length) return;
-  for (const node of els) {
-    if (!isNode(node)) {
-      node.classList.remove(...classNames);
-      continue;
+  const parentElements = [];
+  const regularNodes = [];
+  for (const el of els) {
+    if (el instanceof HTMLElement && parents.get(el)) {
+      parentElements.push(el);
+    } else {
+      regularNodes.push(el);
     }
-    const nodeData = nodes.get(node) || parents.get(node);
-    if (!nodeData) continue;
-    for (const className2 of classNames) {
-      if (!nodeData.privateClasses.includes(className2)) {
-        node.classList.remove(className2);
+  }
+  for (const parent of parentElements) {
+    const parentData = parents.get(parent);
+    if (!parentData) continue;
+    if (className.includes("dropZoneParent")) {
+      console.log("remove drop zone parent class", className);
+      console.log("show me private classes", parentData.privateClasses);
+    }
+    for (const cls of classNames) {
+      if (!parentData.privateClasses.includes(cls)) {
+        parent.classList.remove(cls);
       }
     }
+  }
+  if (regularNodes.length > 0) {
+    requestAnimationFrame(() => {
+      for (const node of regularNodes) {
+        if (!isNode(node)) {
+          node.classList.remove(...classNames);
+          continue;
+        }
+        const nodeData = nodes.get(node);
+        if (!nodeData) continue;
+        for (const cls of classNames) {
+          if (!nodeData.privateClasses.includes(cls)) {
+            node.classList.remove(cls);
+          }
+        }
+      }
+    });
   }
 }
 function getScrollDirection(el, e, style, rect, opts) {
@@ -2684,18 +2748,28 @@ function getScrollDirection(el, e, style, rect, opts) {
   return isX ? { left: false, right: false } : { up: false, down: false };
 }
 function scrollAxis(el, _e, state2, options) {
+  if (!isDragState(state2) || !state2.draggedNode) {
+    return;
+  }
   state2.preventEnter = true;
   const isX = options.axis === "x";
   const dirFactor = options.direction === "positive" ? 1 : -1;
   const speed = 20;
   const key = isX ? "lastScrollDirectionX" : "lastScrollDirectionY";
   const idKey = isX ? "frameIdX" : "frameIdY";
-  if (state2[key] && state2[key] !== options.direction && state2[idKey] !== void 0) {
+  if (state2[idKey] !== void 0) {
     cancelAnimationFrame(state2[idKey]);
     state2[idKey] = void 0;
   }
   state2[key] = options.direction;
   const scrollLoop = () => {
+    if (!isDragState(state2) || !state2.draggedNode) {
+      if (state2[idKey] !== void 0) {
+        cancelAnimationFrame(state2[idKey]);
+        state2[idKey] = void 0;
+      }
+      return;
+    }
     const scrollProp = isX ? "scrollLeft" : "scrollTop";
     const sizeProp = isX ? "clientWidth" : "clientHeight";
     const scrollSizeProp = isX ? "scrollWidth" : "scrollHeight";
@@ -2705,6 +2779,7 @@ function scrollAxis(el, _e, state2, options) {
     const canScroll = dirFactor > 0 ? scrollPos + clientSize < scrollSize : scrollPos > 0;
     if (!canScroll) {
       state2[idKey] = void 0;
+      state2[key] = void 0;
       return;
     }
     el[scrollProp] += speed * dirFactor;
@@ -2720,6 +2795,9 @@ function isPointerInside(el, x, y) {
   return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
 }
 function handleSynthScroll(coordinates, e, state2) {
+  if (!isDragState(state2) || !state2.draggedNode) {
+    return;
+  }
   cancelSynthScroll(state2);
   const { x, y } = coordinates;
   let scrolled = false;

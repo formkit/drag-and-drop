@@ -2778,11 +2778,10 @@ export function addClass(
 
   if (!data) {
     el.classList.add(...classNames);
-
     return;
   }
 
-  const privateClasses = [];
+  const privateClasses = [...(data.privateClasses || [])];
 
   for (const className of classNames) {
     if (!el.classList.contains(className)) {
@@ -2801,7 +2800,8 @@ export function addClass(
 }
 
 /**
- * Remove class from the nodes using requestAnimationFrame for better timing.
+ * Remove class from the nodes using requestAnimationFrame for better timing on regular nodes,
+ * but synchronously for parent elements to avoid race conditions with remapNodes.
  *
  * @param els - The nodes.
  * @param className - The class name.
@@ -2818,25 +2818,52 @@ export function removeClass(
 
   if (!classNames.length) return;
 
-  // Use requestAnimationFrame to ensure class removal happens during proper rendering cycle
-  requestAnimationFrame(() => {
-    for (const node of els) {
-      if (!isNode(node)) {
-        node.classList.remove(...classNames);
-        continue;
-      }
+  // Split elements into parents (remove synchronously) and regular nodes (use animation frame)
+  const parentElements: Array<HTMLElement> = [];
+  const regularNodes: Array<Node | HTMLElement | Element> = [];
 
-      const nodeData = nodes.get(node) || parents.get(node);
+  for (const el of els) {
+    if (el instanceof HTMLElement && parents.get(el)) {
+      parentElements.push(el);
+    } else {
+      regularNodes.push(el);
+    }
+  }
 
-      if (!nodeData) continue;
+  // Process parent elements synchronously
+  for (const parent of parentElements) {
+    const parentData = parents.get(parent);
 
-      for (const className of classNames) {
-        if (!nodeData.privateClasses.includes(className)) {
-          node.classList.remove(className);
-        }
+    if (!parentData) continue;
+
+    for (const cls of classNames) {
+      if (!parentData.privateClasses.includes(cls)) {
+        parent.classList.remove(cls);
       }
     }
-  });
+  }
+
+  // Use requestAnimationFrame for regular nodes
+  if (regularNodes.length > 0) {
+    requestAnimationFrame(() => {
+      for (const node of regularNodes) {
+        if (!isNode(node)) {
+          node.classList.remove(...classNames);
+          continue;
+        }
+
+        const nodeData = nodes.get(node);
+
+        if (!nodeData) continue;
+
+        for (const cls of classNames) {
+          if (!nodeData.privateClasses.includes(cls)) {
+            node.classList.remove(cls);
+          }
+        }
+      }
+    });
+  }
 }
 
 type ScrollDirection<T> = { axis: "x"; state: DragState<T> } | { axis: "y" };

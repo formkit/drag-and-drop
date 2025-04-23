@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { dropOrSwap } from "@formkit/drag-and-drop";
-import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
+import { dropOrSwap } from "../../../src/index";
+import { useDragAndDrop } from "../../../src/vue/index";
 
 const todoItems = [
   "Schedule perm",
