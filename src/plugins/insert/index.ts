@@ -162,20 +162,82 @@ function checkPosition(e: DragEvent | PointerEvent) {
   }
 
   // 2. Traverse up the DOM from the element under the cursor
-  //    to see if any ancestor is a registered parent.
-  let isWithinAParent = false;
+  //    to see if any ancestor is a registered parent within the same group.
+  let isWithinValidParent = false;
   let current: HTMLElement | null = el;
+  const initialParentConfig = state.initialParent.data.config;
+
   while (current) {
-    if (nodes.has(current as Node) || parents.has(current)) {
-      isWithinAParent = true;
-      break; // Found a registered parent ancestor
+    // Check if current element is a registered parent
+    const parentData = parents.get(current);
+    if (parentData) {
+      // Check if this parent belongs to the same group as the initial parent
+      const elementConfig = parentData.config;
+
+      // Check group membership - elements belong to same instance if:
+      // 1. They have the same group, or
+      // 2. Neither has a group (default behavior), or
+      // 3. One accepts the other via accepts function
+      const sameGroup = elementConfig.group === initialParentConfig.group;
+      const bothNoGroup = !elementConfig.group && !initialParentConfig.group;
+
+      if (sameGroup || bothNoGroup) {
+        isWithinValidParent = true;
+        break;
+      }
+
+      // If there's an accepts function, check if this parent would accept the drag
+      if (elementConfig.accepts) {
+        const parentRecord: ParentRecord<any> = {
+          el: current,
+          data: parentData,
+        };
+        const accepted = elementConfig.accepts(
+          parentRecord,
+          state.initialParent,
+          state.currentParent,
+          state
+        );
+        if (accepted) {
+          isWithinValidParent = true;
+          break;
+        }
+      }
+
+      // If we found a registered parent but it's not in the same group,
+      // treat it as if we're outside valid parents
+      break;
     }
+
+    // Check if current element is a registered node
+    const nodeData = nodes.get(current as Node);
+    if (nodeData) {
+      // For nodes, traverse up to find their parent and check group membership
+      let nodeParent: HTMLElement | null = current.parentElement;
+      while (nodeParent) {
+        const nodeParentData = parents.get(nodeParent);
+        if (nodeParentData) {
+          const elementConfig = nodeParentData.config;
+          const sameGroup = elementConfig.group === initialParentConfig.group;
+          const bothNoGroup =
+            !elementConfig.group && !initialParentConfig.group;
+
+          if (sameGroup || bothNoGroup) {
+            isWithinValidParent = true;
+          }
+          break; // Found the parent, stop looking
+        }
+        nodeParent = nodeParent.parentElement;
+      }
+      break; // Found a registered node, processed it
+    }
+
     if (current === document.body) break; // Stop if we reach the body
     current = current.parentElement;
   }
 
-  // 3. If the cursor is NOT within any registered parent...
-  if (!isWithinAParent) {
+  // 3. If the cursor is NOT within a valid parent from the same group...
+  if (!isWithinValidParent) {
     // Hide the insert point if it exists
     if (insertState.insertPoint) {
       insertState.insertPoint.el.style.display = "none";
@@ -196,7 +258,7 @@ function checkPosition(e: DragEvent | PointerEvent) {
     // Reset current parent in the main state back to the initial one
     state.currentParent = state.initialParent;
   }
-  // 4. If the cursor IS within a registered parent, do nothing in this function.
+  // 4. If the cursor IS within a valid parent from the same group, do nothing in this function.
   // Other event handlers will manage the insertion point positioning.
 }
 
