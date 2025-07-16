@@ -1610,6 +1610,7 @@ export function initDrag<T>(
       dragImage = config.dragImage(data, draggedNodes);
     } else {
       if (!config.multiDrag || draggedNodes.length === 1) {
+        data.zIndex = data.targetData.node.el.style.zIndex;
         data.targetData.node.el.style.zIndex = "9999";
         data.targetData.node.el.style.boxSizing = "border-box";
 
@@ -1793,6 +1794,7 @@ export function handleDragend<T>(
   state: DragState<T>
 ) {
   const config = data.targetData.parent.data.config;
+  data.targetData.node.el.style.zIndex = data.zIndex ?? "0";
 
   if (!config.nativeDrag) return;
 

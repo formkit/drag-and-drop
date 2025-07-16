@@ -458,6 +458,7 @@ export interface NodeEventData<T> {
  */
 export interface NodeDragEventData<T> extends NodeEventData<T> {
   e: DragEvent;
+  zIndex?: string;
 }
 /**
  * The data passed to the node event listener when the event is a pointer event (not a native drag event).
