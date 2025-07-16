@@ -338,6 +338,14 @@ function handleRootPointermove(e: PointerEvent) {
   }
 }
 
+function handleTouchmove(e: TouchEvent) {
+  if (isDragState(state) && e.cancelable) pd(e);
+}
+
+function handleContextmenu(e: Event) {
+  if (isSynthDragState(state)) pd(e);
+}
+
 /**
  * Initializes the drag and drop functionality for a given parent.
  *
@@ -362,12 +370,8 @@ export function dragAndDrop<T>({
       drop: handleRootDrop,
       pointermove: handleRootPointermove,
       pointercancel: nodeEventData(config.handlePointercancel),
-      touchmove: (e: TouchEvent) => {
-        if (isDragState(state) && e.cancelable) pd(e);
-      },
-      contextmenu: (e: Event) => {
-        if (isSynthDragState(state)) pd(e);
-      },
+      touchmove: handleTouchmove,
+      contextmenu: handleContextmenu,
     });
   }
 
