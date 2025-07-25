@@ -17,6 +17,14 @@
   "keywords": [],
   "author": "Sasha Milenkovic <sasha@formkit.com>",
   "license": "MIT",
+  "homepage": "https://github.com/formkit/drag-and-drop",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/formkit/drag-and-drop.git"
+  },
+  "bugs": {
+    "url": "https://github.com/formkit/drag-and-drop/issues"
+  },
   "devDependencies": {
     "@playwright/test": "^1.51.1",
     "@types/react": "^18.3.20",
