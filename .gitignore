@@ -11,6 +11,8 @@ node_modules
 dist-ssr
 *.local
 
+.nuxt
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -25,3 +27,5 @@ dist-ssr
 /test-results/
 /playwright-report/
 /playwright/.cache/
+.node_modules_tmp
+tests/.nuxt/
