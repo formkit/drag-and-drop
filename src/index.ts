@@ -1173,15 +1173,16 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     }
   }
 
+  const parentNodeCount = parentData.getValues(parent).length
   if (
-    enabledNodes.length !== parentData.getValues(parent).length &&
+    enabledNodes.length !== parentNodeCount &&
     !config.disabled
   ) {
     console.warn(
-      "The number of draggable items defined in the parent element does not match the number of values. This may cause unexpected behavior."
+      `The number of draggable items defined in the parent element (${parentNodeCount}) does not match the number of values (${enabledNodes.length}). This may cause unexpected behavior.`,
     );
 
-    return;
+    return
   }
 
   const values = parentData.getValues(parent);
