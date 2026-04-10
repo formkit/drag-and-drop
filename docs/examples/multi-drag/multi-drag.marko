@@ -1,0 +1,33 @@
+static const mockFileNames = [
+  "dungeon_master.exe",
+  "map_1.dat",
+  "map_2.dat",
+  "character1.txt",
+  "character2.txt",
+  "shell32.dll",
+  "README.txt",
+];
+static const config = {
+  group: "A",
+  multiDrag: true,
+  selectedClass: "bg-blue-500 text-white",
+};
+
+<let/files1=mockFileNames>
+<let/files2=[]>
+
+<div class="file-manager">
+  <ul/parent1 class="file-list">
+    <for|item| of=files1 by=(f => f)>
+      <li class="file">${item}</li>
+    </for>
+  </ul>
+  <ul/parent2 class="file-list">
+    <for|item| of=files2 by=(f => f)>
+      <li class="file">${item}</li>
+    </for>
+  </ul>
+</div>
+
+<dnd:=files1 parent=parent1 config=config/>
+<dnd:=files2 parent=parent2 config=config/>

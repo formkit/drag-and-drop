@@ -1,0 +1,56 @@
+static const sourceItems = ["dungeon_master.exe", "map_1.dat", "map_2.dat", "character1.txt", "character2.txt", "shell32.dll", "README.txt"];
+static const target1Items = ["knight.bmp", "dragon.bmp"];
+static const target2Items = ["brick.bmp", "moss.bmp"];
+
+<let/items1=sourceItems>
+<let/items2=target1Items>
+<let/items3=target2Items>
+
+<!-- Config objects are stable; accepts callbacks close over reactive vars. -->
+<let/sourceConfig={ accepts: () => true }>
+<let/target1Config={
+  accepts: (_parent, lastParent) => {
+    if (lastParent.el === target2()) return false;
+    return items2.length < 3;
+  },
+}>
+<let/target2Config={
+  accepts: (_parent, lastParent) => {
+    if (lastParent.el === target1()) return false;
+    return items3.length < 5;
+  },
+}>
+
+<div>
+  <div class="flex justify-between">
+    <div>
+      <ul/source>
+        <for|item| of=items1 by=(i => i)>
+          <li>${item}</li>
+        </for>
+      </ul>
+    </div>
+    <div class="flex flex-col">
+      <div>
+        <h5>I can accept up to three items</h5>
+        <ul/target1 class="border-solid border-2 border-indigo-600">
+          <for|item| of=items2 by=(i => i)>
+            <li>${item}</li>
+          </for>
+        </ul>
+      </div>
+      <div>
+        I can accept up to five items.
+        <ul/target2 class="border-solid border-2 border-indigo-600">
+          <for|item| of=items3 by=(i => i)>
+            <li>${item}</li>
+          </for>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<dnd:=items1 parent=source config=sourceConfig/>
+<dnd:=items2 parent=target1 config=target1Config/>
+<dnd:=items3 parent=target2 config=target2Config/>

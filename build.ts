@@ -58,7 +58,7 @@ const __dirname = dirname(__filename);
     outExtension: ({ format }) => ({ js: format === "cjs" ? ".cjs" : ".mjs" }),
   });
 
-  async function replaceImports(fileName) {
+  async function replaceImports(fileName: string) {
     const format = fileName.endsWith("mjs") ? "mjs" : "cjs";
     const file = await readFile(resolve(__dirname, `${fileName}`), "utf8");
     const updatedFile = file.replace(
@@ -74,6 +74,24 @@ const __dirname = dirname(__filename);
   await replaceImports("dist/react/index.cjs");
   await replaceImports("dist/solid/index.mjs");
   await replaceImports("dist/solid/index.cjs");
+
+  // Marko — distribute as source, no compilation step needed.
+  // .marko files are compiled by the consumer's bundler (@marko/vite, @marko/webpack).
+  // "../index" in dnd.marko resolves to dist/index.mjs at consumer build time.
+  console.log("Copying Marko integration...");
+  const markoDistTagsDir = resolve(__dirname, "dist/tags");
+  await mkdir(markoDistTagsDir, { recursive: true });
+  await copyFile(
+    resolve(__dirname, "src/marko/dnd.marko"),
+    resolve(markoDistTagsDir, "dnd.marko")
+  );
+  // marko.json at dist root enables <dnd> auto-discovery in consuming projects.
+  // "tags-dir" is the correct key (confirmed from @marko/vite fixture packages).
+  await writeFile(
+    resolve(__dirname, "dist/marko.json"),
+    JSON.stringify({ "tags-dir": "./tags", "script-lang": "ts" }, null, 2),
+    "utf8"
+  );
 
   console.log("Rewriting package.json...");
 

@@ -1,0 +1,28 @@
+<let/tapes=[
+  "Depeche Mode",
+  "Duran Duran",
+  "Pet",
+  "Kraftwerk",
+  "Tears for Fears",
+  "Spandau Ballet",
+]>
+<let/disabled=false>
+<let/config={}>
+
+<ul/parent>
+  <for|tape| of=tapes by=(t => t)>
+    <li class="cassette">${tape}</li>
+  </for>
+</ul>
+
+<dnd:=tapes parent=parent config=config/>
+
+<button
+  id="no-drag"
+  onClick() {
+    disabled = !disabled;
+    config = { disabled };
+  }
+>
+  ${disabled ? "Enable" : "Disable"} drag and drop
+</button>
