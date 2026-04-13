@@ -48,6 +48,10 @@
         "default": "./solid/index.mjs"
       }
     },
+    "./marko": {
+      "import": "./tags/dnd.marko",
+      "default": "./tags/dnd.marko"
+    },
     ".": {
       "require": {
         "types": "./index.d.cts",

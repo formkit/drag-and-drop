@@ -1,4 +1,3 @@
-// @ts-ignore Test fixture imports the source Marko component outside tests-frameworks rootDir.
 import Dnd from "../../../src/marko/dnd.marko"
 
 export interface Input {
@@ -24,13 +23,16 @@ static const QUEEN = { id: "queen_of_spades", src: "/cards/queen_of_spades.png" 
   </for>
 </ul>
 
-<Dnd:=cards parent=(() => list() as HTMLElement) config=config/>
+<Dnd:=cards parent=list config=config/>
 
 <button id=`${input.id}_add_value` onClick() { cards = [...cards, QUEEN]; }>
   Add value
 </button>
 <button id=`${input.id}_disable` onClick() { config = { disabled: true }; }>
   Disable
+</button>
+<button id=`${input.id}_enable` onClick() { config = { disabled: false }; }>
+  Enable
 </button>
 <span id=`${input.id}_values`>
   ${cards.map(c => c.id).join(" ")}

@@ -1,0 +1,45 @@
+import Dnd from "../../../src/marko/dnd.marko"
+
+export interface Input {
+  id: string;
+}
+
+static const GROUP = { group: "marko_transfer" };
+
+<let/list1=[
+  { id: "10_of_clubs", src: "/cards/10_of_clubs.png" },
+  { id: "jack_of_hearts", src: "/cards/jack_of_hearts.png" },
+]>
+<let/list2=[
+  { id: "queen_of_spades", src: "/cards/queen_of_spades.png" },
+]>
+
+<h3>#${input.id}</h3>
+<h4>transfer</h4>
+
+<div style="display:flex">
+  <ul/parent1 id=`${input.id}_list1`>
+    <for|card| of=list1 by="id">
+      <li class="item" id=`${input.id}_${card.id}`>
+        <img src=card.src/>
+      </li>
+    </for>
+  </ul>
+  <ul/parent2 id=`${input.id}_list2`>
+    <for|card| of=list2 by="id">
+      <li class="item" id=`${input.id}_${card.id}`>
+        <img src=card.src/>
+      </li>
+    </for>
+  </ul>
+</div>
+
+<Dnd:=list1 parent=parent1 config=GROUP/>
+<Dnd:=list2 parent=parent2 config=GROUP/>
+
+<span id=`${input.id}_values1`>
+  ${list1.map(c => c.id).join(" ")}
+</span>
+<span id=`${input.id}_values2`>
+  ${list2.map(c => c.id).join(" ")}
+</span>

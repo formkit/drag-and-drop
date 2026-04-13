@@ -19,3 +19,73 @@ Created by the <a href="https://formkit.com">FormKit team</a>.
 > Unlike many projects this repository includes the `dist` directory since the documentation extracts TypeScript types from the build source code.
 
 ## About this repository
+
+## Marko
+
+FormKit Drag and Drop supports Marko v6 via a native tag integration. Because Marko's `<lifecycle>` tag provides `onMount`, `onUpdate`, and `onDestroy` hooks directly, no separate composable or hook wrapper is needed — the `<dnd>` tag _is_ the integration.
+
+### Installation
+
+```bash
+npm install @formkit/drag-and-drop
+```
+
+Ensure your project uses [`@marko/vite`](https://github.com/marko-js/vite) (v5.4+ for Vite 5, v6+ for Vite 8).
+
+### Usage
+
+Use the `:=` bind shorthand to wire up reactive state with two-way binding:
+
+```marko
+<let/tapes=[
+  "Depeche Mode",
+  "Duran Duran",
+  "Pet Shop Boys",
+  "Kraftwerk",
+  "Tears for Fears",
+  "Spandau Ballet",
+]>
+
+<ul/parent>
+  <for|tape| of=tapes by="id">
+    <li>${tape}</li>
+  </for>
+</ul>
+
+<dnd:=tapes parent=parent/>
+```
+
+### Auto-discovery
+
+The `<dnd>` tag is auto-discoverable — no import needed. Simply install `@formkit/drag-and-drop` and use `<dnd>` in any `.marko` template.
+
+### Explicit import
+
+If you prefer an explicit import (e.g. to rename the tag or resolve a conflict):
+
+```marko
+import Dnd from "@formkit/drag-and-drop/marko"
+
+<Dnd:=tapes parent=parent/>
+```
+
+### Disabling drag and drop
+
+Pass a reactive `config` variable and replace it to trigger an update:
+
+```marko
+<let/tapes=["Depeche Mode", "Duran Duran", "Pet Shop Boys"]>
+<let/config={}>
+
+<ul/parent>
+  <for|tape| of=tapes by="id">
+    <li>${tape}</li>
+  </for>
+</ul>
+
+<dnd:=tapes parent=parent config=config/>
+
+<button onClick() { config = { disabled: true }; }>Disable</button>
+```
+
+

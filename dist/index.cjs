@@ -1362,6 +1362,12 @@ function handleRootPointermove(e) {
     synthMove(e, state);
   }
 }
+function handleTouchmove(e) {
+  if (isDragState(state) && e.cancelable) pd(e);
+}
+function handleContextmenu(e) {
+  if (isSynthDragState(state)) pd(e);
+}
 function dragAndDrop({
   parent,
   getValues,
@@ -1378,12 +1384,8 @@ function dragAndDrop({
       drop: handleRootDrop,
       pointermove: handleRootPointermove,
       pointercancel: nodeEventData(config.handlePointercancel),
-      touchmove: (e) => {
-        if (isDragState(state) && e.cancelable) pd(e);
-      },
-      contextmenu: (e) => {
-        if (isSynthDragState(state)) pd(e);
-      }
+      touchmove: handleTouchmove,
+      contextmenu: handleContextmenu
     });
   }
   tearDown(parent);
