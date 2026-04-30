@@ -1,5 +1,7 @@
 name: Drag and drop tests
 on: [push, workflow_dispatch]
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 jobs:
   playwright:
     name: "Playwright tests"
@@ -9,7 +11,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: latest
+      - name: Update npm
+        run: npm install -g npm@latest
+      - name: Verify runtime
+        run: |
+          node --version
+          npm --version
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
