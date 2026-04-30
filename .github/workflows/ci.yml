@@ -9,11 +9,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
-          version: 9.10.0
+          version: 10.14.0
       - run: pnpm install --frozen-lockfile
       - name: Build Dev Frameworks
         run: cd tests-frameworks && pnpm install && cd ..
