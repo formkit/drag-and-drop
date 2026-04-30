@@ -46,6 +46,10 @@
       "types": "./src/solid/index.ts",
       "default": "./src/solid/index.ts"
     },
+    "./marko": {
+      "import": "./tags/dnd.marko",
+      "default": "./tags/dnd.marko"
+    },
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"

@@ -1,0 +1,39 @@
+import Dnd from "../../../src/marko/dnd.marko"
+
+export interface Input {
+  id: string;
+}
+
+static const QUEEN = { id: "queen_of_spades", src: "/cards/queen_of_spades.png" };
+
+<let/cards=[
+  { id: "10_of_clubs", src: "/cards/10_of_clubs.png" },
+  { id: "jack_of_hearts", src: "/cards/jack_of_hearts.png" },
+]>
+<let/config={}>
+
+<h3>#${input.id}</h3>
+<h4>useDragAndDrop</h4>
+
+<ul/list id=input.id>
+  <for|card| of=cards by="id">
+    <li class="item" id=`${input.id}_${card.id}`>
+      <img src=card.src/>
+    </li>
+  </for>
+</ul>
+
+<Dnd:=cards parent=list config=config/>
+
+<button id=`${input.id}_add_value` onClick() { cards = [...cards, QUEEN]; }>
+  Add value
+</button>
+<button id=`${input.id}_disable` onClick() { config = { disabled: true }; }>
+  Disable
+</button>
+<button id=`${input.id}_enable` onClick() { config = { disabled: false }; }>
+  Enable
+</button>
+<span id=`${input.id}_values`>
+  ${cards.map(c => c.id).join(" ")}
+</span>

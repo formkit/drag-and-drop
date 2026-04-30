@@ -6,6 +6,8 @@ import react from "@vitejs/plugin-react";
 
 import solid from "vite-plugin-solid";
 
+import marko from "@marko/vite";
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
@@ -16,5 +18,6 @@ export default defineConfig({
     solid({
       include: "./solid/**/*.tsx",
     }),
+    marko(),
   ],
 });

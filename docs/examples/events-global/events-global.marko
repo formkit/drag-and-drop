@@ -1,0 +1,25 @@
+client import { state } from "@formkit/drag-and-drop";
+
+<let/flavors=["🍦 vanilla", "🍫 chocolate", "🍓 strawberry"]>
+<let/dragStatus="Not dragging">
+
+<lifecycle
+  onMount() {
+    state.on("dragStarted", () => { dragStatus = "Dragging"; });
+    state.on("dragEnded", () => { dragStatus = "Not dragging"; });
+  }
+/>
+
+<div class="border-4 p-4 border-indigo-300 dark:bg-slate-800 antialiased">
+  <div class="font-oldschool mb-4 text-lg md:text-xl lg:text-2xl">
+    <span class="antialiased">=== Rank your favorite flavors ===</span>
+    <div>Drag status: ${dragStatus}</div>
+  </div>
+  <div/parent class="border-2 border-indigo-300 font-oldschool text-lg md:text-xl lg:text-2xl antialiased">
+    <for|flavor| of=flavors by=(f => f)>
+      <div class="border-2 border-indigo-300 p-2">${flavor}</div>
+    </for>
+  </div>
+</div>
+
+<dnd:=flavors parent=parent/>

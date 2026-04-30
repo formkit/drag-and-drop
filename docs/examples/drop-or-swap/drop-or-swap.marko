@@ -1,0 +1,46 @@
+import { dropOrSwap } from "@formkit/drag-and-drop";
+
+static const todoItems = ["Schedule perm", "Rewind VHS tapes", "Make change for the arcade", "Get disposable camera developed", "Learn C++", "Return Nintendo Power Glove"];
+static const doneItems = ["Pickup new mix-tape from Beth"];
+
+<let/todos=todoItems>
+<let/dones=doneItems>
+<let/todoSwap=false>
+<let/doneSwap=false>
+
+<!-- Config objects are initialized once; the shouldSwap callbacks close
+     over reactive variables and always read the current value. -->
+<let/todoConfig={ group: "todoList", plugins: [dropOrSwap({ shouldSwap: () => todoSwap })] }>
+<let/doneConfig={ group: "todoList", plugins: [dropOrSwap({ shouldSwap: () => doneSwap })] }>
+
+<div class="kanban-board">
+  <ul/todoList class="kanban-column">
+    <for|todo| of=todos by=(t => t)>
+      <li class="kanban-item">${todo}</li>
+    </for>
+  </ul>
+  <div>
+    <button
+      onClick() { todoSwap = !todoSwap; }
+      class="bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg mt-4"
+    >
+      Toggle ${todoSwap ? "Drop" : "Swap"}
+    </button>
+  </div>
+  <ul/doneList class="kanban-column">
+    <for|done| of=dones by=(t => t)>
+      <li class="kanban-item">${done}</li>
+    </for>
+  </ul>
+  <div>
+    <button
+      onClick() { doneSwap = !doneSwap; }
+      class="bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg mt-4"
+    >
+      Toggle ${doneSwap ? "Drop" : "Swap"}
+    </button>
+  </div>
+</div>
+
+<dnd:=todos parent=todoList config=todoConfig/>
+<dnd:=dones parent=doneList config=doneConfig/>

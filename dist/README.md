@@ -15,6 +15,9 @@ Check out the docs here!
 
 Created by the <a href="https://formkit.com">FormKit team</a>.
 
+> [!NOTE]  
+> Unlike many projects this repository includes the `dist` directory since the documentation extracts TypeScript types from the build source code.
+
 ## About this repository
 
 ## Marko

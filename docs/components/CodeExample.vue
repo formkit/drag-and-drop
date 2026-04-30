@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { Component } from "vue";
 import { shallowRef, ref, reactive, watch, onMounted, nextTick } from "vue";
+import IconMarko from "./IconMarko.vue";
 
 const props = defineProps<{
   example: string;
@@ -10,7 +11,7 @@ const exampleLang = ref("react");
 const rawCode = ref("");
 const copyStatus = ref("Copy");
 const codeCache = ref<Record<string, string>>({});
-const availableLangs = ["react", "vue", "solid", "native"];
+const availableLangs = ["react", "vue", "solid", "native", "marko"];
 const copyButtonRef = ref<HTMLButtonElement | null>(null);
 
 const cmp = shallowRef<Component | false>(false);
@@ -135,6 +136,16 @@ async function copyCode() {
         <IconJavaScript class="inline-block w-4 sm:w-5 h-[1.25em] mr-1.5" />
         Native
       </li>
+      <li
+        class="example-tab"
+        @click="
+          exampleLang = 'marko';
+          expanded = true;
+        "
+        :data-active="exampleLang === 'marko'"
+      >
+        <IconMarko class="inline-block w-4 sm:w-5 mr-1.5" /> Marko
+      </li>
 
       <li class="ml-auto flex items-center pr-1">
         <div class="relative mr-1">
@@ -195,6 +206,9 @@ async function copyCode() {
       </div>
       <div v-if="loadedLangs.has('native')" v-show="exampleLang === 'native'">
         <CodeExampleNative :example="example" />
+      </div>
+      <div v-if="loadedLangs.has('marko')" v-show="exampleLang === 'marko'">
+        <CodeExampleMarko :example="example" />
       </div>
     </div>
     <div class="demo-container">

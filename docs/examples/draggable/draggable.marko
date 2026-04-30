@@ -1,0 +1,21 @@
+static const config = {
+  draggable: (el: HTMLElement) => el.id !== "no-drag",
+};
+
+<let/tapes=[
+  "Depeche Mode",
+  "Duran Duran",
+  "Pet Shop Boys",
+  "Kraftwerk",
+  "Tears for Fears",
+  "Spandau Ballet",
+]>
+
+<ul/parent>
+  <for|tape| of=tapes by=(t => t)>
+    <li class="cassette">${tape}</li>
+  </for>
+  <li id="no-drag">I am NOT draggable</li>
+</ul>
+
+<dnd:=tapes parent=parent config=config/>

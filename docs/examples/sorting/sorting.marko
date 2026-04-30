@@ -1,0 +1,16 @@
+<let/tapes=[
+  "Depeche Mode",
+  "Duran Duran",
+  "Pet Shop Boys",
+  "Kraftwerk",
+  "Tears for Fears",
+  "Spandau Ballet",
+]>
+
+<ul/parent>
+  <for|tape| of=tapes by=(t => t)>
+    <li class="cassette">${tape}</li>
+  </for>
+</ul>
+
+<dnd:=tapes parent=parent/>

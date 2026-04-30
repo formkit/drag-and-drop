@@ -1,0 +1,57 @@
+import { insert } from "@formkit/drag-and-drop";
+
+static const insertPointClasses = [
+  "absolute",
+  "bg-blue-500",
+  "z-[1000]",
+  "rounded-full",
+  "duration-[5ms]",
+  "before:block",
+  'before:content-["Insert"]',
+  "before:whitespace-nowrap",
+  "before:block",
+  "before:bg-blue-500",
+  "before:py-1",
+  "before:px-2",
+  "before:rounded-full",
+  "before:text-xs",
+  "before:absolute",
+  "before:top-1/2",
+  "before:left-1/2",
+  "before:-translate-y-1/2",
+  "before:-translate-x-1/2",
+  "before:text-white",
+  "before:text-xs",
+];
+
+static function makeInsertPoint() {
+  const div = document.createElement("div");
+  for (const cls of insertPointClasses) div.classList.add(cls);
+  return div;
+}
+
+static const todoItems = ["Schedule perm", "Rewind VHS tapes", "Make change for the arcade", "Get disposable camera developed", "Learn C++", "Return Nintendo Power Glove"];
+static const doneItems = ["Pickup new mix-tape from Beth"];
+static const config = {
+  group: "todoList",
+  plugins: [insert({ insertPoint: makeInsertPoint })],
+};
+
+<let/todos=todoItems>
+<let/dones=doneItems>
+
+<div class="kanban-board">
+  <ul/todoList class="kanban-column">
+    <for|todo| of=todos by=(t => t)>
+      <li class="kanban-item">${todo}</li>
+    </for>
+  </ul>
+  <ul/doneList class="kanban-column">
+    <for|done| of=dones by=(t => t)>
+      <li class="kanban-item">${done}</li>
+    </for>
+  </ul>
+</div>
+
+<dnd:=todos parent=todoList config=config/>
+<dnd:=dones parent=doneList config=config/>
