@@ -10,14 +10,15 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@nuxtjs/tailwindcss": "^6.12.1",
-    "nuxt": "^3.11.1",
-    "vue": "^3.4.21",
-    "vue-router": "^4.3.0",
-    "@formkit/drag-and-drop": "workspace:*"
+    "@formkit/drag-and-drop": "workspace:*",
+    "@nuxtjs/tailwindcss": "^6.14.0",
+    "nuxt": "^4.4.4",
+    "vue": "^3.5.33",
+    "vue-router": "^5.0.6"
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.20",
-    "postcss": "^8.4.47"
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.12",
+    "vite": "^7.3.2"
   }
 }

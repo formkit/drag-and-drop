@@ -78,12 +78,12 @@ export function useDragAndDrop<E extends HTMLElement, T = unknown>(
   list: T[],
   options: Partial<ParentConfig<T>> = {}
 ): [
-  RefObject<E>,
+  RefObject<E | null>,
   T[],
   Dispatch<SetStateAction<T[]>>,
   (config: Partial<ParentConfig<T>>) => void
 ] {
-  const parent: RefObject<E> = useRef<E>(null);
+  const parent = useRef<E>(null);
 
   const [values, setValues] = useState(list);
 

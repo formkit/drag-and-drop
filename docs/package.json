@@ -9,19 +9,20 @@
     "postinstall": "nuxt prepare"
   },
   "devDependencies": {
-    "@arrow-js/core": "1.0.0-alpha.9",
-    "@nuxtjs/color-mode": "^3.3.2",
-    "@nuxtjs/tailwindcss": "^6.11.2",
-    "@shikijs/twoslash": "^1.1.6",
-    "@types/node": "^18",
-    "@vueuse/nuxt": "^10.7.2",
-    "nuxt": "^3.10.0",
-    "nuxt-fathom": "^0.0.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "solid-js": "^1.8.0",
-    "shiki": "^1.1.6",
-    "twoslash-vue": "^0.2.4"
+    "@arrow-js/core": "1.0.6",
+    "@nuxtjs/color-mode": "^4.0.0",
+    "@nuxtjs/tailwindcss": "^6.14.0",
+    "@shikijs/twoslash": "^4.0.2",
+    "@types/node": "^25.6.0",
+    "@vueuse/nuxt": "^14.2.1",
+    "nuxt": "^4.4.4",
+    "nuxt-fathom": "^0.0.3",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "shiki": "^4.0.2",
+    "solid-js": "^1.9.12",
+    "twoslash-vue": "^0.3.8",
+    "vite": "^7.3.2"
   },
   "dependencies": {
     "@formkit/drag-and-drop": "workspace:*"

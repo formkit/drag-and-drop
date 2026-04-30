@@ -2,9 +2,10 @@
   "compilerOptions": {
     "jsx": "react",
     "target": "ES2020",
+    "ignoreDeprecations": "6.0",
     "useDefineForClassFields": true,
     "module": "ESNext",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
 
     /* Bundler mode */
@@ -20,5 +21,13 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["/**/*"]
+  "include": [
+    "index.d.ts",
+    "main.ts",
+    "vite.config.ts",
+    "marko/**/*.ts",
+    "react/**/*.ts",
+    "react/**/*.tsx",
+    "vue/**/*.ts"
+  ]
 }

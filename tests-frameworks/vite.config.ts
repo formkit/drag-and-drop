@@ -18,6 +18,6 @@ export default defineConfig({
     solid({
       include: "./solid/**/*.tsx",
     }),
-    marko(),
+    marko({ linked: false }),
   ],
 });

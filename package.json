@@ -27,19 +27,21 @@
     }
   },
   "devDependencies": {
-    "@playwright/test": "^1.51.1",
-    "@types/react": "^18.3.20",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "bumpp": "^9.11.1",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.59.1",
+    "@types/react": "^19.2.14",
+    "@typescript-eslint/eslint-plugin": "^8.59.1",
+    "@typescript-eslint/parser": "^8.59.1",
+    "bumpp": "^11.0.1",
     "esbuild-plugin-replace": "^1.4.0",
-    "eslint": "^8.57.1",
-    "eslint-plugin-vue": "^9.33.0",
-    "jiti": "^2.4.2",
-    "pathe": "^1.1.2",
-    "publint": "^0.2.12",
-    "tailwind": "^4.0.0",
-    "tsup": "^8.4.0",
-    "typescript": "^5.8.3"
+    "eslint": "^10.2.1",
+    "eslint-plugin-vue": "^10.9.0",
+    "jiti": "^2.6.1",
+    "pathe": "^2.0.3",
+    "publint": "^0.3.18",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vue-eslint-parser": "^10.4.0"
   },
   "exports": {
     "./vue": {

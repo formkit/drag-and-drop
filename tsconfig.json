@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2020",
+    "ignoreDeprecations": "6.0",
     "useDefineForClassFields": true,
     "module": "es2020",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
