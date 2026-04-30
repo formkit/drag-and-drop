@@ -5,7 +5,7 @@ let page: Page;
 
 test.beforeAll(async ({ browser }) => {
   page = await browser.newPage();
-  await page.goto("http://localhost:5173/");
+  await page.goto("http://127.0.0.1:5173/");
 });
 
 test.describe("Vue wrappers working as expected", async () => {

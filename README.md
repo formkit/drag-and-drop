@@ -19,15 +19,15 @@ Created by the <a href="https://formkit.com">FormKit team</a>.
 
 ## Marko
 
-FormKit Drag and Drop supports Marko v6 via a native tag integration. Because Marko's `<lifecycle>` tag provides `onMount`, `onUpdate`, and `onDestroy` hooks directly, no separate composable or hook wrapper is needed — the `<dnd>` tag _is_ the integration.
+FormKit Drag and Drop supports Marko v6 via a native tag integration. Because Marko's `<lifecycle>` tag provides `onMount`, `onUpdate`, and `onDestroy` hooks directly, no separate composable or hook wrapper is needed. The `<dnd>` tag is the integration.
 
 ### Installation
 
 ```bash
-npm install @formkit/drag-and-drop
+npm install @formkit/drag-and-drop @marko/runtime-tags
 ```
 
-Ensure your project uses [`@marko/vite`](https://github.com/marko-js/vite) (v5.4+ for Vite 5, v6+ for Vite 8).
+Ensure your project uses [`@marko/vite`](https://github.com/marko-js/vite) (v5.4+ for Vite 5, v6+ for Vite 8) and `@marko/runtime-tags` 6.0.166 or newer.
 
 ### Usage
 
@@ -44,7 +44,7 @@ Use the `:=` bind shorthand to wire up reactive state with two-way binding:
 ]>
 
 <ul/parent>
-  <for|tape| of=tapes by="id">
+  <for|tape| of=tapes by=(tape => tape)>
     <li>${tape}</li>
   </for>
 </ul>
@@ -54,7 +54,7 @@ Use the `:=` bind shorthand to wire up reactive state with two-way binding:
 
 ### Auto-discovery
 
-The `<dnd>` tag is auto-discoverable — no import needed. Simply install `@formkit/drag-and-drop` and use `<dnd>` in any `.marko` template.
+The `<dnd>` tag is auto-discoverable without an import. Simply install `@formkit/drag-and-drop` and use `<dnd>` in any `.marko` template.
 
 ### Explicit import
 
@@ -75,7 +75,7 @@ Pass a reactive `config` variable and replace it to trigger an update:
 <let/config={}>
 
 <ul/parent>
-  <for|tape| of=tapes by="id">
+  <for|tape| of=tapes by=(tape => tape)>
     <li>${tape}</li>
   </for>
 </ul>
@@ -84,5 +84,3 @@ Pass a reactive `config` variable and replace it to trigger an update:
 
 <button onClick() { config = { disabled: true }; }>Disable</button>
 ```
-
-

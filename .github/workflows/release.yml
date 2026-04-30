@@ -58,6 +58,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Set package version from git tag
+        env:
+          VERSION: ${{ steps.publish-meta.outputs.version }}
+        run: npm pkg set version="$VERSION" --git-tag-version=false
+
       - name: Build package
         run: pnpm run build
 
