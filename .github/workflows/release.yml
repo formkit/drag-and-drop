@@ -13,22 +13,29 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
-          version: 9.10.0
+          version: 10.33.2
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: 24
+          check-latest: true
           cache: pnpm
           registry-url: "https://registry.npmjs.org"
 
       - name: Update npm for trusted publishing
         run: npm install -g npm@latest
+
+      - name: Verify runtime
+        run: |
+          node --version
+          npm --version
+          pnpm --version
 
       - name: Determine npm tag
         id: publish-meta
@@ -67,8 +74,7 @@ jobs:
         run: pnpm run build
 
       - name: Validate package
-        working-directory: dist
-        run: npx publint
+        run: pnpm exec publint dist
 
       - name: Publish package
         working-directory: dist
@@ -77,6 +83,6 @@ jobs:
         run: pnpm publish --access public --no-git-checks --tag "$NPM_TAG"
 
       - name: Create GitHub release notes
-        run: npx changelogithub
+        run: pnpm dlx changelogithub@latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
