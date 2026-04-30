@@ -2,9 +2,9 @@ workspaces:
   - docs
   - tests
   - tests-frameworks
-  - dist
   - playground/nuxt
   - playground/next
 
 packages:
   - "**"
+  - "!dist"

@@ -58,7 +58,7 @@ const __dirname = dirname(__filename);
     outExtension: ({ format }) => ({ js: format === "cjs" ? ".cjs" : ".mjs" }),
   });
 
-  async function replaceImports(fileName) {
+  async function replaceImports(fileName: string) {
     const format = fileName.endsWith("mjs") ? "mjs" : "cjs";
     const file = await readFile(resolve(__dirname, `${fileName}`), "utf8");
     const updatedFile = file.replace(
@@ -77,9 +77,54 @@ const __dirname = dirname(__filename);
 
   console.log("Rewriting package.json...");
 
+  const publishExports = {
+    "./vue": {
+      require: {
+        types: "./vue/index.d.cts",
+        default: "./vue/index.cjs",
+      },
+      import: {
+        types: "./vue/index.d.ts",
+        default: "./vue/index.mjs",
+      },
+    },
+    "./react": {
+      require: {
+        types: "./react/index.d.cts",
+        default: "./react/index.cjs",
+      },
+      import: {
+        types: "./react/index.d.ts",
+        default: "./react/index.mjs",
+      },
+    },
+    "./solid": {
+      require: {
+        types: "./solid/index.d.cts",
+        default: "./solid/index.cjs",
+      },
+      import: {
+        types: "./solid/index.d.ts",
+        default: "./solid/index.mjs",
+      },
+    },
+    ".": {
+      require: {
+        types: "./index.d.cts",
+        default: "./index.cjs",
+      },
+      import: {
+        types: "./index.d.ts",
+        default: "./index.mjs",
+      },
+    },
+  };
+
   const packageJson = {
-    name: "@formkit/drag-and-drop",
     ...JSON.parse(await readFile(resolve(__dirname, `package.json`), "utf8")),
+    main: "./index.cjs",
+    types: "./index.d.cts",
+    exports: publishExports,
   };
   delete packageJson.devDependencies;
   delete packageJson.private;

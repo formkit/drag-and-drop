@@ -5,20 +5,73 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+  id-token: write
+
 jobs:
-  release:
+  publish:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.10.0
+
       - uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: "20"
+          cache: pnpm
+          registry-url: "https://registry.npmjs.org"
 
-      - run: npx changelogithub
+      - name: Update npm for trusted publishing
+        run: npm install -g npm@latest
+
+      - name: Determine npm tag
+        id: publish-meta
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG_NAME#v}
+
+          if [[ "$VERSION" =~ (^|[-.])next([.-]|$) ]]; then
+            NPM_TAG="next"
+          elif [[ "$VERSION" =~ (^|[-.])dev([.-]|$) ]]; then
+            NPM_TAG="dev"
+          else
+            NPM_TAG="latest"
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "npm_tag=$NPM_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Verify branch for @latest releases
+        if: steps.publish-meta.outputs.npm_tag == 'latest'
+        run: |
+          if ! git branch -r --contains HEAD | grep -q 'origin/main'; then
+            echo "ERROR: @latest releases can only be published from main"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build package
+        run: pnpm run build
+
+      - name: Validate package
+        working-directory: dist
+        run: npx publint
+
+      - name: Publish package
+        working-directory: dist
         env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          NPM_TAG: ${{ steps.publish-meta.outputs.npm_tag }}
+        run: pnpm publish --access public --no-git-checks --tag "$NPM_TAG"
+
+      - name: Create GitHub release notes
+        run: npx changelogithub
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

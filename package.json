@@ -1,16 +1,17 @@
 {
+  "name": "@formkit/drag-and-drop",
   "version": "0.5.3",
   "private": true,
   "description": "Drag and drop package.",
-  "main": "./index.cjs",
-  "types": "./index.d.cts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "type": "module",
   "scripts": {
     "tests": "cd tests && pnpm run dev",
     "tests-frameworks": "cd tests-frameworks && pnpm run dev",
     "docs": "cd docs && pnpm run dev",
     "build": "jiti build.ts",
-    "release": "npx bumpp --no-tag --no-push --no-commit && pnpm run build && cd dist && npx publint && pnpm publish --no-git-checks",
+    "release": "npx bumpp && git push --follow-tags",
     "lint": "eslint ."
   },
   "packages": [],
@@ -34,44 +35,20 @@
   },
   "exports": {
     "./vue": {
-      "require": {
-        "types": "./vue/index.d.cts",
-        "default": "./vue/index.cjs"
-      },
-      "import": {
-        "types": "./vue/index.d.ts",
-        "default": "./vue/index.mjs"
-      }
+      "types": "./src/vue/index.ts",
+      "default": "./src/vue/index.ts"
     },
     "./react": {
-      "require": {
-        "types": "./react/index.d.cts",
-        "default": "./react/index.cjs"
-      },
-      "import": {
-        "types": "./react/index.d.ts",
-        "default": "./react/index.mjs"
-      }
+      "types": "./src/react/index.ts",
+      "default": "./src/react/index.ts"
     },
     "./solid": {
-      "require": {
-        "types": "./solid/index.d.cts",
-        "default": "./solid/index.cjs"
-      },
-      "import": {
-        "types": "./solid/index.d.ts",
-        "default": "./solid/index.mjs"
-      }
+      "types": "./src/solid/index.ts",
+      "default": "./src/solid/index.ts"
     },
     ".": {
-      "require": {
-        "types": "./index.d.cts",
-        "default": "./index.cjs"
-      },
-      "import": {
-        "types": "./index.d.ts",
-        "default": "./index.mjs"
-      }
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
     }
   }
 }
