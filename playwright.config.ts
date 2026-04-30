@@ -8,6 +8,20 @@ export default defineConfig({
   workers: 1,
   timeout: 20000,
   reporter: "list",
+  webServer: [
+    {
+      command: "pnpm --dir tests-frameworks run dev --host 127.0.0.1",
+      url: "http://127.0.0.1:5173",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120000,
+    },
+    {
+      command: "pnpm --dir tests run dev --host 127.0.0.1",
+      url: "http://127.0.0.1:3001",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120000,
+    },
+  ],
   use: {
     baseURL: "http://127.0.0.1:5173",
     trace: "on-first-retry",

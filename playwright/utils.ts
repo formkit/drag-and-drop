@@ -12,6 +12,54 @@ interface DragDropData {
   drop?: boolean;
 }
 
+interface SelectData {
+  id: string;
+  shiftKey?: boolean;
+  ctrlKey?: boolean;
+  metaKey?: boolean;
+}
+
+/**
+ * Selects a draggable node through the pointer event path used by the library.
+ */
+export async function selectNode(
+  page: Page,
+  { id, shiftKey = false, ctrlKey = false, metaKey = false }: SelectData
+): Promise<void> {
+  await page.evaluate(
+    ({ id, shiftKey, ctrlKey, metaKey }) => {
+      const element = document.getElementById(id);
+
+      if (!element) return;
+
+      const rect = element.getBoundingClientRect();
+      const x = rect.x + rect.width / 2;
+      const y = rect.y + rect.height / 2;
+      const eventProps = {
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+        buttons: 1,
+        clientX: x,
+        clientY: y,
+        ctrlKey,
+        metaKey,
+        pointerId: 1,
+        pointerType: "mouse",
+        screenX: x,
+        screenY: y,
+        shiftKey,
+      };
+
+      element.dispatchEvent(new PointerEvent("pointerdown", eventProps));
+      element.dispatchEvent(
+        new PointerEvent("pointerup", { ...eventProps, buttons: 0 })
+      );
+    },
+    { id, shiftKey, ctrlKey, metaKey }
+  );
+}
+
 /**
  * Utility function used to simulate drag and drop events.
  *

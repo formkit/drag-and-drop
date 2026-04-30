@@ -1,5 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
-import { drag } from "../../utils";
+import { drag, selectNode } from "../../utils";
 
 let page: Page;
 
@@ -11,7 +11,7 @@ test.describe("Multi drag sorting", async () => {
   test("Multi drag sort", async () => {
     await page.goto("http://localhost:3001/multi-drag");
     await new Promise((r) => setTimeout(r, 1000));
-    await page.locator("#Apple").click();
+    await selectNode(page, { id: "Apple" });
     await drag(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Banana", position: "center" },
@@ -28,7 +28,7 @@ test.describe("Multi drag sorting", async () => {
     await expect(page.locator("#sort_values")).toHaveText(
       "Banana Orange Apple"
     );
-    await page.locator("#Banana").click();
+    await selectNode(page, { id: "Banana" });
     await drag(page, {
       originEl: { id: "Banana", position: "center" },
       destinationEl: { id: "Orange", position: "center" },
@@ -49,8 +49,8 @@ test.describe("Multi drag sorting", async () => {
   test("Select two, drag both", async () => {
     await page.goto("http://localhost:3001/multi-drag");
     await new Promise((r) => setTimeout(r, 1000));
-    await page.click("#Apple");
-    await page.click("#Banana");
+    await selectNode(page, { id: "Apple" });
+    await selectNode(page, { id: "Banana", shiftKey: true });
     await drag(page, {
       originEl: { id: "Apple", position: "center" },
       destinationEl: { id: "Orange", position: "center" },
