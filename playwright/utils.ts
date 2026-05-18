@@ -22,9 +22,33 @@ export async function drag(page: Page, data: DragDropData): Promise<void> {
   // Shouldn't need to do this, but leaving it for now 🤷‍♂️
   await new Promise((resolve) => setTimeout(resolve, 25));
   return page.evaluate(async (data) => {
-    const originElement = document.getElementById(data.originEl.id);
+    const findElementById = (id: string): Element | null => {
+      const queue: Array<Document | ShadowRoot> = [document];
 
-    const destinationElement = document.getElementById(data.destinationEl.id);
+      while (queue.length) {
+        const root = queue.shift();
+
+        if (!root) continue;
+
+        const match = root.querySelector(`#${CSS.escape(id)}`);
+
+        if (match) return match;
+
+        const hosts = root.querySelectorAll("*");
+
+        for (const host of hosts) {
+          if (host instanceof HTMLElement && host.shadowRoot) {
+            queue.push(host.shadowRoot);
+          }
+        }
+      }
+
+      return null;
+    };
+
+    const originElement = findElementById(data.originEl.id);
+
+    const destinationElement = findElementById(data.destinationEl.id);
 
     if (!originElement || !destinationElement) return;
 
@@ -38,6 +62,7 @@ export async function drag(page: Page, data: DragDropData): Promise<void> {
       return {
         bubbles: true,
         cancelable: true,
+        composed: true,
         clientX: x,
         clientY: y,
         dataTransfer,
@@ -100,8 +125,32 @@ export async function syntheticDrag(
   // Shouldn't need to do this, but leaving it for now 🤷‍♂️
   await new Promise((resolve) => setTimeout(resolve, 25));
   return page.evaluate(async (data) => {
-    const originElement = document.getElementById(data.originEl.id);
-    const destinationElement = document.getElementById(data.destinationEl.id);
+    const findElementById = (id: string): Element | null => {
+      const queue: Array<Document | ShadowRoot> = [document];
+
+      while (queue.length) {
+        const root = queue.shift();
+
+        if (!root) continue;
+
+        const match = root.querySelector(`#${CSS.escape(id)}`);
+
+        if (match) return match;
+
+        const hosts = root.querySelectorAll("*");
+
+        for (const host of hosts) {
+          if (host instanceof HTMLElement && host.shadowRoot) {
+            queue.push(host.shadowRoot);
+          }
+        }
+      }
+
+      return null;
+    };
+
+    const originElement = findElementById(data.originEl.id);
+    const destinationElement = findElementById(data.destinationEl.id);
 
     if (!originElement || !destinationElement) return;
 
@@ -137,6 +186,7 @@ export async function syntheticDrag(
       return {
         bubbles: true,
         cancelable: true,
+        composed: true,
         clientX: x,
         clientY: y,
         screenX: x,

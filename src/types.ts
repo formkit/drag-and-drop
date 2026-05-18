@@ -37,7 +37,7 @@ export interface ParentConfig<T> {
     targetParentData: ParentRecord<T>,
     initialParentData: ParentRecord<T>,
     currentParentData: ParentRecord<T>,
-    state: BaseDragState<T>
+    state: BaseDragState<T>,
   ) => boolean;
 
   /**
@@ -55,7 +55,7 @@ export interface ParentConfig<T> {
    */
   dragImage?: (
     data: NodeDragEventData<T>,
-    draggedNodes: Array<NodeRecord<T>>
+    draggedNodes: Array<NodeRecord<T>>,
   ) => HTMLElement;
   /**
    * A flag to disable dragability of all nodes in the parent.
@@ -63,7 +63,7 @@ export interface ParentConfig<T> {
   disabled?: boolean;
   /**
    * A selector for the drag handle. Will search at any depth within the
-   * draggable element.
+   * draggable element including nested shadow roots.
    */
   dragHandle?: string;
   /**
@@ -96,7 +96,7 @@ export interface ParentConfig<T> {
     node: NodeRecord<T>,
     nodes: Array<NodeRecord<T>>,
     config: ParentConfig<T>,
-    isSynthDrag?: boolean
+    isSynthDrag?: boolean,
   ) => void;
   // When drag starts, this will be applied to the dragged node(s) (not their
   // representations being dragged) on dragstart. This will remain on the nodes
@@ -125,7 +125,7 @@ export interface ParentConfig<T> {
   group?: string;
   handleParentFocus: (
     data: ParentEventData<T>,
-    state: BaseDragState<T>
+    state: BaseDragState<T>,
   ) => void;
   handleNodeKeydown: (data: NodeEventData<T>, state: DragState<T>) => void;
 
@@ -141,18 +141,18 @@ export interface ParentConfig<T> {
   handleNodeDrop: (data: NodeDragEventData<T>, state: DragState<T>) => void;
   handleNodePointerup: (
     data: NodePointerEventData<T>,
-    state: DragState<T>
+    state: DragState<T>,
   ) => void;
   handleParentScroll: (
     data: ParentEventData<T>,
-    state: DragState<T> | BaseDragState<T> | SynthDragState<T>
+    state: DragState<T> | BaseDragState<T> | SynthDragState<T>,
   ) => void;
   /**
    * Function that is called when a dragenter event is triggered on the node.
    */
   handleNodeDragenter: (
     data: NodeDragEventData<T>,
-    state: DragState<T>
+    state: DragState<T>,
   ) => void;
   handleNodeBlur: (data: NodeEventData<T>, state: DragState<T>) => void;
   handleNodeFocus: (data: NodeEventData<T>, state: DragState<T>) => void;
@@ -161,14 +161,14 @@ export interface ParentConfig<T> {
    */
   handleNodeDragleave: (
     data: NodeDragEventData<T>,
-    state: DragState<T>
+    state: DragState<T>,
   ) => void;
   /**
    * Function that is called when a dragover event is triggered on the parent.
    */
   handleParentDragover: (
     data: ParentDragEventData<T>,
-    state: DragState<T>
+    state: DragState<T>,
   ) => void;
   /**
    * Drop event on parent
@@ -180,14 +180,14 @@ export interface ParentConfig<T> {
   handleNodeDragover: (data: NodeDragEventData<T>, state: DragState<T>) => void;
   handlePointercancel: (
     data: NodeDragEventData<T> | NodePointerEventData<T>,
-    state: DragState<T> | SynthDragState<T> | BaseDragState<T>
+    state: DragState<T> | SynthDragState<T> | BaseDragState<T>,
   ) => void;
   /*
    * Function that is called when a pointerdown is triggered on node.
    */
   handleNodePointerdown: (
     data: NodePointerEventData<T>,
-    state: DragState<T>
+    state: DragState<T>,
   ) => void;
   /**
    * Function that is called when a node that is being moved by touchmove event
@@ -195,7 +195,7 @@ export interface ParentConfig<T> {
    */
   handleNodePointerover: (
     data: PointeroverNodeEvent<T>,
-    state: SynthDragState<T>
+    state: SynthDragState<T>,
   ) => void;
   /**
    * Function that is called when a node that is being moved by touchmove event
@@ -203,7 +203,7 @@ export interface ParentConfig<T> {
    */
   handleParentPointerover: (
     e: PointeroverParentEvent<T>,
-    state: SynthDragState<T>
+    state: SynthDragState<T>,
   ) => void;
   /**
    * Config option for insert plugin.
@@ -307,7 +307,7 @@ export interface ParentConfig<T> {
     node: NodeRecord<T>,
     parent: ParentRecord<T>,
     e: PointerEvent,
-    draggedNodes: Array<NodeRecord<T>>
+    draggedNodes: Array<NodeRecord<T>>,
   ) => {
     dragImage: HTMLElement;
     offsetX?: number;
@@ -981,19 +981,19 @@ export interface DropSwapConfig<T> {
   shouldSwap?: (data: ShouldSwapData<T>) => boolean;
   handleNodeDragover?: (
     data: NodeDragEventData<T>,
-    state: DragState<T>
+    state: DragState<T>,
   ) => void;
   handleParentDragover?: (
     data: ParentDragEventData<T>,
-    state: DragState<T>
+    state: DragState<T>,
   ) => void;
   handleParentPointerover?: (
     e: PointeroverParentEvent<T>,
-    state: DragState<T>
+    state: DragState<T>,
   ) => void;
   handleNodePointerover?: (
     data: PointeroverNodeEvent<T>,
-    state: SynthDragState<T>
+    state: SynthDragState<T>,
   ) => void;
 }
 
@@ -1009,16 +1009,16 @@ export interface InsertConfig<T> {
   insertEvent?: (data: InsertEvent<T>) => void;
   handleNodeDragover?: (
     data: NodeDragEventData<T>,
-    state: DragState<T>
+    state: DragState<T>,
   ) => void;
   handleParentDragover?: (
     data: ParentDragEventData<T>,
-    state: DragState<T>
+    state: DragState<T>,
   ) => void;
   handleParentPointerover?: (data: PointeroverParentEvent<T>) => void;
   handleNodePointerover?: (data: PointeroverNodeEvent<T>) => void;
   handleEnd?: (
-    state: BaseDragState<T> | DragState<T> | SynthDragState<T>
+    state: BaseDragState<T> | DragState<T> | SynthDragState<T>,
   ) => void;
   dynamicValues?: (data: DynamicValuesData<T>) => Array<T>;
 }

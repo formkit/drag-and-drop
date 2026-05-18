@@ -1362,8 +1362,7 @@ export function handleDragstart<T>(
     !config.nativeDrag ||
     !validateDragstart(data) ||
     !validateDragHandle({
-      x: data.e.clientX,
-      y: data.e.clientY,
+      event: data.e,
       node: data.targetData.node,
       config,
     })
@@ -1417,8 +1416,7 @@ export function handleNodePointerdown<T>(
 
   if (
     !validateDragHandle({
-      x: data.e.clientX,
-      y: data.e.clientY,
+      event: data.e,
       node: data.targetData.node,
       config: data.targetData.parent.data.config,
     })
@@ -1683,13 +1681,11 @@ export function initDrag<T>(
 }
 
 export function validateDragHandle<T>({
-  x,
-  y,
+  event,
   node,
   config,
 }: {
-  x: number;
-  y: number;
+  event: PointerEvent | DragEvent;
   node: NodeRecord<T>;
   config: ParentConfig<T>;
 }): boolean {
@@ -1697,16 +1693,19 @@ export function validateDragHandle<T>({
 
   if (!config.dragHandle) return true;
 
-  const dragHandles = node.el.querySelectorAll(config.dragHandle);
+  const dragPath = event.composedPath?.() ?? [];
 
-  if (!dragHandles) return false;
+  const draggableNodePathIndex = dragPath.indexOf(node.el);
 
-  const elFromPoint = config.root.elementFromPoint(x, y);
+  if (draggableNodePathIndex === -1) return false;
 
-  if (!elFromPoint) return false;
+  for (let x = 0; x < draggableNodePathIndex; x++) {
+    const pathNode = dragPath[x];
 
-  for (const handle of Array.from(dragHandles))
-    if (elFromPoint === handle || handle.contains(elFromPoint)) return true;
+    if (!(pathNode instanceof Element)) continue;
+
+    if (pathNode.matches(config.dragHandle)) return true;
+  }
 
   return false;
 }
