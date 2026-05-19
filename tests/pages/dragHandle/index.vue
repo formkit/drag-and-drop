@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted } from "vue";
 import { useDragAndDrop } from "../../../src/vue/index";
 
 const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
@@ -37,6 +38,52 @@ const [parent3, values3] = useDragAndDrop(
 function click() {
   console.log("click");
 }
+
+const [shadowParent, shadowValues] = useDragAndDrop(
+  ["ShadowApple", "ShadowBanana", "ShadowOrange"],
+  {
+    draggable: (el) => {
+      return el.tagName === "LI";
+    },
+    dragHandle: ".does-not-exist",
+    shadowDragHandle: ".dragHandle",
+  }
+);
+
+onMounted(() => {
+  const createShadowHandle = (host: HTMLElement, itemId: string) => {
+    const root = host.shadowRoot ?? host.attachShadow({ mode: "open" });
+
+    root.innerHTML = `
+      <style>
+        .dragHandle {
+          cursor: grab;
+          color: #94a3b8;
+          display: inline-flex;
+          align-items: center;
+          width: 24px;
+          height: 24px;
+        }
+      </style>
+      <span id="${itemId}_shadowDragHandle" class="dragHandle" aria-label="shadow drag handle">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path
+            fill="currentColor"
+            d="M9,3H11V5H9V3M13,3H15V5H13V3M9,7H11V9H9V7M13,7H15V9H13V7M9,11H11V13H9V11M13,11H15V13H13V11M9,15H11V17H9V15M13,15H15V17H13V15M9,19H11V21H9V19M13,19H15V21H13V19Z"
+          />
+        </svg>
+      </span>
+    `;
+  };
+
+  for (const value of shadowValues.value) {
+    const host = document.getElementById(`${value}_shadowHost`);
+
+    if (!host) continue;
+
+    createShadowHandle(host, value);
+  }
+});
 </script>
 
 <template>
@@ -102,6 +149,20 @@ function click() {
         </li>
         <span id="values_3" class="values-display">
           {{ values3.map((x) => x).join(" ") }}
+        </span>
+      </ul>
+    </div>
+    <div class="list-container">
+      <h2>Shadow Handle List</h2>
+      <ul id="shadow_list" ref="shadowParent" class="list">
+        <li v-for="value in shadowValues" :id="value" :key="value" class="item">
+          <div class="item-content">
+            <span :id="value + '_shadowHost'" class="shadow-host"></span>
+            <span class="item-text">{{ value }}</span>
+          </div>
+        </li>
+        <span id="values_shadow" class="values-display">
+          {{ shadowValues.map((x) => x).join(" ") }}
         </span>
       </ul>
     </div>

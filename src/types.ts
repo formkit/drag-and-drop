@@ -67,6 +67,11 @@ export interface ParentConfig<T> {
    */
   dragHandle?: string;
   /**
+   * A selector for drag handles inside Shadow DOM. Matching is performed
+   * against the event composedPath instead of querySelector.
+   */
+  shadowDragHandle?: string;
+  /**
    * External drag handle
    */
   externalDragHandle?: {

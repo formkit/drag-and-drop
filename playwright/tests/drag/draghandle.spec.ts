@@ -27,4 +27,27 @@ test.describe("Native drag with drag handles", async () => {
     });
     await expect(page.locator("#values_1")).toHaveText("Banana Apple Orange");
   });
+
+  test("Native drag with shadowDragHandle. Should only drag when using handle inside shadow DOM", async () => {
+    await page.goto("http://localhost:3001/draghandle");
+    await new Promise((r) => setTimeout(r, 1000));
+
+    await drag(page, {
+      originEl: { id: "ShadowApple", position: "center" },
+      destinationEl: { id: "ShadowBanana", position: "center" },
+      dragStart: true,
+    });
+    await expect(page.locator("#values_shadow")).toHaveText(
+      "ShadowApple ShadowBanana ShadowOrange"
+    );
+
+    await drag(page, {
+      originEl: { id: "ShadowApple_shadowDragHandle", position: "center" },
+      destinationEl: { id: "ShadowBanana", position: "center" },
+      dragStart: true,
+    });
+    await expect(page.locator("#values_shadow")).toHaveText(
+      "ShadowBanana ShadowApple ShadowOrange"
+    );
+  });
 });

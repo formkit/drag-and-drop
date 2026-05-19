@@ -27,4 +27,27 @@ test.describe("Synth Drag handles", async () => {
     });
     await expect(page.locator("#values_1")).toHaveText("Banana Apple Orange");
   });
+
+  test("Test #2: shadowDragHandle should match a handle inside shadow DOM.", async () => {
+    await page.goto("http://localhost:3001/draghandle");
+    await new Promise((r) => setTimeout(r, 1000));
+
+    await syntheticDrag(page, {
+      originEl: { id: "ShadowApple", position: "center" },
+      destinationEl: { id: "ShadowBanana", position: "center" },
+      dragStart: true,
+    });
+    await expect(page.locator("#values_shadow")).toHaveText(
+      "ShadowApple ShadowBanana ShadowOrange"
+    );
+
+    await syntheticDrag(page, {
+      originEl: { id: "ShadowApple_shadowDragHandle", position: "center" },
+      destinationEl: { id: "ShadowBanana", position: "center" },
+      dragStart: true,
+    });
+    await expect(page.locator("#values_shadow")).toHaveText(
+      "ShadowBanana ShadowApple ShadowOrange"
+    );
+  });
 });

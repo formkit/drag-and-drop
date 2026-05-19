@@ -1364,6 +1364,7 @@ export function handleDragstart<T>(
     !validateDragHandle({
       x: data.e.clientX,
       y: data.e.clientY,
+      e: data.e,
       node: data.targetData.node,
       config,
     })
@@ -1419,6 +1420,7 @@ export function handleNodePointerdown<T>(
     !validateDragHandle({
       x: data.e.clientX,
       y: data.e.clientY,
+      e: data.e,
       node: data.targetData.node,
       config: data.targetData.parent.data.config,
     })
@@ -1685,15 +1687,29 @@ export function initDrag<T>(
 export function validateDragHandle<T>({
   x,
   y,
+  e,
   node,
   config,
 }: {
   x: number;
   y: number;
+  e: PointerEvent | DragEvent;
   node: NodeRecord<T>;
   config: ParentConfig<T>;
 }): boolean {
   if (config.externalDragHandle) return false;
+
+  if (config.shadowDragHandle) {
+    const path = e.composedPath();
+
+    for (const target of path) {
+      if (!(target instanceof Element)) continue;
+
+      if (target.matches(config.shadowDragHandle)) return true;
+    }
+
+    return false;
+  }
 
   if (!config.dragHandle) return true;
 

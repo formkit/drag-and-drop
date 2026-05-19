@@ -22,9 +22,39 @@ export async function drag(page: Page, data: DragDropData): Promise<void> {
   // Shouldn't need to do this, but leaving it for now 🤷‍♂️
   await new Promise((resolve) => setTimeout(resolve, 25));
   return page.evaluate(async (data) => {
-    const originElement = document.getElementById(data.originEl.id);
+    const findElementById = (id: string): HTMLElement | null => {
+      const direct = document.getElementById(id);
 
-    const destinationElement = document.getElementById(data.destinationEl.id);
+      if (direct) return direct;
+
+      const queue: Array<Element | ShadowRoot> = [document.documentElement];
+
+      while (queue.length) {
+        const current = queue.shift();
+
+        if (!current) continue;
+
+        const root = current instanceof ShadowRoot ? current : current.shadowRoot;
+
+        if (root) {
+          const fromShadow = root.getElementById(id);
+
+          if (fromShadow) return fromShadow as HTMLElement;
+
+          queue.push(...Array.from(root.children));
+        }
+
+        if (current instanceof Element) {
+          queue.push(...Array.from(current.children));
+        }
+      }
+
+      return null;
+    };
+
+    const originElement = findElementById(data.originEl.id);
+
+    const destinationElement = findElementById(data.destinationEl.id);
 
     if (!originElement || !destinationElement) return;
 
@@ -37,6 +67,7 @@ export async function drag(page: Page, data: DragDropData): Promise<void> {
 
       return {
         bubbles: true,
+        composed: true,
         cancelable: true,
         clientX: x,
         clientY: y,
@@ -100,8 +131,38 @@ export async function syntheticDrag(
   // Shouldn't need to do this, but leaving it for now 🤷‍♂️
   await new Promise((resolve) => setTimeout(resolve, 25));
   return page.evaluate(async (data) => {
-    const originElement = document.getElementById(data.originEl.id);
-    const destinationElement = document.getElementById(data.destinationEl.id);
+    const findElementById = (id: string): HTMLElement | null => {
+      const direct = document.getElementById(id);
+
+      if (direct) return direct;
+
+      const queue: Array<Element | ShadowRoot> = [document.documentElement];
+
+      while (queue.length) {
+        const current = queue.shift();
+
+        if (!current) continue;
+
+        const root = current instanceof ShadowRoot ? current : current.shadowRoot;
+
+        if (root) {
+          const fromShadow = root.getElementById(id);
+
+          if (fromShadow) return fromShadow as HTMLElement;
+
+          queue.push(...Array.from(root.children));
+        }
+
+        if (current instanceof Element) {
+          queue.push(...Array.from(current.children));
+        }
+      }
+
+      return null;
+    };
+
+    const originElement = findElementById(data.originEl.id);
+    const destinationElement = findElementById(data.destinationEl.id);
 
     if (!originElement || !destinationElement) return;
 
@@ -136,6 +197,7 @@ export async function syntheticDrag(
 
       return {
         bubbles: true,
+        composed: true,
         cancelable: true,
         clientX: x,
         clientY: y,
