@@ -1,17 +1,26 @@
-name: Release
+name: Publish
 
+# Publishing is driven by pushing a git tag:
+#   v0.6.0              -> npm dist-tag "latest" (main branch only)
+#   v0.6.0-next.abc1234 -> npm dist-tag "next"
+#   v0.6.0-dev.abc1234  -> npm dist-tag "dev"
+# The suffix on prerelease versions is the short commit hash. Publishing
+# uses npm trusted publishing (OIDC) — no tokens.
 on:
   push:
     tags:
       - "v*"
 
-permissions:
-  contents: write
-  id-token: write
-
 jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
   publish:
+    needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -19,12 +28,11 @@ jobs:
 
       - uses: pnpm/action-setup@v6
         with:
-          version: 10.33.2
+          version: 10.14.0
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
-          check-latest: true
+          node-version: 24.15.0
           cache: pnpm
           registry-url: "https://registry.npmjs.org"
 
@@ -37,8 +45,8 @@ jobs:
           npm --version
           pnpm --version
 
-      - name: Determine npm tag
-        id: publish-meta
+      - name: Determine version and npm dist-tag
+        id: meta
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
           VERSION=${TAG_NAME#v}
@@ -51,11 +59,12 @@ jobs:
             NPM_TAG="latest"
           fi
 
+          echo "Version: $VERSION (npm dist-tag: $NPM_TAG)"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "npm_tag=$NPM_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Verify branch for @latest releases
-        if: steps.publish-meta.outputs.npm_tag == 'latest'
+        if: steps.meta.outputs.npm_tag == 'latest'
         run: |
           if ! git branch -r --contains HEAD | grep -q 'origin/main'; then
             echo "ERROR: @latest releases can only be published from main"
@@ -66,9 +75,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Set package version from git tag
-        env:
-          VERSION: ${{ steps.publish-meta.outputs.version }}
-        run: npm pkg set version="$VERSION" --git-tag-version=false
+        run: npm pkg set version="${{ steps.meta.outputs.version }}"
 
       - name: Build package
         run: pnpm run build
@@ -76,13 +83,12 @@ jobs:
       - name: Validate package
         run: pnpm exec publint dist
 
-      - name: Publish package
+      - name: Publish to npm
         working-directory: dist
-        env:
-          NPM_TAG: ${{ steps.publish-meta.outputs.npm_tag }}
-        run: pnpm publish --access public --no-git-checks --tag "$NPM_TAG"
+        run: npm publish --access public --tag "${{ steps.meta.outputs.npm_tag }}"
 
       - name: Create GitHub release notes
+        if: steps.meta.outputs.npm_tag == 'latest'
         run: pnpm dlx changelogithub@latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,5 +1,12 @@
 name: Drag and drop tests
-on: [push, workflow_dispatch]
+on:
+  push:
+    # Tag pushes are covered by publish.yml, which calls this workflow as
+    # its test gate.
+    branches:
+      - "**"
+  workflow_dispatch:
+  workflow_call:
 jobs:
   playwright:
     name: "Playwright tests (${{ matrix.project }})"
