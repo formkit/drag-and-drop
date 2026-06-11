@@ -1218,12 +1218,58 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
 
   const enabledNodeRecords: Array<NodeRecord<T>> = [];
 
+  // During an active drag the DOM can lag behind the values array, because
+  // framework renders are asynchronous (React especially, #169). Pairing
+  // values to nodes positionally would then reassign node identities —
+  // attaching the wrong value/index to elements and corrupting every
+  // subsequent sort. While dragging, pair each known node to its existing
+  // value instead and derive its index from the values array. Falls back to
+  // positional pairing whenever existing node values can't be matched 1:1
+  // onto the current values (initial setup, transfers committing, replaced
+  // arrays).
+  let identityIndexes: Array<number> | null = null;
+
+  if (isDragState(state)) {
+    identityIndexes = [];
+
+    const consumed = new Array(values.length).fill(false);
+
+    for (let x = 0; x < enabledNodes.length; x++) {
+      const prevNodeData = nodes.get(enabledNodes[x]);
+
+      let found = -1;
+
+      if (prevNodeData) {
+        for (let i = 0; i < values.length; i++) {
+          if (!consumed[i] && eq(values[i], prevNodeData.value)) {
+            found = i;
+
+            break;
+          }
+        }
+      }
+
+      if (found === -1) {
+        identityIndexes = null;
+
+        break;
+      }
+
+      consumed[found] = true;
+
+      identityIndexes.push(found);
+    }
+  }
+
   for (let x = 0; x < enabledNodes.length; x++) {
     const node = enabledNodes[x];
 
     const prevNodeData = nodes.get(node);
 
-    if (config.draggableValue && !config.draggableValue(values[x])) continue;
+    const valueIndex = identityIndexes ? identityIndexes[x] : x;
+
+    if (config.draggableValue && !config.draggableValue(values[valueIndex]))
+      continue;
 
     const nodeData = Object.assign(
       prevNodeData ?? {
@@ -1231,8 +1277,8 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
         abortControllers: {},
       },
       {
-        value: values[x],
-        index: x,
+        value: values[valueIndex],
+        index: valueIndex,
       }
     );
 
