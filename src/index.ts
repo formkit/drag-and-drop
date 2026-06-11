@@ -2370,6 +2370,12 @@ export function validateTransfer<T>({
   draggedNodes: Array<NodeRecord<T>>;
   state: BaseDragState<T>;
 }) {
+  // A `dragover` can fire when there is no valid target/current parent (e.g.
+  // hovering the source list of a transfer setup). Without this guard the
+  // first `targetParent.el` access throws an uncaught TypeError and breaks the
+  // drag interaction. No valid parent means the transfer is simply not valid.
+  if (!targetParent || !currentParent) return false;
+
   if (targetParent.el === currentParent.el) return false;
 
   const targetConfig = targetParent.data.config;
