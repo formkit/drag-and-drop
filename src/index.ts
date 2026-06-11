@@ -2166,6 +2166,11 @@ export function handleLongPress<T>(
 ) {
   const config = data.targetData.parent.data.config;
 
+  // Long press is opt-in. Without it, a press-and-hold is simply a pointer
+  // that has not moved yet — scheduling the timeout anyway mutated drag state
+  // and preventDefault-ed a stale event one second into every touch hold.
+  if (!config.longPress) return;
+
   state.longPressTimeout = setTimeout(() => {
     if (!state) return;
 
