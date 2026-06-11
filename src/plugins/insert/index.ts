@@ -770,16 +770,16 @@ export function handleEnd<T>(
           parent: {
             el: state.initialParent.el,
             data: state.initialParent.data,
-          } as ParentRecord<unknown>,
+          } as ParentRecord<T>,
           previousValues: [...draggedParentValues],
           previousNodes: [...enabledNodes],
           nodes: [...state.initialParent.data.enabledNodes],
           values: [...newParentValues],
           draggedNodes: state.draggedNodes,
-          targetNodes: insertState.draggedOverNodes,
+          targetNodes: insertState.draggedOverNodes as Array<NodeRecord<T>>,
           previousPosition: originalIndex,
           position: index,
-          state: state as DragState<unknown>,
+          state: state as DragState<T>,
         };
 
         state.initialParent.data.config.onSort(sortEventData);
