@@ -18,6 +18,14 @@
   "keywords": [],
   "author": "Sasha Milenkovic <sasha@formkit.com>",
   "license": "MIT",
+  "homepage": "https://drag-and-drop.formkit.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/formkit/drag-and-drop.git"
+  },
+  "bugs": {
+    "url": "https://github.com/formkit/drag-and-drop/issues"
+  },
   "peerDependencies": {
     "@marko/runtime-tags": ">=6.0.166"
   },
