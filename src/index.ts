@@ -542,7 +542,7 @@ export function performSort<T>({
       parent: {
         el: parent.el,
         data: parent.data,
-      } as ParentRecord<unknown>,
+      } as ParentRecord<T>,
       previousValues: [...targetParentValues],
       previousNodes: [...enabledNodes],
       nodes: [...parent.data.enabledNodes],
@@ -551,7 +551,7 @@ export function performSort<T>({
       previousPosition: originalIndex,
       position: targetNodes[0].data.index,
       targetNodes,
-      state,
+      state: state as BaseDragState<T>,
     });
   }
 }

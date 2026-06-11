@@ -416,7 +416,7 @@ function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
         parent: {
           el: state.initialParent.el,
           data: state.initialParent.data,
-        } as ParentRecord<unknown>,
+        } as ParentRecord<T>,
         previousValues: [...initialParentValues],
         previousNodes: [...state.initialParent.data.enabledNodes],
         nodes: [...state.initialParent.data.enabledNodes],
@@ -425,7 +425,7 @@ function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
         previousPosition: draggedIndex,
         position: targetIndex,
         targetNodes: dropSwapState.draggedOverNodes as NodeRecord<T>[],
-        state: state as BaseDragState<unknown>,
+        state: state as BaseDragState<T>,
       });
     }
   } else {
