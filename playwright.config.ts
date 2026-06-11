@@ -48,7 +48,10 @@ export default defineConfig({
       testMatch: ["tests/drag/**/*.spec.ts", "tests-frameworks/**/*.spec.ts"],
 
       use: {
-        ...devices["Desktop Webkit"],
+        // "Desktop Webkit" is not a registered device descriptor — spreading
+        // it was undefined, so this project silently ran on the default
+        // browser (chromium). "Desktop Safari" is the real WebKit device.
+        ...devices["Desktop Safari"],
       },
     },
     {
