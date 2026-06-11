@@ -235,9 +235,15 @@ export function setDragState<T>(
 }
 
 /**
- *
+ * Pointerdown events already handled by a draggable node. The node handlers
+ * no longer stop propagation (so framework-delegated listeners still fire);
+ * instead, ancestor nodes and the root handler skip claimed events.
  */
-function handleRootPointerdown() {
+const claimedPointerdowns = new WeakSet<Event>();
+
+function handleRootPointerdown(e: PointerEvent) {
+  if (claimedPointerdowns.has(e)) return;
+
   if (state.activeState) setActive(state.activeState.parent, undefined, state);
 
   if (state.selectedState)
@@ -1409,7 +1415,14 @@ export function handleNodePointerdown<T>(
   data: NodePointerEventData<T>,
   state: BaseDragState<T>
 ) {
-  sp(data.e);
+  // Claim the event for the innermost draggable node instead of stopping
+  // propagation: frameworks like React attach delegated listeners at the
+  // root, which stopPropagation silenced entirely (consumer onPointerDown
+  // handlers inside items never fired). Ancestor nodes and the root
+  // pointerdown handler skip events already claimed here.
+  if (claimedPointerdowns.has(data.e)) return;
+
+  claimedPointerdowns.add(data.e);
 
   state.pointerDown = {
     parent: data.targetData.parent,
