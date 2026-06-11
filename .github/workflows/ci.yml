@@ -44,8 +44,28 @@ jobs:
         run: cd tests-frameworks && pnpm install && cd ..
       - name: Build Dev
         run: cd tests && pnpm install && cd ..
+      - name: Get Playwright version
+        id: pw-version
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ matrix.browser }}-${{ steps.pw-version.outputs.version }}
       - name: Install Playwright
-        run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+        # The browser download intermittently stalls forever (no output after
+        # reaching the CDN), which used to eat the whole job timeout. Bound
+        # each attempt and retry instead of hanging.
+        timeout-minutes: 20
+        run: |
+          for attempt in 1 2 3; do
+            if timeout 300 pnpm exec playwright install --with-deps ${{ matrix.browser }}; then
+              exit 0
+            fi
+            echo "playwright install stalled or failed (attempt $attempt), retrying..."
+            sleep 5
+          done
+          exit 1
       - name: Run Playwright tests
         run: pnpm exec playwright test --project "${{ matrix.project }}"
       - uses: actions/upload-artifact@v7
