@@ -78,10 +78,33 @@ export async function drag(page: Page, data: DragDropData): Promise<void> {
 
     const dataTransfer = new DataTransfer();
 
-    const getEventProps = (element: Element) => {
+    const getEventProps = (element: Element, position = "center") => {
       const rect = element.getBoundingClientRect();
 
-      const [x, y] = [rect.x + rect.width / 2, rect.y + rect.height / 2];
+      let x = rect.x;
+      let y = rect.y;
+
+      switch (position) {
+        case "top":
+          x += rect.width / 2;
+          y += 5;
+          break;
+        case "bottom":
+          x += rect.width / 2;
+          y += rect.height - 5;
+          break;
+        case "left":
+          x += 5;
+          y += rect.height / 2;
+          break;
+        case "right":
+          x += rect.width - 5;
+          y += rect.height / 2;
+          break;
+        default:
+          x += rect.width / 2;
+          y += rect.height / 2;
+      }
 
       return {
         bubbles: true,
@@ -96,7 +119,10 @@ export async function drag(page: Page, data: DragDropData): Promise<void> {
 
     if (data.dragStart) {
       originElement.dispatchEvent(
-        new DragEvent("dragstart", getEventProps(originElement))
+        new DragEvent(
+          "dragstart",
+          getEventProps(originElement, data.originEl.position)
+        )
       );
     }
 
@@ -104,12 +130,18 @@ export async function drag(page: Page, data: DragDropData): Promise<void> {
 
     // Dragover the origin element
     originElement.dispatchEvent(
-      new DragEvent("dragover", getEventProps(originElement))
+      new DragEvent(
+        "dragover",
+        getEventProps(originElement, data.originEl.position)
+      )
     );
 
     await new Promise((resolve) => setTimeout(resolve, 200));
 
-    const destinationEventProps = getEventProps(destinationElement);
+    const destinationEventProps = getEventProps(
+      destinationElement,
+      data.destinationEl.position
+    );
 
     // Dragover the destination target
     destinationElement.dispatchEvent(
@@ -127,7 +159,7 @@ export async function drag(page: Page, data: DragDropData): Promise<void> {
 
     if (data.drop) {
       destinationElement.dispatchEvent(
-        new DragEvent("drop", getEventProps(destinationElement))
+        new DragEvent("drop", destinationEventProps)
       );
 
       await new Promise((resolve) => setTimeout(resolve, 200));

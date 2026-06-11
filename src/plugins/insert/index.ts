@@ -11,7 +11,6 @@ import type {
   BaseDragState,
   InsertState,
   Coordinates,
-  Node,
 } from "../../types";
 
 import {
@@ -25,7 +24,6 @@ import {
   removeClass,
   addEvents,
   remapNodes,
-  nodes,
 } from "../../index";
 
 import { eq, pd, eventCoordinates } from "../../utils";
@@ -151,6 +149,39 @@ function findFirstOverflowingParent(element: HTMLElement): HTMLElement | null {
   return null; // No overflowing parent found
 }
 
+/**
+ * Whether the dragged nodes may be dropped into the given parent. Mirrors the
+ * core validateTransfer() semantics: the initial parent is always valid, and
+ * any other parent must opt in via accepts() or share the initial parent's
+ * group.
+ */
+function isValidDropTarget<T>(
+  target: ParentRecord<T>,
+  state: DragState<T>
+): boolean {
+  if (target.el === state.initialParent.el) return true;
+
+  const targetConfig = target.data.config;
+
+  if (state.draggedNode.el.contains(target.el)) return false;
+
+  if (targetConfig.dropZone === false) return false;
+
+  if (targetConfig.accepts) {
+    return targetConfig.accepts(
+      target,
+      state.initialParent,
+      state.currentParent,
+      state
+    );
+  }
+
+  return (
+    !!targetConfig.group &&
+    targetConfig.group === state.initialParent.data.config.group
+  );
+}
+
 function checkPosition(e: DragEvent | PointerEvent) {
   if (!isDragState(state)) return;
 
@@ -161,20 +192,28 @@ function checkPosition(e: DragEvent | PointerEvent) {
     return;
   }
 
-  // 2. Traverse up the DOM from the element under the cursor
-  //    to see if any ancestor is a registered parent.
+  // 2. Traverse up the DOM from the element under the cursor looking for a
+  //    registered parent that can actually receive the dragged nodes. The
+  //    walk continues past registered parents that fail validation so that
+  //    nested lists with different groups don't mask a valid ancestor (e.g.
+  //    dragging a column while hovering the cards list inside it).
   let isWithinAParent = false;
   let current: HTMLElement | null = el;
   while (current) {
-    if (nodes.has(current as Node) || parents.has(current)) {
+    const parentData = parents.get(current);
+    if (
+      parentData &&
+      isValidDropTarget({ el: current, data: parentData }, state)
+    ) {
       isWithinAParent = true;
-      break; // Found a registered parent ancestor
+      break; // Found a valid registered parent ancestor
     }
     if (current === document.body) break; // Stop if we reach the body
     current = current.parentElement;
   }
 
-  // 3. If the cursor is NOT within any registered parent...
+  // 3. If the cursor is NOT within a registered parent that can receive the
+  //    dragged nodes...
   if (!isWithinAParent) {
     // Hide the insert point if it exists
     if (insertState.insertPoint) {
@@ -441,11 +480,12 @@ function processParentDragEvent<T>(
 
   if (realTargetParent.el === state.currentParent?.el) {
     moveBetween(realTargetParent, state);
-  } else {
-    moveOutside(realTargetParent, state);
+  } else if (moveOutside(realTargetParent, state)) {
+    // Only adopt the hovered parent as the current parent when it can
+    // actually receive the dragged nodes — otherwise handleEnd would
+    // transfer values into a list whose group/accepts rules reject them.
+    state.currentParent = realTargetParent;
   }
-
-  state.currentParent = realTargetParent;
 }
 
 export function handleParentDragover<T>(
@@ -503,30 +543,12 @@ export function moveBetween<T>(data: ParentRecord<T>, state: DragState<T>) {
   }
 }
 
-function moveOutside<T>(data: ParentRecord<T>, state: DragState<T>) {
+function moveOutside<T>(data: ParentRecord<T>, state: DragState<T>): boolean {
   if (data.el === state.currentParent.el) return false;
 
+  if (!isValidDropTarget(data, state)) return false;
+
   const targetConfig = data.data.config;
-
-  if (state.draggedNode.el.contains(data.el)) return false;
-
-  if (targetConfig.dropZone === false) return;
-
-  const initialParentConfig = state.initialParent.data.config;
-
-  if (targetConfig.accepts) {
-    return targetConfig.accepts(
-      data,
-      state.initialParent,
-      state.currentParent,
-      state
-    );
-  } else if (
-    !targetConfig.group ||
-    targetConfig.group !== initialParentConfig.group
-  ) {
-    return false;
-  }
 
   const values = data.data.getValues(data.el);
 
@@ -545,25 +567,25 @@ function moveOutside<T>(data: ParentRecord<T>, state: DragState<T>) {
 
     const foundRange = findClosest(enabledNodes, state);
 
-    if (!foundRange) return;
+    if (!foundRange) return true;
 
     const key = foundRange[1] as "ascending" | "descending";
 
-    if (foundRange) {
-      const position = foundRange[0].data.range
-        ? foundRange[0].data.range[key]
-        : undefined;
+    const position = foundRange[0].data.range
+      ? foundRange[0].data.range[key]
+      : undefined;
 
-      if (position)
-        positionInsertPoint(
-          data,
-          position,
-          foundRange[1] === "ascending",
-          foundRange[0],
-          insertState as InsertState<T>
-        );
-    }
+    if (position)
+      positionInsertPoint(
+        data,
+        position,
+        foundRange[1] === "ascending",
+        foundRange[0],
+        insertState as InsertState<T>
+      );
   }
+
+  return true;
 }
 
 function findClosest<T>(enabledNodes: NodeRecord<T>[], state: DragState<T>) {
