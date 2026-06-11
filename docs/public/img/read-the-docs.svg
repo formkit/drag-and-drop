@@ -1,0 +1,29 @@
+<svg width="300" height="76" viewBox="0 0 300 76" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="btn" x1="0" y1="0" x2="300" y2="76" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fe44dc" />
+      <stop offset="0.55" stop-color="#d13ccf" />
+      <stop offset="1" stop-color="#8b32c9" />
+    </linearGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="300" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9ff3ff" />
+      <stop offset="1" stop-color="#409baf" />
+    </linearGradient>
+  </defs>
+  <!-- hard offset shadow, cyan — matches the site's pixel shadows -->
+  <rect x="10" y="12" width="286" height="60" rx="12" fill="#409baf" />
+  <!-- button body -->
+  <rect x="2" y="2" width="286" height="60" rx="12" fill="url(#btn)" />
+  <rect x="2" y="2" width="286" height="60" rx="12" stroke="url(#edge)" stroke-width="3" />
+  <!-- retro scanlines -->
+  <g opacity="0.16" stroke="#ffffff" stroke-width="1.5">
+    <line x1="8" y1="14" x2="282" y2="14" />
+    <line x1="8" y1="22" x2="282" y2="22" />
+    <line x1="8" y1="30" x2="282" y2="30" />
+  </g>
+  <!-- glint -->
+  <circle cx="262" cy="16" r="3" fill="#ffffff" opacity="0.85" />
+  <text x="143" y="41" text-anchor="middle" dominant-baseline="middle"
+    font-family="Menlo, Monaco, 'Courier New', monospace" font-size="21" font-weight="bold"
+    fill="#ffffff" letter-spacing="2">READ THE DOCS ▸</text>
+</svg>
