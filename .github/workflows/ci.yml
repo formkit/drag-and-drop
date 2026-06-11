@@ -2,9 +2,27 @@ name: Drag and drop tests
 on: [push, workflow_dispatch]
 jobs:
   playwright:
-    name: "Playwright tests"
+    name: "Playwright tests (${{ matrix.project }})"
     timeout-minutes: 30
     runs-on: ubuntu-latest
+    strategy:
+      # One shard per Playwright project: the full suite serially exceeds the
+      # job timeout, and sharding keeps each run well inside it.
+      fail-fast: false
+      matrix:
+        include:
+          - project: Desktop Chrome
+            browser: chromium
+            slug: chrome
+          - project: Desktop Firefox
+            browser: firefox
+            slug: firefox
+          - project: Desktop Webkit
+            browser: webkit
+            slug: webkit
+          - project: iPhone 13 Chromium
+            browser: chromium
+            slug: mobile-chromium
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -27,12 +45,12 @@ jobs:
       - name: Build Dev
         run: cd tests && pnpm install && cd ..
       - name: Install Playwright
-        run: pnpm exec playwright install --with-deps
+        run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
       - name: Run Playwright tests
-        run: pnpm exec playwright test
+        run: pnpm exec playwright test --project "${{ matrix.project }}"
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.slug }}
           path: playwright-report/
           retention-days: 30
