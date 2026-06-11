@@ -53,22 +53,24 @@ export function animations(animationsConfig: Partial<AnimationsConfig> = {}) {
 
         const duration = animationsConfig.duration || 150;
 
+        const easing = animationsConfig.easing || "ease-in-out";
+
         if (data.node.data.value === state.draggedNode.data.value) {
           switch (state.incomingDirection) {
             case "below":
-              animate(data.node.el, slideUp, duration);
+              animate(data.node.el, slideUp, duration, easing);
 
               break;
             case "above":
-              animate(data.node.el, slideDown, duration);
+              animate(data.node.el, slideDown, duration, easing);
 
               break;
             case "left":
-              animate(data.node.el, slideRight, duration);
+              animate(data.node.el, slideRight, duration, easing);
 
               break;
             case "right":
-              animate(data.node.el, slideLeft, duration);
+              animate(data.node.el, slideLeft, duration, easing);
 
               break;
           }
@@ -115,26 +117,26 @@ export function animations(animationsConfig: Partial<AnimationsConfig> = {}) {
           );
 
           if (xDiff > yDiff && ascendingDirection) {
-            animate(data.node.el, slideRight, duration);
+            animate(data.node.el, slideRight, duration, easing);
           } else if (xDiff > yDiff && !ascendingDirection) {
-            animate(data.node.el, slideLeft, duration);
+            animate(data.node.el, slideLeft, duration, easing);
           }
         } else {
           switch (state.incomingDirection) {
             case "below":
-              animate(data.node.el, slideDown, duration);
+              animate(data.node.el, slideDown, duration, easing);
 
               break;
             case "above":
-              animate(data.node.el, slideUp, duration);
+              animate(data.node.el, slideUp, duration, easing);
 
               break;
             case "left":
-              animate(data.node.el, slideLeft, duration);
+              animate(data.node.el, slideLeft, duration, easing);
 
               break;
             case "right":
-              animate(data.node.el, slideRight, duration);
+              animate(data.node.el, slideRight, duration, easing);
 
               break;
           }
@@ -147,7 +149,8 @@ export function animations(animationsConfig: Partial<AnimationsConfig> = {}) {
 function animate(
   node: Node,
   animation: Keyframe[] | PropertyIndexedKeyframes,
-  duration: number
+  duration: number,
+  easing: string
 ) {
   if (!state) return;
 
@@ -155,7 +158,7 @@ function animate(
 
   node.animate(animation, {
     duration: duration,
-    easing: "ease-in-out",
+    easing,
   });
 
   setTimeout(() => {
