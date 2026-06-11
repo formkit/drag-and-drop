@@ -876,6 +876,24 @@ export function tearDown(parent: HTMLElement) {
 
   if (!parentData) return;
 
+  // Cancel interaction state tied to this parent so pending timers and the
+  // document-level drag handlers don't fire against unmounted elements
+  // (#145).
+  if (state.pointerDown?.parent.el === parent) {
+    if (state.longPressTimeout) clearTimeout(state.longPressTimeout);
+
+    state.pointerDown = undefined;
+  }
+
+  if (
+    isDragState(state) &&
+    (state.initialParent.el === parent || state.currentParent.el === parent)
+  ) {
+    if (isSynthDragState(state)) state.clonedDraggedNode?.remove();
+
+    resetState();
+  }
+
   if (parentData.abortControllers.mainParent)
     parentData.abortControllers.mainParent.abort();
 }
@@ -1690,7 +1708,9 @@ export function initDrag<T>(
 
         data.targetData.parent.el.appendChild(wrapper);
 
-        wrapper.showPopover();
+        // showPopover throws on disconnected elements (e.g. the parent was
+        // unmounted mid-interaction, #145).
+        if (wrapper.isConnected) wrapper.showPopover();
 
         wrapper.getBoundingClientRect(); // ← forces layout
 
@@ -2162,7 +2182,9 @@ function initSynthDrag<T>(
 
   parent.el.appendChild(dragImage);
 
-  dragImage.showPopover();
+  // showPopover throws on disconnected elements (e.g. the parent was
+  // unmounted mid-interaction, #145).
+  if (dragImage.isConnected) dragImage.showPopover();
 
   const synthDragStateProps = {
     clonedDraggedEls: [],
