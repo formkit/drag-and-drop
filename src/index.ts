@@ -1351,20 +1351,25 @@ function handleParentScroll<T>(_data: ParentEventData<T>) {
  */
 export function handleDragstart<T>(
   data: NodeDragEventData<T>,
-  _state: BaseDragState<T>
+  state: BaseDragState<T>
 ) {
   const config = data.targetData.parent.data.config;
 
-  if (
-    !config.nativeDrag ||
-    !validateDragstart(data) ||
-    !validateDragHandle({
-      x: data.e.clientX,
-      y: data.e.clientY,
-      node: data.targetData.node,
-      config,
-    })
-  ) {
+  // Native dragstart fires on the draggable node itself, so a handle inside
+  // a shadow root is never part of this event's path. Reuse the validation
+  // performed on pointerdown (whose composed path does include the handle)
+  // when it refers to the same node; fall back to validating this event
+  // directly (e.g. Safari, where pointerdown may not have fired).
+  const validated =
+    state.pointerDown && state.pointerDown.node.el === data.targetData.node.el
+      ? state.pointerDown.validated
+      : validateDragHandle({
+          e: data.e,
+          node: data.targetData.node,
+          config,
+        });
+
+  if (!config.nativeDrag || !validateDragstart(data) || !validated) {
     pd(data.e);
 
     return;
@@ -1414,8 +1419,7 @@ export function handleNodePointerdown<T>(
 
   if (
     !validateDragHandle({
-      x: data.e.clientX,
-      y: data.e.clientY,
+      e: data.e,
       node: data.targetData.node,
       config: data.targetData.parent.data.config,
     })
@@ -1682,13 +1686,11 @@ export function initDrag<T>(
 }
 
 export function validateDragHandle<T>({
-  x,
-  y,
+  e,
   node,
   config,
 }: {
-  x: number;
-  y: number;
+  e: PointerEvent | DragEvent;
   node: NodeRecord<T>;
   config: ParentConfig<T>;
 }): boolean {
@@ -1696,11 +1698,25 @@ export function validateDragHandle<T>({
 
   if (!config.dragHandle) return true;
 
+  // Events that originate inside a shadow root are retargeted to the host
+  // element, so querySelectorAll/elementFromPoint can never see the handle.
+  // composedPath() exposes the real path; only elements between the event
+  // origin and the draggable node itself can count as the node's handle.
+  const path = e.composedPath();
+
+  const nodeIndex = path.indexOf(node.el);
+
+  for (const target of nodeIndex === -1 ? [] : path.slice(0, nodeIndex)) {
+    if (target instanceof Element && target.matches(config.dragHandle))
+      return true;
+  }
+
+  // Fallback for events that fire on the draggable node itself (native
+  // dragstart targets the draggable element, not the handle): hit-test the
+  // handle from the event coordinates.
   const dragHandles = node.el.querySelectorAll(config.dragHandle);
 
-  if (!dragHandles) return false;
-
-  const elFromPoint = config.root.elementFromPoint(x, y);
+  const elFromPoint = config.root.elementFromPoint(e.clientX, e.clientY);
 
   if (!elFromPoint) return false;
 
