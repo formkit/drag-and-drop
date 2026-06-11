@@ -22,6 +22,7 @@ import {
   state,
   addEvents,
   isDragState,
+  validateTransfer,
 } from "../../index";
 
 export const dropSwapState: DropSwapState<unknown> = {
@@ -110,12 +111,67 @@ function rootPointerover(_e: CustomEvent) {
   state.currentParent = state.initialParent;
 }
 
+/**
+ * Whether the dragged nodes may be dropped into the given parent. Hovering
+ * the parent the drag is currently over (or started from) is always allowed;
+ * everything else must pass the core transfer rules (group/accepts/dropZone).
+ */
+function canTransferTo<T>(
+  targetParent: ParentRecord<T>,
+  state: DragState<T> | SynthDragState<T>
+): boolean {
+  if (targetParent.el === state.currentParent.el) return true;
+
+  if (targetParent.el === state.initialParent.el) return true;
+
+  return validateTransfer({
+    currentParent: state.currentParent,
+    targetParent,
+    initialParent: state.initialParent,
+    draggedNodes: state.draggedNodes,
+    state,
+  });
+}
+
+/**
+ * Clears any hover targeting so a drop over an invalid parent is a no-op:
+ * handleEnd returns early when no nodes are targeted and the current parent
+ * is back to the initial one.
+ */
+function resetDraggedOverNodes<T>(state: DragState<T> | SynthDragState<T>) {
+  const config = state.currentParent.data.config;
+
+  const isSynth = isSynthDragState(state);
+
+  removeClass(
+    dropSwapState.draggedOverNodes.map((node) => node.el),
+    isSynth ? config.synthDropZoneClass : config.dropZoneClass
+  );
+
+  removeClass(
+    [state.currentParent.el],
+    isSynth ? config.synthDropZoneParentClass : config.dropZoneParentClass
+  );
+
+  dropSwapState.draggedOverNodes = [];
+
+  state.currentTargetValue = undefined;
+
+  state.currentParent = state.initialParent;
+}
+
 function updateDraggedOverNodes<T>(
   data: PointeroverNodeEvent<T> | NodeDragEventData<T>,
   state: DragState<T> | SynthDragState<T>
 ) {
   const targetData =
     "detail" in data ? data.detail.targetData : data.targetData;
+
+  if (!canTransferTo(targetData.parent, state)) {
+    resetDraggedOverNodes(state);
+
+    return;
+  }
 
   const config = targetData.parent.data.config;
 
@@ -176,6 +232,12 @@ export function handleParentDragover<T>(
 
   data.e.stopPropagation();
 
+  if (!canTransferTo(data.targetData.parent, state)) {
+    resetDraggedOverNodes(state);
+
+    return;
+  }
+
   const currentConfig = state.currentParent.data.config;
 
   removeClass(
@@ -200,6 +262,12 @@ export function handleParentDragover<T>(
 }
 
 export function handeParentPointerover<T>(data: PointeroverParentEvent<T>) {
+  if (!canTransferTo(data.detail.targetData.parent, data.detail.state)) {
+    resetDraggedOverNodes(data.detail.state);
+
+    return;
+  }
+
   const currentConfig = data.detail.state.currentParent.data.config;
 
   removeClass(
