@@ -1,7 +1,7 @@
 import type { MaybeRef, Ref } from "vue";
 import type { VueDragAndDropData, VueParentConfig } from "./types";
 import { dragAndDrop as initParent, isBrowser, tearDown } from "../index";
-import { isRef, onUnmounted, ref, unref } from "vue";
+import { isRef, onBeforeUnmount, ref, unref } from "vue";
 import { handleVueElements } from "./utils";
 export * from "./types";
 
@@ -92,7 +92,9 @@ export function useDragAndDrop<T>(
 
   dragAndDrop({ parent, values, ...options });
 
-  onUnmounted(() => parent.value && tearDown(parent.value));
+  // onBeforeUnmount, not onUnmounted: template refs are already null by the
+  // time onUnmounted runs, so tearDown was never actually called (#145).
+  onBeforeUnmount(() => parent.value && tearDown(parent.value));
 
   return [parent, values, updateConfig];
 }
