@@ -36,7 +36,7 @@
       The <code>useDragAndDrop</code> hook is the most convenient way to add
       Drag and Drop to your app and is available for React, Vue, and Solid. Call
       this function with an initial array of values and the configuration
-      options. It returns an array of values containing a a template ref, a
+      options. It returns an array of values containing a template ref, a
       reactive set of values (and a setter in the case of React), as well as a
       function to update the parent's config. The template ref should be
       assigned to the parent DOM element of the items you wish to make
@@ -96,13 +96,13 @@
       <span class="indent"
         >state: [<span class="var">values</span>,
         <span class="var">setValues</span>]</span
-      >, <br /><span class="indent">config</span><br />})
+      >, <br /><span class="indent">...config</span><br />})
       <div class="comment"><br />// Vue:</div>
       <span class="fn">dragAndDrop</span>({<br />
       <span class="indent">parent: <span class="var">parentRef</span></span
       >,<br />
       <span class="indent">values: <span class="var">valueRef</span>,</span
-      ><br /><span class="indent">config</span><br />})
+      ><br /><span class="indent">...config</span><br />})
       <div>
         <br /><span class="comment"
           >// Vanilla JS: (import from core, not subpath)</span
