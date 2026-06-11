@@ -1,15 +1,14 @@
-import type { Ref } from "vue";
+import type { MaybeRef, Ref } from "vue";
 import type { VueDragAndDropData, VueParentConfig } from "./types";
 import { dragAndDrop as initParent, isBrowser, tearDown } from "../index";
-import { onUnmounted, ref } from "vue";
+import { isRef, onBeforeUnmount, ref, unref } from "vue";
 import { handleVueElements } from "./utils";
 export * from "./types";
 
 /**
  * Global store for parent els to values.
  */
-const parentValues: WeakMap<HTMLElement, Ref<Array<any>> | Array<any>> =
-  new WeakMap();
+const parentValues: WeakMap<HTMLElement, MaybeRef<Array<any>>> = new WeakMap();
 
 /**
  * Returns the values of the parent element.
@@ -27,7 +26,7 @@ function getValues(parent: HTMLElement): Array<any> {
     return [];
   }
 
-  return "value" in values ? values.value : values;
+  return unref(values);
 }
 
 /**
@@ -43,8 +42,7 @@ function setValues(newValues: Array<any>, parent: HTMLElement): void {
   const currentValues = parentValues.get(parent);
 
   // Only update reactive values. If static, let's not update.
-  if (currentValues && "value" in currentValues)
-    currentValues.value = newValues;
+  if (currentValues && isRef(currentValues)) currentValues.value = newValues;
   //else if (currentValues) parentValues.set(parent, newValues);
 }
 /**
@@ -94,7 +92,9 @@ export function useDragAndDrop<T>(
 
   dragAndDrop({ parent, values, ...options });
 
-  onUnmounted(() => parent.value && tearDown(parent.value));
+  // onBeforeUnmount, not onUnmounted: template refs are already null by the
+  // time onUnmounted runs, so tearDown was never actually called (#145).
+  onBeforeUnmount(() => parent.value && tearDown(parent.value));
 
   return [parent, values, updateConfig];
 }
@@ -110,7 +110,7 @@ export function useDragAndDrop<T>(
  */
 function handleParent<T>(
   config: Partial<VueParentConfig<T>>,
-  values: Ref<Array<T>> | Array<T>
+  values: MaybeRef<Array<T>>
 ) {
   return (parent: HTMLElement) => {
     parentValues.set(parent, values);

@@ -1,7 +1,7 @@
 <img src="https://s3.amazonaws.com/cdn.formk.it/web-assets/drag-and-drop.gif" alt="FormKit Drag & Drop" width="250" height="250">
 
 [![Tests](https://github.com/formkit/drag-and-drop/actions/workflows/ci.yml/badge.svg)](https://github.com/formkit/drag-and-drop/actions/workflows/ci.yml)![GitHub Sponsors](https://img.shields.io/github/sponsors/formkit)
-![NPM Version](https://img.shields.io/npm/v/%40formkit%2Ftempo)
+![NPM Version](https://img.shields.io/npm/v/%40formkit%2Fdrag-and-drop)
 
 ## Introduction
 
@@ -14,8 +14,3 @@ Check out the docs here!
 ---
 
 Created by the <a href="https://formkit.com">FormKit team</a>.
-
-> [!NOTE]  
-> Unlike many projects this repository includes the `dist` directory since the documentation extracts TypeScript types from the build source code.
-
-## About this repository

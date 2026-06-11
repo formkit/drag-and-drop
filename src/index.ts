@@ -235,9 +235,15 @@ export function setDragState<T>(
 }
 
 /**
- *
+ * Pointerdown events already handled by a draggable node. The node handlers
+ * no longer stop propagation (so framework-delegated listeners still fire);
+ * instead, ancestor nodes and the root handler skip claimed events.
  */
-function handleRootPointerdown() {
+const claimedPointerdowns = new WeakSet<Event>();
+
+function handleRootPointerdown(e: PointerEvent) {
+  if (claimedPointerdowns.has(e)) return;
+
   if (state.activeState) setActive(state.activeState.parent, undefined, state);
 
   if (state.selectedState)
@@ -247,7 +253,9 @@ function handleRootPointerdown() {
 }
 
 function handleRootPointerup() {
-  if (state.pointerDown) state.pointerDown.node.el.draggable = true;
+  if (state.pointerDown)
+    state.pointerDown.node.el.draggable =
+      !state.pointerDown.parent.data.config.dragHandle;
 
   state.pointerDown = undefined;
 
@@ -542,7 +550,7 @@ export function performSort<T>({
       parent: {
         el: parent.el,
         data: parent.data,
-      } as ParentRecord<unknown>,
+      } as ParentRecord<T>,
       previousValues: [...targetParentValues],
       previousNodes: [...enabledNodes],
       nodes: [...parent.data.enabledNodes],
@@ -551,7 +559,7 @@ export function performSort<T>({
       previousPosition: originalIndex,
       position: targetNodes[0].data.index,
       targetNodes,
-      state,
+      state: state as BaseDragState<T>,
     });
   }
 }
@@ -868,6 +876,24 @@ export function tearDown(parent: HTMLElement) {
 
   if (!parentData) return;
 
+  // Cancel interaction state tied to this parent so pending timers and the
+  // document-level drag handlers don't fire against unmounted elements
+  // (#145).
+  if (state.pointerDown?.parent.el === parent) {
+    if (state.longPressTimeout) clearTimeout(state.longPressTimeout);
+
+    state.pointerDown = undefined;
+  }
+
+  if (
+    isDragState(state) &&
+    (state.initialParent.el === parent || state.currentParent.el === parent)
+  ) {
+    if (isSynthDragState(state)) state.clonedDraggedNode?.remove();
+
+    resetState();
+  }
+
   if (parentData.abortControllers.mainParent)
     parentData.abortControllers.mainParent.abort();
 }
@@ -1022,7 +1048,10 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     },
   });
 
-  data.node.el.draggable = true;
+  // With a drag handle configured, the node only becomes draggable once a
+  // pointerdown on the handle validates — otherwise draggable="true" would
+  // disable text selection everywhere inside the item (#139).
+  data.node.el.draggable = !config.dragHandle;
 
   config.reapplyDragClasses(data.node.el, data.parent.data);
 
@@ -1170,30 +1199,77 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
 
     if (!config.draggable || (config.draggable && config.draggable(node))) {
       enabledNodes.push(node);
+    } else {
+      // Keep the DOM attribute in sync so elements excluded by the
+      // draggable callback cannot start native drags (#96).
+      node.draggable = false;
     }
   }
 
-  if (
-    enabledNodes.length !== parentData.getValues(parent).length &&
-    !config.disabled
-  ) {
+  const values = parentData.getValues(parent);
+
+  if (enabledNodes.length !== values.length && !config.disabled) {
     console.warn(
-      "The number of draggable items defined in the parent element does not match the number of values. This may cause unexpected behavior."
+      `The number of draggable items (${enabledNodes.length}) defined in the parent element does not match the number of values (${values.length}). This may cause unexpected behavior.`
     );
 
     return;
   }
 
-  const values = parentData.getValues(parent);
-
   const enabledNodeRecords: Array<NodeRecord<T>> = [];
+
+  // During an active drag the DOM can lag behind the values array, because
+  // framework renders are asynchronous (React especially, #169). Pairing
+  // values to nodes positionally would then reassign node identities —
+  // attaching the wrong value/index to elements and corrupting every
+  // subsequent sort. While dragging, pair each known node to its existing
+  // value instead and derive its index from the values array. Falls back to
+  // positional pairing whenever existing node values can't be matched 1:1
+  // onto the current values (initial setup, transfers committing, replaced
+  // arrays).
+  let identityIndexes: Array<number> | null = null;
+
+  if (isDragState(state)) {
+    identityIndexes = [];
+
+    const consumed = new Array(values.length).fill(false);
+
+    for (let x = 0; x < enabledNodes.length; x++) {
+      const prevNodeData = nodes.get(enabledNodes[x]);
+
+      let found = -1;
+
+      if (prevNodeData) {
+        for (let i = 0; i < values.length; i++) {
+          if (!consumed[i] && eq(values[i], prevNodeData.value)) {
+            found = i;
+
+            break;
+          }
+        }
+      }
+
+      if (found === -1) {
+        identityIndexes = null;
+
+        break;
+      }
+
+      consumed[found] = true;
+
+      identityIndexes.push(found);
+    }
+  }
 
   for (let x = 0; x < enabledNodes.length; x++) {
     const node = enabledNodes[x];
 
     const prevNodeData = nodes.get(node);
 
-    if (config.draggableValue && !config.draggableValue(values[x])) continue;
+    const valueIndex = identityIndexes ? identityIndexes[x] : x;
+
+    if (config.draggableValue && !config.draggableValue(values[valueIndex]))
+      continue;
 
     const nodeData = Object.assign(
       prevNodeData ?? {
@@ -1201,8 +1277,8 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
         abortControllers: {},
       },
       {
-        value: values[x],
-        index: x,
+        value: values[valueIndex],
+        index: valueIndex,
       }
     );
 
@@ -1354,20 +1430,25 @@ function handleParentScroll<T>(_data: ParentEventData<T>) {
  */
 export function handleDragstart<T>(
   data: NodeDragEventData<T>,
-  _state: BaseDragState<T>
+  state: BaseDragState<T>
 ) {
   const config = data.targetData.parent.data.config;
 
-  if (
-    !config.nativeDrag ||
-    !validateDragstart(data) ||
-    !validateDragHandle({
-      x: data.e.clientX,
-      y: data.e.clientY,
-      node: data.targetData.node,
-      config,
-    })
-  ) {
+  // Native dragstart fires on the draggable node itself, so a handle inside
+  // a shadow root is never part of this event's path. Reuse the validation
+  // performed on pointerdown (whose composed path does include the handle)
+  // when it refers to the same node; fall back to validating this event
+  // directly (e.g. Safari, where pointerdown may not have fired).
+  const validated =
+    state.pointerDown && state.pointerDown.node.el === data.targetData.node.el
+      ? state.pointerDown.validated
+      : validateDragHandle({
+          e: data.e,
+          node: data.targetData.node,
+          config,
+        });
+
+  if (!config.nativeDrag || !validateDragstart(data) || !validated) {
     pd(data.e);
 
     return;
@@ -1407,7 +1488,14 @@ export function handleNodePointerdown<T>(
   data: NodePointerEventData<T>,
   state: BaseDragState<T>
 ) {
-  sp(data.e);
+  // Claim the event for the innermost draggable node instead of stopping
+  // propagation: frameworks like React attach delegated listeners at the
+  // root, which stopPropagation silenced entirely (consumer onPointerDown
+  // handlers inside items never fired). Ancestor nodes and the root
+  // pointerdown handler skip events already claimed here.
+  if (claimedPointerdowns.has(data.e)) return;
+
+  claimedPointerdowns.add(data.e);
 
   state.pointerDown = {
     parent: data.targetData.parent,
@@ -1417,8 +1505,7 @@ export function handleNodePointerdown<T>(
 
   if (
     !validateDragHandle({
-      x: data.e.clientX,
-      y: data.e.clientY,
+      e: data.e,
       node: data.targetData.node,
       config: data.targetData.parent.data.config,
     })
@@ -1426,6 +1513,11 @@ export function handleNodePointerdown<T>(
     return;
 
   state.pointerDown.validated = true;
+
+  // The pointer is on the drag handle: enable native dragging for the
+  // imminent dragstart (#139).
+  if (data.targetData.parent.data.config.dragHandle)
+    data.targetData.node.el.draggable = true;
 
   handleLongPress(data, state, data.targetData.node);
 
@@ -1614,6 +1706,10 @@ export function initDrag<T>(
       dragImage = config.dragImage(data, draggedNodes);
     } else {
       if (!config.multiDrag || draggedNodes.length === 1) {
+        // Capture the original inline z-index before elevating the node so
+        // handleEnd restores the user's value instead of the temporary 9999.
+        dragState.originalZIndex = data.targetData.node.el.style.zIndex;
+
         data.targetData.node.el.style.zIndex = "9999";
         data.targetData.node.el.style.boxSizing = "border-box";
 
@@ -1622,8 +1718,6 @@ export function initDrag<T>(
           data.e.offsetX,
           data.e.offsetY
         );
-
-        dragState.originalZIndex = data.targetData.node.el.style.zIndex;
 
         return dragState;
       } else {
@@ -1660,7 +1754,9 @@ export function initDrag<T>(
 
         data.targetData.parent.el.appendChild(wrapper);
 
-        wrapper.showPopover();
+        // showPopover throws on disconnected elements (e.g. the parent was
+        // unmounted mid-interaction, #145).
+        if (wrapper.isConnected) wrapper.showPopover();
 
         wrapper.getBoundingClientRect(); // ← forces layout
 
@@ -1683,13 +1779,11 @@ export function initDrag<T>(
 }
 
 export function validateDragHandle<T>({
-  x,
-  y,
+  e,
   node,
   config,
 }: {
-  x: number;
-  y: number;
+  e: PointerEvent | DragEvent;
   node: NodeRecord<T>;
   config: ParentConfig<T>;
 }): boolean {
@@ -1697,11 +1791,25 @@ export function validateDragHandle<T>({
 
   if (!config.dragHandle) return true;
 
+  // Events that originate inside a shadow root are retargeted to the host
+  // element, so querySelectorAll/elementFromPoint can never see the handle.
+  // composedPath() exposes the real path; only elements between the event
+  // origin and the draggable node itself can count as the node's handle.
+  const path = e.composedPath();
+
+  const nodeIndex = path.indexOf(node.el);
+
+  for (const target of nodeIndex === -1 ? [] : path.slice(0, nodeIndex)) {
+    if (target instanceof Element && target.matches(config.dragHandle))
+      return true;
+  }
+
+  // Fallback for events that fire on the draggable node itself (native
+  // dragstart targets the draggable element, not the handle): hit-test the
+  // handle from the event coordinates.
   const dragHandles = node.el.querySelectorAll(config.dragHandle);
 
-  if (!dragHandles) return false;
-
-  const elFromPoint = config.root.elementFromPoint(x, y);
+  const elFromPoint = config.root.elementFromPoint(e.clientX, e.clientY);
 
   if (!elFromPoint) return false;
 
@@ -1781,7 +1889,9 @@ export function handleNodeFocus<T>(data: NodeEventData<T>) {
 export function handleNodeBlur<T>(data: NodeEventData<T>) {
   if (data.e.target === data.e.currentTarget) return;
 
-  if (state.pointerDown) state.pointerDown.node.el.draggable = true;
+  if (state.pointerDown)
+    state.pointerDown.node.el.draggable =
+      !state.pointerDown.parent.data.config.dragHandle;
 }
 
 /**
@@ -1858,7 +1968,9 @@ export function handlePointercancel<T>(
  * @returns void
  */
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
-  if (state.draggedNode) state.draggedNode.el.draggable = true;
+  if (state.draggedNode)
+    state.draggedNode.el.draggable =
+      !state.currentParent.data.config.dragHandle;
 
   // --- Capture necessary data BEFORE resetState might affect it ---
   const nodesToClean = state.draggedNodes.map((x) => x.el);
@@ -1970,6 +2082,13 @@ export function handleNodePointerup<T>(
     data.targetData.parent.data.enabledNodes.map((x) => x.el),
     config.longPressClass
   );
+
+  // This handler stops propagation, so handleRootPointerup never sees
+  // releases over a node — disarm handle-gated dragging here (#139).
+  // pointerDown itself stays set: the focus/blur handlers rely on it to
+  // manage draggable while editing inner inputs (#142).
+  if (state.pointerDown && state.pointerDown.parent.data.config.dragHandle)
+    state.pointerDown.node.el.draggable = false;
 
   if (!isDragState(state)) return;
 
@@ -2109,7 +2228,9 @@ function initSynthDrag<T>(
 
   parent.el.appendChild(dragImage);
 
-  dragImage.showPopover();
+  // showPopover throws on disconnected elements (e.g. the parent was
+  // unmounted mid-interaction, #145).
+  if (dragImage.isConnected) dragImage.showPopover();
 
   const synthDragStateProps = {
     clonedDraggedEls: [],
@@ -2150,6 +2271,11 @@ export function handleLongPress<T>(
   node: NodeRecord<T>
 ) {
   const config = data.targetData.parent.data.config;
+
+  // Long press is opt-in. Without it, a press-and-hold is simply a pointer
+  // that has not moved yet — scheduling the timeout anyway mutated drag state
+  // and preventDefault-ed a stale event one second into every touch hold.
+  if (!config.longPress) return;
 
   state.longPressTimeout = setTimeout(() => {
     if (!state) return;
@@ -2370,6 +2496,12 @@ export function validateTransfer<T>({
   draggedNodes: Array<NodeRecord<T>>;
   state: BaseDragState<T>;
 }) {
+  // A `dragover` can fire when there is no valid target/current parent (e.g.
+  // hovering the source list of a transfer setup). Without this guard the
+  // first `targetParent.el` access throws an uncaught TypeError and breaks the
+  // drag interaction. No valid parent means the transfer is simply not valid.
+  if (!targetParent || !currentParent) return false;
+
   if (targetParent.el === currentParent.el) return false;
 
   const targetConfig = targetParent.data.config;

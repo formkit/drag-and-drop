@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { Component } from "vue";
-import { shallowRef, ref, reactive, watch, onMounted, nextTick } from "vue";
+import { shallowRef, ref, watch, onMounted } from "vue";
+import IconMarko from "./IconMarko.vue";
 
 const props = defineProps<{
   example: string;
@@ -10,16 +11,14 @@ const exampleLang = ref("react");
 const rawCode = ref("");
 const copyStatus = ref("Copy");
 const codeCache = ref<Record<string, string>>({});
-const availableLangs = ["react", "vue", "solid", "native"];
+const availableLangs = ["react", "vue", "solid", "native", "marko"];
 const copyButtonRef = ref<HTMLButtonElement | null>(null);
 
 const cmp = shallowRef<Component | false>(false);
-const loadedLangs = reactive(new Set(["react"]));
 
 watch(
   exampleLang,
   (newLang) => {
-    loadedLangs.add(newLang);
     rawCode.value = codeCache.value[newLang] || "";
     copyStatus.value = rawCode.value ? "Copy" : "Error";
   },
@@ -135,6 +134,16 @@ async function copyCode() {
         <IconJavaScript class="inline-block w-4 sm:w-5 h-[1.25em] mr-1.5" />
         Native
       </li>
+      <li
+        class="example-tab"
+        @click="
+          exampleLang = 'marko';
+          expanded = true;
+        "
+        :data-active="exampleLang === 'marko'"
+      >
+        <IconMarko class="inline-block w-4 sm:w-5 mr-1.5" /> Marko
+      </li>
 
       <li class="ml-auto flex items-center pr-1">
         <div class="relative mr-1">
@@ -184,17 +193,26 @@ async function copyCode() {
       v-show="expanded"
       class="editor border-l-4 border-r-4 border-slate-400 dark:border-slate-500"
     >
-      <div v-if="loadedLangs.has('react')" v-show="exampleLang === 'react'">
+      <!--
+        All panes render during SSR/SSG and toggle with v-show. They are
+        server components: mounting them lazily on tab click requires a
+        runtime island request, which has no server to answer it on the
+        statically deployed site — tabs came back empty (#174).
+      -->
+      <div v-show="exampleLang === 'react'">
         <CodeExampleReact :example="example" />
       </div>
-      <div v-if="loadedLangs.has('vue')" v-show="exampleLang === 'vue'">
+      <div v-show="exampleLang === 'vue'">
         <CodeExampleVue :example="example" />
       </div>
-      <div v-if="loadedLangs.has('solid')" v-show="exampleLang === 'solid'">
+      <div v-show="exampleLang === 'solid'">
         <CodeExampleSolid :example="example" />
       </div>
-      <div v-if="loadedLangs.has('native')" v-show="exampleLang === 'native'">
+      <div v-show="exampleLang === 'native'">
         <CodeExampleNative :example="example" />
+      </div>
+      <div v-show="exampleLang === 'marko'">
+        <CodeExampleMarko :example="example" />
       </div>
     </div>
     <div class="demo-container">

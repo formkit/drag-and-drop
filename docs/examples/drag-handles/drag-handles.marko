@@ -1,0 +1,28 @@
+static const todoItems = ["Schedule perm", "Rewind VHS tapes", "Make change for the arcade", "Get disposable camera developed", "Learn C++", "Return Nintendo Power Glove"];
+static const doneItems = ["Pickup new mix-tape from Beth", "Implement drag handles"];
+static const config = { group: "todoList", dragHandle: ".kanban-handle" };
+
+<let/todos=todoItems>
+<let/dones=doneItems>
+
+<div class="kanban-board">
+  <ul/todoList class="kanban-column">
+    <for|todo| of=todos by=(t => t)>
+      <li class="kanban-item">
+        <span class="kanban-handle"/>
+        ${todo}
+      </li>
+    </for>
+  </ul>
+  <ul/doneList class="kanban-column">
+    <for|done| of=dones by=(t => t)>
+      <li class="kanban-item">
+        <span class="kanban-handle"/>
+        ${done}
+      </li>
+    </for>
+  </ul>
+</div>
+
+<dnd:=todos parent=todoList config=config/>
+<dnd:=dones parent=doneList config=config/>

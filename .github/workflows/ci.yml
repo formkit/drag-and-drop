@@ -1,35 +1,85 @@
 name: Drag and drop tests
-on: [push, workflow_dispatch]
+on:
+  push:
+    # Tag pushes are covered by publish.yml, which calls this workflow as
+    # its test gate.
+    branches:
+      - "**"
+  workflow_dispatch:
+  workflow_call:
 jobs:
   playwright:
-    name: "Playwright tests"
+    name: "Playwright tests (${{ matrix.project }})"
     timeout-minutes: 30
     runs-on: ubuntu-latest
+    strategy:
+      # One shard per Playwright project: the full suite serially exceeds the
+      # job timeout, and sharding keeps each run well inside it.
+      fail-fast: false
+      matrix:
+        include:
+          - project: Desktop Chrome
+            browser: chromium
+            slug: chrome
+          - project: Desktop Firefox
+            browser: firefox
+            slug: firefox
+          - project: Desktop Webkit
+            browser: webkit
+            slug: webkit
+          - project: iPhone 13 Chromium
+            browser: chromium
+            slug: mobile-chromium
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: 18
+          # Pinned: Node 24.16.0 hangs Playwright's browser download at 100%
+          # (stream never finalizes). 24.15.0 is the last verified-good
+          # version on these runners — bump deliberately, with a green run.
+          node-version: 24.15.0
+      - name: Update npm
+        run: npm install -g npm@latest
+      - name: Verify runtime
+        run: |
+          node --version
+          npm --version
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v6
         with:
-          version: 9.10.0
+          version: 10.14.0
       - run: pnpm install --frozen-lockfile
       - name: Build Dev Frameworks
         run: cd tests-frameworks && pnpm install && cd ..
       - name: Build Dev
         run: cd tests && pnpm install && cd ..
+      - name: Get Playwright version
+        id: pw-version
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ matrix.browser }}-${{ steps.pw-version.outputs.version }}
       - name: Install Playwright
-        run: pnpm exec playwright install --with-deps
-      - name: Spin up tests-frameworks
-        run: pnpm tests-frameworks &
-      - name: Spin up tests
-        run: pnpm tests &
+        # The browser download intermittently stalls forever (no output after
+        # reaching the CDN), which used to eat the whole job timeout. Bound
+        # each attempt and retry instead of hanging.
+        timeout-minutes: 20
+        run: |
+          for attempt in 1 2 3; do
+            if timeout 300 pnpm exec playwright install --with-deps ${{ matrix.browser }}; then
+              exit 0
+            fi
+            echo "playwright install stalled or failed (attempt $attempt), retrying..."
+            sleep 5
+          done
+          exit 1
       - name: Run Playwright tests
-        run: npx playwright test
-      - uses: actions/upload-artifact@v4
+        run: pnpm exec playwright test --project "${{ matrix.project }}"
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.slug }}
           path: playwright-report/
           retention-days: 30

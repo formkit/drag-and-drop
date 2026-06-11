@@ -22,25 +22,29 @@ const nativeTransformer = transformerTwoslash();
 
 export async function highlightCode(
   code: string,
-  lang: "tsx" | "vue" | "ts",
+  lang: "tsx" | "vue" | "ts" | "marko",
 ) {
+  const shikiLang = lang === "marko" ? "html" : lang;
+
   const transformer =
     lang === "vue"
       ? vueTransformer
       : lang === "ts"
         ? nativeTransformer
-        : tsxTransformer;
+        : lang === "marko"
+          ? undefined
+          : tsxTransformer;
 
   const [html, darkHtml] = await Promise.all([
     codeToHtml(code, {
       theme: "github-light",
-      lang,
-      transformers: [transformer],
+      lang: shikiLang,
+      ...(transformer ? { transformers: [transformer] } : {}),
     }),
     codeToHtml(code, {
       theme: "github-dark",
-      lang,
-      transformers: [transformer],
+      lang: shikiLang,
+      ...(transformer ? { transformers: [transformer] } : {}),
     }),
   ]);
 

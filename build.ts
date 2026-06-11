@@ -58,7 +58,7 @@ const __dirname = dirname(__filename);
     outExtension: ({ format }) => ({ js: format === "cjs" ? ".cjs" : ".mjs" }),
   });
 
-  async function replaceImports(fileName) {
+  async function replaceImports(fileName: string) {
     const format = fileName.endsWith("mjs") ? "mjs" : "cjs";
     const file = await readFile(resolve(__dirname, `${fileName}`), "utf8");
     const updatedFile = file.replace(
@@ -75,11 +75,76 @@ const __dirname = dirname(__filename);
   await replaceImports("dist/solid/index.mjs");
   await replaceImports("dist/solid/index.cjs");
 
+  // Marko source is compiled by the consumer's bundler.
+  // "../index" in dnd.marko resolves to dist/index.mjs at consumer build time.
+  console.log("Copying Marko integration...");
+  const markoDistTagsDir = resolve(__dirname, "dist/tags");
+  await mkdir(markoDistTagsDir, { recursive: true });
+  await copyFile(
+    resolve(__dirname, "src/marko/dnd.marko"),
+    resolve(markoDistTagsDir, "dnd.marko")
+  );
+  // marko.json at dist root enables <dnd> auto-discovery in consuming projects.
+  await writeFile(
+    resolve(__dirname, "dist/marko.json"),
+    JSON.stringify({ "tags-dir": "./tags", "script-lang": "ts" }, null, 2),
+    "utf8"
+  );
+
   console.log("Rewriting package.json...");
 
+  const publishExports = {
+    "./vue": {
+      require: {
+        types: "./vue/index.d.cts",
+        default: "./vue/index.cjs",
+      },
+      import: {
+        types: "./vue/index.d.ts",
+        default: "./vue/index.mjs",
+      },
+    },
+    "./react": {
+      require: {
+        types: "./react/index.d.cts",
+        default: "./react/index.cjs",
+      },
+      import: {
+        types: "./react/index.d.ts",
+        default: "./react/index.mjs",
+      },
+    },
+    "./solid": {
+      require: {
+        types: "./solid/index.d.cts",
+        default: "./solid/index.cjs",
+      },
+      import: {
+        types: "./solid/index.d.ts",
+        default: "./solid/index.mjs",
+      },
+    },
+    "./marko": {
+      import: "./tags/dnd.marko",
+      default: "./tags/dnd.marko",
+    },
+    ".": {
+      require: {
+        types: "./index.d.cts",
+        default: "./index.cjs",
+      },
+      import: {
+        types: "./index.d.ts",
+        default: "./index.mjs",
+      },
+    },
+  };
+
   const packageJson = {
-    name: "@formkit/drag-and-drop",
     ...JSON.parse(await readFile(resolve(__dirname, `package.json`), "utf8")),
+    main: "./index.cjs",
+    types: "./index.d.cts",
+    exports: publishExports,
   };
   delete packageJson.devDependencies;
   delete packageJson.private;

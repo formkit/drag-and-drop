@@ -18,11 +18,19 @@ function Test1(props: { id: string; testDescription: string }) {
 
   const [values, setValues] = useState(playingCardAssets);
 
+  const [pointerDowns, setPointerDowns] = useState(0);
+
   const parent = React.useRef(null);
 
   const playingCards = values.map((card: { id: string; src: string }) => (
     <li className="item" key={card.id} id={props.id + "_" + card.id}>
       <img src={card.src} />
+      <button
+        id={props.id + "_" + card.id + "_button"}
+        onPointerDown={() => setPointerDowns((count) => count + 1)}
+      >
+        Inner button
+      </button>
     </li>
   ));
 
@@ -63,6 +71,7 @@ function Test1(props: { id: string; testDescription: string }) {
       <span id={props.id + "_values"}>
         {values.map((x: { id: string; src: string }) => x.id).join(" ")}
       </span>
+      <span id={props.id + "_pointerdowns"}>{pointerDowns}</span>
     </>
   );
 }

@@ -28,8 +28,14 @@ export default function myComponent() {
     return items3.length < 5;
   };
 
-  const [target1, items2] = useDragAndDrop(["knight.bmp", "dragon.bmp"], config1);
-  const [target2, items3] = useDragAndDrop(["brick.bmp", "moss.bmp"], config2);
+  const [target1, items2] = useDragAndDrop<HTMLUListElement, string>(
+    ["knight.bmp", "dragon.bmp"],
+    config1
+  );
+  const [target2, items3] = useDragAndDrop<HTMLUListElement, string>(
+    ["brick.bmp", "moss.bmp"],
+    config2
+  );
 
   return (
     <div>
@@ -38,13 +44,13 @@ export default function myComponent() {
           <li key={item}>{item}</li>
         ))}
       </ul>
-      <ul ref="target1">
+      <ul ref={target1}>
         {items2.map((item) => (
           <li key={item}>{item}</li>
         ))}
       </ul>
 
-      <ul ref="target2">
+      <ul ref={target2}>
         {items3.map((item) => (
           <li key={item}>{item}</li>
         ))}

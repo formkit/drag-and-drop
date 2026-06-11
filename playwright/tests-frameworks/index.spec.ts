@@ -5,7 +5,7 @@ let page: Page;
 
 test.beforeAll(async ({ browser }) => {
   page = await browser.newPage();
-  await page.goto("http://localhost:5173/");
+  await page.goto("http://127.0.0.1:5173/");
 });
 
 test.describe("Vue wrappers working as expected", async () => {
@@ -359,5 +359,188 @@ test.describe("React wrapper working as expected", async () => {
         "jack_of_hearts queen_of_spades 10_of_clubs"
       );
     });
+  });
+});
+
+test.describe("Marko wrappers working as expected", async () => {
+  test("dragAndDrop() can enable sorting, accept new values, and update the parent config", async () => {
+    // Check that the list items can be sorted
+    await drag(page, {
+      originEl: {
+        id: "marko_drag_and_drop_10_of_clubs",
+        position: "center",
+      },
+      destinationEl: {
+        id: "marko_drag_and_drop_jack_of_hearts",
+        position: "center",
+      },
+      dragStart: true,
+      drop: true,
+    });
+    await expect(page.locator("#marko_drag_and_drop_values")).toHaveText(
+      "jack_of_hearts 10_of_clubs"
+    );
+    // Add value
+    await page.locator("#marko_drag_and_drop_add_value").click();
+    await expect(page.locator("#marko_drag_and_drop_values")).toHaveText(
+      "jack_of_hearts 10_of_clubs queen_of_spades"
+    );
+    // Check that the list items can be sorted
+    await drag(page, {
+      originEl: {
+        id: "marko_drag_and_drop_10_of_clubs",
+        position: "center",
+      },
+      destinationEl: {
+        id: "marko_drag_and_drop_queen_of_spades",
+        position: "center",
+      },
+      dragStart: true,
+      drop: true,
+    });
+    await expect(page.locator("#marko_drag_and_drop_values")).toHaveText(
+      "jack_of_hearts queen_of_spades 10_of_clubs"
+    );
+    // Disable drag and drop
+    await page.locator("#marko_drag_and_drop_disable").click();
+    // Check that the list items can not be sorted
+    await drag(page, {
+      originEl: {
+        id: "marko_drag_and_drop_10_of_clubs",
+        position: "center",
+      },
+      destinationEl: {
+        id: "marko_drag_and_drop_queen_of_spades",
+        position: "center",
+      },
+      dragStart: true,
+      drop: true,
+    });
+    await expect(page.locator("#marko_drag_and_drop_values")).toHaveText(
+      "jack_of_hearts queen_of_spades 10_of_clubs"
+    );
+    // Re-enable drag and drop
+    await page.locator("#marko_drag_and_drop_enable").click();
+    // Check that the list items can be sorted again
+    await drag(page, {
+      originEl: {
+        id: "marko_drag_and_drop_10_of_clubs",
+        position: "center",
+      },
+      destinationEl: {
+        id: "marko_drag_and_drop_jack_of_hearts",
+        position: "center",
+      },
+      dragStart: true,
+      drop: true,
+    });
+    await expect(page.locator("#marko_drag_and_drop_values")).toHaveText(
+      "10_of_clubs jack_of_hearts queen_of_spades"
+    );
+  });
+
+  test("useDragAndDrop() can enable sorting, accept new values, and update the parent config", async () => {
+    // Check that the list items can be sorted
+    await drag(page, {
+      originEl: {
+        id: "marko_use_drag_and_drop_10_of_clubs",
+        position: "center",
+      },
+      destinationEl: {
+        id: "marko_use_drag_and_drop_jack_of_hearts",
+        position: "center",
+      },
+      dragStart: true,
+      drop: true,
+    });
+    await expect(page.locator("#marko_use_drag_and_drop_values")).toHaveText(
+      "jack_of_hearts 10_of_clubs"
+    );
+    // Add value
+    await page.locator("#marko_use_drag_and_drop_add_value").click();
+    await expect(page.locator("#marko_use_drag_and_drop_values")).toHaveText(
+      "jack_of_hearts 10_of_clubs queen_of_spades"
+    );
+    // Check that the list items can be sorted
+    await drag(page, {
+      originEl: {
+        id: "marko_use_drag_and_drop_10_of_clubs",
+        position: "center",
+      },
+      destinationEl: {
+        id: "marko_use_drag_and_drop_queen_of_spades",
+        position: "center",
+      },
+      dragStart: true,
+      drop: true,
+    });
+    await expect(page.locator("#marko_use_drag_and_drop_values")).toHaveText(
+      "jack_of_hearts queen_of_spades 10_of_clubs"
+    );
+    // Disable drag and drop
+    await page.locator("#marko_use_drag_and_drop_disable").click();
+    // Check that the list items can not be sorted
+    await drag(page, {
+      originEl: {
+        id: "marko_use_drag_and_drop_10_of_clubs",
+        position: "center",
+      },
+      destinationEl: {
+        id: "marko_use_drag_and_drop_jack_of_hearts",
+        position: "center",
+      },
+      dragStart: true,
+      drop: true,
+    });
+    await expect(page.locator("#marko_use_drag_and_drop_values")).toHaveText(
+      "jack_of_hearts queen_of_spades 10_of_clubs"
+    );
+    // Re-enable drag and drop
+    await page.locator("#marko_use_drag_and_drop_enable").click();
+    // Check that the list items can be sorted again
+    await drag(page, {
+      originEl: {
+        id: "marko_use_drag_and_drop_10_of_clubs",
+        position: "center",
+      },
+      destinationEl: {
+        id: "marko_use_drag_and_drop_jack_of_hearts",
+        position: "center",
+      },
+      dragStart: true,
+      drop: true,
+    });
+    await expect(page.locator("#marko_use_drag_and_drop_values")).toHaveText(
+      "10_of_clubs jack_of_hearts queen_of_spades"
+    );
+  });
+
+  test("transfer() can move items between two lists", async () => {
+    // Verify initial state
+    await expect(page.locator("#marko_transfer_values1")).toHaveText(
+      "10_of_clubs jack_of_hearts"
+    );
+    await expect(page.locator("#marko_transfer_values2")).toHaveText(
+      "queen_of_spades"
+    );
+    // Transfer 10_of_clubs from list1 to list2
+    await drag(page, {
+      originEl: {
+        id: "marko_transfer_10_of_clubs",
+        position: "center",
+      },
+      destinationEl: {
+        id: "marko_transfer_queen_of_spades",
+        position: "center",
+      },
+      dragStart: true,
+      drop: true,
+    });
+    await expect(page.locator("#marko_transfer_values1")).toHaveText(
+      "jack_of_hearts"
+    );
+    await expect(page.locator("#marko_transfer_values2")).toHaveText(
+      "10_of_clubs queen_of_spades"
+    );
   });
 });

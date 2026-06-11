@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, useTemplateRef } from "vue";
 import { dragAndDrop } from "../../../src/vue/index";
 
 const props = defineProps<{
@@ -18,7 +18,7 @@ const values = ref([
   },
 ]);
 
-const parent = ref();
+const parent = useTemplateRef<HTMLElement>("parent");
 
 dragAndDrop({
   parent,

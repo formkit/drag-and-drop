@@ -349,19 +349,19 @@ export interface ParentConfig<T> {
   /**
    * Callback function for when a sort operation is performed.
    */
-  onSort?: SortEvent;
+  onSort?: SortEvent<T>;
   /**
    * Callback function for when a transfer operation is performed.
    */
-  onTransfer?: TransferEvent;
+  onTransfer?: TransferEvent<T>;
   /**
    * Fired when a drag is started, whether native drag or synthetic
    */
-  onDragstart?: DragstartEvent;
+  onDragstart?: DragstartEvent<T>;
   /**
    * Fired when a drag is ended, whether native drag or synthetic
    */
-  onDragend?: DragendEvent;
+  onDragend?: DragendEvent<T>;
 }
 
 /**
@@ -891,13 +891,13 @@ export interface DragStateProps<T> {
   frameIdY?: number;
 }
 
-export type SortEvent = <T>(data: SortEventData<T>) => void;
+export type SortEvent<T> = (data: SortEventData<T>) => void;
 
-export type TransferEvent = <T>(data: TransferEventData<T>) => void;
+export type TransferEvent<T> = (data: TransferEventData<T>) => void;
 
-export type DragstartEvent = <T>(data: DragstartEventData<T>) => void;
+export type DragstartEvent<T> = (data: DragstartEventData<T>) => void;
 
-export type DragendEvent = <T>(data: DragendEventData<T>) => void;
+export type DragendEvent<T> = (data: DragendEventData<T>) => void;
 
 export interface SortEventData<T> {
   parent: ParentRecord<T>;

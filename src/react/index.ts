@@ -78,12 +78,12 @@ export function useDragAndDrop<E extends HTMLElement, T = unknown>(
   list: T[],
   options: Partial<ParentConfig<T>> = {}
 ): [
-  RefObject<E>,
+  RefObject<E | null>,
   T[],
   Dispatch<SetStateAction<T[]>>,
   (config: Partial<ParentConfig<T>>) => void
 ] {
-  const parent: RefObject<E> = useRef<E>(null);
+  const parent = useRef<E>(null);
 
   const [values, setValues] = useState(list);
 
@@ -96,8 +96,13 @@ export function useDragAndDrop<E extends HTMLElement, T = unknown>(
   }, [values]);
 
   useEffect(() => {
+    // Capture the element now: React nulls DOM refs before passive effect
+    // cleanups run on unmount, so reading parent.current in the cleanup
+    // skipped tearDown entirely (#145).
+    const el = parent.current;
+
     return () => {
-      if (parent.current) tearDown(parent.current);
+      if (el) tearDown(el);
     };
   }, []);
 

@@ -1,0 +1,173 @@
+static const initialItems1 = ["Apples", "Bananas", "Oranges", "Grapes"];
+static const initialItems2 = ["Milk", "Cheese", "Yogurt"];
+static const group = "accessibleList";
+
+<let/liveMessage="">
+<let/items1=initialItems1>
+<let/items2=initialItems2>
+<let/focusedList=null>
+<let/focusedIdx=null>
+<let/selected=null>
+
+<let/config1={
+  group,
+  onDragstart: (s) => { liveMessage = `Drag started for ${s.draggedNode.data.value}.`; },
+  onSort: (e) => { liveMessage = `Sorted ${e.draggedNodes[0].data.value} in List 1 to position ${e.position + 1}.`; },
+  onTransfer: (e) => { liveMessage = `Transferred ${e.draggedNodes[0].data.value} to List 1 at position ${e.targetIndex + 1}.`; },
+  onDragend: (s) => { liveMessage = `Drag ended for ${s.draggedNode.data.value}.`; },
+}>
+<let/config2={
+  group,
+  onDragstart: (s) => { liveMessage = `Drag started for ${s.draggedNode.data.value}.`; },
+  onSort: (e) => { liveMessage = `Sorted ${e.draggedNodes[0].data.value} in List 2 to position ${e.position + 1}.`; },
+  onTransfer: (e) => { liveMessage = `Transferred ${e.draggedNodes[0].data.value} to List 2 at position ${e.targetIndex + 1}.`; },
+  onDragend: (s) => { liveMessage = `Drag ended for ${s.draggedNode.data.value}.`; },
+}>
+
+<div class="accessibility-demo">
+  <div aria-live="polite" class="sr-only">${liveMessage}</div>
+
+  <div class="lists-container">
+    <div class="list-wrapper">
+      <h2 id="list1-heading">List 1</h2>
+      <ul/list1
+        class="list"
+        tabindex="0"
+        role="listbox"
+        aria-labelledby="list1-heading"
+        aria-activedescendant=(focusedList === 0 && focusedIdx !== null ? `list1-item-${items1[focusedIdx]}` : undefined)
+        onFocus() { focusedList = 0; if (focusedIdx === null && items1.length > 0) focusedIdx = 0; liveMessage = "List 1 focused. Use up and down arrows to navigate items."; }
+        onKeydown(e) {
+          if (focusedList !== 0) return;
+          const items = items1;
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            if (items.length > 0) { focusedIdx = focusedIdx === null ? 0 : (focusedIdx + 1) % items.length; liveMessage = items[focusedIdx]; }
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            if (items.length > 0) { focusedIdx = focusedIdx === null ? items.length - 1 : (focusedIdx - 1 + items.length) % items.length; liveMessage = items[focusedIdx]; }
+          } else if (e.key === " ") {
+            e.preventDefault();
+            if (focusedIdx !== null) {
+              if (selected?.listIndex === 0 && selected?.itemIndex === focusedIdx) { selected = null; liveMessage = `${items[focusedIdx]} deselected.`; }
+              else { selected = { listIndex: 0, itemIndex: focusedIdx, value: items[focusedIdx] }; liveMessage = `${items[focusedIdx]} selected. Use arrow keys to choose drop position, then press Enter.`; }
+            }
+          } else if (e.key === "Enter") {
+            e.preventDefault();
+            if (selected && focusedIdx !== null) {
+              const { listIndex: srcList, itemIndex: srcIdx, value } = selected;
+              const tgtList = 0; const tgtIdx = focusedIdx;
+              if (srcList === tgtList && srcIdx === tgtIdx) { liveMessage = `Cannot drop ${value} onto itself.`; selected = null; return; }
+              const srcItems = srcList === 0 ? [...items1] : [...items2];
+              const tgtItems = [...items1];
+              srcItems.splice(srcIdx, 1);
+              const effIdx = Math.max(0, Math.min(tgtIdx, tgtItems.length));
+              tgtItems.splice(effIdx, 0, value);
+              if (srcList === 0) items1 = tgtItems;
+              else { items2 = srcItems; items1 = tgtItems; }
+              liveMessage = `Moved ${value} to position ${effIdx + 1} in List 1.`;
+              selected = null; focusedIdx = effIdx; focusedList = 0;
+            }
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            if (selected) { liveMessage = `Selection cancelled for ${selected.value}.`; selected = null; }
+            else { e.target.blur(); focusedList = null; focusedIdx = null; }
+          }
+        }
+      >
+        <for|item, index| of=items1 by=(i => i)>
+          <li
+            id=`list1-item-${item}`
+            class=["item", focusedList === 0 && focusedIdx === index && "item-focused", selected?.listIndex === 0 && selected?.itemIndex === index && "item-selected"]
+            role="option"
+            aria-selected=(focusedList === 0 && focusedIdx === index)
+            tabindex="-1"
+          >
+            ${item}
+          </li>
+        </for>
+        <if=items1.length === 0>
+          <li class="empty-list-message">Empty</li>
+        </if>
+      </ul>
+    </div>
+
+    <div class="list-wrapper">
+      <h2 id="list2-heading">List 2</h2>
+      <ul/list2
+        class="list"
+        tabindex="0"
+        role="listbox"
+        aria-labelledby="list2-heading"
+        aria-activedescendant=(focusedList === 1 && focusedIdx !== null ? `list2-item-${items2[focusedIdx]}` : undefined)
+        onFocus() { focusedList = 1; if (focusedIdx === null && items2.length > 0) focusedIdx = 0; liveMessage = "List 2 focused. Use up and down arrows to navigate items."; }
+        onKeydown(e) {
+          if (focusedList !== 1) return;
+          const items = items2;
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            if (items.length > 0) { focusedIdx = focusedIdx === null ? 0 : (focusedIdx + 1) % items.length; liveMessage = items[focusedIdx]; }
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            if (items.length > 0) { focusedIdx = focusedIdx === null ? items.length - 1 : (focusedIdx - 1 + items.length) % items.length; liveMessage = items[focusedIdx]; }
+          } else if (e.key === " ") {
+            e.preventDefault();
+            if (focusedIdx !== null) {
+              if (selected?.listIndex === 1 && selected?.itemIndex === focusedIdx) { selected = null; liveMessage = `${items[focusedIdx]} deselected.`; }
+              else { selected = { listIndex: 1, itemIndex: focusedIdx, value: items[focusedIdx] }; liveMessage = `${items[focusedIdx]} selected. Use arrow keys to choose drop position, then press Enter.`; }
+            }
+          } else if (e.key === "Enter") {
+            e.preventDefault();
+            if (selected && focusedIdx !== null) {
+              const { listIndex: srcList, itemIndex: srcIdx, value } = selected;
+              const tgtList = 1; const tgtIdx = focusedIdx;
+              if (srcList === tgtList && srcIdx === tgtIdx) { liveMessage = `Cannot drop ${value} onto itself.`; selected = null; return; }
+              const srcItems = srcList === 0 ? [...items1] : [...items2];
+              const tgtItems = [...items2];
+              srcItems.splice(srcIdx, 1);
+              const effIdx = Math.max(0, Math.min(tgtIdx, tgtItems.length));
+              tgtItems.splice(effIdx, 0, value);
+              if (srcList === 1) items2 = tgtItems;
+              else { items1 = srcItems; items2 = tgtItems; }
+              liveMessage = `Moved ${value} to position ${effIdx + 1} in List 2.`;
+              selected = null; focusedIdx = effIdx; focusedList = 1;
+            }
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            if (selected) { liveMessage = `Selection cancelled for ${selected.value}.`; selected = null; }
+            else { e.target.blur(); focusedList = null; focusedIdx = null; }
+          }
+        }
+      >
+        <for|item, index| of=items2 by=(i => i)>
+          <li
+            id=`list2-item-${item}`
+            class=["item", focusedList === 1 && focusedIdx === index && "item-focused", selected?.listIndex === 1 && selected?.itemIndex === index && "item-selected"]
+            role="option"
+            aria-selected=(focusedList === 1 && focusedIdx === index)
+            tabindex="-1"
+          >
+            ${item}
+          </li>
+        </for>
+        <if=items2.length === 0>
+          <li class="empty-list-message">Empty</li>
+        </if>
+      </ul>
+    </div>
+  </div>
+
+  <div class="instructions">
+    <h3>Keyboard Instructions</h3>
+    <ul>
+      <li>Use <kbd>Tab</kbd> or <kbd>Shift+Tab</kbd> to focus a list.</li>
+      <li>Use <kbd>↑</kbd> / <kbd>↓</kbd> arrows to navigate items within the focused list.</li>
+      <li>Press <kbd>Spacebar</kbd> to select/deselect the highlighted item for moving.</li>
+      <li>With an item selected, navigate to choose the drop position, then press <kbd>Enter</kbd>.</li>
+      <li>Press <kbd>Escape</kbd> to cancel a selection or leave the list.</li>
+    </ul>
+  </div>
+</div>
+
+<dnd:=items1 parent=list1 config=config1/>
+<dnd:=items2 parent=list2 config=config2/>

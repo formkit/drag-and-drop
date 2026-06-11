@@ -1,77 +1,76 @@
 {
+  "name": "@formkit/drag-and-drop",
   "version": "0.5.3",
   "private": true,
   "description": "Drag and drop package.",
-  "main": "./index.cjs",
-  "types": "./index.d.cts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "type": "module",
   "scripts": {
     "tests": "cd tests && pnpm run dev",
     "tests-frameworks": "cd tests-frameworks && pnpm run dev",
     "docs": "cd docs && pnpm run dev",
     "build": "jiti build.ts",
-    "release": "npx bumpp --no-tag --no-push --no-commit && pnpm run build && cd dist && npx publint && pnpm publish --no-git-checks",
+    "release": "npx bumpp && git push --follow-tags",
     "lint": "eslint ."
   },
   "packages": [],
   "keywords": [],
   "author": "Sasha Milenkovic <sasha@formkit.com>",
   "license": "MIT",
+  "homepage": "https://drag-and-drop.formkit.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/formkit/drag-and-drop.git"
+  },
+  "bugs": {
+    "url": "https://github.com/formkit/drag-and-drop/issues"
+  },
+  "peerDependencies": {
+    "@marko/runtime-tags": ">=6.0.166"
+  },
+  "peerDependenciesMeta": {
+    "@marko/runtime-tags": {
+      "optional": true
+    }
+  },
   "devDependencies": {
-    "@playwright/test": "^1.51.1",
-    "@types/react": "^18.3.20",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "bumpp": "^9.11.1",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.59.1",
+    "@types/react": "^19.2.14",
+    "@typescript-eslint/eslint-plugin": "^8.59.1",
+    "@typescript-eslint/parser": "^8.59.1",
+    "bumpp": "^11.0.1",
     "esbuild-plugin-replace": "^1.4.0",
-    "eslint": "^8.57.1",
-    "eslint-plugin-vue": "^9.33.0",
-    "jiti": "^2.4.2",
-    "pathe": "^1.1.2",
-    "publint": "^0.2.12",
-    "tailwind": "^4.0.0",
-    "tsup": "^8.4.0",
-    "typescript": "^5.8.3"
+    "eslint": "^10.2.1",
+    "eslint-plugin-vue": "^10.9.0",
+    "jiti": "^2.6.1",
+    "pathe": "^2.0.3",
+    "publint": "^0.3.18",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vue-eslint-parser": "^10.4.0"
   },
   "exports": {
     "./vue": {
-      "require": {
-        "types": "./vue/index.d.cts",
-        "default": "./vue/index.cjs"
-      },
-      "import": {
-        "types": "./vue/index.d.ts",
-        "default": "./vue/index.mjs"
-      }
+      "types": "./src/vue/index.ts",
+      "default": "./src/vue/index.ts"
     },
     "./react": {
-      "require": {
-        "types": "./react/index.d.cts",
-        "default": "./react/index.cjs"
-      },
-      "import": {
-        "types": "./react/index.d.ts",
-        "default": "./react/index.mjs"
-      }
+      "types": "./src/react/index.ts",
+      "default": "./src/react/index.ts"
     },
     "./solid": {
-      "require": {
-        "types": "./solid/index.d.cts",
-        "default": "./solid/index.cjs"
-      },
-      "import": {
-        "types": "./solid/index.d.ts",
-        "default": "./solid/index.mjs"
-      }
+      "types": "./src/solid/index.ts",
+      "default": "./src/solid/index.ts"
+    },
+    "./marko": {
+      "import": "./src/marko/dnd.marko",
+      "default": "./src/marko/dnd.marko"
     },
     ".": {
-      "require": {
-        "types": "./index.d.cts",
-        "default": "./index.cjs"
-      },
-      "import": {
-        "types": "./index.d.ts",
-        "default": "./index.mjs"
-      }
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
     }
   }
 }
