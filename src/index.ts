@@ -1173,18 +1173,15 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
     }
   }
 
-  if (
-    enabledNodes.length !== parentData.getValues(parent).length &&
-    !config.disabled
-  ) {
+  const values = parentData.getValues(parent);
+
+  if (enabledNodes.length !== values.length && !config.disabled) {
     console.warn(
-      "The number of draggable items defined in the parent element does not match the number of values. This may cause unexpected behavior."
+      `The number of draggable items (${enabledNodes.length}) defined in the parent element does not match the number of values (${values.length}). This may cause unexpected behavior.`
     );
 
     return;
   }
-
-  const values = parentData.getValues(parent);
 
   const enabledNodeRecords: Array<NodeRecord<T>> = [];
 
