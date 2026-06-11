@@ -253,7 +253,9 @@ function handleRootPointerdown(e: PointerEvent) {
 }
 
 function handleRootPointerup() {
-  if (state.pointerDown) state.pointerDown.node.el.draggable = true;
+  if (state.pointerDown)
+    state.pointerDown.node.el.draggable =
+      !state.pointerDown.parent.data.config.dragHandle;
 
   state.pointerDown = undefined;
 
@@ -1028,7 +1030,10 @@ export function setupNode<T>(data: SetupNodeData<T>) {
     },
   });
 
-  data.node.el.draggable = true;
+  // With a drag handle configured, the node only becomes draggable once a
+  // pointerdown on the handle validates — otherwise draggable="true" would
+  // disable text selection everywhere inside the item (#139).
+  data.node.el.draggable = !config.dragHandle;
 
   config.reapplyDragClasses(data.node.el, data.parent.data);
 
@@ -1176,6 +1181,10 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
 
     if (!config.draggable || (config.draggable && config.draggable(node))) {
       enabledNodes.push(node);
+    } else {
+      // Keep the DOM attribute in sync so elements excluded by the
+      // draggable callback cannot start native drags (#96).
+      node.draggable = false;
     }
   }
 
@@ -1440,6 +1449,11 @@ export function handleNodePointerdown<T>(
     return;
 
   state.pointerDown.validated = true;
+
+  // The pointer is on the drag handle: enable native dragging for the
+  // imminent dragstart (#139).
+  if (data.targetData.parent.data.config.dragHandle)
+    data.targetData.node.el.draggable = true;
 
   handleLongPress(data, state, data.targetData.node);
 
@@ -1809,7 +1823,9 @@ export function handleNodeFocus<T>(data: NodeEventData<T>) {
 export function handleNodeBlur<T>(data: NodeEventData<T>) {
   if (data.e.target === data.e.currentTarget) return;
 
-  if (state.pointerDown) state.pointerDown.node.el.draggable = true;
+  if (state.pointerDown)
+    state.pointerDown.node.el.draggable =
+      !state.pointerDown.parent.data.config.dragHandle;
 }
 
 /**
@@ -1886,7 +1902,9 @@ export function handlePointercancel<T>(
  * @returns void
  */
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
-  if (state.draggedNode) state.draggedNode.el.draggable = true;
+  if (state.draggedNode)
+    state.draggedNode.el.draggable =
+      !state.currentParent.data.config.dragHandle;
 
   // --- Capture necessary data BEFORE resetState might affect it ---
   const nodesToClean = state.draggedNodes.map((x) => x.el);
@@ -1998,6 +2016,13 @@ export function handleNodePointerup<T>(
     data.targetData.parent.data.enabledNodes.map((x) => x.el),
     config.longPressClass
   );
+
+  // This handler stops propagation, so handleRootPointerup never sees
+  // releases over a node — disarm handle-gated dragging here (#139).
+  // pointerDown itself stays set: the focus/blur handlers rely on it to
+  // manage draggable while editing inner inputs (#142).
+  if (state.pointerDown && state.pointerDown.parent.data.config.dragHandle)
+    state.pointerDown.node.el.draggable = false;
 
   if (!isDragState(state)) return;
 
