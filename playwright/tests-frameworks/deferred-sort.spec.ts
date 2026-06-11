@@ -1,11 +1,28 @@
 import { test, expect, Page } from "@playwright/test";
+import { resolve } from "path";
 
 let page: Page;
+
+// Vite serves repo files at /@fs/<absolute path>; resolve the library entry
+// from the repo root (playwright runs from the config directory) so the
+// import works on any machine (CI included).
+const libraryModuleUrl = `/@fs${resolve(process.cwd(), "src/index.ts")}`;
 
 test.beforeAll(async ({ browser }) => {
   page = await browser.newPage();
   await page.goto("http://127.0.0.1:5173/");
 });
+
+interface ProbeEntry {
+  rendered: string;
+  registered: string | null;
+}
+
+interface ProbeResult {
+  midDrag: Array<ProbeEntry>;
+  settled: Array<ProbeEntry>;
+  values: string;
+}
 
 /**
  * Regression for #169: when framework commits lag behind the values array
@@ -13,22 +30,22 @@ test.beforeAll(async ({ browser }) => {
  * mid-drag must not reassign node identities. Every registered node must
  * keep the value it visibly renders; pairing values onto stale DOM
  * positionally attaches wrong values/indices and corrupts subsequent sorts.
+ *
+ * The probe runs as a string-evaluated script: Playwright's transpilation
+ * of function arguments rewrites dynamic import(), which must reach the
+ * browser untouched to load the library module instance Vite serves.
  */
 test.describe("React deferred renders during drag (#169)", async () => {
   test("node identities survive sorts while commits lag", async () => {
     const id = "react_deferred_sort";
 
-    const result = await page.evaluate(async (id) => {
-      const mod = await import(
-        /* @vite-ignore */
-        "/@fs/" +
-          // eslint-disable-next-line no-useless-concat
-          "Users/justinschroeder/Projects/formkit-coordinator/.dmux/worktrees/drag-drop-review/drag-and-drop/src/index.ts"
-      );
+    const script = `(async () => {
+      const mod = await import(${JSON.stringify(libraryModuleUrl)});
+      const id = ${JSON.stringify(id)};
 
-      const byId = (v: string) => document.getElementById(`${id}_${v}`)!;
+      const byId = (v) => document.getElementById(id + "_" + v);
       const dataTransfer = new DataTransfer();
-      const props = (el: Element) => {
+      const props = (el) => {
         const rect = el.getBoundingClientRect();
         return {
           bubbles: true,
@@ -40,16 +57,16 @@ test.describe("React deferred renders during drag (#169)", async () => {
       };
 
       const probe = () =>
-        Array.from(
-          document.querySelectorAll(`#${id} .item`)
-        ).map((el) => ({
-          rendered: (el.textContent ?? "").trim(),
-          registered: mod.nodes.get(el)?.value ?? null,
-        }));
+        Array.from(document.querySelectorAll("#" + id + " .item")).map(
+          (el) => ({
+            rendered: (el.textContent ?? "").trim(),
+            registered: mod.nodes.get(el)?.value ?? null,
+          })
+        );
 
       // Keep the list away from the viewport edges: dragovers near an edge
       // engage auto-scroll, which sets preventEnter and swallows sorts.
-      document.getElementById(id)!.scrollIntoView({ block: "center" });
+      document.getElementById(id).scrollIntoView({ block: "center" });
       await new Promise((r) => setTimeout(r, 200));
 
       const dragged = byId("one");
@@ -58,16 +75,15 @@ test.describe("React deferred renders during drag (#169)", async () => {
       await new Promise((r) => setTimeout(r, 250));
 
       // Sort #1: values update immediately, the commit lands 50ms later.
-      const t1 = byId("three");
-      t1.dispatchEvent(new DragEvent("dragover", props(t1)));
-      t1.dispatchEvent(new DragEvent("dragover", props(t1)));
-
       // Sort #2 races the pending commit: the remap inside performSort runs
-      // against stale DOM.
-      await new Promise((r) => setTimeout(r, 20));
-      const t2 = byId("five");
-      t2.dispatchEvent(new DragEvent("dragover", props(t2)));
-      t2.dispatchEvent(new DragEvent("dragover", props(t2)));
+      // against stale DOM. Double dragover each time: the first after a
+      // remap is swallowed by remapJustFinished.
+      for (const v of ["three", "five"]) {
+        const el = byId(v);
+        el.dispatchEvent(new DragEvent("dragover", props(el)));
+        el.dispatchEvent(new DragEvent("dragover", props(el)));
+        await new Promise((r) => setTimeout(r, 20));
+      }
 
       // Inspect node identities inside the mispair window, before the
       // deferred commit re-syncs the DOM.
@@ -82,10 +98,12 @@ test.describe("React deferred renders during drag (#169)", async () => {
       const settled = probe();
 
       const values =
-        document.getElementById(`${id}_values`)?.textContent ?? "";
+        document.getElementById(id + "_values")?.textContent ?? "";
 
       return { midDrag, settled, values };
-    }, id);
+    })()`;
+
+    const result = (await page.evaluate(script)) as ProbeResult;
 
     // The invariant under test: a node never carries a value other than
     // the one it renders, even while the DOM lags the values array.
