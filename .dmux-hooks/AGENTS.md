@@ -407,4 +407,4 @@ When creating a new hook:
 ---
 
 *This documentation was auto-generated from dmux source code.*
-*Version: 2026-03-12*
+*Version: 2026-03-13*
