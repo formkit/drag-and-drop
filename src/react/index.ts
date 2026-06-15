@@ -93,6 +93,14 @@ export function useDragAndDrop<E extends HTMLElement, T = unknown>(
 
   useEffect(() => {
     dragAndDrop({ parent, state: [values, setValues], ...options });
+  }, []);
+
+  useEffect(() => {
+    if (parent.current)
+      parentValues.set(parent.current, [
+        values as Array<unknown>,
+        setValues as Dispatch<SetStateAction<Array<unknown>>>,
+      ]);
   }, [values]);
 
   useEffect(() => {

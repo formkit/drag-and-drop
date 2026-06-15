@@ -2591,9 +2591,9 @@ export function validateSort<T>(
       state.draggedNodes.map((x) => x.el).includes(data.targetData.node.el)
     ) {
       state.currentTargetValue = data.targetData.node.data.value;
-    }
 
-    return false;
+      return false;
+    }
   }
 
   if (state.preventEnter) return false;

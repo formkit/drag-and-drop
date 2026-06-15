@@ -127,6 +127,82 @@ test.describe("Vue wrappers working as expected", async () => {
 });
 
 test.describe("React wrapper working as expected", async () => {
+  test("useDragAndDrop() keeps sorting across multiple rows during one drag", async ({
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== "chromium",
+      "Synthetic native DragEvent sequence is only deterministic in Chromium."
+    );
+
+    await page.evaluate(async () => {
+      const originElement = document.getElementById(
+        "react_use_drag_and_drop_continuous_depeche_mode"
+      );
+      const targetIds = [
+        "react_use_drag_and_drop_continuous_duran_duran",
+        "react_use_drag_and_drop_continuous_pet_shop_boys",
+        "react_use_drag_and_drop_continuous_kraftwerk",
+      ];
+
+      if (!originElement) throw new Error("Missing origin element");
+
+      const dataTransfer = new DataTransfer();
+
+      const getEventProps = (element: Element) => {
+        const rect = element.getBoundingClientRect();
+        const x = rect.x + rect.width / 2;
+        const y = rect.y + rect.height / 2;
+
+        return {
+          bubbles: true,
+          cancelable: true,
+          clientX: x,
+          clientY: y,
+          dataTransfer,
+          screenX: x,
+          screenY: y,
+        };
+      };
+
+      originElement.dispatchEvent(
+        new DragEvent("dragstart", getEventProps(originElement))
+      );
+
+      for (const id of targetIds) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const targetElement = document.getElementById(id);
+
+        if (!targetElement) throw new Error(`Missing target element ${id}`);
+
+        targetElement.dispatchEvent(
+          new DragEvent("dragover", getEventProps(targetElement))
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      const dropElement = document.getElementById(targetIds[targetIds.length - 1]);
+
+      if (!dropElement) throw new Error("Missing drop element");
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      dropElement.dispatchEvent(
+        new DragEvent("drop", getEventProps(dropElement))
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    });
+
+    await expect(
+      page.locator("#react_use_drag_and_drop_continuous_values")
+    ).toHaveText(
+      "duran_duran pet_shop_boys kraftwerk depeche_mode tears_for_fears spandau_ballet"
+    );
+  });
+
   test("dragAndDrop() can enable sorting, accept new values, and update the parent config", async () => {
     // Check that the list items can be sorted
     await drag(page, {
