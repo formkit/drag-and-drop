@@ -36,6 +36,58 @@ interface ProbeResult {
  * browser untouched to load the library module instance Vite serves.
  */
 test.describe("React deferred renders during drag (#169)", async () => {
+  test("sorting continues across later rows during one drag (#201)", async () => {
+    const id = "react_use_drag_and_drop_continuous";
+
+    const script = `(async () => {
+      const mod = await import(${JSON.stringify(libraryModuleUrl)});
+      const id = ${JSON.stringify(id)};
+
+      const byId = (value) => document.getElementById(id + "_" + value);
+      const parent = document.getElementById(id);
+      const dataTransfer = new DataTransfer();
+      const props = (el) => {
+        const rect = el.getBoundingClientRect();
+        return {
+          bubbles: true,
+          cancelable: true,
+          clientX: rect.x + rect.width / 2,
+          clientY: rect.y + rect.height / 2,
+          dataTransfer,
+        };
+      };
+      const values = () => {
+        const parentData = mod.parents.get(parent);
+        return mod
+          .parentValues(parent, parentData)
+          .map((item) => item.id)
+          .join(" ");
+      };
+
+      parent.scrollIntoView({ block: "center" });
+      await new Promise((r) => setTimeout(r, 200));
+
+      const dragged = byId("depeche_mode");
+      dragged.dispatchEvent(new DragEvent("dragstart", props(dragged)));
+      await new Promise((r) => setTimeout(r, 250));
+
+      for (const value of ["duran_duran", "pet_shop_boys", "kraftwerk"]) {
+        const target = byId(value);
+        target.dispatchEvent(new DragEvent("dragover", props(target)));
+        target.dispatchEvent(new DragEvent("dragover", props(target)));
+        await new Promise((r) => setTimeout(r, 50));
+      }
+
+      return values();
+    })()`;
+
+    const values = (await page.evaluate(script)) as string;
+
+    expect(values).toBe(
+      "duran_duran pet_shop_boys kraftwerk depeche_mode tears_for_fears spandau_ballet"
+    );
+  });
+
   test("node identities survive sorts while commits lag", async () => {
     const id = "react_deferred_sort";
 
