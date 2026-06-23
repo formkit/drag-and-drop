@@ -1929,7 +1929,14 @@ export function handleNodeDrop<T>(
 export function handleNodeFocus<T>(data: NodeEventData<T>) {
   if (data.e.target === data.e.currentTarget) return;
 
-  if (state.pointerDown) state.pointerDown.node.el.draggable = false;
+  if (!state.pointerDown) return;
+
+  const pointerDown = state.pointerDown;
+  const isValidatedDragActivation =
+    pointerDown.validated &&
+    pointerDown.node.el === data.targetData.node.el;
+
+  if (!isValidatedDragActivation) pointerDown.node.el.draggable = false;
 }
 
 export function handleNodeBlur<T>(data: NodeEventData<T>) {

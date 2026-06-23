@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useDragAndDrop } from "../../../src/vue/index";
 
-const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
+const [parent1, values1] = useDragAndDrop<string>(["Apple", "Banana", "Orange"], {
   group: "transfer",
   draggable: (el) => {
     return el.tagName === "LI";
@@ -9,9 +9,10 @@ const [parent1, values1] = useDragAndDrop(["Apple", "Banana", "Orange"], {
   dropZoneClass: "dropZone",
   synthDropZoneClass: "synthDropZone",
   dragHandle: ".dragHandle",
+  dragIgnore: ".dragIgnore",
 });
 
-const [parent2, values2] = useDragAndDrop(["Cherry", "Grape", "Pineapple"], {
+const [parent2, values2] = useDragAndDrop<string>(["Cherry", "Grape", "Pineapple"], {
   group: "transfer",
   draggable: (el) => {
     return el.tagName === "LI";
@@ -47,14 +48,28 @@ function click() {
       <ul id="transfer_1" ref="parent1" class="list" aria-label="list1">
         <li v-for="value in values1" :id="value" :key="value" class="item">
           <div class="item-content">
-            <span :id="value + '_dragHandle'" class="dragHandle">
+            <button
+              :id="value + '_dragHandle'"
+              class="dragHandle"
+              type="button"
+            >
               <svg viewBox="0 0 24 24" width="24" height="24">
                 <path
                   fill="currentColor"
                   d="M9,3H11V5H9V3M13,3H15V5H13V3M9,7H11V9H9V7M13,7H15V9H13V7M9,11H11V13H9V11M13,11H15V13H13V11M9,15H11V17H9V15M13,15H15V17H13V15M9,19H11V21H9V19M13,19H15V21H13V19Z"
                 />
               </svg>
-            </span>
+            </button>
+            <button :id="value + '_nonHandle'" type="button">
+              <span :id="value + '_nonHandle_child'">Edit</span>
+            </button>
+            <button
+              :id="value + '_dragIgnore'"
+              class="dragIgnore"
+              type="button"
+            >
+              <span :id="value + '_dragIgnore_child'">Ignore</span>
+            </button>
             <span class="item-text">{{ value }}</span>
           </div>
         </li>

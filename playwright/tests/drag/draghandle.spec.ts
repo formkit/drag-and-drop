@@ -8,6 +8,56 @@ test.beforeEach(async ({ browser }) => {
 });
 
 test.describe("Native drag with drag handles", async () => {
+  test("Focused button handles enable dragging on the first pointerdown", async () => {
+    await page.goto("http://localhost:3001/draghandle");
+
+    const handle = page.locator("#Apple_dragHandle");
+    const item = page.locator("#Apple");
+    const box = await handle.boundingBox();
+
+    expect(box).not.toBeNull();
+
+    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+    await page.mouse.down();
+
+    await expect(handle).toBeFocused();
+    await expect(item).toHaveAttribute("draggable", "true");
+
+    await page.mouse.up();
+  });
+
+  for (const target of [
+    {
+      name: "nested non-handle target",
+      childId: "Apple_nonHandle_child",
+      buttonId: "Apple_nonHandle",
+    },
+    {
+      name: "nested ignored target",
+      childId: "Apple_dragIgnore_child",
+      buttonId: "Apple_dragIgnore",
+    },
+  ]) {
+    test(`Focused ${target.name} keeps dragging disabled`, async () => {
+      await page.goto("http://localhost:3001/draghandle");
+
+      const child = page.locator(`#${target.childId}`);
+      const button = page.locator(`#${target.buttonId}`);
+      const item = page.locator("#Apple");
+      const box = await child.boundingBox();
+
+      expect(box).not.toBeNull();
+
+      await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+      await page.mouse.down();
+
+      await expect(button).toBeFocused();
+      await expect(item).toHaveAttribute("draggable", "false");
+
+      await page.mouse.up();
+    });
+  }
+
   test("Native drag with drag handles. Should not be able to pick up item unless using drag handle", async () => {
     await page.goto("http://localhost:3001/draghandle");
     await new Promise((r) => setTimeout(r, 1000));
