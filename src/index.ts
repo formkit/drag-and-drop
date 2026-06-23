@@ -1442,7 +1442,7 @@ export function handleDragstart<T>(
   const validated =
     state.pointerDown && state.pointerDown.node.el === data.targetData.node.el
       ? state.pointerDown.validated
-      : validateDragHandle({
+      : validateDragActivation({
           e: data.e,
           node: data.targetData.node,
           config,
@@ -1504,7 +1504,7 @@ export function handleNodePointerdown<T>(
   };
 
   if (
-    !validateDragHandle({
+    !validateDragActivation({
       e: data.e,
       node: data.targetData.node,
       config: data.targetData.parent.data.config,
@@ -1817,6 +1817,52 @@ export function validateDragHandle<T>({
     if (elFromPoint === handle || handle.contains(elFromPoint)) return true;
 
   return false;
+}
+
+export function isDragIgnored<T>({
+  e,
+  node,
+  config,
+}: {
+  e: PointerEvent | DragEvent;
+  node: NodeRecord<T>;
+  config: ParentConfig<T>;
+}): boolean {
+  if (!config.dragIgnore) return false;
+
+  const path = e.composedPath();
+
+  const nodeIndex = path.indexOf(node.el);
+
+  const pathToNode = nodeIndex === -1 ? [] : path.slice(0, nodeIndex + 1);
+
+  for (const target of pathToNode) {
+    if (target instanceof Element && target.matches(config.dragIgnore))
+      return true;
+  }
+
+  const elFromPoint = config.root.elementFromPoint(e.clientX, e.clientY);
+
+  if (!elFromPoint || !node.el.contains(elFromPoint)) return false;
+
+  const ignoredElement = elFromPoint.closest(config.dragIgnore);
+
+  return !!ignoredElement && node.el.contains(ignoredElement);
+}
+
+function validateDragActivation<T>({
+  e,
+  node,
+  config,
+}: {
+  e: PointerEvent | DragEvent;
+  node: NodeRecord<T>;
+  config: ParentConfig<T>;
+}): boolean {
+  return (
+    !isDragIgnored({ e, node, config }) &&
+    validateDragHandle({ e, node, config })
+  );
 }
 
 export function handleClickNode<T>(_data: NodeEventData<T>) {}
