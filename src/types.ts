@@ -67,6 +67,11 @@ export interface ParentConfig<T> {
    */
   dragHandle?: string;
   /**
+   * A selector for elements that should not activate dragging. Matching
+   * elements and their descendants remain interactive.
+   */
+  dragIgnore?: string;
+  /**
    * External drag handle
    */
   externalDragHandle?: {
