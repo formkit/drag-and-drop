@@ -332,6 +332,8 @@ function handleRootPointermove(e: PointerEvent) {
       rect
     );
 
+    emitOnDragstart(state.pointerDown.parent, synthDragState, config);
+
     synthMove(e, synthDragState, true);
   } else if (isSynthDragState(state)) {
     synthMove(e, state);
@@ -1387,20 +1389,26 @@ export function handleDragstart<T>(
 
   const dragState = initDrag(data, nodes);
 
-  if (config.onDragstart) {
-    const dragstartData: DragstartEventData<T> = {
-      parent: data.targetData.parent,
-      values: parentValues(
-        data.targetData.parent.el,
-        data.targetData.parent.data
-      ),
-      draggedNode: dragState.draggedNode,
-      draggedNodes: dragState.draggedNodes,
-      position: dragState.initialIndex,
-      state: dragState,
-    };
-    config.onDragstart(dragstartData);
-  }
+  emitOnDragstart(data.targetData.parent, dragState, config);
+}
+
+function emitOnDragstart<T>(
+  parent: ParentRecord<T>,
+  dragState: DragState<T> | SynthDragState<T>,
+  config: ParentConfig<T>
+) {
+  if (!config.onDragstart) return;
+
+  const dragstartData: DragstartEventData<T> = {
+    parent,
+    values: parentValues(parent.el, parent.data),
+    draggedNode: dragState.draggedNode,
+    draggedNodes: dragState.draggedNodes,
+    position: dragState.initialIndex,
+    state: dragState,
+  };
+
+  config.onDragstart(dragstartData);
 }
 
 export function handleNodePointerdown<T>(
