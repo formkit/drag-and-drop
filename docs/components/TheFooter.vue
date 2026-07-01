@@ -139,6 +139,12 @@
       <span class="text-slate-500 block mt-4 text-sm dark:text-fuchsia-200/50">
         Released under the MIT License. &copy;
         {{ new Date().getFullYear() }} FormKit. All rights reserved.
+        <a
+          href="https://www.wearebraid.com"
+          target="_blank"
+          class="text-slate-500 no-underline hover:underline dark:text-fuchsia-200/50"
+          >Site by Braid.</a
+        >
       </span>
     </div>
   </footer>
