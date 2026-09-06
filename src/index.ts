@@ -1968,6 +1968,15 @@ export function handlePointercancel<T>(
  * @returns void
  */
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
+  // handleEnd can be reached from native dragend events that were not
+  // preceded by the library observing a dragstart (e.g. dragging an <img>
+  // or <a> into a draggable node — see #206). In that case the global
+  // state is still in its post-resetState() form (a BaseDragState with
+  // neither draggedNode, initialParent, currentParent nor draggedNodes),
+  // so the entire body of this function would dereference undefined
+  // values. Bail out early: there is nothing library-managed to clean up.
+  if (!isDragState(state)) return;
+
   if (state.draggedNode)
     state.draggedNode.el.draggable =
       !state.currentParent.data.config.dragHandle;
