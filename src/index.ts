@@ -508,6 +508,39 @@ export function dragStateProps<T>(
 }
 
 /**
+ * Returns `values` without the dragged items. Removes exactly one entry per
+ * dragged node, preferring the node's own index when it still holds that
+ * value, so deep-equal duplicates are never merged or dropped
+ * (formkit/formkit#1754).
+ *
+ * @internal
+ */
+function withoutDraggedValues<T>(
+  values: Array<T>,
+  draggedNodes: Array<NodeRecord<T>>
+): Array<T> {
+  const removed = new Array(values.length).fill(false);
+
+  for (const node of draggedNodes) {
+    const index = node.data.index;
+
+    if (index >= 0 && index < values.length && !removed[index] && eq(values[index], node.data.value)) {
+      removed[index] = true;
+
+      continue;
+    }
+
+    const match = values.findIndex(
+      (value, i) => !removed[i] && eq(value, node.data.value)
+    );
+
+    if (match !== -1) removed[match] = true;
+  }
+
+  return values.filter((_, i) => !removed[i]);
+}
+
+/**
  * Perform the sort of the nodes.
  *
  * @param {ParentRecord<T>} parent - The parent record.
@@ -535,9 +568,7 @@ export function performSort<T>({
 
   const enabledNodes = [...parent.data.enabledNodes];
 
-  const newParentValues = [
-    ...targetParentValues.filter((x) => !draggedValues.some((y) => eq(x, y))),
-  ];
+  const newParentValues = withoutDraggedValues(targetParentValues, draggedNodes);
   newParentValues.splice(targetNodes[0].data.index, 0, ...draggedValues);
 
   if ("draggedNode" in state)
@@ -712,11 +743,10 @@ export function performTransfer<T>({
 
   const draggedValues = draggedNodes.map((x) => x.data.value);
 
-  const currentParentValues = [
-    ...parentValues(currentParent.el, currentParent.data).filter(
-      (x) => !draggedValues.some((y) => eq(x, y))
-    ),
-  ];
+  const currentParentValues = withoutDraggedValues(
+    parentValues(currentParent.el, currentParent.data),
+    draggedNodes
+  );
 
   const targetParentValues = parentValues(targetParent.el, targetParent.data);
 
