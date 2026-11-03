@@ -778,6 +778,13 @@ export type BaseDragState<T> = {
         parent: ParentRecord<T>;
         node: NodeRecord<T>;
         validated: boolean;
+        /**
+         * True while a validated drag-handle press is in progress (cleared on
+         * pointerup). Focus/blur inside the node must not undo `draggable`
+         * during that window, or the press that moved focus can't start a
+         * native drag.
+         */
+        active?: boolean;
       }
     | undefined;
   /**

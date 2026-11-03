@@ -1025,6 +1025,7 @@ function setup<T>(parent: HTMLElement, parentData: ParentData<T>): void {
               data: nodeData,
             },
             validated: true,
+            active: true,
           };
 
           draggableItem.draggable = true;
@@ -1543,6 +1544,10 @@ export function handleNodePointerdown<T>(
     return;
 
   state.pointerDown.validated = true;
+  // Only handle-gated nodes toggle `draggable` per press. Without a handle the
+  // focus/blur handlers must keep managing draggable so inner inputs stay
+  // selectable (#142).
+  state.pointerDown.active = !!data.targetData.parent.data.config.dragHandle;
 
   // The pointer is on the drag handle: enable native dragging for the
   // imminent dragstart (#139).
@@ -1913,11 +1918,20 @@ export function handleNodeDrop<T>(
 export function handleNodeFocus<T>(data: NodeEventData<T>) {
   if (data.e.target === data.e.currentTarget) return;
 
+  // Pressing a (focusable) drag handle focuses it; that must not cancel the
+  // drag the press just armed.
+  if (state.pointerDown?.active) return;
+
   if (state.pointerDown) state.pointerDown.node.el.draggable = false;
 }
 
 export function handleNodeBlur<T>(data: NodeEventData<T>) {
   if (data.e.target === data.e.currentTarget) return;
+
+  // Pressing the drag handle moves focus away from whatever was focused inside
+  // the node (e.g. a button or input in a repeater row). Resetting draggable
+  // here would cancel the native drag before it starts (formkit/formkit#1755).
+  if (state.pointerDown?.active) return;
 
   if (state.pointerDown)
     state.pointerDown.node.el.draggable =
@@ -1998,6 +2012,10 @@ export function handlePointercancel<T>(
  * @returns void
  */
 export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
+  // A native drag usually ends without a pointerup (the browser cancels the
+  // pointer when the drag starts), so the handle press ends here.
+  if (state.pointerDown) state.pointerDown.active = false;
+
   if (state.draggedNode)
     state.draggedNode.el.draggable =
       !state.currentParent.data.config.dragHandle;
@@ -2117,6 +2135,8 @@ export function handleNodePointerup<T>(
   // releases over a node — disarm handle-gated dragging here (#139).
   // pointerDown itself stays set: the focus/blur handlers rely on it to
   // manage draggable while editing inner inputs (#142).
+  if (state.pointerDown) state.pointerDown.active = false;
+
   if (state.pointerDown && state.pointerDown.parent.data.config.dragHandle)
     state.pointerDown.node.el.draggable = false;
 
