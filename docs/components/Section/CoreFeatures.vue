@@ -63,6 +63,15 @@
       be used to find the handle.
     </p>
     <CodeExample example="drag-handles" />
+    <h3 id="drag-ignore">Drag Ignore</h3>
+    <p>
+      Sometimes a draggable item contains things users need to interact with
+      &mdash; inputs, buttons, selectable text. Set the
+      <code>dragIgnore</code> property to a selector, and pointer or drag
+      events that start on matching elements (or their descendants) won't
+      begin a drag.
+    </p>
+    <CodeExample example="drag-ignore" />
     <h3 id="update-config">Updating Config</h3>
     <p>
       The parent's configuration can be updated idempotently during runtime by

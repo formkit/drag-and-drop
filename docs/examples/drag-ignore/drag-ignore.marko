@@ -1,0 +1,16 @@
+static const tapeItems = ["Depeche Mode", "Duran Duran", "Pet Shop Boys", "Kraftwerk"];
+static const config = { dragIgnore: ".no-drag" };
+
+<let/tapes=tapeItems>
+
+<ul/tapeList>
+  <for|tape| of=tapes by=(t => t)>
+    <li>
+      ${tape}
+      <!-- Clicks and text selection here won't start a drag -->
+      <input class="no-drag"/>
+    </li>
+  </for>
+</ul>
+
+<dnd:=tapes parent=tapeList config=config/>
