@@ -15,14 +15,14 @@
     "@shikijs/twoslash": "^4.0.2",
     "@types/node": "^25.6.0",
     "@vueuse/nuxt": "^14.2.1",
-    "nuxt": "^4.4.4",
+    "nuxt": "^4.6.4",
     "nuxt-fathom": "^0.0.3",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "shiki": "^4.0.2",
     "solid-js": "^1.9.12",
     "twoslash-vue": "^0.3.8",
-    "vite": "^7.3.2"
+    "vite": "^7.3.7"
   },
   "dependencies": {
     "@formkit/drag-and-drop": "workspace:*"
