@@ -148,6 +148,7 @@ const __dirname = dirname(__filename);
   };
   delete packageJson.devDependencies;
   delete packageJson.private;
+  delete packageJson.pnpm;
   const updatedFile = JSON.stringify(packageJson, null, 2);
   await writeFile(
     resolve(__dirname, `./dist/package.json`),
