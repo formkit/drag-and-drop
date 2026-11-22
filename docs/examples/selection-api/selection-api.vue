@@ -22,5 +22,6 @@ const logSelection = () => console.log(selectedValues(list.value!));
     <li v-for="tape in tapes" :key="tape">{{ tape }}</li>
   </ul>
   <button @click="selectSynth">Select synth-pop</button>
-  <button @click="clearSelection">Clear</button>
+  <button @click="logSelection">Log selection</button>
+  <button @click="clearSelection()">Clear</button>
 </template>

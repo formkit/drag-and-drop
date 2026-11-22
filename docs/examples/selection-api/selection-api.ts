@@ -1,3 +1,4 @@
+import { reactive, html } from "@arrow-js/core";
 import {
   dragAndDrop,
   selectedValues,
@@ -5,21 +6,28 @@ import {
   clearSelection,
 } from "@formkit/drag-and-drop";
 
-const list = document.getElementById("list")!;
-const tapes = ["Depeche Mode", "Duran Duran", "Pet Shop Boys", "Kraftwerk"];
+const state = reactive({
+  tapes: ["Depeche Mode", "Duran Duran", "Pet Shop Boys", "Kraftwerk"],
+});
 
-dragAndDrop({
-  parent: list,
-  getValues: () => tapes,
+dragAndDrop<string>({
+  parent: document.getElementById("tape-list")!,
+  getValues: () => state.tapes,
   setValues: (newValues) => {
-    tapes.splice(0, tapes.length, ...newValues);
+    state.tapes = reactive(newValues);
   },
   config: { multiDrag: true, selectedClass: "selected" },
 });
 
-// Select by value (replaces the current selection)
-setSelectedValues(list, ["Kraftwerk", "Pet Shop Boys"]);
-// Read the current selection
-console.log(selectedValues(list)); // ["Pet Shop Boys", "Kraftwerk"]
-// Clear it
-clearSelection();
+const list = () => document.getElementById("tape-list")!;
+
+html`
+  <ul id="tape-list">
+    ${() => state.tapes.map((tape) => html`<li>${tape}</li>`.key(tape))}
+  </ul>
+  <button @click="${() => setSelectedValues(list(), ["Kraftwerk", "Pet Shop Boys"])}">
+    Select synth-pop
+  </button>
+  <button @click="${() => console.log(selectedValues(list()))}">Log selection</button>
+  <button @click="${() => clearSelection()}">Clear</button>
+`(document.getElementById("app")!);

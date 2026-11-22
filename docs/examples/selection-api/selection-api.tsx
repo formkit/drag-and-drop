@@ -26,7 +26,8 @@ export function myComponent() {
         ))}
       </ul>
       <button onClick={selectSynth}>Select synth-pop</button>
-      <button onClick={clearSelection}>Clear</button>
+      <button onClick={logSelection}>Log selection</button>
+      <button onClick={() => clearSelection()}>Clear</button>
     </>
   );
 }
