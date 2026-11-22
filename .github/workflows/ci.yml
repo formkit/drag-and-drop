@@ -11,7 +11,7 @@ jobs:
   playwright:
     name: "Playwright tests (${{ matrix.project }})"
     timeout-minutes: 30
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       # One shard per Playwright project: the full suite serially exceeds the
       # job timeout, and sharding keeps each run well inside it.

@@ -847,6 +847,76 @@ export function dragValues<T>(state: DragState<T>): Array<T> {
 }
 
 /**
+ * Get the values of the currently selected nodes in the given parent (empty
+ * when the selection belongs to another parent or nothing is selected).
+ *
+ * @param parent - The parent element.
+ *
+ * @returns The selected values, in selection order.
+ */
+export function selectedValues<T>(parent: HTMLElement): Array<T> {
+  const selected = state.selectedState;
+
+  if (!selected || selected.parent.el !== parent) return [];
+
+  return selected.nodes.map((x) => x.data.value as T);
+}
+
+/**
+ * Select the nodes of the given parent whose values are in `values`
+ * (compared with ===), replacing any current selection. Without the
+ * `multiDrag` config only the first match is selected. An empty array clears
+ * the selection.
+ *
+ * @param parent - The parent element.
+ * @param values - The values to select.
+ *
+ * @returns void
+ */
+export function setSelectedValues<T>(
+  parent: HTMLElement,
+  values: Array<T>
+): void {
+  const parentData = parents.get(parent) as ParentData<T> | undefined;
+
+  if (!parentData) return;
+
+  clearSelection();
+
+  let selected = parentData.enabledNodes.filter((node) =>
+    values.includes(node.data.value as T)
+  );
+
+  if (!parentData.config.multiDrag) selected = selected.slice(0, 1);
+
+  if (!selected.length) return;
+
+  setSelected(
+    { el: parent, data: parentData },
+    selected,
+    selected[selected.length - 1],
+    state as BaseDragState<T>,
+    false
+  );
+}
+
+/**
+ * Clear the current selection (in any parent), removing the selected class
+ * and aria-selected state.
+ *
+ * @returns void
+ */
+export function clearSelection(): void {
+  const selected = state.selectedState;
+
+  if (selected) deselect([...selected.nodes], selected.parent, state);
+
+  state.selectedState = undefined;
+
+  state.activeState = undefined;
+}
+
+/**
  * Utility function to update parent config.
  *
  * @param parent - The parent element.
@@ -1583,6 +1653,9 @@ export function handleNodePointerdown<T>(
       if (idx === -1) {
         selectedNodes = [...state.selectedState.nodes, targetNode];
       } else {
+        // Clear the class and aria-selected from the node being toggled off.
+        deselect([targetNode], data.targetData.parent, state);
+
         selectedNodes = state.selectedState.nodes.filter(
           (x) => x.el !== targetNode.el
         );

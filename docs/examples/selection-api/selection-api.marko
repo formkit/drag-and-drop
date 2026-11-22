@@ -1,0 +1,21 @@
+import { selectedValues, setSelectedValues, clearSelection } from "@formkit/drag-and-drop";
+
+static const tapeItems = ["Depeche Mode", "Duran Duran", "Pet Shop Boys", "Kraftwerk"];
+static const config = { multiDrag: true, selectedClass: "selected" };
+
+<let/tapes=tapeItems>
+
+<ul/tapeList>
+  <for|tape| of=tapes by=(t => t)>
+    <li>${tape}</li>
+  </for>
+</ul>
+
+<dnd:=tapes parent=tapeList config=config/>
+
+<!-- Select by value (replaces the current selection) -->
+<button onClick() { setSelectedValues(tapeList(), ["Kraftwerk", "Pet Shop Boys"]) }>
+  Select synth-pop
+</button>
+<button onClick() { console.log(selectedValues(tapeList())) }>Log selection</button>
+<button onClick() { clearSelection() }>Clear</button>
