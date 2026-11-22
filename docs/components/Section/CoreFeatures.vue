@@ -87,5 +87,17 @@
       <code>true</code> in the configuration.
     </p>
     <CodeExample example="multi-drag" />
+    <h4 id="selection-api">Controlling the selection</h4>
+    <p>
+      Read and change the selection from code with
+      <code>selectedValues(parent)</code>,
+      <code>setSelectedValues(parent, values)</code> (values are matched with
+      <code>===</code>; only the first match is selected without
+      <code>multiDrag</code>) and <code>clearSelection()</code>. Programmatic
+      selections behave exactly like pointer ones: they get the
+      <code>selectedClass</code> and <code>aria-selected</code>, drag together,
+      and clear when the user clicks outside the list.
+    </p>
+    <CodeExample example="selection-api" />
   </SectionWrapper>
 </template>
