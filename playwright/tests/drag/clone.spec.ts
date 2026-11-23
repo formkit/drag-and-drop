@@ -55,14 +55,14 @@ test("browser native drag drops a copy", async ({ page }) => {
   await expect(a(page)).toHaveText("Apple");
 });
 
-for (const mode of ["deep", "custom", "fallback"]) {
+for (const mode of ["deep", "custom", "fallback", "reactive"]) {
   test(`copies object values with ${mode} cloning`, async ({ page }) => {
     await page.goto(`http://localhost:3001/clone-objects?mode=${mode}`);
     await page.waitForTimeout(800);
     await drag(page, { originEl: { id: "object-item", position: "center" }, destinationEl: { id: "object-target", position: "bottom" }, dragStart: true });
     await expect(page.locator("#object-target li")).toHaveText(mode === "custom" ? "custom" : "original");
-    await expect(page.locator("#identity")).toHaveText(mode === "fallback" ? "true" : "false");
-    await expect(page.locator("#nested-identity")).toHaveText(mode === "deep" ? "false" : "true");
+    await expect(page.locator("#identity")).toHaveText("false");
+    await expect(page.locator("#nested-identity")).toHaveText(mode === "custom" ? "true" : "false");
     await drag(page, { originEl: { id: "object-item", position: "center" }, destinationEl: { id: "object-target2", position: "bottom" }, drop: true });
     await expect(page.locator("#object-target li")).toHaveCount(0);
     await expect(page.locator("#object-target2 li")).toHaveText(mode === "custom" ? "custom" : "original");

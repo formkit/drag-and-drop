@@ -50,8 +50,10 @@
       Multi-drag copies each selected value in order.
     </p>
     <p>
-      By default, each copy uses <code>structuredClone</code>; if it throws,
-      the original value is used. Pass a function as <code>clone</code> to
+      By default, each value is deep-copied (<code>structuredClone</code>,
+      falling back to a property-by-property copy for framework proxies such
+      as Vue reactive objects; functions and class instances are kept by
+      reference). Pass a function as <code>clone</code> to
       create custom copies, such as assigning a fresh unique key for each item.
       Transfers fire <code>onTransfer</code> for both lists with the nodes
       leaving the current list; after rendering, drag state tracks the copied

@@ -724,6 +724,53 @@ export function handleParentFocus<T>(
  *
  * @returns void
  */
+/**
+ * Deep-copies a value for `clone: true`. Uses structuredClone, and when that
+ * throws (framework proxies such as Vue reactive objects, values holding
+ * functions or DOM nodes) walks own enumerable properties instead, keeping
+ * functions and non-plain objects by reference.
+ */
+function copyValue<T>(value: T, seen = new WeakMap<object, unknown>()): T {
+  try {
+    return structuredClone(value);
+  } catch {
+    return manualCopy(value, seen) as T;
+  }
+}
+
+function manualCopy(value: unknown, seen: WeakMap<object, unknown>): unknown {
+  if (value === null || typeof value !== "object") return value;
+  if (seen.has(value)) return seen.get(value);
+  if (value instanceof Date) return new Date(value.getTime());
+  if (Array.isArray(value)) {
+    const out: unknown[] = [];
+    seen.set(value, out);
+    for (const item of value) out.push(manualCopy(item, seen));
+    return out;
+  }
+  if (value instanceof Map) {
+    const out = new Map();
+    seen.set(value, out);
+    value.forEach((v, k) => out.set(k, manualCopy(v, seen)));
+    return out;
+  }
+  if (value instanceof Set) {
+    const out = new Set();
+    seen.set(value, out);
+    value.forEach((v) => out.add(manualCopy(v, seen)));
+    return out;
+  }
+  const proto = Object.getPrototypeOf(value);
+  // Class instances, DOM nodes, etc. are kept as-is.
+  if (proto !== Object.prototype && proto !== null) return value;
+  const out: Record<string, unknown> = {};
+  seen.set(value, out);
+  for (const key of Object.keys(value)) {
+    out[key] = manualCopy((value as Record<string, unknown>)[key], seen);
+  }
+  return out;
+}
+
 export function performTransfer<T>({
   currentParent,
   targetParent,
@@ -753,7 +800,7 @@ export function performTransfer<T>({
   const draggedValues = draggedNodes.map((x) => {
     if (!leavingSource) return x.data.value;
     if (typeof clone === "function") return clone(x.data.value);
-    try { return structuredClone(x.data.value); } catch { return x.data.value; }
+    return copyValue(x.data.value);
   });
 
   const currentParentValues = leavingSource ? parentValues(currentParent.el, currentParent.data) : withoutDraggedValues(

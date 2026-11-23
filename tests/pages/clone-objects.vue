@@ -4,7 +4,10 @@ import { useRoute } from "vue-router";
 import { useDragAndDrop } from "../../src/vue/index";
 const mode = useRoute().query.mode;
 type Item = { name: string; nested: { count: number }; fn?: () => void };
-const original: Item = markRaw({ name: "original", nested: { count: 1 }, ...(mode === "fallback" ? { fn: () => {} } : {}) });
+const raw: Item = { name: "original", nested: { count: 1 }, ...(mode === "fallback" ? { fn: () => {} } : {}) };
+// "reactive" leaves the item as a normal Vue reactive object (a Proxy, which
+// structuredClone can't copy); the other modes mark it raw.
+const original: Item = mode === "reactive" ? raw : markRaw(raw);
 const [source, originals] = useDragAndDrop<Item>([original], {
   group: "objects", sortable: false,
   clone: mode === "custom" ? (value) => ({ ...value, name: "custom" }) : true,
@@ -18,8 +21,8 @@ const [target2, copies2] = useDragAndDrop<Item>([], { group: "objects" });
     <ul id="object-target" ref="target"><li v-for="(item, index) in copies" :key="index">{{ item.name }}</li></ul>
     <ul id="object-target2" ref="target2"><li v-for="(item, index) in copies2" :key="index">{{ item.name }}</li></ul>
   </div>
-  <output id="identity">{{ copies.length ? toRaw(copies[0]) === original : copies2.length ? toRaw(copies2[0]) === original : 'empty' }}</output>
-  <output id="nested-identity">{{ copies.length ? toRaw(copies[0]).nested === original.nested : copies2.length ? toRaw(copies2[0]).nested === original.nested : 'empty' }}</output>
+  <output id="identity">{{ copies.length ? toRaw(copies[0]) === toRaw(originals[0]) : copies2.length ? toRaw(copies2[0]) === toRaw(originals[0]) : 'empty' }}</output>
+  <output id="nested-identity">{{ copies.length ? toRaw(toRaw(copies[0]).nested) === toRaw(toRaw(originals[0]).nested) : copies2.length ? toRaw(toRaw(copies2[0]).nested) === toRaw(toRaw(originals[0]).nested) : 'empty' }}</output>
 </template>
 <style scoped>
 .lists { display: flex; gap: 30px; } ul { width: 160px; min-height: 200px; padding: 10px; border: 1px solid; } li { height: 50px; list-style: none; }
