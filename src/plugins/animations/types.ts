@@ -1,5 +1,7 @@
 import { ParentConfig } from "../../types";
 export interface AnimationsConfig {
+  /** Animate dropped items into their final position. Disabled by default. */
+  drop?: boolean | { duration?: number; easing?: string };
   duration?: number;
   /**
    * CSS easing for the sort/transfer animations (any value accepted by the
