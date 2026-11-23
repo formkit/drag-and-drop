@@ -1,0 +1,25 @@
+<!-- tree-list.marko: the enclosing component owns a root node in let/root.
+     Render tree-list with owner=root and ownerChange=(value => root = { ...value }).
+     Keep node objects stable so both sides of a transfer update the same tree. -->
+import TreeList from "./tree-list.marko";
+import Dnd from "@formkit/drag-and-drop/marko";
+
+static const config = { group: "tree", multiDrag: true };
+
+<ul/list style="min-height: 2rem; padding: 12px; border: 1px dashed gray">
+  <for|node| of=input.owner.children by=(n => n.id)>
+    <li>
+      ${node.label}
+      <TreeList owner=node ownerChange=(() => input.ownerChange(input.owner))/>
+    </li>
+  </for>
+</ul>
+<Dnd
+  value=input.owner.children
+  valueChange=(children => {
+    input.owner.children = children;
+    input.ownerChange(input.owner);
+  })
+  parent=list
+  config=config
+/>

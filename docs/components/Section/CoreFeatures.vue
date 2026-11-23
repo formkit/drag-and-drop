@@ -41,6 +41,24 @@
       list by hovering over the target parent's draggable items.
     </p>
     <CodeExample example="transfer" />
+    <h3 id="nested-lists">Nested lists (trees)</h3>
+    <p>
+      Render a list for each node, including leaves, and bind each list to that
+      node’s children. Give all lists the same <code>group</code> and use stable,
+      unique keys. Moving a node moves its children with it. Give empty lists a
+      visible minimum size so they can receive drops.
+    </p>
+    <p>
+      Transfers into a dragged node’s own descendants are rejected by core,
+      including for multi-drag and synthetic drag, when child lists are nested
+      in their owning item’s DOM. Portaled or virtualized lists need their own
+      data-based <code>accepts</code> check. Each list must have only its
+      values as immediate draggable children; keep labels inside their list items.
+      Transfers happen while hovering. If a list moves when the source is
+      removed, a stationary pointer can land on a different target; reserve
+      space or otherwise keep drop targets stable while dragging.
+    </p>
+    <CodeExample example="nested" />
     <h3 id="cloning">Cloning</h3>
     <p>
       Set <code>clone: true</code> on a source list to copy values when they

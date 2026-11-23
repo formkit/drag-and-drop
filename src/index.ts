@@ -2798,7 +2798,9 @@ export function validateTransfer<T>({
 
   const targetConfig = targetParent.data.config;
 
-  if (draggedNodes[0].el.contains(targetParent.el)) return false;
+  // Every selected subtree must be excluded, not just the first one.
+  if (draggedNodes.some((node) => node.el.contains(targetParent.el)))
+    return false;
 
   if (targetConfig.dropZone === false) return false;
 
