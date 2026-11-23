@@ -1,6 +1,9 @@
 import type { SetupNodeData, Node } from "../../types";
 import type { AnimationsConfig } from "./types";
-import { state, parents, isDragState } from "../../index";
+import { state, parents, isDragState, isSynthDragState } from "../../index";
+import { eq } from "../../utils";
+
+const slideAnimations = new WeakMap<Node, Set<Animation>>();
 
 export function animations(animationsConfig: Partial<AnimationsConfig> = {}) {
   const slideUp = [
@@ -45,6 +48,58 @@ export function animations(animationsConfig: Partial<AnimationsConfig> = {}) {
 
     return {
       setup() {
+        if (animationsConfig.drop) {
+          parentData.on("dragStarted", () => {
+            if (!isDragState(state) || state.initialParent.el !== parent) return;
+            if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+            const dragState = state;
+            const controller = new AbortController();
+            const options = { capture: true, signal: controller.signal };
+            let point = { ...dragState.coordinates };
+
+            document.addEventListener("dragover", (event) => {
+              point = { x: event.clientX, y: event.clientY };
+            }, options);
+
+            const release = (event: Event) => {
+              if (isSynthDragState(dragState) !== (event.type === "pointerup")) return;
+              const releaseRect = isSynthDragState(dragState)
+                ? dragState.clonedDraggedNode.getBoundingClientRect()
+                : { left: point.x - dragState.startLeft, top: point.y - dragState.startTop };
+              const left = releaseRect.left;
+              const top = releaseRect.top;
+              controller.abort();
+
+              requestAnimationFrame(() => {
+                const target = parents.get(dragState.currentParent.el);
+                if (!target) return;
+                const available = [...target.enabledNodes];
+                const elements = dragState.draggedNodes.flatMap((dragged) => {
+                  const index = available.findIndex((node) => eq(node.data.value, dragged.data.value));
+                  return index < 0 ? [] : [available.splice(index, 1)[0].el];
+                });
+                // Finish existing sort animations before measuring the destination.
+                elements.forEach((el) => slideAnimations.get(el)?.forEach((animation) => animation.cancel()));
+                const destinations = elements.map((el) => el.getBoundingClientRect());
+                const drop = typeof animationsConfig.drop === "object" ? animationsConfig.drop : {};
+                elements.forEach((el, index) => {
+                  const rect = destinations[index];
+                  el.animate([
+                    { transform: `translate(${left - rect.left}px, ${top - rect.top}px)` },
+                    { transform: "translate(0px, 0px)" },
+                  ], { duration: drop.duration ?? 180, easing: drop.easing ?? "ease-in-out" });
+                });
+              });
+            };
+            document.addEventListener("drop", release, options);
+            document.addEventListener("pointerup", release, options);
+            document.addEventListener("pointercancel", () => {
+              if (isSynthDragState(dragState)) controller.abort();
+            }, options);
+            document.addEventListener("dragend", () => controller.abort(), options);
+          });
+        }
         if (document.head.querySelector("[data-drag-and-drop]")) return;
       },
 
@@ -156,10 +211,15 @@ function animate(
 
   state.preventEnter = true;
 
-  node.animate(animation, {
+  const runningAnimation = node.animate(animation, {
     duration: duration,
     easing,
   });
+  const animations = slideAnimations.get(node) ?? new Set<Animation>();
+  animations.add(runningAnimation);
+  slideAnimations.set(node, animations);
+  runningAnimation.addEventListener("finish", () => animations.delete(runningAnimation));
+  runningAnimation.addEventListener("cancel", () => animations.delete(runningAnimation));
 
   setTimeout(() => {
     if (!state) return;

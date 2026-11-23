@@ -30,5 +30,14 @@
       <code>animations</code> plugin.
     </p>
     <CodeExample example="animations" />
+    <h4 id="drop-animation">Drop animation</h4>
+    <p>
+      Enable <code>drop: true</code> to animate dropped items into their final
+      positions, including with <code>dropOrSwap</code>. Pass
+      <code>drop: { duration: 180, easing: 'ease-in-out' }</code> to customize
+      the animation. It is disabled by default and skipped when reduced motion
+      is requested.
+    </p>
+    <CodeExample example="drop-animation" />
   </SectionWrapper>
 </template>
