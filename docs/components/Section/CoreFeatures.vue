@@ -41,6 +41,24 @@
       list by hovering over the target parent's draggable items.
     </p>
     <CodeExample example="transfer" />
+    <h3 id="cloning">Cloning</h3>
+    <p>
+      Set <code>clone: true</code> on a source list to copy values when they
+      are dragged to another list. The source retains its values; the copy moves
+      between targets as you drag and is removed if the drag is cancelled or
+      dropped outside a list. Use <code>sortable: false</code> for a palette.
+      Multi-drag copies each selected value in order.
+    </p>
+    <p>
+      By default, each copy uses <code>structuredClone</code>; if it throws,
+      the original value is used. Pass a function as <code>clone</code> to
+      create custom copies, such as assigning a fresh unique key for each item.
+      Transfers fire <code>onTransfer</code> for both lists with the nodes
+      leaving the current list; after rendering, drag state tracks the copied
+      nodes. <code>onDragend</code> receives the final parent and dragged nodes,
+      or the original source and nodes when a clone is cancelled.
+    </p>
+    <CodeExample example="clone" />
     <h3 id="disable-sort">Disable sort</h3>
     <p>
       Sortability within a given parent can be toggled on and off by setting the

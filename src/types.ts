@@ -30,6 +30,8 @@ export type NativeDragEffects = "link" | "none" | "copy" | "move";
  * The configuration object for a given parent.
  */
 export interface ParentConfig<T> {
+  /** Copy values when dragging out of this parent. A function can provide custom copies. */
+  clone?: boolean | ((value: T) => T);
   /**
    * A function that returns whether a given parent accepts a given node.
    */
@@ -769,6 +771,12 @@ export type BaseDragState<T> = {
    * The nodes that will be updated by a drag action (sorted).
    */
   affectedNodes: Array<NodeRecord<T>>;
+  /** @internal Original selection while a clone is being transferred. */
+  cloneOriginals?: Array<NodeRecord<T>>;
+  /** @internal Whether a clone currently exists in another parent. */
+  cloneActive?: boolean;
+  /** @internal A cancelled synthetic gesture. */
+  cloneCancelled?: boolean;
   /**
    * The last value the dragged node targeted.
    */

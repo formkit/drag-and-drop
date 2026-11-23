@@ -286,7 +286,7 @@ function handleRootKeydown(e: KeyboardEvent) {
 function handleRootDrop(_e: DragEvent) {
   if (!isDragState(state)) return;
 
-  dropped = true;
+  dropped = !state.initialParent.data.config.clone;
 
   const handleEnd = state.initialParent.data.config.handleEnd;
 
@@ -743,9 +743,20 @@ export function performTransfer<T>({
 }) {
   remapNodes(initialParent.el);
 
-  const draggedValues = draggedNodes.map((x) => x.data.value);
+  const dragState = isDragState(state) ? state : undefined;
+  const clone = initialParent.data.config.clone;
+  const leavingSource = !!clone && currentParent.el === initialParent.el;
+  const returningSource = !!clone && targetParent.el === initialParent.el && !!dragState?.cloneActive;
+  if (leavingSource && dragState) {
+    dragState.cloneOriginals = draggedNodes.map((node) => ({ el: node.el, data: { ...node.data } }));
+  }
+  const draggedValues = draggedNodes.map((x) => {
+    if (!leavingSource) return x.data.value;
+    if (typeof clone === "function") return clone(x.data.value);
+    try { return structuredClone(x.data.value); } catch { return x.data.value; }
+  });
 
-  const currentParentValues = withoutDraggedValues(
+  const currentParentValues = leavingSource ? parentValues(currentParent.el, currentParent.data) : withoutDraggedValues(
     parentValues(currentParent.el, currentParent.data),
     draggedNodes
   );
@@ -767,16 +778,31 @@ export function performTransfer<T>({
       targetIndex = targetNodes[0].data.index;
     }
 
-    targetParentValues.splice(targetIndex, 0, ...draggedValues);
+    if (!returningSource) targetParentValues.splice(targetIndex, 0, ...draggedValues);
   } else {
     targetIndex = reset ? initialIndex : targetParent.data.enabledNodes.length;
 
-    targetParentValues.splice(targetIndex, 0, ...draggedValues);
+    if (!returningSource) targetParentValues.splice(targetIndex, 0, ...draggedValues);
   }
 
-  setParentValues(currentParent.el, currentParent.data, currentParentValues);
+  if (!leavingSource) setParentValues(currentParent.el, currentParent.data, currentParentValues);
 
-  setParentValues(targetParent.el, targetParent.data, targetParentValues);
+  if (!returningSource) setParentValues(targetParent.el, targetParent.data, targetParentValues);
+
+  if (dragState && clone) {
+    if (returningSource && dragState.cloneOriginals) {
+      dragState.draggedNodes = dragState.cloneOriginals;
+      dragState.draggedNode = dragState.draggedNodes.find((node) => node.data.index === initialIndex) || dragState.draggedNodes[0];
+      dragState.cloneActive = false;
+    } else {
+      dragState.draggedNodes = draggedNodes.map((node, index) => ({
+        el: node.el,
+        data: { ...node.data, value: draggedValues[index], index: targetIndex + index },
+      }));
+      dragState.draggedNode = dragState.draggedNodes[0];
+      dragState.cloneActive = true;
+    }
+  }
 
   if (targetParent.data.config.onTransfer) {
     targetParent.data.config.onTransfer({
@@ -1405,6 +1431,7 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
 
     if (
       isDragState(state) &&
+      !state.cloneActive &&
       eq(state.draggedNode.data.value, nodeData.value)
     ) {
       state.draggedNode.data = nodeData;
@@ -1445,6 +1472,14 @@ export function remapNodes<T>(parent: HTMLElement, force?: boolean) {
         data: nodeData,
       },
     });
+  }
+
+  if (isDragState(state) && state.cloneActive && state.currentParent.el === parent) {
+    state.draggedNodes = state.draggedNodes.map((dragged) =>
+      enabledNodeRecords.find((node) => node.el === dragged.el) ||
+      enabledNodeRecords.find((node) => node.data.index === dragged.data.index) || dragged
+    );
+    state.draggedNode = state.draggedNodes[0];
   }
 
   parents.set(parent, { ...parentData, enabledNodes: enabledNodeRecords });
@@ -2116,9 +2151,11 @@ export function handlePointercancel<T>(
     return;
   }
 
+  state.cloneCancelled = true;
+
   const config = parents.get(state.initialParent.el)?.config;
 
-  if (config?.onDragend) {
+  if (config?.onDragend && !state.initialParent.data.config.clone) {
     config.onDragend({
       parent: state.currentParent,
       values: parentValues(state.currentParent.el, state.currentParent.data),
@@ -2151,12 +2188,27 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   // values. Bail out early: there is nothing library-managed to clean up.
   if (!isDragState(state)) return;
 
+  if (state.cloneActive) {
+    const hit = isSynthDragState(state) ? getElFromPoint(state.coordinates) : undefined;
+    const validDrop = isSynthDragState(state)
+      ? !state.cloneCancelled && hit?.parent.el === state.currentParent.el
+      : dropped;
+    if (!validDrop) {
+      setParentValues(state.currentParent.el, state.currentParent.data,
+        withoutDraggedValues(parentValues(state.currentParent.el, state.currentParent.data), state.draggedNodes));
+      if (state.cloneOriginals) state.draggedNodes = state.cloneOriginals;
+      state.draggedNode = state.draggedNodes[0];
+      state.currentParent = state.initialParent;
+      state.cloneActive = false;
+    }
+  }
+
   if (state.draggedNode)
     state.draggedNode.el.draggable =
       !state.currentParent.data.config.dragHandle;
 
   // --- Capture necessary data BEFORE resetState might affect it ---
-  const nodesToClean = state.draggedNodes.map((x) => x.el);
+  const nodesToClean = [...state.draggedNodes, ...(state.cloneOriginals || [])].map((x) => x.el);
   const initialParentData = state.initialParent.data;
   const isSynth = isSynthDragState(state);
   const config = parents.get(state.initialParent.el)?.config;
@@ -2208,7 +2260,11 @@ export function handleEnd<T>(state: DragState<T> | SynthDragState<T>) {
   });
 
   // Deselect and reset active state (needs state, do before reset)
-  deselect(state.draggedNodes, state.currentParent, state);
+  deselect(
+    state.cloneOriginals || state.draggedNodes,
+    state.cloneOriginals ? state.initialParent : state.currentParent,
+    state
+  );
   setActive(state.currentParent, undefined, state);
 
   // Prepare data for callback/event *before* resetState
@@ -2688,6 +2744,10 @@ export function validateTransfer<T>({
   if (!targetParent || !currentParent) return false;
 
   if (targetParent.el === currentParent.el) return false;
+
+  // Returning a copy to its origin discards it, even when that palette does
+  // not accept incoming transfers.
+  if (state.cloneActive && targetParent.el === initialParent.el) return true;
 
   const targetConfig = targetParent.data.config;
 
