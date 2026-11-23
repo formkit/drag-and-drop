@@ -47,6 +47,7 @@
     "jiti": "^2.6.1",
     "pathe": "^2.0.3",
     "publint": "^0.3.18",
+    "svelte": "^5.59.1",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
     "vue-eslint-parser": "^10.4.0"
