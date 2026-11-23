@@ -22,7 +22,7 @@
       Drag and drop ships two main functions: <code>dragAndDrop</code> and
       <code>useDragAndDrop</code>. These can be imported for your framework of
       choice by using the subpath import
-      <code>@formkit/drag-and-drop/{react/vue/solid}</code>. A native JavaScript
+      <code>@formkit/drag-and-drop/{react/vue/solid}</code> (Svelte 5 has its own attachment, below). A native JavaScript
       version of the <code>dragAndDrop</code> function is also available at
       <code>@formkit/drag-and-drop</code>.
     </p>
@@ -131,5 +131,23 @@
         ><br />})
       </div>
     </code>
+    <h3 id="svelte">Svelte 5</h3>
+    <p>
+      Svelte 5 gets an
+      <a href="https://svelte.dev/docs/svelte/@attach">attachment</a> from
+      <code>@formkit/drag-and-drop/svelte</code>. Pass a getter and a setter for
+      your <code>$state</code> array plus any config; the config stays reactive,
+      and changes to the list itself don’t re-attach.
+    </p>
+    <code class="block"
+      ><div class="comment">&lt;!-- Svelte 5 --&gt;</div>
+      &lt;script&gt;<br />
+      <span class="indent">import { dragAndDrop } from '@formkit/drag-and-drop/svelte'</span><br />
+      <span class="indent">let tapes = $state(['Depeche Mode', 'Duran Duran', 'Pet Shop Boys'])</span><br />
+      &lt;/script&gt;<br /><br />
+      &lt;ul {@attach dragAndDrop(() =&gt; tapes, (v) =&gt; (tapes = v), { group: 'tapes' })}&gt;<br />
+      <span class="indent">{#each tapes as tape (tape)}&lt;li&gt;{tape}&lt;/li&gt;{/each}</span><br />
+      &lt;/ul&gt;</code
+    >
   </SectionWrapper>
 </template>

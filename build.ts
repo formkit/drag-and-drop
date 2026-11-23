@@ -58,6 +58,19 @@ const __dirname = dirname(__filename);
     outExtension: ({ format }) => ({ js: format === "cjs" ? ".cjs" : ".mjs" }),
   });
 
+  // Build the svelte entry (a Svelte 5 attachment)
+  await build({
+    entry: ["src/svelte/index.ts"],
+    format: ["cjs", "esm"],
+    external: ["svelte", "../index", "../utils"],
+    splitting: false,
+    sourcemap: true,
+    clean: true,
+    dts: true,
+    outDir: "dist/svelte",
+    outExtension: ({ format }) => ({ js: format === "cjs" ? ".cjs" : ".mjs" }),
+  });
+
   async function replaceImports(fileName: string) {
     const format = fileName.endsWith("mjs") ? "mjs" : "cjs";
     const file = await readFile(resolve(__dirname, `${fileName}`), "utf8");
@@ -74,6 +87,8 @@ const __dirname = dirname(__filename);
   await replaceImports("dist/react/index.cjs");
   await replaceImports("dist/solid/index.mjs");
   await replaceImports("dist/solid/index.cjs");
+  await replaceImports("dist/svelte/index.mjs");
+  await replaceImports("dist/svelte/index.cjs");
 
   // Marko source is compiled by the consumer's bundler.
   // "../index" in dnd.marko resolves to dist/index.mjs at consumer build time.
@@ -122,6 +137,16 @@ const __dirname = dirname(__filename);
       import: {
         types: "./solid/index.d.ts",
         default: "./solid/index.mjs",
+      },
+    },
+    "./svelte": {
+      require: {
+        types: "./svelte/index.d.cts",
+        default: "./svelte/index.cjs",
+      },
+      import: {
+        types: "./svelte/index.d.ts",
+        default: "./svelte/index.mjs",
       },
     },
     "./marko": {
