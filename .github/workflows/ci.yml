@@ -67,11 +67,18 @@ jobs:
         # each attempt and retry instead of hanging.
         timeout-minutes: 20
         run: |
+          # WebKit's apt dependencies can take minutes on a slow mirror. A
+          # timeout that kills apt mid-install leaves dpkg locked/half-configured,
+          # which made every retry fail with exit code 100; so allow more time
+          # and repair dpkg before retrying.
           for attempt in 1 2 3; do
-            if timeout 300 pnpm exec playwright install --with-deps ${{ matrix.browser }}; then
+            if timeout 900 pnpm exec playwright install --with-deps ${{ matrix.browser }}; then
               exit 0
             fi
-            echo "playwright install stalled or failed (attempt $attempt), retrying..."
+            echo "playwright install stalled or failed (attempt $attempt), repairing apt and retrying..."
+            sudo killall -q apt-get dpkg || true
+            sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/cache/apt/archives/lock
+            sudo dpkg --configure -a || true
             sleep 5
           done
           exit 1
